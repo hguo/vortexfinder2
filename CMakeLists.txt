@@ -4,7 +4,10 @@ cmake_minimum_required (VERSION 2.8)
 set (CMAKE_INCLUDE_CURRENT_DIR ON)
 set (CMAKE_AUTOMOC ON)
 
-set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake-modules)
+# set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake-modules)
+
+set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+set (LIBRARY_OUTPUT_PATH ${PROJECT_LIBRARY_DIR}/lib)
 
 find_package (OpenGL REQUIRED)
 find_package (GLUT REQUIRED)
