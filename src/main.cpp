@@ -141,8 +141,10 @@ int main(int argc, char **argv)
 #endif
   }
 
-  fprintf(stderr, "total points: %lu\n", zeros.size()/3); 
+  int npts = zeros.size()/3; 
+  fprintf(stderr, "total points: %d\n", npts); 
   FILE *fp = fopen("out", "wb");
+  fwrite(&npts, sizeof(int), 1, fp); 
   fwrite(zeros.data(), sizeof(float), zeros.size(), fp); 
   fclose(fp); 
 #endif

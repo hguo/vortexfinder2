@@ -96,6 +96,18 @@ void CGLWidget::initializeGL()
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shiness); 
   }
 
+  // load data
+  {
+    FILE *fp = fopen("out", "rb");
+    int npts; 
+    fread(&npts, sizeof(int), 1, fp); 
+    _points.resize(npts*3); 
+    fread((void*)_points.data(), sizeof(float), npts*3, fp); 
+    fclose(fp);
+
+    fprintf(stderr, "read %d points\n", npts); 
+  }
+
   CHECK_GLERROR(); 
 }
 
@@ -118,9 +130,9 @@ void CGLWidget::paintGL()
   mvmatrix.setToIdentity();
   mvmatrix.lookAt(_eye, _center, _up);
   mvmatrix.rotate(_trackball.getRotation());
+  mvmatrix.scale(_trackball.getScale()); 
 #if 0
   mvmatrix.scale(1.0/_ds->dims()[0]); 
-  mvmatrix.scale(_trackball.getScale()); 
   mvmatrix.translate(-0.5*_ds->dims()[0], -0.5*_ds->dims()[1], -0.5*_ds->dims()[2]);
 #endif
 
@@ -132,7 +144,19 @@ void CGLWidget::paintGL()
   glLoadMatrixd(mvmatrix.data()); 
 
   glColor3f(0, 0, 0); 
-  glutWireTeapot(1.0); 
+  glScalef(0.01, 0.01, 0.01); 
+
+  glBegin(GL_POINTS); 
+  for (int i=0; i<_points.size()/3; i++) 
+    glVertex3f(_points[i*3], _points[i*3+1], _points[i*3+2]); 
+  glEnd(); 
+
+#if 0
+  glEnableClientState(GL_VERTEX_ARRAY); 
+  glVertexPointer(3, GL_FLOAT, 0, _points.data());
+  glDrawElements(GL_LINES, _points.size(), GL_FLOAT, _points.data()); 
+  glDisableClientState(GL_VERTEX_ARRAY);
+#endif
 
   CHECK_GLERROR(); 
 }

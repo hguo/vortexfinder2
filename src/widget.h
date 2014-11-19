@@ -15,12 +15,6 @@ class CGLWidget : public QGLWidget
 {
   Q_OBJECT
 
-  enum {
-    MODE_VOLREN, 
-    MODE_LINE, 
-    MODE_TUBE
-  };
-
 public:
   CGLWidget(const QGLFormat& fmt=QGLFormat::defaultFormat(), QWidget *parent=NULL, QGLWidget *sharedWidget=NULL); 
   ~CGLWidget(); 
@@ -40,7 +34,9 @@ private:
   
 private: // camera
   const float _fovy, _znear, _zfar; 
-  const QVector3D _eye, _center, _up; 
+  const QVector3D _eye, _center, _up;
+
+  std::vector<float> _points; 
 }; 
 
 #endif
