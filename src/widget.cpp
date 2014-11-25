@@ -101,11 +101,13 @@ void CGLWidget::initializeGL()
     FILE *fp = fopen("out", "rb");
     int npts; 
     fread(&npts, sizeof(int), 1, fp); 
-    _points.resize(npts*3); 
-    fread((void*)_points.data(), sizeof(float), npts*3, fp); 
+    _vertices.resize(npts*3); 
+    fread((void*)_vertices.data(), sizeof(float), npts*3, fp);
+    _rhos.resize(npts); 
+    fread((void*)_rhos.data(), sizeof(float), npts, fp);
     fclose(fp);
 
-    fprintf(stderr, "read %d points\n", npts); 
+    fprintf(stderr, "read %d vertices\n", npts); 
   }
 
   CHECK_GLERROR(); 
@@ -147,16 +149,12 @@ void CGLWidget::paintGL()
   glScalef(0.01, 0.01, 0.01); 
 
   glBegin(GL_POINTS); 
-  for (int i=0; i<_points.size()/3; i++) 
-    glVertex3f(_points[i*3], _points[i*3+1], _points[i*3+2]); 
+  for (int i=0; i<_vertices.size()/3; i++) {
+    float r = std::min(_rhos[i], 1.f); 
+    glColor4f(1-r, r, 0, 1-pow(r, 0.1)); 
+    glVertex3f(_vertices[i*3], _vertices[i*3+1], _vertices[i*3+2]);
+  }
   glEnd(); 
-
-#if 0
-  glEnableClientState(GL_VERTEX_ARRAY); 
-  glVertexPointer(3, GL_FLOAT, 0, _points.data());
-  glDrawElements(GL_LINES, _points.size(), GL_FLOAT, _points.data()); 
-  glDisableClientState(GL_VERTEX_ARRAY);
-#endif
 
   CHECK_GLERROR(); 
 }

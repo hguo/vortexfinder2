@@ -32,6 +32,7 @@ include_directories (
   ${GLUT_INCLUDE_DIR}
   ${LIBMESH_INCLUDE_DIR}
   ${MPI_INCLUDE_PATH}
+  ${VTK_INCLUDE_DIRS}
 )
 
 link_directories (

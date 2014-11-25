@@ -36,7 +36,7 @@ private: // camera
   const float _fovy, _znear, _zfar; 
   const QVector3D _eye, _center, _up;
 
-  std::vector<float> _points; 
+  std::vector<float> _vertices, _rhos;  
 }; 
 
 #endif
