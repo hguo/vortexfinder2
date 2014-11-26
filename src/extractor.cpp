@@ -138,7 +138,7 @@ void VortexExtractor::Extract()
       }
       phase_shift += flux; 
       double critera = phase_shift / (2*M_PI); 
-      if (abs(critera)<0.5f) continue;
+      if (fabs(critera)<0.5f) continue;
 
       if (_gauge) {
         phi[1] = phi[0] + delta1[0]; 
