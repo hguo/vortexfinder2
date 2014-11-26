@@ -35,7 +35,7 @@ void VortexExtractor::SetKex(double Kex)
   _Kex = Kex; 
 }
 
-void VortexExtractor::EnableGaugeTransformation(bool g)
+void VortexExtractor::SetGaugeTransformation(bool g)
 {
   _gauge = g; 
 }
@@ -95,7 +95,9 @@ void VortexExtractor::Extract()
 
   for (; it!=end; it++) {
     const Elem *elem = *it;
-   
+    
+    int n_zeros = 0; 
+
     for (int i=0; i<elem->n_sides(); i++) {
       AutoPtr<Elem> side = elem->side(i); 
       
@@ -153,6 +155,8 @@ void VortexExtractor::Extract()
         zeros.push_back(pos[0]); 
         zeros.push_back(pos[1]); 
         zeros.push_back(pos[2]);
+
+        n_zeros ++; 
 #if 0
         fprintf(stderr, "elem=%p, side=%d, u={%f, %f, %f}, v={%f, %f, %f}, rho={%f, %f, %f}, phi={%f, %f, %f}, ps=%f, pos={%f, %f, %f}\n", 
             elem, i, 
@@ -161,9 +165,12 @@ void VortexExtractor::Extract()
             ps, pos[0], pos[1], pos[2]);
 #endif
       } else {
-        fprintf(stderr, "WARNING: punctured but zero not found\n"); 
+        // fprintf(stderr, "WARNING: punctured but zero not found\n"); 
       }
     }
+
+    if (!elem->on_boundary() && (n_zeros==1 || n_zeros==3))
+      fprintf(stderr, "elem=%p, on_boundary=%d, n_zeros=%d\n", elem, elem->on_boundary(), n_zeros); 
   }
   
   int npts = zeros.size()/3; 

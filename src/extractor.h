@@ -24,7 +24,7 @@ public:
 
   void SetMagneticField(const double B[3]);
   void SetKex(double Kex);
-  void EnableGaugeTransformation(bool); 
+  void SetGaugeTransformation(bool); 
 
   void LoadData(const std::string& filename); 
   void LoadTimestep(int timestep); 
