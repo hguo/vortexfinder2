@@ -13,6 +13,7 @@ target_link_libraries (viewer
 )
 
 set (extractor_sources
+  vortex.cpp
   extractor.cpp
 )
 

@@ -165,7 +165,7 @@ void VortexExtractor::Extract()
             ps, pos[0], pos[1], pos[2]);
 #endif
       } else {
-        // fprintf(stderr, "WARNING: punctured but zero not found\n"); 
+        fprintf(stderr, "WARNING: punctured but zero not found\n"); 
       }
     }
 
