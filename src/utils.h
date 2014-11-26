@@ -28,18 +28,18 @@ static inline bool find_zero_triangle(T r[3], T i[3], T lambda[3])
 }
 
 template <typename T>
-static inline bool find_zero_triangle(T r[3], T i[3], T x[3], T y[3], T z[3], T pos[3])
+static inline bool find_zero_triangle(T r[3], T i[3], T X0[3], T X1[3], T X2[3], T pos[3])
 {
   T lambda[3]; 
   if (!find_zero_triangle(r, i, lambda)) return false; 
 
-  T R[3][2] = {{x[0]-x[2], x[1]-x[2]}, 
-               {y[0]-y[2], y[1]-y[2]}, 
-               {z[0]-z[2], z[1]-z[2]}}; 
+  T R[3][2] = {{X0[0]-X2[0], X1[0]-X2[0]}, 
+               {X0[1]-X2[1], X1[1]-X2[1]}, 
+               {X0[2]-X2[2], X1[2]-X2[2]}}; 
 
-  pos[0] = R[0][0]*lambda[0] + R[0][1]*lambda[1] + x[2]; 
-  pos[1] = R[1][0]*lambda[0] + R[1][1]*lambda[1] + y[2]; 
-  pos[2] = R[2][0]*lambda[0] + R[2][1]*lambda[1] + z[2]; 
+  pos[0] = R[0][0]*lambda[0] + R[0][1]*lambda[1] + X2[0]; 
+  pos[1] = R[1][0]*lambda[0] + R[1][1]*lambda[1] + X2[1]; 
+  pos[2] = R[2][0]*lambda[0] + R[2][1]*lambda[1] + X2[2]; 
 
   return true; 
 }

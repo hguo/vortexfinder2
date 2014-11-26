@@ -12,12 +12,11 @@ target_link_libraries (viewer
   ${GLUT_LIBRARY}
 )
 
-add_executable (main main.cpp)
-target_link_libraries (main 
-  ${LIBMESH_LIBRARY}
+set (extractor_sources
+  extractor.cpp
 )
 
-add_executable (main2 main2.cpp)
-target_link_libraries (main2 
+add_executable (main main.cpp ${extractor_sources})
+target_link_libraries (main 
   ${LIBMESH_LIBRARY}
 )

@@ -1,19 +1,32 @@
 #include <iostream>
 #include <vector>
-#include <libmesh/libmesh.h>
-#include <libmesh/mesh.h>
-#include <libmesh/elem.h>
-#include <libmesh/equation_systems.h>
-#include <libmesh/nonlinear_implicit_system.h>
-#include <libmesh/exodusII_io.h>
-#include <libmesh/numeric_vector.h>
-#include <libmesh/dof_map.h>
-#include "utils.h"
-
-#define GAUGE 0
+#include "extractor.h"
 
 using namespace libMesh; 
 
+int main(int argc, char **argv)
+{
+  const std::string filename = "tslab.3.Bz0_02.Nt1000.lu.512.e"; 
+  const double B[3] = {0.f, 0.f, 0.02f}; // magenetic field
+  const double Kex = 0; 
+  
+  LibMeshInit init(argc, argv);
+  
+  VortexExtractor extractor(init.comm());
+  extractor.SetVerbose(1);
+  extractor.SetMagneticField(B); 
+  extractor.SetKex(Kex); 
+
+  extractor.LoadData(filename); 
+  extractor.LoadTimestep(600); 
+
+  extractor.Extract(); 
+
+  return 0; 
+}
+
+
+#if 0
 int main(int argc, char **argv)
 {
   // const char filename[] = "tslab.2.Bz0_1.exodus.short_out.e"; 
@@ -45,7 +58,6 @@ int main(int argc, char **argv)
   exio.copy_nodal_solution(tsys, "v", "v", timestep);
 
   /// testing
-#if 1
   const DofMap &dof_map  = tsys.get_dof_map();  
 
   MeshBase::const_element_iterator it = mesh.active_local_elements_begin(); 
@@ -139,7 +151,7 @@ int main(int argc, char **argv)
   fwrite(&npts, sizeof(int), 1, fp); 
   fwrite(zeros.data(), sizeof(float), zeros.size(), fp); 
   fclose(fp); 
-#endif
 
   return 0; 
 }
+#endif
