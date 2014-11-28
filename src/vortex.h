@@ -3,8 +3,9 @@
 
 #include <string>
 #include <list>
+#include <vector>
 
-class VortexObject 
+class VortexObject : public std::vector<std::list<float> >
 {
 public:
   VortexObject(); 
@@ -13,9 +14,11 @@ public:
   void SerializeToString(std::string& str);
   bool ParseFromString(const std::string& str);
 
-protected:
-  typedef std::list<float> PointList;
-  std::list<PointList> _vortices; 
+  int AddLine();  
+  int AddLine(const std::list<float> &line);
+  std::list<float>& GetLine(int i) {return (*this)[i];}
+  
+  int NrLines() const {return size();}
 }; 
 
 #endif

@@ -21,7 +21,8 @@ int main(int argc, char **argv)
   extractor.LoadData(filename); 
   extractor.LoadTimestep(600); 
 
-  extractor.Extract(); 
+  extractor.Extract();
+  extractor.Trace(); 
 
   return 0; 
 }

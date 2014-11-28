@@ -22,6 +22,9 @@ set (LIBMESH_INCLUDE_DIR "${LIBMESH_DIR}/include")
 set (LIBMESH_LIBRARY_DIR "${LIBMESH_DIR}/lib")
 set (LIBMESH_LIBRARY "${LIBMESH_LIBRARY_DIR}/libmesh_opt.dylib")
 
+set (PETSC_DIR "/usr" CACHE PATH "The installed path for PETSc")
+set (PETSC_INCLUDE_DIR "${PETSC_DIR}/include")
+
 include (${QT_USE_FILE})
 
 include_directories (
@@ -31,6 +34,7 @@ include_directories (
   ${GLEW_INCLUDE_DIR}
   ${GLUT_INCLUDE_DIR}
   ${LIBMESH_INCLUDE_DIR}
+  ${PETSC_INCLUDE_DIR}
   ${MPI_INCLUDE_PATH}
   ${VTK_INCLUDE_DIRS}
 )
