@@ -96,7 +96,7 @@ void VortexExtractor::Extract()
 
   for (; it!=end; it++) {
     const Elem *elem = *it;
-    PuncturedElem<double> punctured_elem; 
+    Item<double> item; 
     
     for (int face=0; face<elem->n_sides(); face++) {
       AutoPtr<Elem> side = elem->side(face); 
@@ -142,9 +142,9 @@ void VortexExtractor::Extract()
      
       // update bits
       int chirality = lround(critera);
-      punctured_elem.elem = elem; 
-      punctured_elem.SetChirality(face, chirality);
-      punctured_elem.SetPuncturedFace(face);
+      item.elem = elem; 
+      item.SetChirality(face, chirality);
+      item.SetPuncturedFace(face);
 
       if (_gauge) {
         phi[1] = phi[0] + delta1[0]; 
@@ -158,7 +158,7 @@ void VortexExtractor::Extract()
       double pos[3]; 
       bool succ = find_zero_triangle(u, v, X0, X1, X2, pos); 
       if (succ) {
-        punctured_elem.SetPuncturedPoint(face, pos); 
+        item.SetPuncturedPoint(face, pos); 
 
         zeros.push_back(pos[0]); 
         zeros.push_back(pos[1]); 
@@ -168,10 +168,10 @@ void VortexExtractor::Extract()
       }
     }
   
-    if (punctured_elem.Valid()) {
-      _punctured_elems.insert(std::make_pair<const Elem*, PuncturedElem<double> >(elem, punctured_elem));  
-      fprintf(stderr, "elem_id=%d, bits=%s\n", 
-          elem->id(), punctured_elem.bits.to_string().c_str()); 
+    if (item.Valid()) {
+      _items.insert(std::make_pair<const Elem*, Item<double> >(elem, item));  
+      // fprintf(stderr, "elem_id=%d, bits=%s\n", 
+      //     elem->id(), item.bits.to_string().c_str()); 
     }
   }
   
@@ -183,32 +183,81 @@ void VortexExtractor::Extract()
   fclose(fp); 
 }
 
-void VortexExtractor::Trace(VortexObject& vortex, punctured_elem_iterator it, int direction)
+#if 0
+void VortexExtractor::Trace(VortexObject& vortex, item_iterator it, int direction)
 {
-  _traced_punctured_elems.push_back(it);
-  const PuncturedElem<double>& punctured_elem = it->second;
+  _traced_items.push_back(it);
+  const Item<double>& item = it->second;
 
   for (int face=0; face<4; face++) {
-    if (punctured_elem.Chirality(face) == direction) {
-     const Elem *next_elem = punctured_elem.elem->neighbor(face);
+    if (item.Chirality(face) == direction) {
+     const Elem *next_elem = item.elem->neighbor(face);
      if (next_elem) {
-        punctured_elem_iterator it1 = _punctured_elems.find(next_elem); 
+        item_iterator it1 = _items.find(next_elem); 
         Trace(vortex, it1, direction);
-      }
+        break;
+     }
     }
   }
 }
+#endif
 
 void VortexExtractor::Trace()
 {
-#if 0
-  while (!_punctured_elems.empty()) {
-    std::map<Elem*, PuncturedElem<double> >::iterator it = _punctured_elems.begin();
-
-    dof_id_type id = it->first;
-    // forward trace 
+  while (!_items.empty()) {
+    item_iterator it0 = _items.begin(); 
+    std::list<item_iterator> traced_items;
+    std::list<double> points; 
     
-    // backward trace
+    traced_items.push_back(it0); 
+
+    // forward trace (chirality = 1)
+    const Elem *elem = it0->first;
+    while (elem != NULL) {
+      item_iterator it = _items.find(elem);
+      const Item<double>& item = it->second; 
+      if (it != it0)
+        traced_items.push_back(it); 
+      for (int face=0; face<4; face++) {
+        if (item.Chirality(face) == 1 && item.traced == false) {
+          double pos[3]; 
+          item.traced = true; 
+          item.GetPuncturedPoint(face, pos); 
+          points.push_back(pos[0]); 
+          points.push_back(pos[1]); 
+          points.push_back(pos[2]);
+          // fprintf(stderr, "pushing back, {%f, %f, %f}\n", pos[0], pos[1], pos[2]); 
+          elem = item.elem->neighbor(face);
+        }
+      }
+    }
+
+    // backward trace (chirality = -1)
+    elem = it0->first;
+    it0->second.traced = false; // reset flag
+    while (elem != NULL) {
+      item_iterator it = _items.find(elem);
+      const Item<double>& item = it->second; 
+      if (it != it0)
+        traced_items.push_back(it); 
+      for (int face=0; face<4; face++) {
+        if (item.Chirality(face) == -1 && item.traced == false) {
+          double pos[3];
+          item.traced = true; 
+          item.GetPuncturedPoint(face, pos); 
+          points.push_front(pos[0]); 
+          points.push_front(pos[1]); 
+          points.push_front(pos[2]); 
+          // fprintf(stderr, "pushing front, {%f, %f, %f}\n", pos[0], pos[1], pos[2]); 
+          elem = item.elem->neighbor(face);
+        }
+      }
+    }
+    
+    for (std::list<item_iterator>::iterator it = traced_items.begin(); it != traced_items.end(); it++) {
+      _items.erase(*it); 
+    }
+
+    fprintf(stderr, "traced points: %lu\n", points.size()/3); 
   }
-#endif
 }

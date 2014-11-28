@@ -53,12 +53,13 @@ private:
 
 private:
   template <typename T>
-  struct PuncturedElem {
+  struct Item {
     const Elem *elem; 
     std::bitset<8> bits; 
     std::vector<T> pos;
+    mutable bool traced; 
 
-    PuncturedElem() : pos(12) {} // for easier access.. should later reduce memory footprint 
+    Item() : pos(12), traced(false) {} // for easier access.. should later reduce memory footprint 
     bool Valid() const {return bits.any();} 
     int Chirality(int face) const {
       if (!bits[face]) return 0; // face not punctured
@@ -68,15 +69,16 @@ private:
     bool IsPunctured(int face) {return bits[face];}
     void SetPuncturedFace(int face) {bits[face] = 1;}
     void SetPuncturedPoint(int face, const T* p) {pos[face*3] = p[0]; pos[face*3+1] = p[1]; pos[face*3+2] = p[2];}
-    void GetPuncturedPoint(int face, T* p) {p[0] = pos[face*3]; p[1] = pos[face*3+1]; p[2] = pos[face*3+2];}
+    void GetPuncturedPoint(int face, T* p) const {p[0] = pos[face*3]; p[1] = pos[face*3+1]; p[2] = pos[face*3+2];}
+    int Degree() const {return bits[0] + bits[1] + bits[2] + bits[3];}
   }; 
 
-  std::map<const Elem*, PuncturedElem<double> > _punctured_elems; 
-  typedef std::map<const Elem*, PuncturedElem<double> >::const_iterator punctured_elem_iterator;
-  std::list<punctured_elem_iterator> _traced_punctured_elems; 
+  std::map<const Elem*, Item<double> > _items; 
+  typedef std::map<const Elem*, Item<double> >::const_iterator item_iterator;
+  std::list<item_iterator> _traced_items; 
 
 private:
-  void Trace(VortexObject& vortex, punctured_elem_iterator iterator, int direction); 
+  void Trace(VortexObject& vortex, item_iterator iterator, int direction); 
 }; 
 
 #endif

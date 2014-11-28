@@ -16,6 +16,7 @@ void VortexObject::SerializeToString(std::string& str)
 bool VortexObject::ParseFromString(const std::string& str)
 {
   // TODO
+  return false;
 }
 
 int VortexObject::AddLine() 
