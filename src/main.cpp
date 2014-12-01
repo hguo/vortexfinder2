@@ -18,11 +18,23 @@ int main(int argc, char **argv)
   extractor.SetKex(Kex);
   extractor.SetGaugeTransformation(false);
 
-  extractor.LoadData(filename); 
-  extractor.LoadTimestep(600); 
+  extractor.LoadData(filename);
+  for (int t=600; t<=1000; t++) {
+    fprintf(stderr, "------- timestep=%d -------\n", t); 
+    
+    double t0 = (double)clock() / CLOCKS_PER_SEC; 
+    extractor.LoadTimestep(t);
+    double t1 = (double)clock() / CLOCKS_PER_SEC; 
+    extractor.Extract();
+    double t2 = (double)clock() / CLOCKS_PER_SEC; 
+    extractor.Trace(); 
+    double t3 = (double)clock() / CLOCKS_PER_SEC; 
 
-  extractor.Extract();
-  extractor.Trace(); 
+    fprintf(stderr, "------- timings -------\n");
+    fprintf(stderr, "t_io:\t%f\n", t1-t0); 
+    fprintf(stderr, "t_ex:\t%f\n", t2-t1); 
+    fprintf(stderr, "t_tr:\t%f\n", t3-t2);
+  }
 
   return 0; 
 }

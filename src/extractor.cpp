@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <list>
+#include <set>
 #include "extractor.h"
 #include "utils.h"
 
@@ -96,7 +97,7 @@ void VortexExtractor::Extract()
 
   for (; it!=end; it++) {
     const Elem *elem = *it;
-    Item<double> item; 
+    VortexItem<> item; 
     
     for (int face=0; face<elem->n_sides(); face++) {
       AutoPtr<Elem> side = elem->side(face); 
@@ -142,7 +143,7 @@ void VortexExtractor::Extract()
      
       // update bits
       int chirality = lround(critera);
-      item.elem = elem; 
+      item.elem_id = elem->id(); 
       item.SetChirality(face, chirality);
       item.SetPuncturedFace(face);
 
@@ -169,7 +170,7 @@ void VortexExtractor::Extract()
     }
   
     if (item.Valid()) {
-      _items.insert(std::make_pair<const Elem*, Item<double> >(elem, item));  
+      _map[elem->id()] = item; 
       // fprintf(stderr, "elem_id=%d, bits=%s\n", 
       //     elem->id(), item.bits.to_string().c_str()); 
     }
@@ -183,81 +184,144 @@ void VortexExtractor::Extract()
   fclose(fp); 
 }
 
-#if 0
-void VortexExtractor::Trace(VortexObject& vortex, item_iterator it, int direction)
-{
-  _traced_items.push_back(it);
-  const Item<double>& item = it->second;
-
-  for (int face=0; face<4; face++) {
-    if (item.Chirality(face) == direction) {
-     const Elem *next_elem = item.elem->neighbor(face);
-     if (next_elem) {
-        item_iterator it1 = _items.find(next_elem); 
-        Trace(vortex, it1, direction);
-        break;
-     }
-    }
-  }
-}
-#endif
-
 void VortexExtractor::Trace()
 {
-  while (!_items.empty()) {
-    item_iterator it0 = _items.begin(); 
-    std::list<item_iterator> traced_items;
-    std::list<double> points; 
-    
-    traced_items.push_back(it0); 
+  while (!_map.empty()) {
+    /// 1. sort vortex items into connected components; pick up special items
+    std::list<VortexMap<>::iterator> to_erase, to_visit;
+    to_visit.push_back(_map.begin()); 
 
-    // forward trace (chirality = 1)
-    const Elem *elem = it0->first;
-    while (elem != NULL) {
-      item_iterator it = _items.find(elem);
-      const Item<double>& item = it->second; 
-      if (it != it0)
-        traced_items.push_back(it); 
-      for (int face=0; face<4; face++) {
-        if (item.Chirality(face) == 1 && item.traced == false) {
-          double pos[3]; 
-          item.traced = true; 
-          item.GetPuncturedPoint(face, pos); 
-          points.push_back(pos[0]); 
-          points.push_back(pos[1]); 
-          points.push_back(pos[2]);
-          // fprintf(stderr, "pushing back, {%f, %f, %f}\n", pos[0], pos[1], pos[2]); 
-          elem = item.elem->neighbor(face);
+    VortexMap<> connected_items, special_items; 
+    while (!to_visit.empty()) { // depth-first search
+      VortexMap<>::iterator current = to_visit.front();
+      to_visit.pop_front();
+
+      Elem *elem = _mesh->elem(current->first); 
+      for (int face=0; face<4; face++) { // for 4 faces, in either directions
+        Elem *neighbor = elem->neighbor(face); 
+        if (current->second.IsPunctured(face) && neighbor != NULL) {
+          VortexMap<>::iterator it = _map.find(neighbor->id());
+          assert(it != _map.end());
+          if (!it->second.visited)
+            to_visit.push_back(it); 
         }
       }
-    }
-
-    // backward trace (chirality = -1)
-    elem = it0->first;
-    it0->second.traced = false; // reset flag
-    while (elem != NULL) {
-      item_iterator it = _items.find(elem);
-      const Item<double>& item = it->second; 
-      if (it != it0)
-        traced_items.push_back(it); 
-      for (int face=0; face<4; face++) {
-        if (item.Chirality(face) == -1 && item.traced == false) {
-          double pos[3];
-          item.traced = true; 
-          item.GetPuncturedPoint(face, pos); 
-          points.push_front(pos[0]); 
-          points.push_front(pos[1]); 
-          points.push_front(pos[2]); 
-          // fprintf(stderr, "pushing front, {%f, %f, %f}\n", pos[0], pos[1], pos[2]); 
-          elem = item.elem->neighbor(face);
-        }
-      }
+       
+      if (current->second.IsSpecial()) 
+        special_items[current->first] = current->second;
+      else 
+        connected_items[current->first] = current->second; 
+   
+      current->second.visited = true; 
+      to_erase.push_back(current);
     }
     
-    for (std::list<item_iterator>::iterator it = traced_items.begin(); it != traced_items.end(); it++) {
-      _items.erase(*it); 
+    for (std::list<VortexMap<>::iterator>::iterator it = to_erase.begin(); it != to_erase.end(); it ++)
+      _map.erase(*it);
+    to_erase.clear(); 
+   
+
+    /// 2. trace vortex lines
+    VortexObject<> vortex_object; 
+    //// 2.1 special items
+    for (VortexMap<>::iterator it = special_items.begin(); it != special_items.end(); it ++) {
+      std::list<double> line;
+      Elem *elem = _mesh->elem(it->first);
+      Point centroid = elem->centroid(); 
+      line.push_back(centroid(0)); line.push_back(centroid(1)); line.push_back(centroid(2));
+      vortex_object.push_back(line); 
+    }
+    if (vortex_object.size() > 0)
+      fprintf(stderr, "# of special vortex items: %d\n", vortex_object.size()); 
+
+    //// 2.2 ordinary items
+    while (!connected_items.empty()) {
+      VortexMap<>::iterator seed = connected_items.begin(); 
+      bool special; 
+      std::list<double> line; 
+      to_erase.push_back(seed);
+
+      // trace forward (chirality = 1)
+      ElemIdType id = seed->first;       
+      while (1) {
+        int face; 
+        double pos[3];
+        bool traced = false; 
+        Elem *elem = _mesh->elem(id); 
+        VortexMap<>::iterator it = connected_items.find(id);
+        // if (it->second.visited) break;  // avoid loop
+        // else it->second.visited = true; 
+        if (it == connected_items.end()) {
+          special = true;
+          it = special_items.find(id);
+        } else {
+          special = false;
+        }
+        
+        for (face=0; face<4; face++) 
+          if (it->second.Chirality(face) == 1) {
+            if (it != seed) 
+              to_erase.push_back(it); 
+            it->second.GetPuncturedPoint(face, pos);
+            line.push_back(pos[0]); line.push_back(pos[1]); line.push_back(pos[2]);
+            Elem *neighbor = elem->neighbor(face);
+            if (neighbor != NULL) {
+              id = neighbor->id(); 
+              if (special)  // `downgrade' the special element
+                it->second.RemovePuncturedFace(face); 
+              traced = true; 
+            }
+          }
+
+        if (!traced) break;
+      }
+
+      // trace backward (chirality = -1)
+      line.pop_front(); line.pop_front(); line.pop_front(); // remove the seed point
+      id = seed->first;       
+      while (1) {
+        int face; 
+        double pos[3];
+        bool traced = false; 
+        Elem *elem = _mesh->elem(id); 
+        VortexMap<>::iterator it = connected_items.find(id);
+        // if (it->second.visited) break; // avoid loop
+        // else it->second.visited = true; 
+        if (it == connected_items.end()) {
+          special = true;
+          it = special_items.find(id);
+        } else {
+          special = false;
+        }
+        
+        for (face=0; face<4; face++) 
+          if (it->second.Chirality(face) == -1) {
+            if (it != seed) 
+              to_erase.push_back(it); 
+            it->second.GetPuncturedPoint(face, pos);
+            line.push_front(pos[0]); line.push_front(pos[1]); line.push_front(pos[2]); 
+            Elem *neighbor = elem->neighbor(face);
+            if (neighbor != NULL) {
+              id = neighbor->id(); 
+              if (special)  // `downgrade' the special element
+                it->second.RemovePuncturedFace(face); 
+              traced = true; 
+            }
+          }
+        if (!traced) break;
+      }
+      
+      for (std::list<VortexMap<>::iterator>::iterator it = to_erase.begin(); it != to_erase.end(); it ++)
+        connected_items.erase(*it);
+      to_erase.clear();
+
+      vortex_object.push_back(line); 
     }
 
-    fprintf(stderr, "traced points: %lu\n", points.size()/3); 
+    fprintf(stderr, "# of lines in vortex_object: %lu\n", vortex_object.size());
+    int count = 0; 
+    for (VortexObject<>::iterator it = vortex_object.begin(); it != vortex_object.end(); it ++) {
+      fprintf(stderr, " - line %d, # of vertices: %lu\n", count ++, it->size()/3); 
+    }
   }
 }
