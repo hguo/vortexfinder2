@@ -32,16 +32,27 @@ protected:
   void keyPressEvent(QKeyEvent*); 
   void wheelEvent(QWheelEvent*); 
 
+  void renderCoreLines(); 
+  void renderCoreTubes(); 
+  void updateTubes(int nPatches, float radius); 
+
 private:
   CGLTrackball _trackball;
+
+private: //data
+  std::vector<VortexObject<> > _vortex_objects;
  
-private: 
+private: // camera
   const float _fovy, _znear, _zfar; 
   const QVector3D _eye, _center, _up;
 
-  std::vector<VortexObject<> > _vortex_objects;
-
-  std::vector<float> _vertices, _rhos;  
+private: // tube rendering
+  std::vector<GLfloat> line_vertices, line_colors; 
+  std::vector<GLsizei> line_vert_count; 
+  std::vector<GLint> line_indices; 
+  
+  std::vector<GLfloat> tube_vertices, tube_normals, tube_colors; 
+  std::vector<GLuint> tube_indices_lines, tube_indices_vertices;
 }; 
 
 #endif

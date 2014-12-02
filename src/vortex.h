@@ -92,8 +92,10 @@ public:
     this->resize(n); 
 
     std::vector<size_t> n_vertices(n);  
-    for (size_t i=0; i<n; i++) 
-      stream >> n_vertices[i]; 
+    for (size_t i=0; i<n; i++) {
+      stream >> n_vertices[i];
+      // fprintf(stderr, "n=%d, n_vertices=%d\n", n, n_vertices[i]); 
+    }
 
     for (size_t i=0; i<n; i++) 
       for (size_t j=0; j<n_vertices[i]; j++) {

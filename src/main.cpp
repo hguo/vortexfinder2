@@ -16,7 +16,7 @@ int main(int argc, char **argv)
   // extractor.SetVerbose(1);
   extractor.SetMagneticField(B); 
   extractor.SetKex(Kex);
-  extractor.SetGaugeTransformation(false);
+  extractor.SetGaugeTransformation(true);
 
   extractor.LoadData(filename);
   // for (int t=36; t<=40; t++) {

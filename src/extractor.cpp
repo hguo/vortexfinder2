@@ -176,7 +176,7 @@ void VortexExtractor::Extract()
     }
   }
  
-#if 0
+#if 1
   int npts = zeros.size()/3; 
   fprintf(stderr, "total number of singularities: %d\n", npts); 
   FILE *fp = fopen("out", "wb");
@@ -270,6 +270,7 @@ void VortexExtractor::Trace()
             if (it != seed) 
               to_erase.push_back(it); 
             it->second.GetPuncturedPoint(face, pos);
+            // fprintf(stderr, "%f, %f, %f\n", pos[0], pos[1], pos[2]); 
             line.push_back(pos[0]); line.push_back(pos[1]); line.push_back(pos[2]);
             Elem *neighbor = elem->neighbor(face);
             if (neighbor != NULL) {
@@ -306,7 +307,8 @@ void VortexExtractor::Trace()
             if (it != seed) 
               to_erase.push_back(it); 
             it->second.GetPuncturedPoint(face, pos);
-            line.push_front(pos[0]); line.push_front(pos[1]); line.push_front(pos[2]); 
+            // fprintf(stderr, "%f, %f, %f\n", pos[0], pos[1], pos[2]); 
+            line.push_front(pos[2]); line.push_front(pos[1]); line.push_front(pos[0]); 
             Elem *neighbor = elem->neighbor(face);
             if (neighbor != NULL) {
               id = neighbor->id(); 
@@ -322,7 +324,9 @@ void VortexExtractor::Trace()
         ordinary_items.erase(*it);
       to_erase.clear();
 
-      vortex_object.push_back(line); 
+      vortex_object.push_back(line);
+
+      fprintf(stderr, "#ordinary=%ld\n", ordinary_items.size()); 
     }
 
     vortex_objects.push_back(vortex_object); 
@@ -335,7 +339,7 @@ void VortexExtractor::Trace()
 #endif
   }
     
-  fprintf(stderr, "# of vortex objects: %lu\n", vortex_objects.size());
+  // fprintf(stderr, "# of vortex objects: %lu\n", vortex_objects.size());
 
   size_t offset_size[2] = {0}; 
   FILE *fp_offset = fopen("offset", "wb"), 
@@ -350,7 +354,7 @@ void VortexExtractor::Trace()
     fwrite(offset_size, sizeof(size_t), 2, fp_offset);
     fwrite(buf.data(), 1, buf.size(), fp); 
 
-    fprintf(stderr, "offset=%lu, size=%lu\n", offset_size[0], offset_size[1]); 
+    // fprintf(stderr, "offset=%lu, size=%lu\n", offset_size[0], offset_size[1]); 
 
     offset_size[0] += buf.size(); 
   }
