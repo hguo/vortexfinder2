@@ -175,18 +175,20 @@ void VortexExtractor::Extract()
       //     elem->id(), item.bits.to_string().c_str()); 
     }
   }
-  
+ 
+#if 0
   int npts = zeros.size()/3; 
   fprintf(stderr, "total number of singularities: %d\n", npts); 
   FILE *fp = fopen("out", "wb");
   fwrite(&npts, sizeof(int), 1, fp); 
   fwrite(zeros.data(), sizeof(float), zeros.size(), fp); 
-  fclose(fp); 
+  fclose(fp);
+#endif
 }
 
 void VortexExtractor::Trace()
 {
-  std::list<VortexObject<> > vortex_objects; 
+  std::vector<VortexObject<> > vortex_objects; 
 
   while (!_map.empty()) {
     /// 1. sort vortex items into connected components; pick up special items
@@ -333,5 +335,23 @@ void VortexExtractor::Trace()
 #endif
   }
     
-  fprintf(stderr, "# of vortex objects: %lu\n", vortex_objects.size()); 
+  fprintf(stderr, "# of vortex objects: %lu\n", vortex_objects.size());
+
+  size_t offset_size[2] = {0}; 
+  FILE *fp_offset = fopen("offset", "wb"), 
+       *fp = fopen("vortex", "wb");
+  size_t count = vortex_objects.size(); 
+  fwrite(&count, sizeof(size_t), 1, fp_offset); 
+  for (int i=0; i<vortex_objects.size(); i++) {
+    std::string buf; 
+    vortex_objects[i].Serialize(buf);
+    offset_size[1] = buf.size();
+
+    fwrite(offset_size, sizeof(size_t), 2, fp_offset);
+    fwrite(buf.data(), 1, buf.size(), fp); 
+
+    fprintf(stderr, "offset=%lu, size=%lu\n", offset_size[0], offset_size[1]); 
+
+    offset_size[0] += buf.size(); 
+  }
 }

@@ -97,6 +97,7 @@ void CGLWidget::initializeGL()
   }
 
   // load data
+#if 0
   {
     FILE *fp = fopen("out", "rb");
     int npts; 
@@ -109,6 +110,8 @@ void CGLWidget::initializeGL()
 
     fprintf(stderr, "read %d vertices\n", npts); 
   }
+#endif
+  LoadVortexObjects(); 
 
   CHECK_GLERROR(); 
 }
@@ -159,3 +162,24 @@ void CGLWidget::paintGL()
   CHECK_GLERROR(); 
 }
 
+void CGLWidget::LoadVortexObjects()
+{
+  size_t offset_size[2] = {0}; 
+  FILE *fp_offset = fopen("offset", "rb"), 
+       *fp = fopen("vortex", "rb");
+  size_t count = _vortex_objects.size(); 
+
+  fread(&count, sizeof(size_t), 1, fp_offset);
+  _vortex_objects.resize(count); 
+
+  for (int i=0; i<_vortex_objects.size(); i++) {
+    std::string buf; 
+    
+    fread(offset_size, sizeof(size_t), 2, fp_offset);
+    buf.resize(offset_size[1]); 
+
+    fread((char*)buf.data(), 1, buf.size(), fp); 
+    
+    _vortex_objects[i].Unserialize(buf);
+  }
+}
