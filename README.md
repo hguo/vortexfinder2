@@ -1,29 +1,26 @@
 # README #
 
-This README would normally document whatever steps are necessary to get your application up and running.
-
 ### What is this repository for? ###
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+* Vortex detection for condor2/GLGPU written in C++
+* Version 0.1
 
-### How do I get set up? ###
+### Prerequisites ###
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+* CMake (version >= 3.0.2)
+* PETSc (version >= 3.5.2)
+* libMesh (preferable 0.9.4-rc1) built with PETSc
+* Qt4 (optional for the viewer, preferable 4.8.6)
 
-### Contribution guidelines ###
+### Building and Running Examples ###
 
-* Writing tests
-* Code review
-* Other guidelines
+TBA
+
+### TODOs ###
+
+* Add support for both tet/hex mesh
+* Add support for GLGPU output formats
 
 ### Who do I talk to? ###
 
-* Repo owner or admin
-* Other community or team contact
+* Hanqi Guo, hguo@anl.gov
