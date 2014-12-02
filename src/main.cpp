@@ -19,7 +19,9 @@ int main(int argc, char **argv)
   extractor.SetGaugeTransformation(false);
 
   extractor.LoadData(filename);
-  for (int t=600; t<=1000; t++) {
+  // for (int t=36; t<=40; t++) {
+  {
+    int t = 600; 
     fprintf(stderr, "------- timestep=%d -------\n", t); 
     
     double t0 = (double)clock() / CLOCKS_PER_SEC; 

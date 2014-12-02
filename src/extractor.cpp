@@ -186,41 +186,44 @@ void VortexExtractor::Extract()
 
 void VortexExtractor::Trace()
 {
+  std::list<VortexObject<> > vortex_objects; 
+
   while (!_map.empty()) {
     /// 1. sort vortex items into connected components; pick up special items
     std::list<VortexMap<>::iterator> to_erase, to_visit;
     to_visit.push_back(_map.begin()); 
 
-    VortexMap<> connected_items, special_items; 
+    VortexMap<> ordinary_items, special_items; 
     while (!to_visit.empty()) { // depth-first search
-      VortexMap<>::iterator current = to_visit.front();
+      VortexMap<>::iterator it = to_visit.front();
       to_visit.pop_front();
+      if (it->second.visited) continue; 
 
-      Elem *elem = _mesh->elem(current->first); 
+      Elem *elem = _mesh->elem(it->first); 
       for (int face=0; face<4; face++) { // for 4 faces, in either directions
         Elem *neighbor = elem->neighbor(face); 
-        if (current->second.IsPunctured(face) && neighbor != NULL) {
-          VortexMap<>::iterator it = _map.find(neighbor->id());
-          assert(it != _map.end());
-          if (!it->second.visited)
-            to_visit.push_back(it); 
+        if (it->second.IsPunctured(face) && neighbor != NULL) {
+          VortexMap<>::iterator it1 = _map.find(neighbor->id());
+          assert(it1 != _map.end());
+          if (!it1->second.visited)
+            to_visit.push_back(it1); 
         }
       }
-       
-      if (current->second.IsSpecial()) 
-        special_items[current->first] = current->second;
+
+      if (it->second.IsSpecial()) 
+        special_items[it->first] = it->second;
       else 
-        connected_items[current->first] = current->second; 
-   
-      current->second.visited = true; 
-      to_erase.push_back(current);
+        ordinary_items[it->first] = it->second; 
+
+      it->second.visited = true; 
+      to_erase.push_back(it);
     }
-    
+   
     for (std::list<VortexMap<>::iterator>::iterator it = to_erase.begin(); it != to_erase.end(); it ++)
       _map.erase(*it);
     to_erase.clear(); 
    
-
+#if 1
     /// 2. trace vortex lines
     VortexObject<> vortex_object; 
     //// 2.1 special items
@@ -232,11 +235,13 @@ void VortexExtractor::Trace()
       vortex_object.push_back(line); 
     }
     if (vortex_object.size() > 0)
-      fprintf(stderr, "# of special vortex items: %d\n", vortex_object.size()); 
+      fprintf(stderr, "# of SPECIAL vortex items: %lu\n", vortex_object.size()); 
 
     //// 2.2 ordinary items
-    while (!connected_items.empty()) {
-      VortexMap<>::iterator seed = connected_items.begin(); 
+    for (VortexMap<>::iterator it = ordinary_items.begin(); it != ordinary_items.end(); it ++) 
+      it->second.visited = false; 
+    while (!ordinary_items.empty()) {
+      VortexMap<>::iterator seed = ordinary_items.begin(); 
       bool special; 
       std::list<double> line; 
       to_erase.push_back(seed);
@@ -248,14 +253,14 @@ void VortexExtractor::Trace()
         double pos[3];
         bool traced = false; 
         Elem *elem = _mesh->elem(id); 
-        VortexMap<>::iterator it = connected_items.find(id);
-        // if (it->second.visited) break;  // avoid loop
-        // else it->second.visited = true; 
-        if (it == connected_items.end()) {
+        VortexMap<>::iterator it = ordinary_items.find(id);
+        if (it == ordinary_items.end()) {
           special = true;
           it = special_items.find(id);
         } else {
           special = false;
+          // if (it->second.visited) break;  // avoid loop
+          // else it->second.visited = true; 
         }
         
         for (face=0; face<4; face++) 
@@ -284,14 +289,14 @@ void VortexExtractor::Trace()
         double pos[3];
         bool traced = false; 
         Elem *elem = _mesh->elem(id); 
-        VortexMap<>::iterator it = connected_items.find(id);
-        // if (it->second.visited) break; // avoid loop
-        // else it->second.visited = true; 
-        if (it == connected_items.end()) {
+        VortexMap<>::iterator it = ordinary_items.find(id);
+        if (it == ordinary_items.end()) {
           special = true;
           it = special_items.find(id);
         } else {
           special = false;
+          // if (it->second.visited) break; // avoid loop
+          // else it->second.visited = true; 
         }
         
         for (face=0; face<4; face++) 
@@ -312,16 +317,21 @@ void VortexExtractor::Trace()
       }
       
       for (std::list<VortexMap<>::iterator>::iterator it = to_erase.begin(); it != to_erase.end(); it ++)
-        connected_items.erase(*it);
+        ordinary_items.erase(*it);
       to_erase.clear();
 
       vortex_object.push_back(line); 
     }
+
+    vortex_objects.push_back(vortex_object); 
 
     fprintf(stderr, "# of lines in vortex_object: %lu\n", vortex_object.size());
     int count = 0; 
     for (VortexObject<>::iterator it = vortex_object.begin(); it != vortex_object.end(); it ++) {
       fprintf(stderr, " - line %d, # of vertices: %lu\n", count ++, it->size()/3); 
     }
+#endif
   }
+    
+  fprintf(stderr, "# of vortex objects: %lu\n", vortex_objects.size()); 
 }
