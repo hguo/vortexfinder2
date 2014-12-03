@@ -1,20 +1,7 @@
-set (viewer_sources
-  trackball.cpp
-  widget.cpp
-  viewer.cpp
-)
+include_directories (${CMAKE_CURRENT_SOURCE_DIR})
 
-add_executable (viewer ${viewer_sources})
-target_link_libraries (viewer
-  ${QT_LIBRARIES}
-  ${OPENGL_LIBRARIES}
-)
+subdirs (extractor)
 
-set (extractor_sources
-  extractor.cpp
-)
-
-add_executable (main main.cpp ${extractor_sources})
-target_link_libraries (main 
-  ${LIBMESH_LIBRARY}
-)
+if (WITH_QT)
+  subdirs (viewer)
+endif ()

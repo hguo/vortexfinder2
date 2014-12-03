@@ -11,7 +11,8 @@
 #include <libmesh/exodusII_io.h>
 #include <libmesh/numeric_vector.h>
 #include <libmesh/dof_map.h>
-#include "vortex.h"
+#include "punctured_elem.h"
+#include "vortex_object.h"
 
 using namespace libMesh; 
 
