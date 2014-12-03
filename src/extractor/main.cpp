@@ -10,7 +10,7 @@ static int nogauge = 0,
            verbose = 0, 
            benchmark = 0; 
 static int T0=1, T=1; // start and length of timesteps
- 
+
 static struct option longopts[] = {
   {"verbose", no_argument, &verbose, 1},  
   {"nogauge", no_argument, &nogauge, 1},
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
 
   extractor.LoadData(filename_in);
   for (int t=T0; t<T0+T; t++) {
-    fprintf(stderr, "------- timestep=%d -------\n", t); 
+    fprintf(stderr, "Analyzing timestep %d...\n", t); 
     
     double t0 = (double)clock() / CLOCKS_PER_SEC; 
     extractor.LoadTimestep(t);
@@ -113,6 +113,7 @@ int main(int argc, char **argv)
     double t2 = (double)clock() / CLOCKS_PER_SEC; 
     extractor.Trace(); 
     double t3 = (double)clock() / CLOCKS_PER_SEC; 
+    extractor.WriteVortexObjects(filename_out); 
 
     if (benchmark) {
       fprintf(stderr, "------- timings -------\n");

@@ -12,7 +12,7 @@
 #include <libmesh/numeric_vector.h>
 #include <libmesh/dof_map.h>
 #include "punctured_elem.h"
-#include "common/vortex_object.h"
+#include "vortex/vortex_object.h"
 
 using namespace libMesh; 
 
@@ -33,14 +33,16 @@ public:
   void SetKex(double Kex);
   void SetGaugeTransformation(bool); 
 
-  void SetMesh(Mesh *);
-  void SetSolution(AutoPtr<NumericVector<Number> > solution); 
+  /// future features...
+  // void SetMesh(Mesh *);
+  // void SetSolution(AutoPtr<NumericVector<Number> > solution); 
 
   void LoadData(const std::string& filename); 
-  void LoadTimestep(int timestep); 
+  void LoadTimestep(int timestep);
 
   void Extract();
   void Trace(); 
+  void WriteVortexObjects(const std::string& filename); 
 
 protected:
   bool Verbose(int level=1) {return level <= _verbose;} 
@@ -60,7 +62,8 @@ private:
   unsigned int _u_var, _v_var;
 
 private:
-  PuncturedElemMap<> _map; 
+  PuncturedElemMap<> _punctured_elems; 
+  std::vector<VortexObject<> > _vortex_objects; 
 }; 
 
 #endif

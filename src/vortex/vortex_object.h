@@ -11,7 +11,7 @@
  * \author  Hanqi Guo
  * \brief   Vortex objects
 */
-template <typename T=double, int NrFaces=4, int NrDims=3> 
+template <typename T=double>
 class VortexObject : public std::vector<std::list<T> >
 {
 public:
@@ -56,9 +56,6 @@ public:
 
     return true; 
   }
-
-private:
-  // PuncturedElemMap<T, NrFaces, NrDims> _map;
 }; 
 
 #endif

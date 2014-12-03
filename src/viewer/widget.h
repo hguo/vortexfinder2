@@ -5,7 +5,7 @@
 #include <QList>
 #include <cmath>
 #include "trackball.h"
-#include "extractor/vortex_object.h"
+#include "vortex/vortex_object.h"
 
 class QMConnector; 
 class QMouseEvent;

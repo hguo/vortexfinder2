@@ -88,7 +88,9 @@ void VortexExtractor::Extract()
 {
   if (Verbose())
     fprintf(stderr, "extracting singularities on mesh faces...\n"); 
-  
+ 
+  _punctured_elems.clear(); 
+
   const DofMap &dof_map  = _tsys->get_dof_map();  
   MeshBase::const_element_iterator it = _mesh->active_local_elements_begin(); 
   const MeshBase::const_element_iterator end = _mesh->active_local_elements_end(); 
@@ -164,7 +166,7 @@ void VortexExtractor::Extract()
     }
   
     if (pelem.Valid()) {
-      _map[elem->id()] = pelem; 
+      _punctured_elems[elem->id()] = pelem; 
       // fprintf(stderr, "elem_id=%d, bits=%s\n", 
       //     elem->id(), pelem.bits.to_string().c_str()); 
     }
@@ -173,12 +175,12 @@ void VortexExtractor::Extract()
 
 void VortexExtractor::Trace()
 {
-  std::vector<VortexObject<> > vortex_objects; 
+  _vortex_objects.clear();
 
-  while (!_map.empty()) {
+  while (!_punctured_elems.empty()) {
     /// 1. sort punctured elems into connected ordinary/special ones
     std::list<PuncturedElemMap<>::iterator> to_erase, to_visit;
-    to_visit.push_back(_map.begin()); 
+    to_visit.push_back(_punctured_elems.begin()); 
 
     PuncturedElemMap<> ordinary_pelems, special_pelems; 
     while (!to_visit.empty()) { // depth-first search
@@ -190,8 +192,8 @@ void VortexExtractor::Trace()
       for (int face=0; face<4; face++) { // for 4 faces, in either directions
         Elem *neighbor = elem->neighbor(face); 
         if (it->second.IsPunctured(face) && neighbor != NULL) {
-          PuncturedElemMap<>::iterator it1 = _map.find(neighbor->id());
-          assert(it1 != _map.end());
+          PuncturedElemMap<>::iterator it1 = _punctured_elems.find(neighbor->id());
+          assert(it1 != _punctured_elems.end());
           if (!it1->second.visited)
             to_visit.push_back(it1); 
         }
@@ -207,7 +209,7 @@ void VortexExtractor::Trace()
     }
    
     for (std::list<PuncturedElemMap<>::iterator>::iterator it = to_erase.begin(); it != to_erase.end(); it ++)
-      _map.erase(*it);
+      _punctured_elems.erase(*it);
     to_erase.clear(); 
    
 #if 1
@@ -314,7 +316,7 @@ void VortexExtractor::Trace()
       fprintf(stderr, "#ordinary=%ld\n", ordinary_pelems.size()); 
     }
 
-    vortex_objects.push_back(vortex_object); 
+    _vortex_objects.push_back(vortex_object); 
 
     fprintf(stderr, "# of lines in vortex_object: %lu\n", vortex_object.size());
     int count = 0; 
@@ -325,15 +327,18 @@ void VortexExtractor::Trace()
   }
     
   // fprintf(stderr, "# of vortex objects: %lu\n", vortex_objects.size());
+}
 
+void VortexExtractor::WriteVortexObjects(const std::string& filename)
+{
   size_t offset_size[2] = {0}; 
   FILE *fp_offset = fopen("offset", "wb"), 
        *fp = fopen("vortex", "wb");
-  size_t count = vortex_objects.size(); 
+  size_t count = _vortex_objects.size(); 
   fwrite(&count, sizeof(size_t), 1, fp_offset); 
-  for (int i=0; i<vortex_objects.size(); i++) {
+  for (int i=0; i<_vortex_objects.size(); i++) {
     std::string buf; 
-    vortex_objects[i].Serialize(buf);
+    _vortex_objects[i].Serialize(buf);
     offset_size[1] = buf.size();
 
     fwrite(offset_size, sizeof(size_t), 2, fp_offset);
