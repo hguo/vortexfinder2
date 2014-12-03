@@ -15,7 +15,7 @@
 
 Build VortexFinder2 core and the GUI (requires Qt4): 
 
-~~~~
+``` shell
 mkdir build
 cd build
 cmake .. \
@@ -28,7 +28,7 @@ make
 
 Build VortexFinder2 core only: 
 
-~~~~
+``` shell
 mkdir build
 cd build
 cmake .. \
