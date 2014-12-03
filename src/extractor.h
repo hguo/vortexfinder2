@@ -15,7 +15,11 @@
 
 using namespace libMesh; 
 
-// a stand alone vortex extractor
+/* 
+ * \class   VortexExtractor
+ * \author  Hanqi Guo
+ * \brief   Vortex extractor for Condor2 output
+*/
 class VortexExtractor : public ParallelObject
 {
 public:

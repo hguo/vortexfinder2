@@ -12,6 +12,11 @@ class QMouseEvent;
 class QKeyEvent; 
 class QWheelEvent; 
 
+/* 
+ * \class   CGLWidget
+ * \author  Hanqi Guo
+ * \brief   A light-weight Qt-based vortex viewer
+*/
 class CGLWidget : public QGLWidget
 {
   Q_OBJECT

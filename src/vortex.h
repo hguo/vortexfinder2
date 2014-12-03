@@ -9,8 +9,11 @@
 
 typedef unsigned int ElemIdType;
 
-////////////////////////////////
-// an element with punctured faces and connectivities
+/* 
+ * \class   PuncturedElem
+ * \author  Hanqi Guo
+ * \brief   An element with punctured faces
+*/
 template <typename T=double, int NrFaces=4, int NrDims=3>
 struct PuncturedElem {
   ElemIdType elem_id;
@@ -54,13 +57,22 @@ struct PuncturedElem {
 };
 
 
-////////////////////////////////
+/* 
+ * \class   PuncturedElemMap
+ * \author  Hanqi Guo
+ * \brief   A dictionary of punctured elems
+*/
 template <typename T=double, int NrFaces=4, int NrDims=3>
 class PuncturedElemMap : public std::map<ElemIdType, PuncturedElem<T, NrFaces, NrDims> > 
 {
 };
 
-////////////////////////////////
+
+/* 
+ * \class   VortexObject
+ * \author  Hanqi Guo
+ * \brief   Vortex objects
+*/
 template <typename T=double, int NrFaces=4, int NrDims=3> 
 class VortexObject : public std::vector<std::list<T> >
 {
