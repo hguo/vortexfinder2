@@ -1,27 +1,109 @@
 #include <iostream>
 #include <vector>
+#include <getopt.h>
 #include "extractor.h"
 
-using namespace libMesh; 
+static std::string filename_in, filename_out;
+static double B[3] = {0.0}; 
+static double Kex = 0;
+static int nogauge = 0,  
+           verbose = 0, 
+           benchmark = 0; 
+static int T0=1, T=1; // start and length of timesteps
+ 
+static struct option longopts[] = {
+  {"verbose", no_argument, &verbose, 1},  
+  {"nogauge", no_argument, &nogauge, 1},
+  {"benchmark", no_argument, &benchmark, 1}, 
+  {"input", required_argument, 0, 'i'},
+  {"output", required_argument, 0, 'o'},
+  {"Kx", required_argument, 0, 'k'}, 
+  {"Bx", required_argument, 0, 'x'}, 
+  {"By", required_argument, 0, 'y'}, 
+  {"Bz", required_argument, 0, 'z'}, 
+  {"t", required_argument, 0, 't'}, 
+  {"T", required_argument, 0, 'T'}, 
+  {0, 0, 0, 0} 
+};
+
+bool parse_arg(int argc, char **argv)
+{
+  int c; 
+  bool b_set = false;  
+
+  while (1) {
+    int option_index = 0;
+    c = getopt_long(argc, argv, "i:o:k:x:y:z:t:T", longopts, &option_index); 
+    if (c == -1) break;
+
+    switch (c) {
+    case 'i': filename_in = optarg; break;
+    case 'o': filename_out = optarg; break;
+    case 'k': Kex = atof(optarg); break;
+    case 'x': B[0] = atof(optarg); b_set = true; break;
+    case 'y': B[1] = atof(optarg); b_set = true; break;
+    case 'z': B[2] = atof(optarg); b_set = true; break;
+    case 't': T0 = atoi(optarg); break;
+    case 'T': T = atoi(optarg); break;
+    default: break; 
+    }
+  }
+
+  if (optind < argc) {
+    if (filename_in.empty())
+      filename_in = argv[optind++]; 
+  }
+
+  if (filename_in.empty()) {
+    fprintf(stderr, "FATAL: input filename not given.\n"); 
+    return false;
+  } else if (!b_set) {
+    fprintf(stderr, "FATAL: magnetic field B not given.\n");
+    return false; 
+  }
+  
+  if (filename_out.empty()) 
+    filename_out = filename_in + ".vortex"; 
+
+  if (verbose) {
+    fprintf(stderr, "---- Argument Summary ----\n"); 
+    fprintf(stderr, "filename_in=%s\n", filename_in.c_str()); 
+    fprintf(stderr, "filename_out=%s\n", filename_out.c_str()); 
+    fprintf(stderr, "Kex=%f\n", Kex); 
+    fprintf(stderr, "B={%f, %f, %f}\n", B[0], B[1], B[2]);
+    fprintf(stderr, "nogauge=%d\n", nogauge);
+    fprintf(stderr, "t=%d\n", T0);
+    fprintf(stderr, "T=%d\n", T);
+    fprintf(stderr, "--------------------------\n"); 
+  }
+
+  return true;  
+}
+
+void print_help(int argc, char **argv)
+{
+  fprintf(stderr, "USAGE:\n");
+  fprintf(stderr, "%s -i <input_filename> [-o output_filename] [-nogauge] [-t=<t>] [-T=<T>] [-Kx=<Kx>] [-Bx=<Bx>] [-By=<By>] [-Bz=<Bz>]\n", argv[0]);
+}
 
 int main(int argc, char **argv)
 {
-  const std::string filename = "tslab.3.Bz0_02.Nt1000.lu.512.e"; 
-  const double B[3] = {0.f, 0.f, 0.02f}; // magenetic field
-  const double Kex = 0; 
-  
-  LibMeshInit init(argc, argv);
+  if (!parse_arg(argc, argv)) {
+    print_help(argc, argv);
+    return EXIT_FAILURE;
+  }
+
+  // libMesh::LibMeshInit init(argc, argv);
+  libMesh::LibMeshInit init(1, argv); // set argc to 1 to supress PETSc warnings. 
   
   VortexExtractor extractor(init.comm());
-  // extractor.SetVerbose(1);
+  extractor.SetVerbose(verbose);
   extractor.SetMagneticField(B); 
   extractor.SetKex(Kex);
-  extractor.SetGaugeTransformation(false);
+  extractor.SetGaugeTransformation(!nogauge);
 
-  extractor.LoadData(filename);
-  // for (int t=36; t<=40; t++) {
-  {
-    int t = 600; 
+  extractor.LoadData(filename_in);
+  for (int t=T0; t<T0+T; t++) {
     fprintf(stderr, "------- timestep=%d -------\n", t); 
     
     double t0 = (double)clock() / CLOCKS_PER_SEC; 
@@ -32,11 +114,13 @@ int main(int argc, char **argv)
     extractor.Trace(); 
     double t3 = (double)clock() / CLOCKS_PER_SEC; 
 
-    fprintf(stderr, "------- timings -------\n");
-    fprintf(stderr, "t_io:\t%f\n", t1-t0); 
-    fprintf(stderr, "t_ex:\t%f\n", t2-t1); 
-    fprintf(stderr, "t_tr:\t%f\n", t3-t2);
+    if (benchmark) {
+      fprintf(stderr, "------- timings -------\n");
+      fprintf(stderr, "t_io:\t%f\n", t1-t0); 
+      fprintf(stderr, "t_ex:\t%f\n", t2-t1); 
+      fprintf(stderr, "t_tr:\t%f\n", t3-t2);
+    }
   }
 
-  return 0; 
+  return EXIT_SUCCESS; 
 }

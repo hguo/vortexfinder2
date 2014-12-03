@@ -12,7 +12,7 @@
 #include <libmesh/numeric_vector.h>
 #include <libmesh/dof_map.h>
 #include "punctured_elem.h"
-#include "vortex_object.h"
+#include "common/vortex_object.h"
 
 using namespace libMesh; 
 
