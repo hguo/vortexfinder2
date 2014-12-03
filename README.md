@@ -1,19 +1,19 @@
 # README #
 
-### What is this repository for? ###
+### Introduction ###
 
 * Vortex detection for condor2/GLGPU written in C++
 
-### Prerequisites ###
+### Build Guidelines ###
+
+#### Prerequisites ####
 
 * CMake (version >= 3.0.2)
 * PETSc (version >= 3.5.2)
 * libMesh (preferable 0.9.4-rc1) built with PETSc
 * Qt4 (optional for the viewer, preferable 4.8.6)
 
-### Building and Running Examples ###
-
-Build VortexFinder2 core and the GUI (requires Qt4): 
+#### Build core only ####
 
 ``` shell
 mkdir build
@@ -25,8 +25,7 @@ cmake .. \
   -DQT_QMAKE_EXECUTABLE=~/local/Qt-4.8.6/bin/qmake
 make
 ```
-
-Build VortexFinder2 core only: 
+#### Build core and the viewer (requires Qt4) ####
 
 ``` shell
 mkdir build
@@ -38,6 +37,8 @@ cmake .. \
   -DWITH_QT=OFF
 make
 ```
+
+### Running Examples ###
 
 ### TODOs ###
 
