@@ -8,10 +8,12 @@
 
 #### Prerequisites ####
 
-* CMake (version >= 3.0.2)
-* PETSc (version >= 3.5.2)
-* libMesh (preferable 0.9.4-rc1) built with PETSc
-* Qt4 (optional for the viewer, preferable 4.8.6)
+* [CMake](http://www.cmake.org/) (version >= 3.0.2)
+* [MPICH](http://www.mpich.org/) (version >= 3.1.2), PETSc dependency
+* [PETSc](http://www.mcs.anl.gov/petsc/) (version >= 3.5.2), for building non-linear implicit systems in libMesh
+* [libMesh](http://libmesh.github.io/) (preferable 0.9.4-rc1) built with PETSc
+* [Protocol Buffers](https://github.com/google/protobuf/) (version >= 2.6.1), for the serialization/unserialization of vortex objects
+* [Qt4](http://qt-project.org/) (optional for the viewer, preferable 4.8.6)
 
 #### Build core only ####
 
