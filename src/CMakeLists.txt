@@ -8,8 +8,6 @@ add_executable (viewer ${viewer_sources})
 target_link_libraries (viewer
   ${QT_LIBRARIES}
   ${OPENGL_LIBRARIES}
-  ${GLEW_LIBRARY}
-  ${GLUT_LIBRARY}
 )
 
 set (extractor_sources

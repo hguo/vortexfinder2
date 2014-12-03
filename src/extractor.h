@@ -28,6 +28,9 @@ public:
   void SetKex(double Kex);
   void SetGaugeTransformation(bool); 
 
+  void SetMesh(Mesh *);
+  void SetSolution(AutoPtr<NumericVector<Number> > solution); 
+
   void LoadData(const std::string& filename); 
   void LoadTimestep(int timestep); 
 
@@ -52,7 +55,7 @@ private:
   unsigned int _u_var, _v_var;
 
 private:
-  VortexMap<> _map; 
+  PuncturedElemMap<> _map; 
 }; 
 
 #endif

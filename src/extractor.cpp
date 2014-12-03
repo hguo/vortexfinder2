@@ -93,11 +93,9 @@ void VortexExtractor::Extract()
   MeshBase::const_element_iterator it = _mesh->active_local_elements_begin(); 
   const MeshBase::const_element_iterator end = _mesh->active_local_elements_end(); 
  
-  std::vector<float> zeros; 
-
   for (; it!=end; it++) {
     const Elem *elem = *it;
-    VortexItem<> item; 
+    PuncturedElem<> pelem; 
     
     for (int face=0; face<elem->n_sides(); face++) {
       AutoPtr<Elem> side = elem->side(face); 
@@ -143,9 +141,9 @@ void VortexExtractor::Extract()
      
       // update bits
       int chirality = lround(critera);
-      item.elem_id = elem->id(); 
-      item.SetChirality(face, chirality);
-      item.SetPuncturedFace(face);
+      pelem.elem_id = elem->id(); 
+      pelem.SetChirality(face, chirality);
+      pelem.SetPuncturedFace(face);
 
       if (_gauge) {
         phi[1] = phi[0] + delta1[0]; 
@@ -159,31 +157,18 @@ void VortexExtractor::Extract()
       double pos[3]; 
       bool succ = find_zero_triangle(u, v, X0, X1, X2, pos); 
       if (succ) {
-        item.SetPuncturedPoint(face, pos); 
-
-        zeros.push_back(pos[0]); 
-        zeros.push_back(pos[1]); 
-        zeros.push_back(pos[2]);
+        pelem.SetPuncturedPoint(face, pos); 
       } else {
         fprintf(stderr, "WARNING: punctured but singularities not found\n"); 
       }
     }
   
-    if (item.Valid()) {
-      _map[elem->id()] = item; 
+    if (pelem.Valid()) {
+      _map[elem->id()] = pelem; 
       // fprintf(stderr, "elem_id=%d, bits=%s\n", 
-      //     elem->id(), item.bits.to_string().c_str()); 
+      //     elem->id(), pelem.bits.to_string().c_str()); 
     }
   }
- 
-#if 1
-  int npts = zeros.size()/3; 
-  fprintf(stderr, "total number of singularities: %d\n", npts); 
-  FILE *fp = fopen("out", "wb");
-  fwrite(&npts, sizeof(int), 1, fp); 
-  fwrite(zeros.data(), sizeof(float), zeros.size(), fp); 
-  fclose(fp);
-#endif
 }
 
 void VortexExtractor::Trace()
@@ -191,13 +176,13 @@ void VortexExtractor::Trace()
   std::vector<VortexObject<> > vortex_objects; 
 
   while (!_map.empty()) {
-    /// 1. sort vortex items into connected components; pick up special items
-    std::list<VortexMap<>::iterator> to_erase, to_visit;
+    /// 1. sort punctured elems into connected ordinary/special ones
+    std::list<PuncturedElemMap<>::iterator> to_erase, to_visit;
     to_visit.push_back(_map.begin()); 
 
-    VortexMap<> ordinary_items, special_items; 
+    PuncturedElemMap<> ordinary_pelems, special_pelems; 
     while (!to_visit.empty()) { // depth-first search
-      VortexMap<>::iterator it = to_visit.front();
+      PuncturedElemMap<>::iterator it = to_visit.front();
       to_visit.pop_front();
       if (it->second.visited) continue; 
 
@@ -205,7 +190,7 @@ void VortexExtractor::Trace()
       for (int face=0; face<4; face++) { // for 4 faces, in either directions
         Elem *neighbor = elem->neighbor(face); 
         if (it->second.IsPunctured(face) && neighbor != NULL) {
-          VortexMap<>::iterator it1 = _map.find(neighbor->id());
+          PuncturedElemMap<>::iterator it1 = _map.find(neighbor->id());
           assert(it1 != _map.end());
           if (!it1->second.visited)
             to_visit.push_back(it1); 
@@ -213,23 +198,23 @@ void VortexExtractor::Trace()
       }
 
       if (it->second.IsSpecial()) 
-        special_items[it->first] = it->second;
+        special_pelems[it->first] = it->second;
       else 
-        ordinary_items[it->first] = it->second; 
+        ordinary_pelems[it->first] = it->second; 
 
       it->second.visited = true; 
       to_erase.push_back(it);
     }
    
-    for (std::list<VortexMap<>::iterator>::iterator it = to_erase.begin(); it != to_erase.end(); it ++)
+    for (std::list<PuncturedElemMap<>::iterator>::iterator it = to_erase.begin(); it != to_erase.end(); it ++)
       _map.erase(*it);
     to_erase.clear(); 
    
 #if 1
     /// 2. trace vortex lines
     VortexObject<> vortex_object; 
-    //// 2.1 special items
-    for (VortexMap<>::iterator it = special_items.begin(); it != special_items.end(); it ++) {
+    //// 2.1 special punctured elems
+    for (PuncturedElemMap<>::iterator it = special_pelems.begin(); it != special_pelems.end(); it ++) {
       std::list<double> line;
       Elem *elem = _mesh->elem(it->first);
       Point centroid = elem->centroid(); 
@@ -237,13 +222,13 @@ void VortexExtractor::Trace()
       vortex_object.push_back(line); 
     }
     if (vortex_object.size() > 0)
-      fprintf(stderr, "# of SPECIAL vortex items: %lu\n", vortex_object.size()); 
+      fprintf(stderr, "# of SPECIAL punctured elems: %lu\n", vortex_object.size()); 
 
-    //// 2.2 ordinary items
-    for (VortexMap<>::iterator it = ordinary_items.begin(); it != ordinary_items.end(); it ++) 
+    //// 2.2 ordinary punctured elems
+    for (PuncturedElemMap<>::iterator it = ordinary_pelems.begin(); it != ordinary_pelems.end(); it ++) 
       it->second.visited = false; 
-    while (!ordinary_items.empty()) {
-      VortexMap<>::iterator seed = ordinary_items.begin(); 
+    while (!ordinary_pelems.empty()) {
+      PuncturedElemMap<>::iterator seed = ordinary_pelems.begin(); 
       bool special; 
       std::list<double> line; 
       to_erase.push_back(seed);
@@ -255,10 +240,10 @@ void VortexExtractor::Trace()
         double pos[3];
         bool traced = false; 
         Elem *elem = _mesh->elem(id); 
-        VortexMap<>::iterator it = ordinary_items.find(id);
-        if (it == ordinary_items.end()) {
+        PuncturedElemMap<>::iterator it = ordinary_pelems.find(id);
+        if (it == ordinary_pelems.end()) {
           special = true;
-          it = special_items.find(id);
+          it = special_pelems.find(id);
         } else {
           special = false;
           // if (it->second.visited) break;  // avoid loop
@@ -292,10 +277,10 @@ void VortexExtractor::Trace()
         double pos[3];
         bool traced = false; 
         Elem *elem = _mesh->elem(id); 
-        VortexMap<>::iterator it = ordinary_items.find(id);
-        if (it == ordinary_items.end()) {
+        PuncturedElemMap<>::iterator it = ordinary_pelems.find(id);
+        if (it == ordinary_pelems.end()) {
           special = true;
-          it = special_items.find(id);
+          it = special_pelems.find(id);
         } else {
           special = false;
           // if (it->second.visited) break; // avoid loop
@@ -320,13 +305,13 @@ void VortexExtractor::Trace()
         if (!traced) break;
       }
       
-      for (std::list<VortexMap<>::iterator>::iterator it = to_erase.begin(); it != to_erase.end(); it ++)
-        ordinary_items.erase(*it);
+      for (std::list<PuncturedElemMap<>::iterator>::iterator it = to_erase.begin(); it != to_erase.end(); it ++)
+        ordinary_pelems.erase(*it);
       to_erase.clear();
 
       vortex_object.push_back(line);
 
-      fprintf(stderr, "#ordinary=%ld\n", ordinary_items.size()); 
+      fprintf(stderr, "#ordinary=%ld\n", ordinary_pelems.size()); 
     }
 
     vortex_objects.push_back(vortex_object); 

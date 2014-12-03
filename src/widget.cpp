@@ -1,7 +1,7 @@
 #include <QMouseEvent>
 #include <QMatrix4x4>
 #include <QDebug>
-#include <glut.h>
+#include <OpenGL/glu.h>
 #include "widget.h"
 
 #define RESET_GLERROR()\

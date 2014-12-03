@@ -10,12 +10,8 @@ set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set (LIBRARY_OUTPUT_PATH ${PROJECT_LIBRARY_DIR}/lib)
 
 find_package (OpenGL REQUIRED)
-find_package (GLUT REQUIRED)
-find_package (GLEW REQUIRED)
-find_package (CUDA REQUIRED)
 find_package (Qt4 REQUIRED COMPONENTS QtCore QtGui QtOpenGL)
 find_package (MPI REQUIRED)
-find_package (VTK REQUIRED)
 
 set (LIBMESH_DIR "/usr" CACHE PATH "The installed path for libMesh")
 set (LIBMESH_INCLUDE_DIR "${LIBMESH_DIR}/include")
@@ -31,8 +27,6 @@ include_directories (
   ${CMAKE_SOURCE_DIR}
   ${QT_INCLUDE_DIR}
   ${OPENGL_INCLUDE_DIR}
-  ${GLEW_INCLUDE_DIR}
-  ${GLUT_INCLUDE_DIR}
   ${LIBMESH_INCLUDE_DIR}
   ${PETSC_INCLUDE_DIR}
   ${MPI_INCLUDE_PATH}

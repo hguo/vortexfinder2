@@ -12,15 +12,15 @@ typedef unsigned int ElemIdType;
 ////////////////////////////////
 // an element with punctured faces and connectivities
 template <typename T=double, int NrFaces=4, int NrDims=3>
-struct VortexItem {
+struct PuncturedElem {
   ElemIdType elem_id;
   std::bitset<NrFaces*2> bits;
   std::vector<T> pos;
   mutable bool visited; 
 
-  VortexItem() : pos(NrFaces*NrDims), visited(false) {}
+  PuncturedElem() : pos(NrFaces*NrDims), visited(false) {}
 
-  bool operator<(const VortexItem<T, NrFaces, NrDims> &rhs) const {return elem_id < rhs.elem_id;}
+  bool operator<(const PuncturedElem<T, NrFaces, NrDims> &rhs) const {return elem_id < rhs.elem_id;}
 
   bool Valid() const {return bits.any();} // returns false if no punctured faces
 
@@ -56,7 +56,7 @@ struct VortexItem {
 
 ////////////////////////////////
 template <typename T=double, int NrFaces=4, int NrDims=3>
-class VortexMap : public std::map<ElemIdType, VortexItem<T, NrFaces, NrDims> > 
+class PuncturedElemMap : public std::map<ElemIdType, PuncturedElem<T, NrFaces, NrDims> > 
 {
 };
 
@@ -108,7 +108,7 @@ public:
   }
 
 private:
-  // VortexMap<T, NrFaces, NrDims> _map;
+  // PuncturedElemMap<T, NrFaces, NrDims> _map;
 }; 
 
 #endif
