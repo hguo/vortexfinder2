@@ -18,6 +18,7 @@
 #### Build the core only ####
 
 ``` shell
+$ cd $VORTEX_FINDER2_SOURCE_DIR
 $ mkdir build
 $ cd build
 $ cmake .. \
@@ -31,7 +32,6 @@ $ make
 #### Build the core and the viewer (requires Qt4) ####
 
 ``` shell
-$ cd $VORTEX_FINDER2_SOURCE_DIR
 $ mkdir build
 $ cd build
 $ cmake .. \
@@ -93,6 +93,6 @@ In the GUI, use left mouse button to rotate, and use wheel to zoom in/out.
 * More features in the GUI, e.g. super current streamlines, inclusions, etc. 
 * Plugins to production visualization tools, e.g. ParaView and VisIt
 
-### Who do I talk to? ###
+### Contact ###
 
-* Hanqi Guo, hguo@anl.gov
+* [Hanqi Guo](http://www.mcs.anl.gov/~hguo/), [hguo@anl.gov](mailto:hguo@anl.gov)
