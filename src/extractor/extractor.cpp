@@ -331,21 +331,5 @@ void VortexExtractor::Trace()
 
 void VortexExtractor::WriteVortexObjects(const std::string& filename)
 {
-  size_t offset_size[2] = {0}; 
-  FILE *fp_offset = fopen("offset", "wb"), 
-       *fp = fopen("vortex", "wb");
-  size_t count = _vortex_objects.size(); 
-  fwrite(&count, sizeof(size_t), 1, fp_offset); 
-  for (int i=0; i<_vortex_objects.size(); i++) {
-    std::string buf; 
-    _vortex_objects[i].SerializeToString(buf);
-    offset_size[1] = buf.size();
-
-    fwrite(offset_size, sizeof(size_t), 2, fp_offset);
-    fwrite(buf.data(), 1, buf.size(), fp); 
-
-    // fprintf(stderr, "offset=%lu, size=%lu\n", offset_size[0], offset_size[1]); 
-
-    offset_size[0] += buf.size(); 
-  }
+  ::WriteVortexObjects(filename, _vortex_objects); 
 }

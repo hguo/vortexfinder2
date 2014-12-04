@@ -25,7 +25,7 @@ public:
   CGLWidget(const QGLFormat& fmt=QGLFormat::defaultFormat(), QWidget *parent=NULL, QGLWidget *sharedWidget=NULL); 
   ~CGLWidget(); 
 
-  void LoadVortexObjects(/* const std::string filename */); // TODO
+  void LoadVortexObjects(const std::string& filename); 
 
 protected:
   void initializeGL(); 
