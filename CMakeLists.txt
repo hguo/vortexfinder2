@@ -1,7 +1,9 @@
 project (glvortex1)
 cmake_minimum_required (VERSION 2.8)
 
+option (WITH_CUDA "Build with CUDA" OFF)
 option (WITH_LIBMESH "Build with libMesh" ON) 
+option (WITH_PNETCDF "Build with parallel-netcdf" OFF)
 option (WITH_QT "Build with Qt" ON)
 
 set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake-modules)
