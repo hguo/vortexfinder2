@@ -313,20 +313,23 @@ void VortexExtractor::Trace()
 
       vortex_object.AddVortexLine(line);
 
-      fprintf(stderr, "#ordinary=%ld\n", ordinary_pelems.size()); 
+      if (Verbose()) 
+        fprintf(stderr, "#ordinary=%ld\n", ordinary_pelems.size()); 
     }
 
     _vortex_objects.push_back(vortex_object); 
 
-    fprintf(stderr, "# of lines in vortex_object: %lu\n", vortex_object.size());
-    int count = 0; 
-    for (VortexObject::iterator it = vortex_object.begin(); it != vortex_object.end(); it ++) {
-      fprintf(stderr, " - line %d, # of vertices: %lu\n", count ++, it->size()/3); 
+    if (Verbose()) {
+      fprintf(stderr, "# of lines in vortex_object: %lu\n", vortex_object.size());
+      int count = 0; 
+      for (VortexObject::iterator it = vortex_object.begin(); it != vortex_object.end(); it ++) {
+        fprintf(stderr, " - line %d, # of vertices: %lu\n", count ++, it->size()/3); 
+      }
     }
 #endif
   }
     
-  // fprintf(stderr, "# of vortex objects: %lu\n", vortex_objects.size());
+  fprintf(stderr, "extracted %lu vortex objects.\n", _vortex_objects.size());
 }
 
 void VortexExtractor::WriteVortexObjects(const std::string& filename)
