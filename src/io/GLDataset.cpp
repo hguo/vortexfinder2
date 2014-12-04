@@ -4,10 +4,10 @@
 #include <cassert>
 #include <cmath>
 
-CGLDataset::CGLDataset()
+GLDataset::GLDataset()
 {
 }
 
-CGLDataset::~CGLDataset()
+GLDataset::~GLDataset()
 {
 }
