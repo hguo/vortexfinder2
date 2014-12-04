@@ -4,10 +4,12 @@ cmake_minimum_required (VERSION 2.8)
 option (WITH_LIBMESH "Build with libMesh" ON) 
 option (WITH_QT "Build with Qt" ON)
 
+set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake-modules)
 set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
 find_package (MPI REQUIRED)
+find_package (Protobuf REQUIRED)
 
 set (LIBMESH_DIR "/usr" CACHE PATH "The installed path for libMesh")
 set (LIBMESH_INCLUDE_DIR "${LIBMESH_DIR}/include")
@@ -21,10 +23,10 @@ include_directories (
   ${LIBMESH_INCLUDE_DIR}
   ${PETSC_INCLUDE_DIR}
   ${MPI_INCLUDE_PATH}
+  ${PROTOBUF_INCLUDE_DIR}
 )
 
 if (WITH_QT)
-  set (CMAKE_AUTOMOC ON)
   set (CMAKE_INCLUDE_CURRENT_DIR ON)
   find_package (OpenGL REQUIRED)
   find_package (Qt4 REQUIRED COMPONENTS QtCore QtGui QtOpenGL)

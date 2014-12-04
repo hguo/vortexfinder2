@@ -1,0 +1,14 @@
+message PBVortexCoreLine {
+  repeated double vertices = 1 [ packed = true ];
+  optional bool special = 2 [ default = false ];
+};
+
+message PBBezierVortexCoreLine {
+  // TODO
+}; 
+
+message PBVortexObject {
+  repeated PBVortexCoreLine lines = 1;
+  optional int32 object_id = 2;
+  optional int32 time_step = 3;
+};

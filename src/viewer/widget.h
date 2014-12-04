@@ -45,7 +45,7 @@ private:
   CGLTrackball _trackball;
 
 private: //data
-  std::vector<VortexObject<> > _vortex_objects;
+  std::vector<VortexObject> _vortex_objects;
  
 private: // camera
   const float _fovy, _znear, _zfar; 

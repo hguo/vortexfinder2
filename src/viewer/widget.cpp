@@ -202,7 +202,7 @@ void CGLWidget::LoadVortexObjects()
 
     fread((char*)buf.data(), 1, buf.size(), fp); 
     
-    _vortex_objects[i].Unserialize(buf);
+    _vortex_objects[i].UnserializeFromString(buf);
   }
 
 #if 1
@@ -212,7 +212,7 @@ void CGLWidget::LoadVortexObjects()
     for (int k=0; k<_vortex_objects[j].size(); k++) { //iterator over lines
       int vertCount = _vortex_objects[j][k].size()/3;  
       
-      for (std::list<double>::iterator it = _vortex_objects[j][k].begin(); 
+      for (std::vector<double>::iterator it = _vortex_objects[j][k].begin(); 
           it != _vortex_objects[j][k].end(); it ++) {
         line_vertices.push_back(*it); 
       }

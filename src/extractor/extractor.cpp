@@ -214,14 +214,14 @@ void VortexExtractor::Trace()
    
 #if 1
     /// 2. trace vortex lines
-    VortexObject<> vortex_object; 
+    VortexObject vortex_object; 
     //// 2.1 special punctured elems
     for (PuncturedElemMap<>::iterator it = special_pelems.begin(); it != special_pelems.end(); it ++) {
       std::list<double> line;
       Elem *elem = _mesh->elem(it->first);
       Point centroid = elem->centroid(); 
       line.push_back(centroid(0)); line.push_back(centroid(1)); line.push_back(centroid(2));
-      vortex_object.push_back(line); 
+      vortex_object.AddVortexLine(line); 
     }
     if (vortex_object.size() > 0)
       fprintf(stderr, "# of SPECIAL punctured elems: %lu\n", vortex_object.size()); 
@@ -311,7 +311,7 @@ void VortexExtractor::Trace()
         ordinary_pelems.erase(*it);
       to_erase.clear();
 
-      vortex_object.push_back(line);
+      vortex_object.AddVortexLine(line);
 
       fprintf(stderr, "#ordinary=%ld\n", ordinary_pelems.size()); 
     }
@@ -320,7 +320,7 @@ void VortexExtractor::Trace()
 
     fprintf(stderr, "# of lines in vortex_object: %lu\n", vortex_object.size());
     int count = 0; 
-    for (VortexObject<>::iterator it = vortex_object.begin(); it != vortex_object.end(); it ++) {
+    for (VortexObject::iterator it = vortex_object.begin(); it != vortex_object.end(); it ++) {
       fprintf(stderr, " - line %d, # of vertices: %lu\n", count ++, it->size()/3); 
     }
 #endif
@@ -338,7 +338,7 @@ void VortexExtractor::WriteVortexObjects(const std::string& filename)
   fwrite(&count, sizeof(size_t), 1, fp_offset); 
   for (int i=0; i<_vortex_objects.size(); i++) {
     std::string buf; 
-    _vortex_objects[i].Serialize(buf);
+    _vortex_objects[i].SerializeToString(buf);
     offset_size[1] = buf.size();
 
     fwrite(offset_size, sizeof(size_t), 2, fp_offset);

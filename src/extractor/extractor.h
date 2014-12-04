@@ -63,7 +63,7 @@ private:
 
 private:
   PuncturedElemMap<> _punctured_elems; 
-  std::vector<VortexObject<> > _vortex_objects; 
+  std::vector<VortexObject> _vortex_objects; 
 }; 
 
 #endif
