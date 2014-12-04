@@ -4,6 +4,10 @@ set (viewer_sources
   main.cpp
 )
 
+if (APPLE)
+  add_definitions ("-Wno-deprecated")
+endif ()
+
 add_executable (viewer ${viewer_sources})
 target_link_libraries (viewer glvortex
   ${QT_LIBRARIES}

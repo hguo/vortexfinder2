@@ -4,21 +4,6 @@
 #include <OpenGL/glu.h>
 #include "widget.h"
 
-#define RESET_GLERROR()\
-{\
-  while (glGetError() != GL_NO_ERROR) {}\
-}
-
-#define CHECK_GLERROR()\
-{\
-  GLenum err = glGetError();\
-  if (err != GL_NO_ERROR) {\
-    const GLubyte *errString = gluErrorString(err);\
-    qDebug("[%s line %d] GL Error: %s\n",\
-            __FILE__, __LINE__, errString);\
-  }\
-}
-
 using namespace std; 
 
 CGLWidget::CGLWidget(const QGLFormat& fmt, QWidget *parent, QGLWidget *sharedWidget)

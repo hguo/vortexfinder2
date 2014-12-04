@@ -6,6 +6,7 @@
 #include <vector>
 #include <bitset>
 #include <sstream>
+#include "def.h"
 
 typedef unsigned int ElemIdType;
 

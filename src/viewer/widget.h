@@ -4,6 +4,7 @@
 #include <QGLWidget>
 #include <QList>
 #include <cmath>
+#include "def.h"
 #include "trackball.h"
 #include "vortex/vortex_object.h"
 
