@@ -18,6 +18,19 @@
 #### Build the core only ####
 
 ``` shell
+$ mkdir build
+$ cd build
+$ cmake .. \
+  -DMPI_HOME=~/local/mpich-3.1.2 \
+  -DLIBMESH_DIR=~/local/libmesh-0.9.4-rc1 \
+  -DPETSC_DIR=~/local/petsc-3.5.2 \
+  -DWITH_QT=OFF
+$ make
+```
+
+#### Build the core and the viewer (requires Qt4) ####
+
+``` shell
 $ cd $VORTEX_FINDER2_SOURCE_DIR
 $ mkdir build
 $ cd build
@@ -27,18 +40,6 @@ $ cmake .. \
   -DPETSC_DIR=~/local/petsc-3.5.2 \
   -DQT_QMAKE_EXECUTABLE=~/local/Qt-4.8.6/bin/qmake \
   -DPROTOBUF_ROOT=~/local/protobuf-2.6.1
-$ make
-```
-#### Build the core and the viewer (requires Qt4) ####
-
-``` shell
-$ mkdir build
-$ cd build
-$ cmake .. \
-  -DMPI_HOME=~/local/mpich-3.1.2 \
-  -DLIBMESH_DIR=~/local/libmesh-0.9.4-rc1 \
-  -DPETSC_DIR=~/local/petsc-3.5.2 \
-  -DWITH_QT=OFF
 $ make
 ```
 
