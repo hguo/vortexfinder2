@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <list>
 #include <set>
-#include "extractor.h"
+#include "Condor2Extractor.h"
 #include "utils.h"
 
 VortexExtractor::VortexExtractor(const Parallel::Communicator &comm)

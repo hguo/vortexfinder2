@@ -1,5 +1,5 @@
-#include "vortex_object.h"
-#include "vortex_object.pb.h"
+#include "VortexObject.h"
+#include "VortexObject.pb.h"
 
 VortexObject::VortexObject()
 {

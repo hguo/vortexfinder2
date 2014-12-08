@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <getopt.h>
-#include "extractor.h"
+#include "Condor2Extractor.h"
 
 static std::string filename_in, filename_out;
 static double B[3] = {0.0}; 

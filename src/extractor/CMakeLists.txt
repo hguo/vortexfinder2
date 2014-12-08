@@ -1,5 +1,5 @@
 set (extractor_sources
-  extractor.cpp
+  Condor2Extractor.cpp
 )
 
 add_library (glextractor ${extractor_sources})

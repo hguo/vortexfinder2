@@ -1,9 +1,9 @@
 set (vortex_sources
-  vortex_object.cpp
+  VortexObject.cpp
 )
 
 set (vortex_protos
-  vortex_object.proto
+  VortexObject.proto
 )
 
 protobuf_generate_cpp (vortex_proto_sources vortex_proto_headers ${vortex_protos})

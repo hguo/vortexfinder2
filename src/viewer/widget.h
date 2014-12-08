@@ -6,7 +6,7 @@
 #include <cmath>
 #include "def.h"
 #include "trackball.h"
-#include "vortex/vortex_object.h"
+#include "vortex/VortexObject.h"
 
 class QMConnector; 
 class QMouseEvent;
