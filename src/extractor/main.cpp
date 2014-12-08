@@ -105,7 +105,7 @@ int main(int argc, char **argv)
   // libMesh::LibMeshInit init(argc, argv);
   libMesh::LibMeshInit init(1, argv); // set argc to 1 to supress PETSc warnings. 
   
-  VortexExtractor extractor(init.comm());
+  Condor2VortexExtractor extractor(init.comm());
   extractor.SetVerbose(verbose);
   extractor.SetMagneticField(B); 
   extractor.SetKex(Kex);

@@ -1,5 +1,5 @@
-#ifndef _EXTRACTOR_H
-#define _EXTRACTOR_H
+#ifndef _CONDOR2EXTRACTOR_H
+#define _CONDOR2EXTRACTOR_H
 
 #include <string>
 #include <map>
@@ -11,21 +11,23 @@
 #include <libmesh/exodusII_io.h>
 #include <libmesh/numeric_vector.h>
 #include <libmesh/dof_map.h>
+#include "Extractor.h"
 #include "PuncturedElem.h"
+#include "io/Condor2Dataset.h"
 #include "vortex/VortexObject.h"
 
 using namespace libMesh; 
 
 /* 
- * \class   VortexExtractor
+ * \class   Condor2VortexExtractor
  * \author  Hanqi Guo
  * \brief   Vortex extractor for Condor2 output
 */
-class VortexExtractor : public ParallelObject
+class Condor2VortexExtractor : public ParallelObject, public VortexExtractor
 {
 public:
-  VortexExtractor(const Parallel::Communicator &comm);
-  ~VortexExtractor();
+  Condor2VortexExtractor(const Parallel::Communicator &comm);
+  ~Condor2VortexExtractor();
 
   void SetVerbose(int level=1);
 
@@ -37,6 +39,10 @@ public:
   // void SetMesh(Mesh *);
   // void SetSolution(AutoPtr<NumericVector<Number> > solution); 
 
+  void SetDataset(const GLDataset* ds);
+  const Condor2Dataset* Dataset() const {return _ds;}
+
+  // to be deprecated 
   void LoadData(const std::string& filename); 
   void LoadTimestep(int timestep);
 
@@ -49,7 +55,10 @@ protected:
 
 private: 
   int _verbose; 
-  
+ 
+  const Condor2Dataset *_ds;
+
+  // to be deprecated
   int _timestep; 
   double _B[3]; // magenetic field
   double _Kex; // Kex

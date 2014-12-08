@@ -4,7 +4,7 @@
 #include "Condor2Extractor.h"
 #include "utils.h"
 
-VortexExtractor::VortexExtractor(const Parallel::Communicator &comm)
+Condor2VortexExtractor::Condor2VortexExtractor(const Parallel::Communicator &comm)
   : ParallelObject(comm), 
     _verbose(0), 
     _mesh(NULL), 
@@ -15,34 +15,39 @@ VortexExtractor::VortexExtractor(const Parallel::Communicator &comm)
 {
 }
 
-VortexExtractor::~VortexExtractor()
+Condor2VortexExtractor::~Condor2VortexExtractor()
 {
   if (_eqsys) delete _eqsys; 
   if (_exio) delete _exio; 
   if (_mesh) delete _mesh; 
 }
 
-void VortexExtractor::SetVerbose(int level)
+void Condor2VortexExtractor::SetVerbose(int level)
 {
   _verbose = level; 
 }
 
-void VortexExtractor::SetMagneticField(const double B[3])
+void Condor2VortexExtractor::SetMagneticField(const double B[3])
 {
   memcpy(_B, B, sizeof(double)*3); 
 }
 
-void VortexExtractor::SetKex(double Kex)
+void Condor2VortexExtractor::SetKex(double Kex)
 {
   _Kex = Kex; 
 }
 
-void VortexExtractor::SetGaugeTransformation(bool g)
+void Condor2VortexExtractor::SetGaugeTransformation(bool g)
 {
   _gauge = g; 
 }
 
-void VortexExtractor::LoadData(const std::string& filename)
+void Condor2VortexExtractor::SetDataset(const GLDataset* ds)
+{
+  _ds = (const Condor2Dataset*)ds;
+}
+
+void Condor2VortexExtractor::LoadData(const std::string& filename)
 {
   /// mesh
   _mesh = new Mesh(comm()); 
@@ -67,7 +72,7 @@ void VortexExtractor::LoadData(const std::string& filename)
     _eqsys->print_info();
 }
 
-void VortexExtractor::LoadTimestep(int timestep)
+void Condor2VortexExtractor::LoadTimestep(int timestep)
 {
   assert(_exio != NULL); 
 
@@ -84,7 +89,7 @@ void VortexExtractor::LoadTimestep(int timestep)
     fprintf(stderr, "nodal solution copied, timestep=%d\n", timestep); 
 }
 
-void VortexExtractor::Extract()
+void Condor2VortexExtractor::Extract()
 {
   if (Verbose())
     fprintf(stderr, "extracting singularities on mesh faces...\n"); 
@@ -173,7 +178,7 @@ void VortexExtractor::Extract()
   }
 }
 
-void VortexExtractor::Trace()
+void Condor2VortexExtractor::Trace()
 {
   _vortex_objects.clear();
 
@@ -332,7 +337,7 @@ void VortexExtractor::Trace()
   fprintf(stderr, "extracted %lu vortex objects.\n", _vortex_objects.size());
 }
 
-void VortexExtractor::WriteVortexObjects(const std::string& filename)
+void Condor2VortexExtractor::WriteVortexObjects(const std::string& filename)
 {
   ::WriteVortexObjects(filename, _vortex_objects); 
 }

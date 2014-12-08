@@ -1,4 +1,5 @@
 set (extractor_sources
+  Extractor.cpp
   Condor2Extractor.cpp
 )
 
