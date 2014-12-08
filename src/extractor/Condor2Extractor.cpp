@@ -2,7 +2,7 @@
 #include <list>
 #include <set>
 #include "Condor2Extractor.h"
-#include "utils.h"
+#include "Utils.h"
 
 Condor2VortexExtractor::Condor2VortexExtractor(const Parallel::Communicator &comm)
   : ParallelObject(comm), 

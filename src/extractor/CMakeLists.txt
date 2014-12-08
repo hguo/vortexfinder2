@@ -1,6 +1,7 @@
 set (extractor_sources
   Extractor.cpp
   Condor2Extractor.cpp
+  GLGPUExtractor.cpp
 )
 
 add_library (glextractor ${extractor_sources})
