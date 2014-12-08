@@ -26,6 +26,8 @@ public:
   GLGPUDataset(); 
   ~GLGPUDataset();
 
+  void PrintInfo() const; 
+
   bool LoadFromFile(const std::string& filename); //!< "legacy" format
   void WriteToNetCDF(const std::string& filename); 
 

@@ -1,6 +1,7 @@
 project (glvortex1)
 cmake_minimum_required (VERSION 2.8)
 
+option (WITH_TESTS "Build the tests" OFF)
 option (WITH_CUDA "Build with CUDA" OFF)
 option (WITH_LIBMESH "Build with libMesh" ON) 
 option (WITH_PNETCDF "Build with parallel-netcdf" OFF)

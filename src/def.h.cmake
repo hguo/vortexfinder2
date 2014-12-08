@@ -24,6 +24,14 @@
   }\
 }
 
+// CUDA error handling
+#define CUDA_SAFE_CALL(call) {\
+  cudaError_t err = call;\
+  if (cudaSuccess != err) {\
+    fprintf(stderr, "[CUDA Error] %s, in file '%s', line%i.\n", cudaGetErrorString(err), __FILE__, __LINE__); \
+    exit(EXIT_FAILURE); \
+  }\
+}
 
 // OpenGL error handling
 #define RESET_GLERROR()\

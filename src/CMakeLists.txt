@@ -10,3 +10,7 @@ subdirs (vortex io extractor)
 if (WITH_QT)
   subdirs (viewer)
 endif ()
+
+if (WITH_TESTS)
+  subdirs (tests)
+endif ()

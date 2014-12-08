@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "def.h"
 
 class GLDataset 
 {
@@ -22,6 +23,8 @@ public:
   double Jx() const {return _Jx;}
   double Kex() const {return _Kex;} 
   double Kex_dot() const {return _Kex_dot;}
+
+  virtual void PrintInfo() const = 0;
 
 protected:
   std::vector<double> _time_stamps; 

@@ -5,14 +5,6 @@
 #include <cmath>
 #include "GLGPUDataset.h"
 
-#define NC_SAFE_CALL(call) {\
-  int retval = call;\
-  if (retval != 0) {\
-      fprintf(stderr, "[NetCDF Error] %s, in file '%s', line %i.\n", nc_strerror(retval), __FILE__, __LINE__); \
-      exit(EXIT_FAILURE); \
-  }\
-}
-
 static const int GLGPU_TAG_SIZE = 4;
 static const char GLGPU_TAG[] = "CA02"; 
 
@@ -37,25 +29,29 @@ void GLGPUDataset::WriteToNetCDF(const std::string& filename)
 
   size_t starts[3] = {0, 0, 0}, 
          sizes[3]  = {_dims[2], _dims[1], _dims[0]};
-         // sizes[3]  = {_dims[0], _dims[1], _dims[2]};
 
   NC_SAFE_CALL( nc_create(filename, NC_CLOBBER | NC_64BIT_OFFSET, &ncid) ); 
   NC_SAFE_CALL( nc_def_dim(ncid, "z", sizes[0], &dimids[0]) );
   NC_SAFE_CALL( nc_def_dim(ncid, "y", sizes[1], &dimids[1]) );
   NC_SAFE_CALL( nc_def_dim(ncid, "x", sizes[2], &dimids[2]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "amp", NC_FLOAT, 3, dimids, &varids[0]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "phase", NC_FLOAT, 3, dimids, &varids[1]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "re", NC_FLOAT, 3, dimids, &varids[2]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "im", NC_FLOAT, 3, dimids, &varids[3]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "amp", NC_DOUBLE, 3, dimids, &varids[0]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "phase", NC_DOUBLE, 3, dimids, &varids[1]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "re", NC_DOUBLE, 3, dimids, &varids[2]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "im", NC_DOUBLE, 3, dimids, &varids[3]) );
   NC_SAFE_CALL( nc_enddef(ncid) );
 
-  NC_SAFE_CALL( nc_put_vara_float(ncid, varids[0], starts, sizes, _amp) ); 
-  NC_SAFE_CALL( nc_put_vara_float(ncid, varids[1], starts, sizes, _phase) ); 
-  NC_SAFE_CALL( nc_put_vara_float(ncid, varids[2], starts, sizes, _re) ); 
-  NC_SAFE_CALL( nc_put_vara_float(ncid, varids[3], starts, sizes, __im) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[0], starts, sizes, _amp) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[1], starts, sizes, _phase) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[2], starts, sizes, _re) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[3], starts, sizes, __im) ); 
 
   NC_SAFE_CALL( nc_close(ncid) );
 #endif
+}
+
+void GLGPUDataset::PrintInfo() const
+{
+  // TODO
 }
 
 bool GLGPUDataset::LoadFromFile(const std::string &filename)
@@ -94,11 +90,9 @@ bool GLGPUDataset::LoadFromFile(const std::string &filename)
     } else if (datatype == GLGPU_TYPE_DOUBLE) {
       fread(&_lengths[i], sizeof(double), 1, fp); 
     }
-    _cellLengths[i] = _lengths[i] / (_dims[i]-1); 
   }
   fprintf(stderr, "dims={%d, %d, %d}\n", _dims[0], _dims[1], _dims[2]); 
   fprintf(stderr, "lengths={%f, %f, %f}\n", _lengths[0], _lengths[1], _lengths[2]);
-  fprintf(stderr, "cellLengths={%f, %f, %f}\n", _cellLengths[0], _cellLengths[1], _cellLengths[2]); 
 
   // dummy
   int dummy; 
@@ -134,6 +128,11 @@ bool GLGPUDataset::LoadFromFile(const std::string &filename)
   _pbc[1] = btype & 0x00ff00;
   _pbc[2] = btype & 0xff0000; 
   fprintf(stderr, "pbc={%d, %d, %d}\n", _pbc[0], _pbc[1], _pbc[2]); 
+  // update cell lengths 
+  for (int i=0; i<num_dims; i++) 
+    if (_pbc[i]) _cellLengths[i] = _lengths[i] / _dims[i];  
+    else _cellLengths[i] = _lengths[i] / (_dims[i]-1); 
+  fprintf(stderr, "cellLengths={%f, %f, %f}\n", _cellLengths[0], _cellLengths[1], _cellLengths[2]); 
 
   // optype
   int optype; 
@@ -195,7 +194,8 @@ bool GLGPUDataset::LoadFromFile(const std::string &filename)
       }
     } else assert(false); 
   } else if (datatype == GLGPU_TYPE_DOUBLE) {
-    assert(false); 
+    assert(false);
+    // The following lines are copied from legacy code. To be reorganized later
 #if 0
     // raw data
     double *buf = (double*)malloc(sizeof(double)*count*2); // complex
