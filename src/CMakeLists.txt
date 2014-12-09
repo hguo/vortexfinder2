@@ -5,7 +5,7 @@ include_directories (
 
 configure_file (def.h.cmake def.h)
 
-subdirs (vortex io extractor)
+subdirs (vortex io extractor tracer)
 
 if (WITH_QT)
   subdirs (viewer)
