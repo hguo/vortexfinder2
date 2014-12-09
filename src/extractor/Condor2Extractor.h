@@ -14,7 +14,6 @@
 #include "Extractor.h"
 #include "PuncturedElem.h"
 #include "io/Condor2Dataset.h"
-#include "vortex/VortexObject.h"
 
 using namespace libMesh; 
 
@@ -48,7 +47,6 @@ public:
 
   void Extract();
   void Trace(); 
-  void WriteVortexObjects(const std::string& filename); 
 
 protected:
   bool Verbose(int level=1) {return level <= _verbose;} 
@@ -72,7 +70,6 @@ private:
 
 private:
   PuncturedElemMap<> _punctured_elems; 
-  std::vector<VortexObject> _vortex_objects; 
 }; 
 
 #endif

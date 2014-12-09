@@ -336,8 +336,3 @@ void Condor2VortexExtractor::Trace()
     
   fprintf(stderr, "extracted %lu vortex objects.\n", _vortex_objects.size());
 }
-
-void Condor2VortexExtractor::WriteVortexObjects(const std::string& filename)
-{
-  ::WriteVortexObjects(filename, _vortex_objects); 
-}
