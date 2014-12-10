@@ -68,21 +68,18 @@ void GLGPUVortexExtractor::solve(int x, int y, int z, int face)
     phase[i] = atan2(im[i], re[i]);
   }
 
-#if 1 // gauge
-  float delta[4] = {
-    phase[1] - phase[0] + gauge(X[0], X[1]), 
-    phase[2] - phase[1] + gauge(X[1], X[2]),  
-    phase[3] - phase[2] + gauge(X[2], X[3]), 
-    phase[0] - phase[3] + gauge(X[3], X[0])
-  };
-#else
-  float delta[4] = {
-    phase[1] - phase[0], 
-    phase[2] - phase[1],  
-    phase[3] - phase[2], 
-    phase[0] - phase[3]
-  };
-#endif
+  float delta[4]; 
+  if (_gauge) {
+    delta[0] = phase[1] - phase[0] + gauge(X[0], X[1]);  
+    delta[1] = phase[2] - phase[1] + gauge(X[1], X[2]);  
+    delta[2] = phase[3] - phase[2] + gauge(X[2], X[3]); 
+    delta[3] = phase[0] - phase[3] + gauge(X[3], X[0]); 
+  } else {
+    delta[0] = phase[1] - phase[0];  
+    delta[1] = phase[2] - phase[1];  
+    delta[2] = phase[3] - phase[2];
+    delta[3] = phase[0] - phase[3];
+  }
 
   float sum = 0.f;
   float delta1[4]; 
@@ -92,16 +89,16 @@ void GLGPUVortexExtractor::solve(int x, int y, int z, int face)
   }
   sum += flux; 
 
-#if 1 //gauge
-  phase[1] = phase[0] + delta1[0]; 
-  phase[2] = phase[1] + delta1[1]; 
-  phase[3] = phase[2] + delta1[2];
-  
-  for (int i=0; i<4; i++) {
-    re[i] = amp[i] * cos(phase[i]); 
-    im[i] = amp[i] * sin(phase[i]); 
+  if (_gauge) {
+    phase[1] = phase[0] + delta1[0]; 
+    phase[2] = phase[1] + delta1[1]; 
+    phase[3] = phase[2] + delta1[2];
+    
+    for (int i=0; i<4; i++) {
+      re[i] = amp[i] * cos(phase[i]); 
+      im[i] = amp[i] * sin(phase[i]); 
+    }
   }
-#endif
 
   float ps = sum / (2*M_PI);
   if (fabs(ps)>0.99f) {
