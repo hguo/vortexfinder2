@@ -2,6 +2,7 @@
 #define _GLGPU_DATASET_H
 
 #include "GLDataset.h"
+#include "common/texel.hpp"
 
 enum {
   GLGPU_ENDIAN_LITTLE = 0, 
@@ -12,13 +13,6 @@ enum {
   GLGPU_TYPE_FLOAT = 0, 
   GLGPU_TYPE_DOUBLE = 1
 };
-
-template <typename T>
-static T& texel3D(T* p, const int* sizes, int x, int y, int z)
-{
-  return p[x + sizes[0]*(y + sizes[1]*z)]; 
-}
-
 
 class GLGPUDataset : public GLDataset
 {
