@@ -4,37 +4,19 @@
 #include "Condor2Extractor.h"
 #include "Utils.h"
 
-Condor2VortexExtractor::Condor2VortexExtractor(const Parallel::Communicator &comm)
-  : ParallelObject(comm), 
-    _verbose(0), 
-    _mesh(NULL), 
-    _exio(NULL), 
-    _eqsys(NULL), 
-    _tsys(NULL),
-    _gauge(false)
+Condor2VortexExtractor::Condor2VortexExtractor() :
+  _verbose(0), 
+  _gauge(false)
 {
 }
 
 Condor2VortexExtractor::~Condor2VortexExtractor()
 {
-  if (_eqsys) delete _eqsys; 
-  if (_exio) delete _exio; 
-  if (_mesh) delete _mesh; 
 }
 
 void Condor2VortexExtractor::SetVerbose(int level)
 {
   _verbose = level; 
-}
-
-void Condor2VortexExtractor::SetMagneticField(const double B[3])
-{
-  memcpy(_B, B, sizeof(double)*3); 
-}
-
-void Condor2VortexExtractor::SetKex(double Kex)
-{
-  _Kex = Kex; 
 }
 
 void Condor2VortexExtractor::SetGaugeTransformation(bool g)
@@ -47,48 +29,6 @@ void Condor2VortexExtractor::SetDataset(const GLDataset* ds)
   _ds = (const Condor2Dataset*)ds;
 }
 
-void Condor2VortexExtractor::LoadData(const std::string& filename)
-{
-  /// mesh
-  _mesh = new Mesh(comm()); 
-  _exio = new ExodusII_IO(*_mesh);
-  _exio->read(filename);
-  _mesh->allow_renumbering(false); 
-  _mesh->prepare_for_use();
-
-  if (Verbose())
-    _mesh->print_info(); 
-
-  /// equation systems
-  _eqsys = new EquationSystems(*_mesh); 
-  
-  _tsys = &(_eqsys->add_system<NonlinearImplicitSystem>("GLsys"));
-  _u_var = _tsys->add_variable("u", FIRST, LAGRANGE);
-  _v_var = _tsys->add_variable("v", FIRST, LAGRANGE); 
-
-  _eqsys->init(); 
-  
-  if (Verbose())
-    _eqsys->print_info();
-}
-
-void Condor2VortexExtractor::LoadTimestep(int timestep)
-{
-  assert(_exio != NULL); 
-
-  _timestep = timestep;
-
-  if (Verbose())
-    fprintf(stderr, "copying nodal solution... timestep=%d\n", timestep); 
-
-  /// copy nodal data
-  _exio->copy_nodal_solution(*_tsys, "u", "u", timestep); 
-  _exio->copy_nodal_solution(*_tsys, "v", "v", timestep);
-  
-  if (Verbose())
-    fprintf(stderr, "nodal solution copied, timestep=%d\n", timestep); 
-}
-
 void Condor2VortexExtractor::Extract()
 {
   if (Verbose())
@@ -96,9 +36,10 @@ void Condor2VortexExtractor::Extract()
  
   _punctured_elems.clear(); 
 
-  const DofMap &dof_map  = _tsys->get_dof_map();  
-  MeshBase::const_element_iterator it = _mesh->active_local_elements_begin(); 
-  const MeshBase::const_element_iterator end = _mesh->active_local_elements_end(); 
+  const DofMap &dof_map  = _ds->tsys()->get_dof_map();  
+  MeshBase::const_element_iterator it = _ds->mesh()->active_local_elements_begin(); 
+  const MeshBase::const_element_iterator end = _ds->mesh()->active_local_elements_end(); 
+  const NumericVector<Number> *tsolution = _ds->tsys()->solution.get(); 
  
   for (; it!=end; it++) {
     const Elem *elem = *it;
@@ -108,12 +49,12 @@ void Condor2VortexExtractor::Extract()
       AutoPtr<Elem> side = elem->side(face); 
       
       std::vector<dof_id_type> u_di, v_di; 
-      dof_map.dof_indices(side.get(), u_di, _u_var);
-      dof_map.dof_indices(side.get(), v_di, _v_var);
+      dof_map.dof_indices(side.get(), u_di, _ds->u_var());
+      dof_map.dof_indices(side.get(), v_di, _ds->v_var());
      
       // could use solution->get()
-      double u[3] = {(*_tsys->solution)(u_di[0]), (*_tsys->solution)(u_di[1]), (*_tsys->solution)(u_di[2])}, 
-             v[3] = {(*_tsys->solution)(v_di[0]), (*_tsys->solution)(v_di[1]), (*_tsys->solution)(v_di[2])};
+      double u[3] = {(*tsolution)(u_di[0]), (*tsolution)(u_di[1]), (*tsolution)(u_di[2])}, 
+             v[3] = {(*tsolution)(v_di[0]), (*tsolution)(v_di[1]), (*tsolution)(v_di[2])};
 
       Node *nodes[3] = {side->get_node(0), side->get_node(1), side->get_node(2)};
       double X0[3] = {nodes[0]->slice(0), nodes[0]->slice(1), nodes[0]->slice(2)}, 
@@ -127,9 +68,9 @@ void Condor2VortexExtractor::Extract()
       double delta[3];
 
       if (_gauge) {
-        delta[0] = phi[1] - phi[0] - gauge_transformation(X0, X1, _Kex, _B); 
-        delta[1] = phi[2] - phi[1] - gauge_transformation(X1, X2, _Kex, _B); 
-        delta[2] = phi[0] - phi[2] - gauge_transformation(X2, X0, _Kex, _B); 
+        delta[0] = phi[1] - phi[0] - gauge_transformation(X0, X1, _ds->Kex(), _ds->B()); 
+        delta[1] = phi[2] - phi[1] - gauge_transformation(X1, X2, _ds->Kex(), _ds->B()); 
+        delta[2] = phi[0] - phi[2] - gauge_transformation(X2, X0, _ds->Kex(), _ds->B()); 
       } else {
         delta[0] = phi[1] - phi[0]; 
         delta[1] = phi[2] - phi[1]; 
@@ -193,7 +134,7 @@ void Condor2VortexExtractor::Trace()
       to_visit.pop_front();
       if (it->second.visited) continue; 
 
-      Elem *elem = _mesh->elem(it->first); 
+      const Elem *elem = _ds->mesh()->elem(it->first); 
       for (int face=0; face<4; face++) { // for 4 faces, in either directions
         Elem *neighbor = elem->neighbor(face); 
         if (it->second.IsPunctured(face) && neighbor != NULL) {
@@ -223,7 +164,7 @@ void Condor2VortexExtractor::Trace()
     //// 2.1 special punctured elems
     for (PuncturedElemMap<>::iterator it = special_pelems.begin(); it != special_pelems.end(); it ++) {
       std::list<double> line;
-      Elem *elem = _mesh->elem(it->first);
+      const Elem *elem = _ds->mesh()->elem(it->first);
       Point centroid = elem->centroid(); 
       line.push_back(centroid(0)); line.push_back(centroid(1)); line.push_back(centroid(2));
       vortex_object.AddVortexLine(line); 
@@ -246,7 +187,7 @@ void Condor2VortexExtractor::Trace()
         int face; 
         double pos[3];
         bool traced = false; 
-        Elem *elem = _mesh->elem(id); 
+        const Elem *elem = _ds->mesh()->elem(id); 
         PuncturedElemMap<>::iterator it = ordinary_pelems.find(id);
         if (it == ordinary_pelems.end()) {
           special = true;
@@ -283,7 +224,7 @@ void Condor2VortexExtractor::Trace()
         int face; 
         double pos[3];
         bool traced = false; 
-        Elem *elem = _mesh->elem(id); 
+        const Elem *elem = _ds->mesh()->elem(id); 
         PuncturedElemMap<>::iterator it = ordinary_pelems.find(id);
         if (it == ordinary_pelems.end()) {
           special = true;

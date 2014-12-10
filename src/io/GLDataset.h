@@ -13,6 +13,11 @@ public:
 
   int Dimensions() const {return 3;}  // currently only 3D data is supported
 
+  int TimeStep() const {return _timestep;}
+
+  void SetMagneticField(const double B[3]);
+  void SetKex(double Kex);
+
   const double* B() const {return _B;}
   double Bx() const {return _B[0];} 
   double By() const {return _B[1];} 
@@ -27,7 +32,9 @@ public:
   virtual void PrintInfo() const = 0;
 
 protected:
+  int _timestep; 
   std::vector<double> _time_stamps; 
+
   double _lengths[3];
   double _B[3];
   double _Jx; 

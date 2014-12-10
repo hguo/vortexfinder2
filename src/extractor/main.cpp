@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <getopt.h>
+#include "io/Condor2Dataset.h"
 #include "Condor2Extractor.h"
 
 static std::string filename_in, filename_out;
@@ -104,19 +105,22 @@ int main(int argc, char **argv)
 
   // libMesh::LibMeshInit init(argc, argv);
   libMesh::LibMeshInit init(1, argv); // set argc to 1 to supress PETSc warnings. 
+ 
+  Condor2Dataset ds(init.comm()); 
+  ds.SetMagneticField(B); 
+  ds.SetKex(Kex);
   
-  Condor2VortexExtractor extractor(init.comm());
-  extractor.SetVerbose(verbose);
-  extractor.SetMagneticField(B); 
-  extractor.SetKex(Kex);
+  Condor2VortexExtractor extractor;
+  extractor.SetDataset(&ds);
+  // extractor.SetVerbose(verbose);
   extractor.SetGaugeTransformation(gauge);
 
-  extractor.LoadData(filename_in);
+  ds.OpenDataFile(filename_in);
   for (int t=T0; t<T0+T; t++) {
     fprintf(stderr, "Analyzing timestep %d...\n", t); 
     
     double t0 = (double)clock() / CLOCKS_PER_SEC; 
-    extractor.LoadTimestep(t);
+    ds.LoadTimeStep(t);
     double t1 = (double)clock() / CLOCKS_PER_SEC; 
     extractor.Extract();
     double t2 = (double)clock() / CLOCKS_PER_SEC; 
