@@ -2,7 +2,7 @@
 #define _TRACER_H
 
 #include "io/GLDataset.h"
-#include "vortex/FieldLine.h"
+#include "common/FieldLine.h"
 
 class FieldLineTracer {
 public: 

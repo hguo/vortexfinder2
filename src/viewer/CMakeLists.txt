@@ -9,7 +9,8 @@ if (APPLE)
 endif ()
 
 add_executable (viewer ${viewer_sources})
-target_link_libraries (viewer glvortex
+target_link_libraries (viewer 
+  glcommon
   ${QT_LIBRARIES}
   ${OPENGL_LIBRARIES}
 )

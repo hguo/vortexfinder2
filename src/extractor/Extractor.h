@@ -2,7 +2,7 @@
 #define _EXTRACTOR_H
 
 #include "io/GLDataset.h"
-#include "vortex/VortexObject.h"
+#include "common/VortexObject.h"
 
 class VortexExtractor {
 public: 
