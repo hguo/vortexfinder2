@@ -20,41 +20,12 @@ GLGPUDataset::~GLGPUDataset()
 {
 }
 
-void GLGPUDataset::WriteToNetCDF(const std::string& filename)
-{
-#if 0
-  int ncid; 
-  int dimids[3]; 
-  int varids[4];
-
-  size_t starts[3] = {0, 0, 0}, 
-         sizes[3]  = {_dims[2], _dims[1], _dims[0]};
-
-  NC_SAFE_CALL( nc_create(filename, NC_CLOBBER | NC_64BIT_OFFSET, &ncid) ); 
-  NC_SAFE_CALL( nc_def_dim(ncid, "z", sizes[0], &dimids[0]) );
-  NC_SAFE_CALL( nc_def_dim(ncid, "y", sizes[1], &dimids[1]) );
-  NC_SAFE_CALL( nc_def_dim(ncid, "x", sizes[2], &dimids[2]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "amp", NC_DOUBLE, 3, dimids, &varids[0]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "phase", NC_DOUBLE, 3, dimids, &varids[1]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "re", NC_DOUBLE, 3, dimids, &varids[2]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "im", NC_DOUBLE, 3, dimids, &varids[3]) );
-  NC_SAFE_CALL( nc_enddef(ncid) );
-
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[0], starts, sizes, _amp) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[1], starts, sizes, _phase) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[2], starts, sizes, _re) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[3], starts, sizes, __im) ); 
-
-  NC_SAFE_CALL( nc_close(ncid) );
-#endif
-}
-
 void GLGPUDataset::PrintInfo() const
 {
   // TODO
 }
 
-bool GLGPUDataset::LoadFromFile(const std::string &filename)
+bool GLGPUDataset::OpenDataFile(const std::string &filename)
 {
   FILE *fp = fopen(filename.c_str(), "rb");
   if (!fp) return false;
@@ -245,3 +216,32 @@ bool GLGPUDataset::LoadFromFile(const std::string &filename)
   
   return true; 
 }
+
+#if 0 // legacy code
+void GLGPUDataset::WriteToNetCDF(const std::string& filename)
+{
+  int ncid; 
+  int dimids[3]; 
+  int varids[4];
+
+  size_t starts[3] = {0, 0, 0}, 
+         sizes[3]  = {_dims[2], _dims[1], _dims[0]};
+
+  NC_SAFE_CALL( nc_create(filename, NC_CLOBBER | NC_64BIT_OFFSET, &ncid) ); 
+  NC_SAFE_CALL( nc_def_dim(ncid, "z", sizes[0], &dimids[0]) );
+  NC_SAFE_CALL( nc_def_dim(ncid, "y", sizes[1], &dimids[1]) );
+  NC_SAFE_CALL( nc_def_dim(ncid, "x", sizes[2], &dimids[2]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "amp", NC_DOUBLE, 3, dimids, &varids[0]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "phase", NC_DOUBLE, 3, dimids, &varids[1]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "re", NC_DOUBLE, 3, dimids, &varids[2]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "im", NC_DOUBLE, 3, dimids, &varids[3]) );
+  NC_SAFE_CALL( nc_enddef(ncid) );
+
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[0], starts, sizes, _amp) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[1], starts, sizes, _phase) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[2], starts, sizes, _re) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[3], starts, sizes, __im) ); 
+
+  NC_SAFE_CALL( nc_close(ncid) );
+}
+#endif

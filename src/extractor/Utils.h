@@ -118,21 +118,22 @@ template <typename T>
 static inline float gauge_transformation(const T *x0, const T *x1, T Kex, const T *B)
 {
   T gx, gy, gz; 
-  T dx[3] = {x1[0]-x0[0], x1[1]-x0[1], x1[2]-x0[2]};
+  T dx = x1[0] - x0[0], 
+    dy = x1[1] - x0[1], 
+    dz = x1[2] - x0[2]; 
  
-  T x = x0[0] + dx[0]*0.5f, 
-    y = x0[1] + dx[1]*0.5f, 
-    z = x0[2] + dx[2]*0.5f; 
+  T x = x0[0] + 0.5*dx, 
+    y = x0[1] + 0.5*dy, 
+    z = x0[2] + 0.5*dz;
 
   if (B[1]>0) { // Y-Z gauge
-    gx = dx[0] * Kex; 
-    gy =-dx[1] * x * B[2]; // -dy*x^hat*Bz
-    gz = dx[2] * x * B[1]; //  dz*x^hat*By
+    gx = dx * Kex; 
+    gy =-dy * x * B[2]; // -dy*x^hat*Bz
+    gz = dz * x * B[1]; //  dz*x^hat*By
   } else { // X-Z gauge
-    gx = dx[0] * y * B[2]  //  dx*y^hat*Bz
-        +dx[0] * Kex; 
+    gx = dx * y * B[2] + dx * Kex; //  dx*y^hat*Bz + dx*K
     gy = 0; 
-    gz =-dx[2] * y * B[0]; // -dz*y^hat*Bx
+    gz =-dz * y * B[0]; // -dz*y^hat*Bx
   }
 
   return gx + gy + gz; 

@@ -9,13 +9,17 @@ public:
   VortexExtractor(); 
   ~VortexExtractor(); 
 
-  // virtual void Clear() = 0; 
   virtual void SetDataset(const GLDataset* ds) = 0;
+  void SetGaugeTransformation(bool); 
+
+  virtual void Extract() = 0; 
+  virtual void Trace() = 0; 
 
   void WriteVortexObjects(const std::string& filename); 
   
 protected:
-  std::vector<VortexObject> _vortex_objects; 
+  std::vector<VortexObject> _vortex_objects;
+  bool _gauge; 
 }; 
 
 #endif

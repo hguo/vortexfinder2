@@ -48,6 +48,13 @@ bool Condor2Dataset::OpenDataFile(const std::string& filename)
   return true; 
 }
 
+void Condor2Dataset::CloseDataFile()
+{
+  if (_eqsys) delete _eqsys; 
+  if (_exio) delete _exio; 
+  if (_mesh) delete _mesh; 
+}
+
 void Condor2Dataset::LoadTimeStep(int timestep)
 {
   assert(_exio != NULL); 

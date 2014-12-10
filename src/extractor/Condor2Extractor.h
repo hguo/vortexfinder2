@@ -23,7 +23,6 @@ public:
   ~Condor2VortexExtractor();
 
   void SetVerbose(int level=1);
-  void SetGaugeTransformation(bool); 
 
   void SetDataset(const GLDataset* ds);
   const Condor2Dataset* Dataset() const {return _ds;}

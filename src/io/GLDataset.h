@@ -11,6 +11,12 @@ public:
   GLDataset(); 
   ~GLDataset();
 
+public: // data I/O
+  virtual bool OpenDataFile(const std::string& filename); 
+  virtual void LoadTimeStep(int timestep);
+  virtual void CloseDataFile();
+
+public: // properties
   int Dimensions() const {return 3;}  // currently only 3D data is supported
 
   int TimeStep() const {return _timestep;}

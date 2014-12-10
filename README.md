@@ -2,7 +2,10 @@
 
 ### Introduction ###
 
-* Vortex detection for condor2/GLGPU written in C++
+A visualization and analysis tool for condor2/GLGPU dataset
+
+* Vortex detection and tracking
+* Super-current line tracing
 
 ### Build Guidelines ###
 
@@ -54,10 +57,10 @@ cd build/bin
 To show help information, run the command without arguments: 
 
 ``` shell
-$ ./extractor
+$ ./extractor_condor2
 FATAL: input filename not given.
 USAGE:
-./extractor -i <input_filename> [-o output_filename] [-gauge] [-t=<t>] [-T=<T>] [-Kx=<Kx>] [-Bx=<Bx>] [-By=<By>] [-Bz=<Bz>]
+./extractor_condor2 -i <input_filename> [-o output_filename] [-gauge] [-t=<t>] [-T=<T>] [-Kx=<Kx>] [-Bx=<Bx>] [-By=<By>] [-Bz=<Bz>]
 
   --verbose   verbose output
   --benchmark Enable benchmark
@@ -71,7 +74,7 @@ USAGE:
 To analyze the example data (tslab.3.Bz0_02.Nt1000.lu.512.e), please add all necessary arguments: 
 
 ``` shell
-$ ./extractor tslab.3.Bz0_02.Nt1000.lu.512.e --Bz 0.02 -t 600
+$ ./extractor_condor2 tslab.3.Bz0_02.Nt1000.lu.512.e --Bz 0.02 -t 600
 ```
 
 By default, the output file is the input filename plus ".vortex" suffix, 

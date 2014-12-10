@@ -5,8 +5,7 @@
 #include "Utils.h"
 
 Condor2VortexExtractor::Condor2VortexExtractor() :
-  _verbose(0), 
-  _gauge(false)
+  _verbose(0)
 {
 }
 
@@ -17,11 +16,6 @@ Condor2VortexExtractor::~Condor2VortexExtractor()
 void Condor2VortexExtractor::SetVerbose(int level)
 {
   _verbose = level; 
-}
-
-void Condor2VortexExtractor::SetGaugeTransformation(bool g)
-{
-  _gauge = g; 
 }
 
 void Condor2VortexExtractor::SetDataset(const GLDataset* ds)

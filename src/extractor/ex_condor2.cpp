@@ -2,7 +2,7 @@
 #include <vector>
 #include <getopt.h>
 #include "io/Condor2Dataset.h"
-#include "Condor2Extractor.h"
+#include "extractor/Condor2Extractor.h"
 
 static std::string filename_in, filename_out;
 static double B[3] = {0.0}; 
@@ -27,7 +27,7 @@ static struct option longopts[] = {
   {0, 0, 0, 0} 
 };
 
-bool parse_arg(int argc, char **argv)
+static bool parse_arg(int argc, char **argv)
 {
   int c; 
   bool b_set = false;  
@@ -81,7 +81,7 @@ bool parse_arg(int argc, char **argv)
   return true;  
 }
 
-void print_help(int argc, char **argv)
+static void print_help(int argc, char **argv)
 {
   fprintf(stderr, "USAGE:\n");
   fprintf(stderr, "%s -i <input_filename> [-o output_filename] [-gauge] [-t=<t>] [-T=<T>] [-Kx=<Kx>] [-Bx=<Bx>] [-By=<By>] [-Bz=<Bz>]\n", argv[0]);

@@ -1,6 +1,7 @@
 #include "Extractor.h"
 
-VortexExtractor::VortexExtractor()
+VortexExtractor::VortexExtractor() :
+  _gauge(false)
 {
 
 }
@@ -8,6 +9,11 @@ VortexExtractor::VortexExtractor()
 VortexExtractor::~VortexExtractor()
 {
 
+}
+
+void VortexExtractor::SetGaugeTransformation(bool g)
+{
+  _gauge = g; 
 }
 
 void VortexExtractor::WriteVortexObjects(const std::string& filename)

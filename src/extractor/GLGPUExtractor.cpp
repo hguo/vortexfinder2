@@ -15,13 +15,17 @@ enum {
   TRIANGLE_LOWER = 1
 }; 
 
-GLGPUVortexExtractor::GLGPUVortexExtractor(const GLGPUDataset *ds)
-  : _ds(ds)
+GLGPUVortexExtractor::GLGPUVortexExtractor()
 {
 }
 
 GLGPUVortexExtractor::~GLGPUVortexExtractor()
 {
+}
+  
+void GLGPUVortexExtractor::SetDataset(const GLDataset *ds)
+{
+  _ds = (const GLGPUDataset*)ds; 
 }
 
 void GLGPUVortexExtractor::solve(int x, int y, int z, int face)
@@ -168,7 +172,7 @@ void GLGPUVortexExtractor::solve(int x, int y, int z, int face)
   }
 }
 
-void GLGPUVortexExtractor::extract()
+void GLGPUVortexExtractor::Extract()
 {
   int dims[3] = {_ds->dims()[0], _ds->dims()[1], _ds->dims()[2]}; 
   float phase[4], delta[4];  
@@ -180,7 +184,10 @@ void GLGPUVortexExtractor::extract()
           solve(x, y, z, face);
 
   fprintf(stderr, "found %lu punctured points\n", _points.size());
-  
+}
+
+void GLGPUVortexExtractor::Trace()
+{
   // tracing punctured points
   while (!_points.empty()) {
     std::map<int, punctured_point_t>::iterator it = _points.begin();

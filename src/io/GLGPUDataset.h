@@ -19,11 +19,13 @@ class GLGPUDataset : public GLDataset
 public: 
   GLGPUDataset(); 
   ~GLGPUDataset();
+ 
+  bool OpenDataFile(const std::string& filename); 
+  // void LoadTimeStep(int timestep);
+  // void CloseDataFile();
 
+public:
   void PrintInfo() const; 
-
-  bool LoadFromFile(const std::string& filename); //!< "legacy" format
-  void WriteToNetCDF(const std::string& filename); 
 
   const int* dims() const {return _dims;}
   const bool* pbc() const {return _pbc;}

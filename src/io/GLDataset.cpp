@@ -26,3 +26,18 @@ void GLDataset::SetKex(double Kex)
   _Kex = Kex; 
 }
 
+bool GLDataset::OpenDataFile(const std::string& filename)
+{
+  // no impl
+  return false;
+}
+
+void GLDataset::LoadTimeStep(int)
+{
+  // no impl
+}
+
+void GLDataset::CloseDataFile()
+{
+  // no impl
+}

@@ -3,29 +3,31 @@
 
 #include <map>
 #include <list>
-
-class GLGPUDataset; 
+#include "Extractor.h"
   
 typedef struct {
   float x, y, z; 
 } point_t;
 
-class GLGPUVortexExtractor {
+class GLGPUVortexExtractor : public VortexExtractor {
   typedef struct {
     float x, y, z; 
     int flag; 
   } punctured_point_t;
 
 public:
-  GLGPUVortexExtractor(const GLGPUDataset *ds);
+  GLGPUVortexExtractor(); 
   ~GLGPUVortexExtractor();
 
-  void extract();
-  const std::list<std::list<point_t> >& cores() const {return _cores;} 
+  void SetDataset(const GLDataset *ds); 
 
+  void Extract();
+  void Trace(); 
 private:
   void solve(int x, int y, int z, int face);
   void trace(std::map<int, punctured_point_t>::iterator it, std::list<std::map<int, punctured_point_t>::iterator>& traversed, bool dir, bool seed); 
+  
+  const std::list<std::list<point_t> >& cores() const {return _cores;} 
 
   void id2cell(int id, int *x, int *y, int *z);
   int cell2id(int x, int y, int z);
