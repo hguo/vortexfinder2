@@ -23,6 +23,8 @@ public:
   bool OpenDataFile(const std::string& filename); 
   // void LoadTimeStep(int timestep);
   // void CloseDataFile();
+  
+  void SerializeDataInfoToString(std::string& buf) const;
 
 public:
   void PrintInfo() const; 

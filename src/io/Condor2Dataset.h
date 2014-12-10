@@ -25,6 +25,7 @@ public:
   void SetEquationSystems(libMesh::EquationSystems*);
 
   void PrintInfo() const; 
+  void SerializeDataInfoToString(std::string& buf) const;
 
 public:
   libMesh::UnstructuredMesh* mesh() const {return _mesh;}

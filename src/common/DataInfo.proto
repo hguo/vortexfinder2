@@ -1,0 +1,32 @@
+message PBDataInfo {
+  enum Model {
+    GLGPU = 0;
+    CONDOR2 = 1;
+  }
+
+  required Model model = 1;
+  optional string name = 2; 
+
+  // Lenghths
+  required double Lx = 10; 
+  required double Ly = 11; 
+  required double Lz = 12; 
+
+  // Magnetic field
+  required double Bx = 21; 
+  required double By = 22; 
+  required double Bz = 23;
+
+  // Kex
+  required double Kex = 30;
+
+  // Dimensions (rectilinear grid only)
+  optional int32 Dx = 40;
+  optional int32 Dy = 41;
+  optional int32 Dz = 42;
+
+  // Periodic boundary conditions
+  optional bool pbc_x = 50; 
+  optional bool pbc_y = 51; 
+  optional bool pbc_z = 52;
+}

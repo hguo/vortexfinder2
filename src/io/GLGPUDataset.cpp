@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cmath>
 #include "GLGPUDataset.h"
+#include "common/DataInfo.pb.h"
 
 static const int GLGPU_TAG_SIZE = 4;
 static const char GLGPU_TAG[] = "CA02"; 
@@ -23,6 +24,34 @@ GLGPUDataset::~GLGPUDataset()
 void GLGPUDataset::PrintInfo() const
 {
   // TODO
+}
+  
+void GLGPUDataset::SerializeDataInfoToString(std::string& buf) const
+{
+  PBDataInfo pb;
+
+  pb.set_model(PBDataInfo::GLGPU);
+  // pb.set_name("");  
+
+  pb.set_lx(Lengths()[0]); 
+  pb.set_ly(Lengths()[1]); 
+  pb.set_lz(Lengths()[2]); 
+
+  pb.set_bx(Bx());
+  pb.set_by(By());
+  pb.set_bz(Bz());
+
+  pb.set_kex(Kex());
+
+  pb.set_dx(dims()[0]);
+  pb.set_dy(dims()[1]);
+  pb.set_dz(dims()[2]);
+
+  pb.set_pbc_x(pbc()[0]);
+  pb.set_pbc_y(pbc()[0]);
+  pb.set_pbc_z(pbc()[0]);
+
+  pb.SerializeToString(&buf);
 }
 
 bool GLGPUDataset::OpenDataFile(const std::string &filename)
@@ -79,13 +108,13 @@ bool GLGPUDataset::OpenDataFile(const std::string &filename)
     // _time = time; 
     _fluctuation_amp = fluctuation_amp;
     _B[0] = B[0]; _B[1] = B[1]; _B[2] = B[2];
-    _Jx = Jx; 
+    // _Jx = Jx; 
   } else if (datatype == GLGPU_TYPE_DOUBLE) {
-    double time; 
+    double time, Jx;  
     fread(&time, sizeof(double), 1, fp); 
     fread(&_fluctuation_amp, sizeof(double), 1, fp);
     fread(_B, sizeof(double), 3, fp);
-    fread(&_Jx, sizeof(double), GLGPU_TYPE_FLOAT, fp); 
+    fread(&Jx, sizeof(double), GLGPU_TYPE_FLOAT, fp); 
   }
     
   // fprintf(stderr, "time=%f\n", time); 

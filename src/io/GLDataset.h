@@ -16,6 +16,8 @@ public: // data I/O
   virtual void LoadTimeStep(int timestep);
   virtual void CloseDataFile();
 
+  virtual void SerializeDataInfoToString(std::string& buf) const = 0;
+
 public: // properties
   int Dimensions() const {return 3;}  // currently only 3D data is supported
 
@@ -31,7 +33,6 @@ public: // properties
 
   const double* Lengths() const {return _lengths;} 
 
-  double Jx() const {return _Jx;}
   double Kex() const {return _Kex;} 
   double Kex_dot() const {return _Kex_dot;}
 
@@ -43,7 +44,6 @@ protected:
 
   double _lengths[3];
   double _B[3];
-  double _Jx; 
   double _Kex, _Kex_dot;
   double _fluctuation_amp; 
 }; 

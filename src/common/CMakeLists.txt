@@ -4,6 +4,7 @@ set (common_sources
 )
 
 set (common_protos
+  DataInfo.proto
   VortexObject.proto
   FieldLine.proto
 )

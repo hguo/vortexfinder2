@@ -1,5 +1,6 @@
-#include "Condor2Dataset.h"
 #include <cassert>
+#include "Condor2Dataset.h"
+#include "common/DataInfo.pb.h"
 
 using namespace libMesh;
 
@@ -21,6 +22,27 @@ Condor2Dataset::~Condor2Dataset()
 void Condor2Dataset::PrintInfo() const
 {
   // TODO
+}
+
+void Condor2Dataset::SerializeDataInfoToString(std::string& buf) const
+{
+  PBDataInfo pb;
+
+  pb.set_model(PBDataInfo::CONDOR2);
+  // pb.set_name("");  
+
+  // FIXME
+  pb.set_lx(Lengths()[0]); 
+  pb.set_ly(Lengths()[1]); 
+  pb.set_lz(Lengths()[2]); 
+
+  pb.set_bx(Bx());
+  pb.set_by(By());
+  pb.set_bz(Bz());
+
+  pb.set_kex(Kex());
+
+  pb.SerializeToString(&buf);
 }
 
 bool Condor2Dataset::OpenDataFile(const std::string& filename)

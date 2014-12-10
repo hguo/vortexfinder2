@@ -5,4 +5,4 @@ set (io_sources
 )
 
 add_library (glio ${io_sources})
-target_link_libraries (glio ${LIBMESH_LIBRARY})
+target_link_libraries (glio glcommon ${LIBMESH_LIBRARY})
