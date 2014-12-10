@@ -185,6 +185,8 @@ void GLGPUVortexExtractor::Extract()
 
 void GLGPUVortexExtractor::Trace()
 {
+  _vortex_objects.clear();
+
   // tracing punctured points
   while (!_points.empty()) {
     std::map<int, punctured_point_t>::iterator it = _points.begin();
@@ -193,22 +195,22 @@ void GLGPUVortexExtractor::Trace()
     trace(it, traversed, true, true); 
     trace(it, traversed, false, true);
 
-    std::list<point_t> core;
-    point_t pt;  
+    VortexObject vobj; 
+    std::list<double> line;
 
     // fprintf(stderr, "-----------\n"); 
     for (std::list<std::map<int, punctured_point_t>::iterator>::iterator it = traversed.begin(); it != traversed.end(); it++) {
-      pt.x = (*it)->second.x; 
-      pt.y = (*it)->second.y; 
-      pt.z = (*it)->second.z;
-      core.push_back(pt); 
-      // fprintf(stderr, "{%f, %f, %f}\n", pt.x, pt.y, pt.z); 
+      line.push_back((*it)->second.x); 
+      line.push_back((*it)->second.y); 
+      line.push_back((*it)->second.z); 
       _points.erase(*it);
     }
 
-    _cores.push_back(core); 
+    vobj.AddVortexLine(line);
+    _vortex_objects.push_back(vobj); 
   }
-  // fprintf(stderr, "traced %lu core lines\n", _cores.size()); 
+  
+  fprintf(stderr, "traced %lu vortex objects.\n", _vortex_objects.size());
 }
 
 void GLGPUVortexExtractor::trace(std::map<int, punctured_point_t>::iterator it, std::list<std::map<int, punctured_point_t>::iterator>& traversed, bool dir, bool seed)

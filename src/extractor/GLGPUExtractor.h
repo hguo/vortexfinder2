@@ -26,8 +26,6 @@ public:
 private:
   void solve(int x, int y, int z, int face);
   void trace(std::map<int, punctured_point_t>::iterator it, std::list<std::map<int, punctured_point_t>::iterator>& traversed, bool dir, bool seed); 
-  
-  const std::list<std::list<point_t> >& cores() const {return _cores;} 
 
   void id2cell(int id, int *x, int *y, int *z);
   int cell2id(int x, int y, int z);
@@ -39,9 +37,7 @@ private:
 
 private: 
   const GLGPUDataset *_ds; 
-
   std::map<int, punctured_point_t> _points;  // <faceId, point>
-  std::list<std::list<point_t> > _cores;   
 }; 
 
 #endif
