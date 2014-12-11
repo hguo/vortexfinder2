@@ -97,8 +97,10 @@ bool GLGPUDataset::OpenDataFile(const std::string &filename)
     } else if (datatype == GLGPU_TYPE_DOUBLE) {
       fread(&_lengths[i], sizeof(double), 1, fp); 
     }
+    _origins[i] = -0.5*_lengths[i];
   }
   fprintf(stderr, "dims={%d, %d, %d}\n", _dims[0], _dims[1], _dims[2]); 
+  fprintf(stderr, "origins={%f, %f, %f}\n", _origins[0], _origins[1], _origins[2]);
   fprintf(stderr, "lengths={%f, %f, %f}\n", _lengths[0], _lengths[1], _lengths[2]);
 
   // dummy

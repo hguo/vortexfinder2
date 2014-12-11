@@ -3,10 +3,20 @@
 
 #include "Tracer.h"
 
+class GLGPUDataset;
+
 class GLGPUFieldLineTracer : public FieldLineTracer
 {
+public:
   GLGPUFieldLineTracer(); 
   ~GLGPUFieldLineTracer();
+
+  void SetDataset(const GLDataset *ds);
+
+  void Trace(); 
+
+private:
+  const GLGPUDataset *_ds;
 }; 
 
 #endif

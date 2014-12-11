@@ -13,6 +13,8 @@ class QMouseEvent;
 class QKeyEvent; 
 class QWheelEvent; 
 
+class PBDataInfo;
+
 /* 
  * \class   CGLWidget
  * \author  Hanqi Guo
@@ -47,7 +49,8 @@ private:
 
 private: //data
   std::vector<VortexObject> _vortex_objects;
- 
+  PBDataInfo *_data_info;
+
 private: // camera
   const float _fovy, _znear, _zfar; 
   const QVector3D _eye, _center, _up;

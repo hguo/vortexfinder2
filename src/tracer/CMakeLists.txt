@@ -5,7 +5,7 @@ set (extractor_sources
 )
 
 add_library (gltracer ${extractor_sources})
-link_libraries (gltracer glcommon ${LIBMESH_LIBRARY})
+link_libraries (gltracer glcommon glio ${LIBMESH_LIBRARY})
 
 add_executable (tracer main.cpp)
 target_link_libraries (tracer gltracer)

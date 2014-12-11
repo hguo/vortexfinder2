@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <OpenGL/glu.h>
 #include "widget.h"
+#include "common/DataInfo.pb.h"
 
 using namespace std; 
 

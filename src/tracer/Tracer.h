@@ -10,6 +10,8 @@ public:
   ~FieldLineTracer(); 
 
   virtual void SetDataset(const GLDataset* ds) = 0;
+
+  virtual void Trace() = 0;
 }; 
 
 #endif
