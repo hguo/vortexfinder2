@@ -31,11 +31,16 @@ void GLGPUDataset::SerializeDataInfoToString(std::string& buf) const
   PBDataInfo pb;
 
   pb.set_model(PBDataInfo::GLGPU);
-  // pb.set_name("");  
+  pb.set_name(_data_name);
 
-  pb.set_lx(Lengths()[0]); 
-  pb.set_ly(Lengths()[1]); 
-  pb.set_lz(Lengths()[2]); 
+  if (Lengths()[0]>0) {
+    pb.set_ox(Origins()[0]); 
+    pb.set_oy(Origins()[1]); 
+    pb.set_oz(Origins()[2]); 
+    pb.set_lx(Lengths()[0]); 
+    pb.set_ly(Lengths()[1]); 
+    pb.set_lz(Lengths()[2]); 
+  }
 
   pb.set_bx(Bx());
   pb.set_by(By());
@@ -58,6 +63,8 @@ bool GLGPUDataset::OpenDataFile(const std::string &filename)
 {
   FILE *fp = fopen(filename.c_str(), "rb");
   if (!fp) return false;
+
+  _data_name = filename;
 
   // tag check
   char tag[GLGPU_TAG_SIZE+1] = {0};  

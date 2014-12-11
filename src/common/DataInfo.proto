@@ -7,10 +7,14 @@ message PBDataInfo {
   required Model model = 1;
   optional string name = 2; 
 
-  // Lenghths
-  required double Lx = 10; 
-  required double Ly = 11; 
-  required double Lz = 12; 
+  // Origin
+  optional double Ox = 60;
+  optional double Oy = 61; 
+  optional double Oz = 62; 
+
+  optional double Lx = 10; 
+  optional double Ly = 11; 
+  optional double Lz = 12; 
 
   // Magnetic field
   required double Bx = 21; 

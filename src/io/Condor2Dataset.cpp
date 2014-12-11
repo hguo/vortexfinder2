@@ -29,12 +29,16 @@ void Condor2Dataset::SerializeDataInfoToString(std::string& buf) const
   PBDataInfo pb;
 
   pb.set_model(PBDataInfo::CONDOR2);
-  // pb.set_name("");  
+  pb.set_name(_data_name);
 
-  // FIXME
-  pb.set_lx(Lengths()[0]); 
-  pb.set_ly(Lengths()[1]); 
-  pb.set_lz(Lengths()[2]); 
+  if (Lengths()[0]>0) {
+    pb.set_ox(Origins()[0]); 
+    pb.set_oy(Origins()[1]); 
+    pb.set_oz(Origins()[2]); 
+    pb.set_lx(Lengths()[0]); 
+    pb.set_ly(Lengths()[1]); 
+    pb.set_lz(Lengths()[2]); 
+  }
 
   pb.set_bx(Bx());
   pb.set_by(By());
@@ -47,6 +51,8 @@ void Condor2Dataset::SerializeDataInfoToString(std::string& buf) const
 
 bool Condor2Dataset::OpenDataFile(const std::string& filename)
 {
+  _data_name = filename;
+
   /// mesh
   _mesh = new Mesh(comm()); 
   _exio = new ExodusII_IO(*_mesh);

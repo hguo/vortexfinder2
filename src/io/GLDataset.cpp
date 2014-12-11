@@ -8,6 +8,7 @@ GLDataset::GLDataset()
   : _Kex(0), _Kex_dot(0), _fluctuation_amp(0), 
     _timestep(0)
 {
+  memset(_origins, 0, sizeof(double)*3); 
   memset(_lengths, 0, sizeof(double)*3); 
   memset(_B, 0, sizeof(double)*3); 
 }

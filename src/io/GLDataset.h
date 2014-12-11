@@ -31,6 +31,7 @@ public: // properties
   double By() const {return _B[1];} 
   double Bz() const {return _B[2];}
 
+  const double* Origins() const {return _origins;}
   const double* Lengths() const {return _lengths;} 
 
   double Kex() const {return _Kex;} 
@@ -42,6 +43,9 @@ protected:
   int _timestep; 
   std::vector<double> _time_stamps; 
 
+  std::string _data_name;
+
+  double _origins[3]; 
   double _lengths[3];
   double _B[3];
   double _Kex, _Kex_dot;
