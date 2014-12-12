@@ -27,6 +27,14 @@ void GLGPUVortexExtractor::SetDataset(const GLDataset *ds)
 {
   _ds = (const GLGPUDataset*)ds; 
 }
+  
+std::vector<unsigned int> GLGPUVortexExtractor::Neighbors(unsigned int elem_id) const
+{
+  std::vector<unsigned int> neighbors; 
+
+  // TODO
+  return neighbors; 
+}
 
 void GLGPUVortexExtractor::solve(int x, int y, int z, int face)
 {

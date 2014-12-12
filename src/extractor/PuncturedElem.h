@@ -1,14 +1,103 @@
 #ifndef _PUNCTURED_ELEM_H
 #define _PUNCTURED_ELEM_H
 
-#include <string>
-#include <list>
 #include <vector>
 #include <bitset>
-#include <sstream>
+#include <map>
 #include "def.h"
 
-typedef unsigned int ElemIdType;
+class PuncturedElem; 
+typedef std::map<unsigned int, PuncturedElem*> PuncturedElemMap;
+
+class PuncturedElem {
+public:
+  mutable bool visited; // for traversal
+  mutable unsigned int prev, next; // for ordinary elem only
+
+public:
+  PuncturedElem() : visited(false), prev(UINT_MAX), next(UINT_MAX) {}
+  virtual ~PuncturedElem() {}
+
+  void Init() {
+    _pos.resize(NrFaces()*NrDims());
+  }
+
+  void SetElemId(unsigned int id) {_elem_id = id;}
+  unsigned int ElemId() const {return _elem_id;}
+
+  bool Punctured() const {return _bits.any();} // returns false if no punctured faces
+
+  int Chirality(int face) const {
+    if (!_bits[face]) return 0; // face not punctured
+    else return _bits[face+NrFaces()] ? 1 : -1; 
+  }
+  
+  void AddPuncturedFace(int face, int chirality, const double *p) {
+    _bits[face] = 1; 
+    if (chirality>0) 
+      _bits[face+NrFaces()] = 1;
+    for (int i=0; i<NrDims(); i++) 
+      _pos[face*NrDims()+i] = p[i];
+  }
+  
+  void GetPuncturedPoint(int face, double* p) const {
+    for (int i=0; i<NrDims(); i++) 
+      p[i] = _pos[face*NrDims()+i];
+  }
+  
+  void RemovePuncturedFace(int face) {_bits[face] = 0; _bits[face+NrFaces()] = 0;} 
+  bool IsPunctured(int face) const {return _bits[face];}
+  bool IsSpecial() const {return Degree()>2;}
+  
+  int Degree() const {
+    int deg = 0; 
+    for (int i=0; i<NrFaces(); i++) 
+      deg += _bits[i]; 
+    return deg; 
+  }
+
+private:
+  unsigned int _elem_id;
+  std::bitset<16> _bits;
+  std::vector<double> _pos; // punctured position
+  std::vector<PuncturedElem*> _neighbors;
+
+protected:
+  virtual int NrFaces() const = 0;
+  virtual int NrDims() const = 0;
+};
+
+// Triangle
+class PuncturedElemTri : public PuncturedElem
+{
+  int NrDims() const {return 2;}
+  int NrFaces() const {return 3;}
+};
+
+// Quadrilateral
+class PuncturedElemQuad : public PuncturedElem
+{
+  int NrDims() const {return 2;}
+  int NrFaces() const {return 4;}
+};
+
+// Tetrahedron
+class PuncturedElemTet : public PuncturedElem
+{
+  int NrDims() const {return 3;}
+  int NrFaces() const {return 4;}
+};
+
+// Hexahedron
+class PuncturedElemHex : public PuncturedElem
+{
+  int NrDims() const {return 3;}
+  int NrFaces() const {return 6;}
+};
+
+
+
+#if 0
 
 /* 
  * \class   PuncturedElem
@@ -67,5 +156,7 @@ template <typename T=double, int NrFaces=4, int NrDims=3>
 class PuncturedElemMap : public std::map<ElemIdType, PuncturedElem<T, NrFaces, NrDims> > 
 {
 };
+
+#endif
 
 #endif

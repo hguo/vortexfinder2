@@ -22,25 +22,19 @@ public:
   Condor2VortexExtractor(); 
   ~Condor2VortexExtractor();
 
-  void SetVerbose(int level=1);
-
   void SetDataset(const GLDataset* ds);
   const Condor2Dataset* Dataset() const {return _ds;}
 
   void Extract();
-  void Trace(); 
 
 protected:
-  bool Verbose(int level=1) {return level <= _verbose;} 
+  std::vector<unsigned int> Neighbors(unsigned int elem_id) const;
 
 private: 
   int _verbose; 
   bool _gauge; 
  
   const Condor2Dataset *_ds;
-
-private:
-  PuncturedElemMap<> _punctured_elems; 
 }; 
 
 #endif

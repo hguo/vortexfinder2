@@ -23,6 +23,7 @@ public:
 
   void Extract();
   void Trace(); 
+
 private:
   void solve(int x, int y, int z, int face);
   void trace(std::map<int, punctured_point_t>::iterator it, std::list<std::map<int, punctured_point_t>::iterator>& traversed, bool dir, bool seed); 
@@ -34,6 +35,9 @@ private:
   int face2id(int f, int x, int y, int z); 
 
   float gauge(int *x0, int *x1) const;  
+
+private:
+  std::vector<unsigned int> Neighbors(unsigned int elem_id) const;
 
 private: 
   const GLGPUDataset *_ds; 
