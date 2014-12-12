@@ -12,10 +12,9 @@ typedef std::map<unsigned int, PuncturedElem*> PuncturedElemMap;
 class PuncturedElem {
 public:
   mutable bool visited; // for traversal
-  mutable unsigned int prev, next; // for ordinary elem only
 
 public:
-  PuncturedElem() : visited(false), prev(UINT_MAX), next(UINT_MAX) {}
+  PuncturedElem() : visited(false) {}
   virtual ~PuncturedElem() {}
 
   void Init() {

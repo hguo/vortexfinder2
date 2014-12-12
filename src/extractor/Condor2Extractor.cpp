@@ -107,13 +107,6 @@ void Condor2VortexExtractor::Extract()
       bool succ = find_zero_triangle(u, v, X0, X1, X2, pos); 
       if (succ) {
         pelem->AddPuncturedFace(face, chirality, pos);
-        const Elem* neighbor = elem->neighbor(face); 
-        if (neighbor != NULL) {
-          if (chirality>0) 
-            pelem->next = neighbor->id(); 
-          else 
-            pelem->prev = neighbor->id(); 
-        }
       } else {
         fprintf(stderr, "WARNING: punctured but singularities not found\n"); 
       }
