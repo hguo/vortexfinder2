@@ -1,4 +1,3 @@
-#include <netcdf.h>
 #include <cstdlib>
 #include <cstdio>
 #include <cassert>

@@ -1,8 +1,17 @@
 set (io_sources
   GLGPUDataset.cpp
-  Condor2Dataset.cpp
   GLDataset.cpp
 )
+  
+if (WITH_LIBMESH)
+  set (io_sources ${io_sources}
+    Condor2Dataset.cpp)
+endif ()
 
 add_library (glio ${io_sources})
-target_link_libraries (glio glcommon ${LIBMESH_LIBRARY})
+
+if (WITH_LIBMESH)
+  target_link_libraries (glio glcommon ${LIBMESH_LIBRARY})
+else ()
+  target_link_libraries (glio glcommon)
+endif ()
