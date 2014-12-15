@@ -6,7 +6,6 @@
 #include <cmath>
 #include "def.h"
 #include "trackball.h"
-#include "common/VortexObject.h"
 
 class QMConnector; 
 class QMouseEvent;
@@ -41,28 +40,34 @@ protected:
   void keyPressEvent(QKeyEvent*); 
   void wheelEvent(QWheelEvent*); 
 
-  void renderCoreLines(); 
-  void renderCoreTubes(); 
+  void renderVortexLines(); 
+  void renderVortexTubes(); 
   void updateTubes(int nPatches, float radius); 
 
 private:
   CGLTrackball _trackball;
 
 private: //data
-  std::vector<VortexObject> _vortex_objects;
+  // std::vector<VortexObject> _vortex_objects;
+  // std::vector<FieldLine> _fieldlines;
   PBDataInfo *_data_info;
 
 private: // camera
   const float _fovy, _znear, _zfar; 
   const QVector3D _eye, _center, _up;
 
-private: // tube rendering
-  std::vector<GLfloat> line_vertices, line_colors; 
-  std::vector<GLsizei> line_vert_count; 
-  std::vector<GLint> line_indices; 
+private: // vortex line rendering
+  std::vector<GLfloat> v_line_vertices, v_line_colors; 
+  std::vector<GLsizei> v_line_vert_count; 
+  std::vector<GLint> v_line_indices; 
   
-  std::vector<GLfloat> tube_vertices, tube_normals, tube_colors; 
-  std::vector<GLuint> tube_indices_lines, tube_indices_vertices;
+  std::vector<GLfloat> vortex_tube_vertices, vortex_tube_normals, vortex_tube_colors; 
+  std::vector<GLuint> vortex_tube_indices_lines, vortex_tube_indices_vertices;
+
+private: // fieldline rendering
+  std::vector<GLfloat> f_line_vertices, f_line_colors; 
+  std::vector<GLsizei> f_line_vert_count; 
+  std::vector<GLint> f_line_indices; 
 }; 
 
 #endif
