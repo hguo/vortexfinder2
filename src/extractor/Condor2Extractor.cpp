@@ -46,9 +46,9 @@ void Condor2VortexExtractor::Extract()
              v[3] = {(*tsolution)(v_di[0]), (*tsolution)(v_di[1]), (*tsolution)(v_di[2])};
 
       Node *nodes[3] = {side->get_node(0), side->get_node(1), side->get_node(2)};
-      double X0[3] = {nodes[0]->slice(0), nodes[0]->slice(1), nodes[0]->slice(2)}, 
-             X1[3] = {nodes[1]->slice(0), nodes[1]->slice(1), nodes[1]->slice(2)}, 
-             X2[3] = {nodes[2]->slice(0), nodes[2]->slice(1), nodes[2]->slice(2)};
+      double X[3][3] = {{nodes[0]->slice(0), nodes[0]->slice(1), nodes[0]->slice(2)}, 
+                        {nodes[1]->slice(0), nodes[1]->slice(1), nodes[1]->slice(2)}, 
+                        {nodes[2]->slice(0), nodes[2]->slice(1), nodes[2]->slice(2)}};
       double rho[3] = {sqrt(u[0]*u[0]+v[0]*v[0]), sqrt(u[1]*u[1]+v[1]*v[1]), sqrt(u[2]*u[2]+v[2]*v[2])}, 
              phi[3] = {atan2(v[0], u[0]), atan2(v[1], u[1]), atan2(v[2], u[2])}; 
 
@@ -57,9 +57,9 @@ void Condor2VortexExtractor::Extract()
       double delta[3];
 
       if (_gauge) {
-        delta[0] = phi[1] - phi[0] - gauge_transformation(X0, X1, _ds->Kex(), _ds->B()); 
-        delta[1] = phi[2] - phi[1] - gauge_transformation(X1, X2, _ds->Kex(), _ds->B()); 
-        delta[2] = phi[0] - phi[2] - gauge_transformation(X2, X0, _ds->Kex(), _ds->B()); 
+        delta[0] = phi[1] - phi[0] - gauge_transformation(X[0], X[1], _ds->Kex(), _ds->B()); 
+        delta[1] = phi[2] - phi[1] - gauge_transformation(X[1], X[2], _ds->Kex(), _ds->B()); 
+        delta[2] = phi[0] - phi[2] - gauge_transformation(X[2], X[0], _ds->Kex(), _ds->B()); 
       } else {
         delta[0] = phi[1] - phi[0]; 
         delta[1] = phi[2] - phi[1]; 
@@ -89,7 +89,7 @@ void Condor2VortexExtractor::Extract()
       }
 
       double pos[3]; 
-      bool succ = find_zero_triangle(u, v, X0, X1, X2, pos); 
+      bool succ = find_zero_triangle(u, v, X, pos); 
       if (succ) {
         pelem->AddPuncturedFace(face, chirality, pos);
       } else {

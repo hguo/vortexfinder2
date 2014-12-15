@@ -118,7 +118,7 @@ void CGLWidget::paintGL()
   glLoadIdentity(); 
   glLoadMatrixd(mvmatrix.data()); 
 
-#if 1
+#if 0
   // render tube
   glEnable(GL_DEPTH_TEST); 
   glEnable(GL_LIGHTING); 

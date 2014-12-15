@@ -101,7 +101,8 @@ void GLGPUVortexExtractor::ExtractElem(int *idx)
     int chirality = ps>0 ? 1 : -1;
     double pos[3];
     // bool succ = find_zero_quad_centric(re, im, vertices, pos); 
-    bool succ = find_zero_quad_bilinear(re, im, vertices, pos); 
+    // bool succ = find_zero_quad_bilinear(re, im, vertices, pos); 
+    bool succ = find_zero_quad_barycentric(re, im, vertices, pos); 
     if (succ) {
       pelem->AddPuncturedFace(face, chirality, pos);
     } else {

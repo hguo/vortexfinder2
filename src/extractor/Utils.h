@@ -10,7 +10,7 @@ inline static T mod2pi(T x)
 }
 
 template <typename T>
-static inline bool find_zero_triangle(T r[3], T i[3], T lambda[3])
+static inline bool find_zero_triangle(T r[3], T i[3], T lambda[3], T epsilon=0)
 {
   T D = r[0]*i[1] + r[1]*i[2] + r[2]*i[0] - r[2]*i[1] - r[1]*i[0] - r[0]*i[2]; // TODO: check if D=0?
   T det[3] = {
@@ -23,23 +23,24 @@ static inline bool find_zero_triangle(T r[3], T i[3], T lambda[3])
   lambda[1] = det[1]/D; 
   lambda[2] = det[2]/D; 
   
-  if (lambda[0]>=0 && lambda[1]>=0 && lambda[2]>=0) return true; 
+  // if (lambda[0]>=0 && lambda[1]>=0 && lambda[2]>=0) return true; 
+  if (lambda[0]>=-epsilon && lambda[1]>=-epsilon && lambda[2]>=-epsilon) return true; 
   else return false; 
 }
 
 template <typename T>
-static inline bool find_zero_triangle(T r[3], T i[3], T X0[3], T X1[3], T X2[3], T pos[3])
+static inline bool find_zero_triangle(T re[3], T im[3], T X[3][3], T pos[3], T epsilon=0)
 {
   T lambda[3]; 
-  if (!find_zero_triangle(r, i, lambda)) return false; 
+  if (!find_zero_triangle(re, im, lambda, epsilon)) return false; 
 
-  T R[3][2] = {{X0[0]-X2[0], X1[0]-X2[0]}, 
-               {X0[1]-X2[1], X1[1]-X2[1]}, 
-               {X0[2]-X2[2], X1[2]-X2[2]}}; 
+  T R[3][2] = {{X[0][0]-X[2][0], X[1][0]-X[2][0]}, 
+               {X[0][1]-X[2][1], X[1][1]-X[2][1]}, 
+               {X[0][2]-X[2][2], X[1][2]-X[2][2]}}; 
 
-  pos[0] = R[0][0]*lambda[0] + R[0][1]*lambda[1] + X2[0]; 
-  pos[1] = R[1][0]*lambda[0] + R[1][1]*lambda[1] + X2[1]; 
-  pos[2] = R[2][0]*lambda[0] + R[2][1]*lambda[1] + X2[2]; 
+  pos[0] = R[0][0]*lambda[0] + R[0][1]*lambda[1] + X[2][0]; 
+  pos[1] = R[1][0]*lambda[0] + R[1][1]*lambda[1] + X[2][1]; 
+  pos[2] = R[2][0]*lambda[0] + R[2][1]*lambda[1] + X[2][2]; 
 
   return true; 
 }
@@ -125,8 +126,29 @@ static inline bool find_zero_quad_centric(T re[4], T im[4], T X[4][3], T pos[3])
 }
 
 template <typename T>
-static inline bool find_zero_quad_barycentric(T re[4], T im[4], T X[4][3], T pos[3])
+static inline bool find_zero_quad_barycentric(T R[4], T I[4], T X[4][3], T pos[3])
 {
+  const T epsilon = 0.01; 
+  T X0[3][3] = {{X[0][0], X[0][1], X[0][2]}, 
+                {X[1][0], X[1][1], X[1][2]}, 
+                {X[2][0], X[2][1], X[2][2]}}, 
+    X1[3][3] = {{X[0][0], X[0][1], X[0][2]}, 
+                {X[2][0], X[2][1], X[2][2]}, 
+                {X[3][0], X[3][1], X[3][2]}}; 
+  T R0[3] = {R[0], R[1], R[2]}, 
+    R1[3] = {R[0], R[2], R[3]}; 
+  T I0[3] = {I[0], I[1], I[2]}, 
+    I1[3] = {I[0], I[2], I[3]}; 
+
+  if (find_zero_triangle(R0, I0, X0, pos)) 
+    return true; 
+  else if (find_zero_triangle(R1, I1, X1, pos)) 
+    return true;
+  if (find_zero_triangle(R0, I0, X0, pos, epsilon))
+    return true;
+  else if (find_zero_triangle(R1, I1, X1, pos, epsilon))
+    return true;
+  else return false;
 }
 
 template <typename T>
