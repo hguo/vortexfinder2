@@ -77,3 +77,11 @@ double GLDataset::Flux(const double X[3][3]) const
 
   return inner_product(_B, dS);
 }
+
+void GLDataset::A(const double X[3], double A[3]) const
+{
+  // A={z*By, x*Bz, y*Bx}
+  A[0] = X[2] * By(); 
+  A[1] = X[0] * Bz(); 
+  A[2] = X[1] * Bx();
+}

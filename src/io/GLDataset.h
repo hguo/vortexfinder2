@@ -38,6 +38,11 @@ public: // properties
   double By() const {return _B[1];} 
   double Bz() const {return _B[2];}
 
+  void A(const double X[3], double A[3]) const; //!< compute the vector potential at given position
+  double Ax(const double X[3]) const {return X[2]*By();}
+  double Ay(const double X[3]) const {return X[0]*Bz();}
+  double Az(const double X[3]) const {return X[1]*Bx();}
+
   const double* Origins() const {return _origins;}
   const double* Lengths() const {return _lengths;} 
 
