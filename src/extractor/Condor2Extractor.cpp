@@ -4,6 +4,8 @@
 #include "Condor2Extractor.h"
 #include "InverseInterpolation.h"
 
+using namespace libMesh; 
+
 Condor2VortexExtractor::Condor2VortexExtractor() :
   _verbose(0)
 {

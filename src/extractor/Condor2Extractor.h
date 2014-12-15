@@ -9,8 +9,6 @@
 #include "PuncturedElem.h"
 #include "io/Condor2Dataset.h"
 
-using namespace libMesh; 
-
 /* 
  * \class   Condor2VortexExtractor
  * \author  Hanqi Guo
