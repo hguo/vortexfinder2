@@ -16,6 +16,8 @@ public: // data I/O
   virtual void LoadTimeStep(int timestep);
   virtual void CloseDataFile();
 
+  virtual void ComputeSupercurrentField() = 0;
+
   virtual void SerializeDataInfoToString(std::string& buf) const = 0;
 
 public: // mesh traversal & utils

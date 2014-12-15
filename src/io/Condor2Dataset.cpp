@@ -139,3 +139,7 @@ std::vector<unsigned int> Condor2Dataset::Neighbors(unsigned int elem_id) const
   return neighbors;
 }
 
+void Condor2Dataset::ComputeSupercurrentField()
+{
+  // TODO
+}

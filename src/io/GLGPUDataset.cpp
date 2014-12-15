@@ -19,7 +19,9 @@ enum {
   GLGPU_TYPE_DOUBLE = 1
 };
 
-GLGPUDataset::GLGPUDataset()
+GLGPUDataset::GLGPUDataset() : 
+  _re(NULL), _im(NULL), _amp(NULL), _phase(NULL), 
+  _scx(NULL), _scy(NULL), _scz(NULL)
 {
   for (int i=0; i<3; i++) {
     _dims[i] = 1; 
@@ -29,6 +31,11 @@ GLGPUDataset::GLGPUDataset()
 
 GLGPUDataset::~GLGPUDataset()
 {
+  if (_re) free(_re);
+  if (_im) free(_im);
+  if (_amp) free(_amp);
+  if (_phase) free (_phase);
+  if (_scx) free(_scx);
 }
 
 void GLGPUDataset::PrintInfo() const
@@ -420,3 +427,35 @@ void GLGPUDataset::WriteToNetCDF(const std::string& filename)
   NC_SAFE_CALL( nc_close(ncid) );
 }
 #endif
+
+void GLGPUDataset::ComputeSupercurrentField()
+{
+  const int nvoxels = dims()[0]*dims()[1]*dims()[2];
+
+  if (_scx != NULL) free(_scx);
+  _scx = (double*)malloc(3*sizeof(double)*nvoxels);
+  _scy = _scx + nvoxels; 
+  _scz = _scy + nvoxels;
+  memset(_scx, 0, 3*sizeof(double)*nvoxels);
+ 
+  double dphi[3], A[3];
+
+  for (int x=1; x<dims()[0]-1; x++) {
+    for (int y=1; y<dims()[1]-1; y++) {
+      for (int z=1; z<dims()[2]-1; z++) {
+        int idx[3] = {x, y, z}; 
+        double pos[3]; 
+
+        Idx2Pos(idx, pos);
+
+        dphi[0] = 0.5 * (phase(x+1, y, z) - phase(x-1, y, z)) / dx();
+        dphi[1] = 0.5 * (phase(x, y+1, z) - phase(x, y-1, z)) / dy();
+        dphi[2] = 0.5 * (phase(x, y, z+1) - phase(x, y, z-1)) / dz();
+
+        texel3D(_scx, dims(), x, y, z) = dphi[0] - Ax(pos); 
+        texel3D(_scy, dims(), x, y, z) = dphi[1] - Ay(pos); 
+        texel3D(_scz, dims(), x, y, z) = dphi[2] - Az(pos); 
+      }
+    }
+  }
+}

@@ -13,7 +13,9 @@ public:
   bool OpenDataFile(const std::string& filename); 
   // void LoadTimeStep(int timestep);
   // void CloseDataFile();
-  
+
+  void ComputeSupercurrentField();
+
   void SerializeDataInfoToString(std::string& buf) const;
   
 public:
@@ -55,7 +57,8 @@ private:
   bool _pbc[3]; 
   double _cell_lengths[3]; 
 
-  double *_re, *_im, *_amp, *_phase; 
+  double *_re, *_im, *_amp, *_phase;
+  double *_scx, *_scy, *_scz; // supercurrent field
 }; 
 
 #endif
