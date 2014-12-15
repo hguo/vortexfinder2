@@ -15,25 +15,10 @@ Condor2VortexExtractor::~Condor2VortexExtractor()
 
 void Condor2VortexExtractor::SetDataset(const GLDataset* ds)
 {
+  VortexExtractor::SetDataset(ds);
   _ds = (const Condor2Dataset*)ds;
 }
   
-std::vector<unsigned int> Condor2VortexExtractor::Neighbors(unsigned int elem_id) const
-{
-  std::vector<unsigned int> neighbors(4);
-  const Elem* elem = _ds->mesh()->elem(elem_id); 
-
-  for (int face=0; face<4; face++) {
-    const Elem* elem1 = elem->neighbor(face);
-    if (elem1 != NULL)
-      neighbors[face] = elem1->id();
-    else 
-      neighbors[face] = UINT_MAX;
-  }
-
-  return neighbors;
-}
-
 void Condor2VortexExtractor::Extract()
 {
   _punctured_elems.clear(); 
@@ -112,11 +97,10 @@ void Condor2VortexExtractor::Extract()
       }
     }
   
-    if (pelem->Punctured()) {
-      _punctured_elems[elem->id()] = pelem; 
-      // fprintf(stderr, "elem_id=%d, bits=%s\n", 
-      //     elem->id(), pelem.bits.to_string().c_str()); 
-    }
+    if (pelem->Punctured()) 
+      _punctured_elems[elem->id()] = pelem;
+    else 
+      delete pelem;
   }
 }
 

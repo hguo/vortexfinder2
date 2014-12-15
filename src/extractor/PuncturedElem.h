@@ -55,6 +55,10 @@ public:
     return deg; 
   }
 
+  void PrintInfo() const {
+    fprintf(stderr, "%s, deg=%d\n", _bits.to_string().c_str(), Degree());
+  }
+
 private:
   unsigned int _elem_id;
   std::bitset<16> _bits;

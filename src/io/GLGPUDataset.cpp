@@ -25,6 +25,133 @@ void GLGPUDataset::PrintInfo() const
 {
   // TODO
 }
+
+void GLGPUDataset::ElemId2Idx(unsigned int id, int *idx) const
+{
+  int s = dims()[0] * dims()[1]; 
+  int k = id / s; 
+  int j = (id - k*s) / dims()[0]; 
+  int i = id - k*s - j*dims()[0]; 
+
+  idx[0] = i; idx[1] = j; idx[2] = k;
+}
+
+unsigned int GLGPUDataset::Idx2ElemId(int *idx) const
+{
+  for (int i=0; i<3; i++) 
+    if (idx[i]<0 || idx[i]>=dims()[i])
+      return UINT_MAX;
+  
+  return idx[0] + dims()[0] * (idx[1] + dims()[1] * idx[2]); 
+}
+
+void GLGPUDataset::Idx2Pos(int *idx, double *pos) const
+{
+  for (int i=0; i<3; i++) 
+    pos[i] = idx[i] * CellLengths()[i] + Origins()[i];
+}
+
+void GLGPUDataset::Pos2Id(double *pos, int *idx) const
+{
+  for (int i=0; i<3; i++)
+    idx[i] = (pos[i] - Origins()[i]) / CellLengths()[i]; 
+  // TODO: perodic boundary conditions
+}
+
+double GLGPUDataset::Flux(int face) const
+{
+  // TODO: pre-compute the flux
+  switch (face) {
+  case 0: return -dx() * dy() * Bz();
+  case 1: return -dy() * dz() * Bx(); 
+  case 2: return -dz() * dx() * By(); 
+  case 3: return  dx() * dy() * Bz(); 
+  case 4: return  dy() * dz() * Bx(); 
+  case 5: return  dz() * dx() * By();
+  default: assert(false);
+  }
+}
+
+void GLGPUDataset::GetFace(int idx0[3], int face, int X[4][3]) const
+{
+  int idx1[3] = {(idx0[0]+1)%dims()[0], (idx0[1]+1)%dims()[1], (idx0[2]+1)%dims()[2]}; 
+  
+  switch (face) {
+  case 0: // XY0
+    X[0][0] = idx0[0]; X[0][1] = idx0[1]; X[0][2] = idx0[2]; 
+    X[1][0] = idx0[0]; X[1][1] = idx1[1]; X[1][2] = idx0[2]; 
+    X[2][0] = idx1[0]; X[2][1] = idx1[1]; X[2][2] = idx0[2]; 
+    X[3][0] = idx1[0]; X[3][1] = idx0[1]; X[3][2] = idx0[2]; 
+    break; 
+  
+  case 1: // YZ0
+    X[0][0] = idx0[0]; X[0][1] = idx0[1]; X[0][2] = idx0[2]; 
+    X[1][0] = idx0[0]; X[1][1] = idx0[1]; X[1][2] = idx1[2]; 
+    X[2][0] = idx0[0]; X[2][1] = idx1[1]; X[2][2] = idx1[2]; 
+    X[3][0] = idx0[0]; X[3][1] = idx1[1]; X[3][2] = idx0[2]; 
+    break; 
+  
+  case 2: // ZX0
+    X[0][0] = idx0[0]; X[0][1] = idx0[1]; X[0][2] = idx0[2]; 
+    X[1][0] = idx1[0]; X[1][1] = idx0[1]; X[1][2] = idx0[2]; 
+    X[2][0] = idx1[0]; X[2][1] = idx0[1]; X[2][2] = idx1[2]; 
+    X[3][0] = idx0[0]; X[3][1] = idx0[1]; X[3][2] = idx1[2]; 
+    break; 
+  
+  case 3: // XY1
+    X[0][0] = idx0[0]; X[0][1] = idx0[1]; X[0][2] = idx1[2]; 
+    X[1][0] = idx1[0]; X[1][1] = idx0[1]; X[1][2] = idx1[2]; 
+    X[2][0] = idx1[0]; X[2][1] = idx1[1]; X[2][2] = idx1[2]; 
+    X[3][0] = idx0[0]; X[3][1] = idx1[1]; X[3][2] = idx1[2]; 
+    break; 
+
+  case 4: // YZ1
+    X[0][0] = idx1[0]; X[0][1] = idx0[1]; X[0][2] = idx0[2]; 
+    X[1][0] = idx1[0]; X[1][1] = idx1[1]; X[1][2] = idx0[2]; 
+    X[2][0] = idx1[0]; X[2][1] = idx1[1]; X[2][2] = idx1[2]; 
+    X[3][0] = idx1[0]; X[3][1] = idx0[1]; X[3][2] = idx1[2]; 
+    break; 
+
+  case 5: // ZX1
+    X[0][0] = idx0[0]; X[0][1] = idx1[1]; X[0][2] = idx0[2]; 
+    X[1][0] = idx0[0]; X[1][1] = idx1[1]; X[1][2] = idx1[2]; 
+    X[2][0] = idx1[0]; X[2][1] = idx1[1]; X[2][2] = idx1[2]; 
+    X[3][0] = idx1[0]; X[3][1] = idx1[1]; X[3][2] = idx0[2]; 
+    break; 
+
+  default: assert(0); break;  
+  }
+}
+
+std::vector<unsigned int> GLGPUDataset::Neighbors(unsigned int elem_id) const
+{
+  std::vector<unsigned int> neighbors; 
+
+  int idx[3], idx1[3];
+  ElemId2Idx(elem_id, idx); 
+
+  for (int face=0; face<6; face++) {
+    switch (face) {
+    case 0: idx1[0] = idx[0]; idx1[1] = idx[1]; idx1[2] = idx[2]-1; break; 
+    case 1: idx1[0] = idx[0]-1; idx1[1] = idx[1]; idx1[2] = idx[2]; break;
+    case 2: idx1[0] = idx[0]; idx1[1] = idx[1]-1; idx1[2] = idx[2]; break;
+    case 3: idx1[0] = idx[0]; idx1[1] = idx[1]; idx1[2] = idx[2]+1; break; 
+    case 4: idx1[0] = idx[0]+1; idx1[1] = idx[1]; idx1[2] = idx[2]; break;
+    case 5: idx1[0] = idx[0]; idx1[1] = idx[1]+1; idx1[2] = idx[2]; break;
+    default: break;
+    }
+
+    for (int i=0; i<3; i++) 
+      if (pbc()[i]) {
+        idx1[i] = idx1[i] % dims()[i]; 
+        if (idx1[i]<0) idx1[i] += dims()[i];
+      }
+    
+    neighbors.push_back(Idx2ElemId(idx1)); 
+  }
+
+  return neighbors; 
+}
   
 void GLGPUDataset::SerializeDataInfoToString(std::string& buf) const
 {
@@ -139,9 +266,9 @@ bool GLGPUDataset::OpenDataFile(const std::string &filename)
   fprintf(stderr, "pbc={%d, %d, %d}\n", _pbc[0], _pbc[1], _pbc[2]); 
   // update cell lengths 
   for (int i=0; i<num_dims; i++) 
-    if (_pbc[i]) _cellLengths[i] = _lengths[i] / _dims[i];  
-    else _cellLengths[i] = _lengths[i] / (_dims[i]-1); 
-  fprintf(stderr, "cellLengths={%f, %f, %f}\n", _cellLengths[0], _cellLengths[1], _cellLengths[2]); 
+    if (_pbc[i]) _cell_lengths[i] = _lengths[i] / _dims[i];  
+    else _cell_lengths[i] = _lengths[i] / (_dims[i]-1); 
+  fprintf(stderr, "cell_lengths={%f, %f, %f}\n", _cell_lengths[0], _cell_lengths[1], _cell_lengths[2]); 
 
   // optype
   int optype; 

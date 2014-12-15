@@ -28,6 +28,9 @@ public:
   void SerializeDataInfoToString(std::string& buf) const;
 
 public:
+  std::vector<unsigned int> Neighbors(unsigned int elem_id) const;
+
+public:
   libMesh::UnstructuredMesh* mesh() const {return _mesh;}
   libMesh::EquationSystems* eqsys() const {return _eqsys;}
   libMesh::NonlinearImplicitSystem* tsys() const {return _tsys;}

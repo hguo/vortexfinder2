@@ -115,6 +115,53 @@ static inline bool find_zero_quad(T re[4], T im[4], T pos[2])
 }
 
 template <typename T>
+static inline bool find_zero_quad_centric(T re[4], T im[4], T X[4][3], T pos[3])
+{
+  pos[0] = 0.25*(X[0][0] + X[1][0] + X[2][0] +X[3][0]);
+  pos[1] = 0.25*(X[0][1] + X[1][1] + X[2][0] +X[3][1]);
+  pos[2] = 0.25*(X[0][2] + X[1][2] + X[2][0] +X[3][2]);
+
+  return true;
+}
+
+template <typename T>
+static inline bool find_zero_quad_barycentric(T re[4], T im[4], T X[4][3], T pos[3])
+{
+}
+
+template <typename T>
+static inline bool find_zero_quad_bilinear(T re[4], T im[4], T X[4][3], T pos[3])
+{
+  T p[2]; 
+
+  bool succ = find_zero_quad(re, im, p); 
+  if (!succ) return false;
+
+  double u[3], v[3]; 
+
+  u[0] = (1-p[0])*X[0][0] + p[0]*X[1][0];
+  u[1] = (1-p[0])*X[0][1] + p[0]*X[1][1];
+  u[2] = (1-p[0])*X[0][2] + p[0]*X[1][2];
+
+  v[0] = (1-p[0])*X[3][0] + p[0]*X[2][0];
+  v[1] = (1-p[0])*X[3][1] + p[0]*X[2][1];
+  v[2] = (1-p[0])*X[3][2] + p[0]*X[2][2];
+
+  pos[0] = (1-p[1])*u[0] + p[1]*v[0];
+  pos[1] = (1-p[1])*u[1] + p[1]*v[1];
+  pos[2] = (1-p[1])*u[2] + p[1]*v[2];
+
+  return true; 
+}
+
+template <typename T>
+static inline bool find_zero_quad_line_cross(T re[4], T im[4], T X[4][3], T pos[3])
+{
+  // TODO
+  return false;
+}
+
+template <typename T>
 static inline float gauge_transformation(const T *x0, const T *x1, T Kex, const T *B)
 {
   T gx, gy, gz; 

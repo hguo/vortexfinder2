@@ -98,3 +98,19 @@ void Condor2Dataset::LoadTimeStep(int timestep)
   // fprintf(stderr, "nodal solution copied, timestep=%d\n", timestep); 
 }
 
+std::vector<unsigned int> Condor2Dataset::Neighbors(unsigned int elem_id) const
+{
+  std::vector<unsigned int> neighbors(4);
+  const Elem* elem = mesh()->elem(elem_id); 
+
+  for (int face=0; face<4; face++) {
+    const Elem* elem1 = elem->neighbor(face);
+    if (elem1 != NULL)
+      neighbors[face] = elem1->id();
+    else 
+      neighbors[face] = UINT_MAX;
+  }
+
+  return neighbors;
+}
+

@@ -27,9 +27,6 @@ public:
 
   void Extract();
 
-protected:
-  std::vector<unsigned int> Neighbors(unsigned int elem_id) const;
-
 private: 
   int _verbose; 
   bool _gauge; 
