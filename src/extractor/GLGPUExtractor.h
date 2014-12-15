@@ -5,12 +5,20 @@
 #include <list>
 #include "Extractor.h"
 
+enum {
+  INTERPOLATION_CENTER = 0, 
+  INTERPOLATION_BARYCENTRIC, 
+  INTERPOLATION_BILINEAR, 
+  INTERPOLATION_LINECROSS
+}; 
+
 class GLGPUVortexExtractor : public VortexExtractor {
 public:
   GLGPUVortexExtractor(); 
   ~GLGPUVortexExtractor();
 
   void SetDataset(const GLDataset *ds); 
+  void SetInterpolationMode(int);
 
   void Extract();
 
@@ -21,6 +29,7 @@ private:
 
 private: 
   const GLGPUDataset *_ds; 
+  int _interpolation_mode;
 }; 
 
 #endif

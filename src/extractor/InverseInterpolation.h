@@ -2,14 +2,6 @@
 #define _UTILS_H
 
 template <typename T>
-inline static T mod2pi(T x)
-{
-  T y = fmod(x, 2*M_PI); 
-  if (y<0) y+= 2*M_PI;
-  return y; 
-}
-
-template <typename T>
 static inline bool find_zero_triangle(T r[3], T i[3], T lambda[3], T epsilon=0)
 {
   T D = r[0]*i[1] + r[1]*i[2] + r[2]*i[0] - r[2]*i[1] - r[1]*i[0] - r[0]*i[2]; // TODO: check if D=0?
@@ -116,7 +108,7 @@ static inline bool find_zero_quad(T re[4], T im[4], T pos[2])
 }
 
 template <typename T>
-static inline bool find_zero_quad_centric(T re[4], T im[4], T X[4][3], T pos[3])
+static inline bool find_zero_quad_center(T re[4], T im[4], T X[4][3], T pos[3])
 {
   pos[0] = 0.25*(X[0][0] + X[1][0] + X[2][0] +X[3][0]);
   pos[1] = 0.25*(X[0][1] + X[1][1] + X[2][0] +X[3][1]);
@@ -181,31 +173,6 @@ static inline bool find_zero_quad_line_cross(T re[4], T im[4], T X[4][3], T pos[
 {
   // TODO
   return false;
-}
-
-template <typename T>
-static inline float gauge_transformation(const T *x0, const T *x1, T Kex, const T *B)
-{
-  T gx, gy, gz; 
-  T dx = x1[0] - x0[0], 
-    dy = x1[1] - x0[1], 
-    dz = x1[2] - x0[2]; 
- 
-  T x = x0[0] + 0.5*dx, 
-    y = x0[1] + 0.5*dy, 
-    z = x0[2] + 0.5*dz;
-
-  if (B[1]>0) { // Y-Z gauge
-    gx = dx * Kex; 
-    gy =-dy * x * B[2]; // -dy*x^hat*Bz
-    gz = dz * x * B[1]; //  dz*x^hat*By
-  } else { // X-Z gauge
-    gx = dx * y * B[2] + dx * Kex; //  dx*y^hat*Bz + dx*K
-    gy = 0; 
-    gz =-dz * y * B[0]; // -dz*y^hat*Bx
-  }
-
-  return gx + gy + gz; 
 }
 
 #endif

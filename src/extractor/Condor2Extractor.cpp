@@ -2,7 +2,7 @@
 #include <list>
 #include <set>
 #include "Condor2Extractor.h"
-#include "Utils.h"
+#include "InverseInterpolation.h"
 
 Condor2VortexExtractor::Condor2VortexExtractor() :
   _verbose(0)
@@ -57,9 +57,9 @@ void Condor2VortexExtractor::Extract()
       double delta[3];
 
       if (_gauge) {
-        delta[0] = phi[1] - phi[0] - gauge_transformation(X[0], X[1], _ds->Kex(), _ds->B()); 
-        delta[1] = phi[2] - phi[1] - gauge_transformation(X[1], X[2], _ds->Kex(), _ds->B()); 
-        delta[2] = phi[0] - phi[2] - gauge_transformation(X[2], X[0], _ds->Kex(), _ds->B()); 
+        delta[0] = phi[1] - phi[0] + _ds->GaugeTransformation(X[0], X[1]); 
+        delta[1] = phi[2] - phi[1] + _ds->GaugeTransformation(X[1], X[2]); 
+        delta[2] = phi[0] - phi[2] + _ds->GaugeTransformation(X[2], X[0]); 
       } else {
         delta[0] = phi[1] - phi[0]; 
         delta[1] = phi[2] - phi[1]; 

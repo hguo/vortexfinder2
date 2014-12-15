@@ -107,8 +107,6 @@ In the GUI, use left mouse button to rotate, and use wheel to zoom in/out.
 
 ### TODOs ###
 
-* Add support for both tet/hex mesh
-* Add support for GLGPU output formats (conversion to libMesh format)
 * Interface for in-situ analysis
 * Vortex line tracking
 * More features in the GUI, e.g. super current streamlines, inclusions, etc. 

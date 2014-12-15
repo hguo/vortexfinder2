@@ -42,3 +42,26 @@ void GLDataset::CloseDataFile()
 {
   // no impl
 }
+  
+double GLDataset::GaugeTransformation(const double *X0, const double *X1) const
+{
+  double gx, gy, gz; 
+  double dx = X1[0] - X0[0], 
+         dy = X1[1] - X0[1], 
+         dz = X1[2] - X0[2]; 
+  double x = X0[0] + 0.5*dx, 
+         y = X0[1] + 0.5*dy, 
+         z = X0[2] + 0.5*dz;
+
+  if (By()>0) { // Y-Z gauge
+    gx = dx * Kex(); 
+    gy =-dy * x * Bz(); // -dy*x^hat*Bz
+    gz = dz * x * By(); //  dz*x^hat*By
+  } else { // X-Z gauge
+    gx = dx * y * Bz() + dx * Kex(); //  dx*y^hat*Bz + dx*K
+    gy = 0; 
+    gz =-dz * y * Bx(); // -dz*y^hat*Bx
+  }
+
+  return gx + gy + gz; 
+}

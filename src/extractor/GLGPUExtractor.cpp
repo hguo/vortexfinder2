@@ -2,20 +2,10 @@
 #include <cassert>
 #include "io/GLGPUDataset.h"
 #include "GLGPUExtractor.h"
-#include "Utils.h"
+#include "InverseInterpolation.h"
 
-enum {
-  FACE_XY = 0, 
-  FACE_YZ = 1, 
-  FACE_XZ = 2
-};
-
-enum {
-  TRIANGLE_UPPER = 0, 
-  TRIANGLE_LOWER = 1
-}; 
-
-GLGPUVortexExtractor::GLGPUVortexExtractor()
+GLGPUVortexExtractor::GLGPUVortexExtractor() :
+  _interpolation_mode(INTERPOLATION_BILINEAR)
 {
 }
 
@@ -27,6 +17,11 @@ void GLGPUVortexExtractor::SetDataset(const GLDataset *ds)
 {
   VortexExtractor::SetDataset(ds);
   _ds = (const GLGPUDataset*)ds; 
+}
+
+void GLGPUVortexExtractor::SetInterpolationMode(int mode)
+{
+  _interpolation_mode = mode;
 }
 
 void GLGPUVortexExtractor::Extract()
@@ -64,10 +59,10 @@ void GLGPUVortexExtractor::ExtractElem(int *idx)
 
     double delta[4];
     if (_gauge) {
-      delta[0] = phase[1] - phase[0] + gauge(X[0], X[1]);  
-      delta[1] = phase[2] - phase[1] + gauge(X[1], X[2]);  
-      delta[2] = phase[3] - phase[2] + gauge(X[2], X[3]); 
-      delta[3] = phase[0] - phase[3] + gauge(X[3], X[0]); 
+      delta[0] = phase[1] - phase[0] + _ds->GaugeTransformation(vertices[0], vertices[1]);  
+      delta[1] = phase[2] - phase[1] + _ds->GaugeTransformation(vertices[1], vertices[2]);  
+      delta[2] = phase[3] - phase[2] + _ds->GaugeTransformation(vertices[2], vertices[3]); 
+      delta[3] = phase[0] - phase[3] + _ds->GaugeTransformation(vertices[3], vertices[0]); 
     } else {
       delta[0] = phase[1] - phase[0];  
       delta[1] = phase[2] - phase[1];  
@@ -100,9 +95,30 @@ void GLGPUVortexExtractor::ExtractElem(int *idx)
 
     int chirality = ps>0 ? 1 : -1;
     double pos[3];
-    // bool succ = find_zero_quad_centric(re, im, vertices, pos); 
-    // bool succ = find_zero_quad_bilinear(re, im, vertices, pos); 
-    bool succ = find_zero_quad_barycentric(re, im, vertices, pos); 
+    bool succ = false; 
+
+    switch (_interpolation_mode) {
+    case INTERPOLATION_CENTER: 
+      succ = find_zero_quad_center(re, im, vertices, pos); 
+      break;
+
+    case INTERPOLATION_BARYCENTRIC: 
+      succ = find_zero_quad_barycentric(re, im, vertices, pos); 
+      break; 
+
+    case INTERPOLATION_BILINEAR: 
+      succ = find_zero_quad_bilinear(re, im, vertices, pos); 
+      break;
+    
+    case INTERPOLATION_LINECROSS: // TODO
+      fprintf(stderr, "FATAL: line cross not yet implemented. exiting.\n"); 
+      assert(false);
+      succ = find_zero_quad_line_cross(re, im, vertices, pos); 
+      break;
+
+    default: 
+      break;
+    }
     if (succ) {
       pelem->AddPuncturedFace(face, chirality, pos);
     } else {
@@ -115,109 +131,4 @@ void GLGPUVortexExtractor::ExtractElem(int *idx)
   }
   else
     delete pelem;
-}
-
-
-#if 0 // find zero point
-#if 0 // barycentric
-    double re0[3] = {re[1], re[2], re[0]},
-          im0[3] = {im[1], im[2], im[0]},
-          re1[3] = {re[3], re[2], re[0]},
-          im1[3] = {im[3], im[2], im[0]};
-    double lambda[3];
-
-    bool upper = find_zero_triangle(re0, im0, lambda),  
-         lower = find_zero_triangle(re1, im1, lambda);
-    
-    double p, q;  
-    if (lower) {
-      p = lambda[0] + lambda[1]; 
-      q = lambda[1]; 
-    } else if (upper) {
-      p = lambda[1]; 
-      q = lambda[0] + lambda[1]; 
-    } else {
-      fprintf(stderr, "FATAL: punctured but no zero point.\n");
-      p = q = 0.5f; 
-      // return; 
-    }
-
-    double xx=x, yy=y, zz=z;  
-    switch (face) {
-    case FACE_XY: xx=x+p; yy=y+q; break; 
-    case FACE_YZ: yy=y+p; zz=z+q; break; 
-    case FACE_XZ: xx=x+p; zz=z+q; break;
-    default: assert(0); break; 
-    }
-    
-    // fprintf(stderr, "punctured, {%d, %d, %d}, face=%d, pt={%f, %f, %f}\n", 
-    //     x, y, z, face, xx, yy, zz); 
-
-    punctured_point_t point;
-    point.x = xx; 
-    point.y = yy; 
-    point.z = zz; 
-    point.flag = 0;
-#else // bilinear
-    double p[2] = {0.5, 0.5};
-    if (!find_zero_quad(re, im, p)) {
-      // fprintf(stderr, "FATAL: punctured but no zero point.\n");
-      // return; 
-    }
-
-    double xx=x, yy=y, zz=z; 
-    switch (face) {
-    case FACE_XY: xx=x+p[0]; yy=y+p[1]; break; 
-    case FACE_YZ: yy=y+p[0]; zz=z+p[1]; break; 
-    case FACE_XZ: xx=x+p[0]; zz=z+p[1]; break; 
-    default: assert(0); break; 
-    }
-
-    punctured_point_t point;
-    point.x = xx; 
-    point.y = yy; 
-    point.z = zz; 
-    point.flag = 0;
-
-    // fprintf(stderr, "pos={%f, %f, %f}\n", xx, yy, zz);
-#endif
-#endif
-
-
-
-double GLGPUVortexExtractor::gauge(int *x0, int *x1) const
-{
-  double gx, gy, gz; 
-  double dx[3] = {0.f};
-
-#if 0
-  for (int i=0; i<3; i++) {
-    dx[i] = x1[i] - x0[i];
-    if (dx[i] > _ds->dims()[i]*0.5f) 
-      dx[i] -= _ds->dims()[i]*0.5f;
-    else if (dx[i] < -_ds->dims()[i]*0.5f) 
-      dx[i] += _ds->dims()[i]*0.5f; 
-    dx[i] *= _ds->CellLengths()[i]; 
-  }
-#endif
-  
-  for (int i=0; i<3; i++) 
-    dx[i] = (x1[i] - x0[i]) * _ds->CellLengths()[i];
-
-  double x = ((x0[0] + x1[0])*0.5 - (_ds->dims()[0]-1)*0.5) * _ds->CellLengths()[0],  
-         y = ((x0[1] + x1[1])*0.5 - (_ds->dims()[1]-1)*0.5) * _ds->CellLengths()[1], 
-         z = ((x0[2] + x1[2])*0.5 - (_ds->dims()[2]-1)*0.5) * _ds->CellLengths()[2]; 
-
-  if (_ds->B()[1] > 0) { // Y-Z gauge
-    gx = dx[0] * _ds->Kex();
-    gy =-dx[1] * x * _ds->Bz(); 
-    gz = dx[2] * y * _ds->By(); 
-  } else { // X-Z gauge
-    gx = dx[0] * y * _ds->Bz()  //  dx*y^hat*Bz
-        +dx[0] * _ds->Kex(); 
-    gy = 0; 
-    gz =-dx[2] * y * _ds->Bx(); // -dz*y^hat*Bx
-  }
-
-  return gx + gy + gz;  
 }
