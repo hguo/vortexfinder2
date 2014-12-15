@@ -30,12 +30,4 @@ protected:
   const GLDataset *_dataset;
 }; 
 
-template <typename T>
-inline static T mod2pi(T x)
-{
-  T y = fmod(x, 2*M_PI); 
-  if (y<0) y+= 2*M_PI;
-  return y; 
-}
-
 #endif

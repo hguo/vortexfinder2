@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <list>
 #include <set>
+#include "common/Utils.hpp"
 #include "Condor2Extractor.h"
 #include "InverseInterpolation.h"
 

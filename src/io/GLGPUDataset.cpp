@@ -2,8 +2,13 @@
 #include <cstdio>
 #include <cassert>
 #include <cmath>
+#include "common/Utils.hpp"
 #include "GLGPUDataset.h"
 #include "common/DataInfo.pb.h"
+
+#ifdef WITH_LIBMESH // suppose libmesh is built with netcdf
+#include <netcdf.h>
+#endif
 
 static const int GLGPU_TAG_SIZE = 4;
 static const char GLGPU_TAG[] = "CA02"; 
@@ -20,7 +25,7 @@ enum {
 
 GLGPUDataset::GLGPUDataset() : 
   _re(NULL), _im(NULL), _amp(NULL), _phase(NULL), 
-  _scx(NULL), _scy(NULL), _scz(NULL)
+  _scx(NULL), _scy(NULL), _scz(NULL), _scm(NULL)
 {
   for (int i=0; i<3; i++) {
     _dims[i] = 1; 
@@ -61,13 +66,13 @@ unsigned int GLGPUDataset::Idx2ElemId(int *idx) const
   return idx[0] + dims()[0] * (idx[1] + dims()[1] * idx[2]); 
 }
 
-void GLGPUDataset::Idx2Pos(int *idx, double *pos) const
+void GLGPUDataset::Idx2Pos(const int idx[], double *pos) const
 {
   for (int i=0; i<3; i++) 
     pos[i] = idx[i] * CellLengths()[i] + Origins()[i];
 }
 
-void GLGPUDataset::Pos2Id(double *pos, int *idx) const
+void GLGPUDataset::Pos2Id(const double pos[], int *idx) const
 {
   for (int i=0; i<3; i++)
     idx[i] = (pos[i] - Origins()[i]) / CellLengths()[i]; 
@@ -86,6 +91,24 @@ double GLGPUDataset::Flux(int face) const
   case 5: return  dz() * dx() * By();
   default: assert(false);
   }
+}
+  
+double GLGPUDataset::GaugeTransformation(const int idx0[3], const int idx1[3]) const
+{
+  double X0[3], X1[3]; 
+
+  Idx2Pos(idx0, X0); 
+  Idx2Pos(idx1, X1); 
+  
+  return GLDataset::GaugeTransformation(X0, X1);
+}
+
+double GLGPUDataset::GaugeTransformation(int x0, int y0, int z0, int x1, int y1, int z1) const
+{
+  int idx0[3] = {x0, y0, z0}, 
+      idx1[3] = {x1, y1, z1}; 
+
+  return GaugeTransformation(idx0, idx1);
 }
 
 void GLGPUDataset::GetFace(int idx0[3], int face, int X[4][3]) const
@@ -398,17 +421,70 @@ bool GLGPUDataset::OpenDataFile(const std::string &filename)
   return true; 
 }
 
-#if 0 // legacy code
-void GLGPUDataset::WriteToNetCDF(const std::string& filename)
+void GLGPUDataset::ComputeSupercurrentField()
 {
+  const int nvoxels = dims()[0]*dims()[1]*dims()[2];
+
+  if (_scx != NULL) free(_scx);
+  _scx = (double*)malloc(4*sizeof(double)*nvoxels);
+  _scy = _scx + nvoxels; 
+  _scz = _scy + nvoxels;
+  _scm = _scz + nvoxels;
+  memset(_scx, 0, 3*sizeof(double)*nvoxels);
+ 
+  double dphi[3], sc[3], A[3];
+
+  // central difference
+  for (int x=0; x<dims()[0]; x++) {
+    for (int y=0; y<dims()[1]; y++) {
+      for (int z=0; z<dims()[2]; z++) {
+        int idx[3] = {x, y, z}; 
+        double pos[3]; 
+        Idx2Pos(idx, pos);
+
+        // boundaries. TODO: pbc
+        int xp = std::max(0, x-1), 
+            xq = std::min(dims()[0]-1, x+1), 
+            yp = std::max(0, y-1), 
+            yq = std::min(dims()[1]-1, y+1), 
+            zp = std::max(0, z-1), 
+            zq = std::min(dims()[2]-1, z+1); 
+
+        // Q: should I do gauge transformation here?
+#if 0
+        dphi[0] = 0.5 * (mod2pi(phase(xq, y, z) - phase(xp, y, z) + GaugeTransformation(xq, y, z, xp, y, z) + M_PI) - M_PI) / dx();
+        dphi[1] = 0.5 * (mod2pi(phase(x, yq, z) - phase(x, yp, z) + GaugeTransformation(x, yq, z, x, yp, z) + M_PI) - M_PI) / dy();
+        dphi[2] = 0.5 * (mod2pi(phase(x, y, zq) - phase(x, y, zp) + GaugeTransformation(x, y, zq, x, y, zp) + M_PI) - M_PI) / dz();
+#else
+        dphi[0] = 0.5 * (mod2pi(phase(xq, y, z) - phase(xp, y, z) + M_PI) - M_PI) / dx();
+        dphi[1] = 0.5 * (mod2pi(phase(x, yq, z) - phase(x, yp, z) + M_PI) - M_PI) / dy();
+        dphi[2] = 0.5 * (mod2pi(phase(x, y, zq) - phase(x, y, zp) + M_PI) - M_PI) / dz();
+#endif
+
+        sc[0] = dphi[0] - Ax(pos);
+        sc[1] = dphi[1] - Ax(pos);
+        sc[2] = dphi[2] - Ax(pos);
+
+        texel3D(_scx, dims(), x, y, z) = sc[0]; 
+        texel3D(_scy, dims(), x, y, z) = sc[1];
+        texel3D(_scz, dims(), x, y, z) = sc[2];
+        texel3D(_scm, dims(), x, y, z) = sqrt(sc[0]*sc[0] + sc[1]*sc[1] + sc[2]*sc[2]);
+      }
+    }
+  }
+}
+
+void GLGPUDataset::WriteNetCDFFile(const std::string& filename)
+{
+#ifdef WITH_LIBMESH
   int ncid; 
   int dimids[3]; 
-  int varids[4];
+  int varids[8];
 
   size_t starts[3] = {0, 0, 0}, 
          sizes[3]  = {_dims[2], _dims[1], _dims[0]};
 
-  NC_SAFE_CALL( nc_create(filename, NC_CLOBBER | NC_64BIT_OFFSET, &ncid) ); 
+  NC_SAFE_CALL( nc_create(filename.c_str(), NC_CLOBBER | NC_64BIT_OFFSET, &ncid) ); 
   NC_SAFE_CALL( nc_def_dim(ncid, "z", sizes[0], &dimids[0]) );
   NC_SAFE_CALL( nc_def_dim(ncid, "y", sizes[1], &dimids[1]) );
   NC_SAFE_CALL( nc_def_dim(ncid, "x", sizes[2], &dimids[2]) );
@@ -416,45 +492,23 @@ void GLGPUDataset::WriteToNetCDF(const std::string& filename)
   NC_SAFE_CALL( nc_def_var(ncid, "phase", NC_DOUBLE, 3, dimids, &varids[1]) );
   NC_SAFE_CALL( nc_def_var(ncid, "re", NC_DOUBLE, 3, dimids, &varids[2]) );
   NC_SAFE_CALL( nc_def_var(ncid, "im", NC_DOUBLE, 3, dimids, &varids[3]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "scx", NC_DOUBLE, 3, dimids, &varids[4]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "scy", NC_DOUBLE, 3, dimids, &varids[5]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "scz", NC_DOUBLE, 3, dimids, &varids[6]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "scm", NC_DOUBLE, 3, dimids, &varids[7]) );
   NC_SAFE_CALL( nc_enddef(ncid) );
 
   NC_SAFE_CALL( nc_put_vara_double(ncid, varids[0], starts, sizes, _amp) ); 
   NC_SAFE_CALL( nc_put_vara_double(ncid, varids[1], starts, sizes, _phase) ); 
   NC_SAFE_CALL( nc_put_vara_double(ncid, varids[2], starts, sizes, _re) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[3], starts, sizes, __im) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[3], starts, sizes, _im) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[4], starts, sizes, _scx) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[5], starts, sizes, _scy) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[6], starts, sizes, _scz) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[7], starts, sizes, _scm) ); 
 
   NC_SAFE_CALL( nc_close(ncid) );
-}
+#else
+  assert(false);
 #endif
-
-void GLGPUDataset::ComputeSupercurrentField()
-{
-  const int nvoxels = dims()[0]*dims()[1]*dims()[2];
-
-  if (_scx != NULL) free(_scx);
-  _scx = (double*)malloc(3*sizeof(double)*nvoxels);
-  _scy = _scx + nvoxels; 
-  _scz = _scy + nvoxels;
-  memset(_scx, 0, 3*sizeof(double)*nvoxels);
- 
-  double dphi[3], A[3];
-
-  for (int x=1; x<dims()[0]-1; x++) {
-    for (int y=1; y<dims()[1]-1; y++) {
-      for (int z=1; z<dims()[2]-1; z++) {
-        int idx[3] = {x, y, z}; 
-        double pos[3]; 
-
-        Idx2Pos(idx, pos);
-
-        dphi[0] = 0.5 * (phase(x+1, y, z) - phase(x-1, y, z)) / dx();
-        dphi[1] = 0.5 * (phase(x, y+1, z) - phase(x, y-1, z)) / dy();
-        dphi[2] = 0.5 * (phase(x, y, z+1) - phase(x, y, z-1)) / dz();
-
-        texel3D(_scx, dims(), x, y, z) = dphi[0] - Ax(pos); 
-        texel3D(_scy, dims(), x, y, z) = dphi[1] - Ay(pos); 
-        texel3D(_scz, dims(), x, y, z) = dphi[2] - Az(pos); 
-      }
-    }
-  }
 }

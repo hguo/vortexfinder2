@@ -44,7 +44,7 @@ void GLDataset::CloseDataFile()
   // no impl
 }
   
-double GLDataset::GaugeTransformation(const double *X0, const double *X1) const
+double GLDataset::GaugeTransformation(const double X0[], const double X1[]) const
 {
   double gx, gy, gz; 
   double dx = X1[0] - X0[0], 

@@ -1,5 +1,6 @@
 #include <cmath>
 #include <cassert>
+#include "common/Utils.hpp"
 #include "io/GLGPUDataset.h"
 #include "GLGPUExtractor.h"
 #include "InverseInterpolation.h"
@@ -59,10 +60,10 @@ void GLGPUVortexExtractor::ExtractElem(int *idx)
 
     double delta[4];
     if (_gauge) {
-      delta[0] = phase[1] - phase[0] + _ds->GaugeTransformation(vertices[0], vertices[1]);  
-      delta[1] = phase[2] - phase[1] + _ds->GaugeTransformation(vertices[1], vertices[2]);  
-      delta[2] = phase[3] - phase[2] + _ds->GaugeTransformation(vertices[2], vertices[3]); 
-      delta[3] = phase[0] - phase[3] + _ds->GaugeTransformation(vertices[3], vertices[0]); 
+      delta[0] = phase[1] - phase[0] + _ds->GaugeTransformation(X[0], X[1]);  
+      delta[1] = phase[2] - phase[1] + _ds->GaugeTransformation(X[1], X[2]);  
+      delta[2] = phase[3] - phase[2] + _ds->GaugeTransformation(X[2], X[3]); 
+      delta[3] = phase[0] - phase[3] + _ds->GaugeTransformation(X[3], X[0]); 
     } else {
       delta[0] = phase[1] - phase[0];  
       delta[1] = phase[2] - phase[1];  

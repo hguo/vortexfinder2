@@ -24,6 +24,9 @@ if (WITH_LIBMESH)
   set (LIBMESH_INCLUDE_DIR "${LIBMESH_DIR}/include")
   set (LIBMESH_LIBRARY_DIR "${LIBMESH_DIR}/lib")
   set (LIBMESH_LIBRARY "${LIBMESH_LIBRARY_DIR}/libmesh_opt.dylib")
+
+  # suppose libmesh is built with netcdf, thus we can directly use netcdf
+  set (NETCDF_LIBRARY "${LIBMESH_DIR}/lib/libnetcdf.dylib")
   
   set (PETSC_DIR "/usr" CACHE PATH "The installed path for PETSc")
   set (PETSC_INCLUDE_DIR "${PETSC_DIR}/include")

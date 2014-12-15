@@ -1,6 +1,16 @@
 #ifndef _UTILS_H
 #define _UTILS_H
 
+#include <cmath>
+
+template <typename T>
+inline static T mod2pi(T x)
+{
+  T y = fmod(x, 2*M_PI); 
+  if (y<0) y+= 2*M_PI;
+  return y; 
+}
+
 template <typename T>
 static inline void cross_product(const T A[3], const T B[3], T C[3])
 {
