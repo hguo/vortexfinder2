@@ -8,6 +8,7 @@ int main(int argc, char **argv)
 {
   GLGPUDataset ds;
   ds.OpenDataFile("GL3D_Xfieldramp_inter_0437_cop.dat");
+  ds.ComputeSupercurrentField();
 
   GLGPUFieldLineTracer tracer;
   tracer.SetDataset(&ds);

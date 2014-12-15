@@ -17,6 +17,7 @@ public:
   void WriteNetCDFFile(const std::string& filename);
 
   void ComputeSupercurrentField();
+  void GetSupercurrentField(const double **sc) const;
 
   void SerializeDataInfoToString(std::string& buf) const;
   
@@ -27,6 +28,7 @@ public:
  
   void Idx2Pos(const int idx[3], double pos[3]) const;
   void Pos2Id(const double pos[3], int idx[3]) const;
+  void Pos2Grid(const double pos[3], double gpos[3]) const; //!< to grid coordinates
 
   // counter-cloce wise sides facing outer
   void GetFace(int idx[3], int faceType, int faceIdx[4][3]) const;

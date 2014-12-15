@@ -15,8 +15,15 @@ public:
 
   void Trace(); 
 
+protected:
+  void Trace(const double seed[3]);
+ 
+protected:
+  bool rk1(double pt[3], double h);
+
 private:
   const GLGPUDataset *_ds;
+  const double *_sc[3];
 }; 
 
 #endif

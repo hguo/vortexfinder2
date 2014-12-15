@@ -2,7 +2,7 @@
 #define _LERP_H
 
 #include "Texel.hpp"
-#include <stdbool.h>
+#include <cmath>
 
 template <typename T>
 bool lerp2D(const T *pt, const int* st, const int* sz, int num_vars, const T **ptrs, T *vars); 

@@ -47,6 +47,13 @@ void GLGPUDataset::PrintInfo() const
   // TODO
 }
 
+void GLGPUDataset::GetSupercurrentField(const double **sc) const
+{
+  sc[0] = _scx; 
+  sc[1] = _scy; 
+  sc[2] = _scz;
+}
+
 void GLGPUDataset::ElemId2Idx(unsigned int id, int *idx) const
 {
   int s = dims()[0] * dims()[1]; 
@@ -66,17 +73,23 @@ unsigned int GLGPUDataset::Idx2ElemId(int *idx) const
   return idx[0] + dims()[0] * (idx[1] + dims()[1] * idx[2]); 
 }
 
-void GLGPUDataset::Idx2Pos(const int idx[], double *pos) const
+void GLGPUDataset::Idx2Pos(const int idx[], double pos[]) const
 {
   for (int i=0; i<3; i++) 
     pos[i] = idx[i] * CellLengths()[i] + Origins()[i];
 }
 
-void GLGPUDataset::Pos2Id(const double pos[], int *idx) const
+void GLGPUDataset::Pos2Id(const double pos[], int idx[]) const
 {
   for (int i=0; i<3; i++)
     idx[i] = (pos[i] - Origins()[i]) / CellLengths()[i]; 
   // TODO: perodic boundary conditions
+}
+
+void GLGPUDataset::Pos2Grid(const double pos[], double gpos[]) const
+{
+  for (int i=0; i<3; i++)
+    gpos[i] = (pos[i] - Origins()[i]) / CellLengths()[i]; 
 }
 
 double GLGPUDataset::Flux(int face) const
