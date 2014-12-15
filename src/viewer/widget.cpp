@@ -159,6 +159,16 @@ void CGLWidget::paintGL()
   CHECK_GLERROR(); 
 }
 
+void CGLWidget::LoadFieldLines(const std::string& filename)
+{
+  std::vector<FieldLine> fieldlines;
+  ReadFieldLines(filename, fieldlines);
+
+  for (int i=0; i<fieldlines.size(); i++) {
+    // TODO
+  }
+}
+
 void CGLWidget::LoadVortexObjects(const std::string& filename)
 {
   std::vector<VortexObject> vortex_objects;
@@ -201,11 +211,11 @@ void CGLWidget::LoadVortexObjects(const std::string& filename)
     cnt += v_line_vert_count[i]; 
   }
 
-  updateTubes(20, 0.5); 
+  updateVortexTubes(20, 0.5); 
 }
 
 ////////////////
-void CGLWidget::updateTubes(int nPatches, float radius) 
+void CGLWidget::updateVortexTubes(int nPatches, float radius) 
 {
   vortex_tube_vertices.clear(); 
   vortex_tube_normals.clear(); 
