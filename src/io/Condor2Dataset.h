@@ -38,6 +38,9 @@ public:
   unsigned int u_var() const {return _u_var;}
   unsigned int v_var() const {return _v_var;}
 
+private: 
+  void ProbeBoundingBox();
+
 private:
   libMesh::UnstructuredMesh *_mesh;
   libMesh::ExodusII_IO *_exio; 

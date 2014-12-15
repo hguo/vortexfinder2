@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cfloat>
 #include "Condor2Dataset.h"
 #include "common/DataInfo.pb.h"
 
@@ -60,8 +61,6 @@ bool Condor2Dataset::OpenDataFile(const std::string& filename)
   _mesh->allow_renumbering(false); 
   _mesh->prepare_for_use();
 
-  // _mesh->print_info(); 
-
   /// equation systems
   _eqsys = new EquationSystems(*_mesh); 
   
@@ -70,8 +69,9 @@ bool Condor2Dataset::OpenDataFile(const std::string& filename)
   _v_var = _tsys->add_variable("v", FIRST, LAGRANGE); 
 
   _eqsys->init(); 
-  
-  // _eqsys->print_info();
+
+  // it takes some time (~0.5s) to compute the bounding box. is there any better way to get this information?
+  ProbeBoundingBox();
 
   return true; 
 }
@@ -81,6 +81,31 @@ void Condor2Dataset::CloseDataFile()
   if (_eqsys) delete _eqsys; 
   if (_exio) delete _exio; 
   if (_mesh) delete _mesh; 
+}
+
+void Condor2Dataset::ProbeBoundingBox()
+{
+  double L[3] = {DBL_MAX, DBL_MAX, DBL_MAX}, 
+         U[3] = {-DBL_MAX, -DBL_MAX, -DBL_MAX};
+
+  MeshBase::const_node_iterator it = mesh()->local_nodes_begin(); 
+  const MeshBase::const_node_iterator end = mesh()->local_nodes_end();
+
+  for (; it != end; it++) {
+    L[0] = std::min(L[0], (*it)->slice(0));
+    L[1] = std::min(L[1], (*it)->slice(1));
+    L[2] = std::min(L[2], (*it)->slice(2));
+    U[0] = std::max(U[0], (*it)->slice(0));
+    U[1] = std::max(U[1], (*it)->slice(1));
+    U[2] = std::max(U[2], (*it)->slice(2));
+  }
+
+  _origins[0] = L[0]; 
+  _origins[1] = L[0]; 
+  _origins[2] = L[0]; 
+  _lengths[0] = U[0] - L[0]; 
+  _lengths[1] = U[1] - L[1]; 
+  _lengths[2] = U[2] - L[2]; 
 }
 
 void Condor2Dataset::LoadTimeStep(int timestep)
