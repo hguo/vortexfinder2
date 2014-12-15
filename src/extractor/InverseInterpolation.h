@@ -1,5 +1,5 @@
-#ifndef _UTILS_H
-#define _UTILS_H
+#ifndef _INVERSE_INTERPOLATION_H
+#define _INVERSE_INTERPOLATION_H
 
 template <typename T>
 static inline bool find_zero_triangle(T r[3], T i[3], T lambda[3], T epsilon=0)

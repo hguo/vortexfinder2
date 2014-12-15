@@ -2,17 +2,7 @@
 #define _GLGPU_DATASET_H
 
 #include "GLDataset.h"
-#include "common/texel.hpp"
-
-enum {
-  GLGPU_ENDIAN_LITTLE = 0, 
-  GLGPU_ENDIAN_BIG = 1
-};
-
-enum {
-  GLGPU_TYPE_FLOAT = 0, 
-  GLGPU_TYPE_DOUBLE = 1
-};
+#include "common/Texel.hpp"
 
 class GLGPUDataset : public GLDataset
 {

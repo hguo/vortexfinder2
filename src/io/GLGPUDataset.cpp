@@ -9,6 +9,16 @@
 static const int GLGPU_TAG_SIZE = 4;
 static const char GLGPU_TAG[] = "CA02"; 
 
+enum {
+  GLGPU_ENDIAN_LITTLE = 0, 
+  GLGPU_ENDIAN_BIG = 1
+};
+
+enum {
+  GLGPU_TYPE_FLOAT = 0, 
+  GLGPU_TYPE_DOUBLE = 1
+};
+
 GLGPUDataset::GLGPUDataset()
 {
   for (int i=0; i<3; i++) {

@@ -89,7 +89,7 @@ void GLGPUVortexExtractor::ExtractElem(int *idx)
       }
     }
 
-    double ps = sum / (2*M_PI);
+    double ps = -sum / (2*M_PI);
     if (fabs(ps)<0.99f) 
       continue; 
 

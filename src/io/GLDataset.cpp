@@ -1,8 +1,9 @@
-#include "gldataset.h"
 #include <cstdlib>
 #include <cstdio>
 #include <cassert>
 #include <cmath>
+#include "gldataset.h"
+#include "common/Utils.hpp"
 
 GLDataset::GLDataset()
   : _Kex(0), _Kex_dot(0), _fluctuation_amp(0), 
@@ -64,4 +65,15 @@ double GLDataset::GaugeTransformation(const double *X0, const double *X1) const
   }
 
   return gx + gy + gz; 
+}
+
+double GLDataset::Flux(const double X[3][3]) const
+{
+  double A[3] = {X[1][0] - X[0][0], X[1][1] - X[0][1], X[1][2] - X[0][2]}, 
+         B[3] = {X[2][0] - X[0][0], X[2][1] - X[0][1], X[2][2] - X[0][2]};
+  double dS[3];
+
+  cross_product(A, B, dS);
+
+  return inner_product(_B, dS);
 }

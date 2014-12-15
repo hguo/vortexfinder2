@@ -1,8 +1,7 @@
 #ifndef _LERP_H
 #define _LERP_H
 
-#include "texel.hpp"
-
+#include "Texel.hpp"
 #include <stdbool.h>
 
 template <typename T>

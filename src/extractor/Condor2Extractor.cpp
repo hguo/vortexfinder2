@@ -53,7 +53,6 @@ void Condor2VortexExtractor::Extract()
              phi[3] = {atan2(v[0], u[0]), atan2(v[1], u[1]), atan2(v[2], u[2])}; 
 
       // check phase shift
-      double flux = 0.f; // TODO: need to compute the flux correctly
       double delta[3];
 
       if (_gauge) {
@@ -72,12 +71,12 @@ void Condor2VortexExtractor::Extract()
         delta1[k] = mod2pi(delta[k] + M_PI) - M_PI; 
         phase_shift += delta1[k]; 
       }
-      phase_shift += flux; 
-      double critera = phase_shift / (2*M_PI);
+      phase_shift += _ds->Flux(X); 
+      double critera = -phase_shift / (2*M_PI);
       if (fabs(critera)<0.5f) continue; // not punctured
      
       // update bits
-      int chirality = lround(critera);
+      int chirality = critera>0 ? 1 : -1; 
 
       if (_gauge) {
         phi[1] = phi[0] + delta1[0]; 

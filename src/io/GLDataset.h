@@ -9,7 +9,7 @@ class GLDataset
 {
 public: 
   GLDataset(); 
-  ~GLDataset();
+  virtual ~GLDataset();
 
 public: // data I/O
   virtual bool OpenDataFile(const std::string& filename); 
@@ -21,7 +21,9 @@ public: // data I/O
 public: // mesh traversal & utils
   virtual std::vector<unsigned int> Neighbors(unsigned int elem_id) const = 0;
 
-  virtual double GaugeTransformation(const double *X0, const double *X1) const;
+  double GaugeTransformation(const double *X0, const double *X1) const;
+  double Flux(const double X[3][3]) const; //!< flux for a triangle
+  double Flux(int n, const double **X) const; //!< flux for an arbitrary closed curve
 
 public: // properties
   int Dimensions() const {return 3;}  // currently only 3D data is supported
