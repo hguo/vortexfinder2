@@ -29,6 +29,7 @@ public:
   ~CGLWidget(); 
 
   void LoadVortexObjects(const std::string& filename); 
+  void LoadFieldLines(const std::string& filename);
 
 protected:
   void initializeGL(); 

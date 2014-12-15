@@ -118,7 +118,7 @@ void CGLWidget::paintGL()
   glLoadIdentity(); 
   glLoadMatrixd(mvmatrix.data()); 
 
-#if 0
+#if 1
   // render tube
   glEnable(GL_DEPTH_TEST); 
   glEnable(GL_LIGHTING); 
@@ -157,10 +157,20 @@ void CGLWidget::LoadVortexObjects(const std::string& filename)
 {
   ReadVortexOjbects(filename, _vortex_objects); 
 
-#if 1
-  float c[4] = {1, 0, 0, 1}; // color;
-
   for (int j=0; j<_vortex_objects.size(); j++) { // iterate over v_objs
+  float c[4] = {1, 0, 0, 1}; // color;
+#if 1
+    switch (j%7) {
+    case 0: c[0]=0; c[1]=0; c[2]=0; c[3]=1; break;
+    case 1: c[0]=0; c[1]=0; c[2]=1; c[3]=1; break;
+    case 2: c[0]=0; c[1]=1; c[2]=0; c[3]=1; break;
+    case 3: c[0]=0; c[1]=1; c[2]=1; c[3]=1; break;
+    case 4: c[0]=1; c[1]=0; c[2]=0; c[3]=1; break;
+    case 5: c[0]=1; c[1]=0; c[2]=1; c[3]=1; break;
+    case 6: c[0]=1; c[1]=1; c[2]=0; c[3]=1; break;
+    default: break; 
+   }
+#endif
     for (int k=0; k<_vortex_objects[j].size(); k++) { //iterator over lines
       int vertCount = _vortex_objects[j][k].size()/3;  
       
@@ -184,8 +194,7 @@ void CGLWidget::LoadVortexObjects(const std::string& filename)
     cnt += line_vert_count[i]; 
   }
 
-  updateTubes(20, 1.f); 
-#endif
+  updateTubes(20, 0.5); 
 }
 
 ////////////////
