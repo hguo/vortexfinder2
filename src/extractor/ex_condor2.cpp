@@ -7,14 +7,14 @@
 static std::string filename_in, filename_out;
 static double B[3] = {0.0}; 
 static double Kex = 0;
-static int gauge = 0,  
+static int nogauge = 0,  
            verbose = 0, 
            benchmark = 0; 
 static int T0=1, T=1; // start and length of timesteps
 
 static struct option longopts[] = {
   {"verbose", no_argument, &verbose, 1},  
-  {"gauge", no_argument, &gauge, 1},
+  {"nogauge", no_argument, &nogauge, 1},
   {"benchmark", no_argument, &benchmark, 1}, 
   {"input", required_argument, 0, 'i'},
   {"output", required_argument, 0, 'o'},
@@ -72,7 +72,7 @@ static bool parse_arg(int argc, char **argv)
     fprintf(stderr, "filename_out=%s\n", filename_out.c_str()); 
     fprintf(stderr, "Kex=%f\n", Kex); 
     fprintf(stderr, "B={%f, %f, %f}\n", B[0], B[1], B[2]);
-    fprintf(stderr, "gauge=%d\n", gauge);
+    fprintf(stderr, "nogauge=%d\n", nogauge);
     fprintf(stderr, "t=%d\n", T0);
     fprintf(stderr, "T=%d\n", T);
     fprintf(stderr, "--------------------------\n"); 
@@ -84,11 +84,11 @@ static bool parse_arg(int argc, char **argv)
 static void print_help(int argc, char **argv)
 {
   fprintf(stderr, "USAGE:\n");
-  fprintf(stderr, "%s -i <input_filename> [-o output_filename] [-gauge] [-t=<t>] [-T=<T>] [-Kx=<Kx>] [-Bx=<Bx>] [-By=<By>] [-Bz=<Bz>]\n", argv[0]);
+  fprintf(stderr, "%s -i <input_filename> [-o output_filename] [--nogauge] [-t=<t>] [-T=<T>] [-Kx=<Kx>] [-Bx=<Bx>] [-By=<By>] [-Bz=<Bz>]\n", argv[0]);
   fprintf(stderr, "\n");
   fprintf(stderr, "\t--verbose   verbose output\n"); 
   fprintf(stderr, "\t--benchmark Enable benchmark\n"); 
-  fprintf(stderr, "\t--gauge     Enable gauge transformation\n"); 
+  fprintf(stderr, "\t--nogauge   Disable gauge transformation\n"); 
   fprintf(stderr, "\t--Kx        Kx\n");
   fprintf(stderr, "\t--B*        Magnetic field\n");
   fprintf(stderr, "\t-t          Starting time step for the analysis\n"); 
@@ -113,7 +113,7 @@ int main(int argc, char **argv)
   Condor2VortexExtractor extractor;
   extractor.SetDataset(&ds);
   // extractor.SetVerbose(verbose);
-  extractor.SetGaugeTransformation(gauge);
+  extractor.SetGaugeTransformation(!nogauge);
 
   ds.OpenDataFile(filename_in);
   for (int t=T0; t<T0+T; t++) {

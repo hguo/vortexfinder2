@@ -60,29 +60,47 @@ To show help information, run the command without arguments:
 $ ./extractor_condor2
 FATAL: input filename not given.
 USAGE:
-./extractor_condor2 -i <input_filename> [-o output_filename] [-gauge] [-t=<t>] [-T=<T>] [-Kx=<Kx>] [-Bx=<Bx>] [-By=<By>] [-Bz=<Bz>]
+./extractor_condor2 -i <input_filename> [-o output_filename] [--nogauge] [-t=<t>] [-T=<T>] [-Kx=<Kx>] [-Bx=<Bx>] [-By=<By>] [-Bz=<Bz>]
 
   --verbose   verbose output
   --benchmark Enable benchmark
-  --gauge     Enable gauge transformation
+  --nogauge   Disable gauge transformation
   --Kx        Kx
   --B*        Magnetic field
   -t          Starting time step for the analysis
   -T          Number of time step for the analysis
 ```
 
-To analyze the example data (tslab.3.Bz0_02.Nt1000.lu.512.e), please add all necessary arguments: 
+``` shell
+./extractor_glgpu
+FATAL: input filename not given.
+USAGE:
+./extractor_glgpu -i <input_filename> [-o output_filename] [--nogauge]
+
+  --verbose   verbose output
+    --benchmark Enable benchmark
+      --nogauge   Disable gauge transformation
+```
+
+To analyze the Condor2 example data (tslab.3.Bz0_02.Nt1000.lu.512.e), please run with all necessary arguments: 
 
 ``` shell
 $ ./extractor_condor2 tslab.3.Bz0_02.Nt1000.lu.512.e --Bz 0.02 -t 600
 ```
 
+To analyze the GLGPU example data (GL3D_Xfieldramp_inter_0437_cop.dat), please run:
+
+``` shell
+$ ./extractor_glgpu GL3D_Xfieldramp_inter_0437_cop.dat
+```
+
 By default, the output file is the input filename plus ".vortex" suffix, 
-e.g. "tslab.3.Bz0_02.Nt1000.lu.512.e.vortex". The output file could be 
+e.g. "tslab.3.Bz0_02.Nt1000.lu.512.e.vortex" and "GL3D_Xfieldramp_inter_0437_cop.dat.vortex". The output file could be 
 visualized by the viewer if it is compiled: 
 
 ``` shell
 $ ./viewer tslab.3.Bz0_02.Nt1000.lu.512.e.vortex
+$ ./viewer GL3D_Xfieldramp_inter_0437_cop.dat.vortex
 ```
 
 In the GUI, use left mouse button to rotate, and use wheel to zoom in/out. 

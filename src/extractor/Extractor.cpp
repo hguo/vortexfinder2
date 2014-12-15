@@ -46,6 +46,7 @@ void VortexExtractor::Trace()
       PuncturedElemMap::iterator it = to_visit.front();
       to_visit.pop_front();
       
+      if (it->second->visited) continue;
       if (it->second->IsSpecial()) 
         special_pelems[it->first] = it->second;
       else 

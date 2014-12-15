@@ -5,13 +5,13 @@
 #include "extractor/GLGPUExtractor.h"
 
 static std::string filename_in, filename_out;
-static int gauge = 0,  
+static int nogauge = 0,  
            verbose = 0, 
            benchmark = 0; 
 
 static struct option longopts[] = {
   {"verbose", no_argument, &verbose, 1},  
-  {"gauge", no_argument, &gauge, 1},
+  {"nogauge", no_argument, &nogauge, 1},
   {"benchmark", no_argument, &benchmark, 1}, 
   {"input", required_argument, 0, 'i'},
   {"output", required_argument, 0, 'o'},
@@ -51,7 +51,7 @@ static bool parse_arg(int argc, char **argv)
     fprintf(stderr, "---- Argument Summary ----\n"); 
     fprintf(stderr, "filename_in=%s\n", filename_in.c_str()); 
     fprintf(stderr, "filename_out=%s\n", filename_out.c_str()); 
-    fprintf(stderr, "gauge=%d\n", gauge);
+    fprintf(stderr, "nogauge=%d\n", nogauge);
     fprintf(stderr, "--------------------------\n"); 
   }
 
@@ -61,11 +61,11 @@ static bool parse_arg(int argc, char **argv)
 static void print_help(int argc, char **argv)
 {
   fprintf(stderr, "USAGE:\n");
-  fprintf(stderr, "%s -i <input_filename> [-o output_filename] [-gauge]\n", argv[0]);
+  fprintf(stderr, "%s -i <input_filename> [-o output_filename] [--nogauge]\n", argv[0]);
   fprintf(stderr, "\n");
   fprintf(stderr, "\t--verbose   verbose output\n"); 
   fprintf(stderr, "\t--benchmark Enable benchmark\n"); 
-  fprintf(stderr, "\t--gauge     Enable gauge transformation\n"); 
+  fprintf(stderr, "\t--nogauge   Disable gauge transformation\n"); 
   fprintf(stderr, "\n");
 }
 
@@ -83,7 +83,7 @@ int main(int argc, char **argv)
   GLGPUVortexExtractor extractor;
   extractor.SetDataset(&ds);
   // extractor.SetVerbose(verbose);
-  extractor.SetGaugeTransformation(gauge);
+  extractor.SetGaugeTransformation(!nogauge);
   
   extractor.Extract();
   extractor.Trace(); 
