@@ -451,7 +451,7 @@ void GLGPUDataset::ComputeSupercurrentField()
             zq = std::min(dims()[2]-1, z+1); 
 
         // Q: should I do gauge transformation here?
-#if 0
+#if 1
         dphi[0] = 0.5 * (mod2pi(phase(xq, y, z) - phase(xp, y, z) + GaugeTransformation(xq, y, z, xp, y, z) + M_PI) - M_PI) / dx();
         dphi[1] = 0.5 * (mod2pi(phase(x, yq, z) - phase(x, yp, z) + GaugeTransformation(x, yq, z, x, yp, z) + M_PI) - M_PI) / dy();
         dphi[2] = 0.5 * (mod2pi(phase(x, y, zq) - phase(x, y, zp) + GaugeTransformation(x, y, zq, x, y, zp) + M_PI) - M_PI) / dz();
