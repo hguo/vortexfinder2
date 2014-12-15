@@ -14,8 +14,8 @@ A visualization and analysis tool for condor2/GLGPU dataset
 * [CMake](http://www.cmake.org/) (mandatory, version >= 3.0.2)
 * [Protocol Buffers](https://github.com/google/protobuf/) (mandatory, version >= 2.6.1), used for the serialization/unserialization of vortex objects
 * [libMesh](http://libmesh.github.io/) (optional, preferable 0.9.4-rc1 built with PETSc), used for Condor2 data analysis
-  * [PETSc](http://www.mcs.anl.gov/petsc/) (version >= 3.5.2), used for non-linear implicit system support in libMesh
-  * [MPICH](http://www.mpich.org/) (version >= 3.1.2), PETSc dependency
+    * [PETSc](http://www.mcs.anl.gov/petsc/) (version >= 3.5.2), used for non-linear implicit system support in libMesh
+    * [MPICH](http://www.mpich.org/) (version >= 3.1.2), PETSc dependency
 * [Qt4](http://qt-project.org/) (optional, preferable 4.8.6), used for the GUI
 
 #### Build the core only ####
@@ -66,7 +66,7 @@ $ make
 Change the working directory:
 
 ``` shell
-cd build/bin
+$ cd build/bin
 ```
 
 To show help information, run the command without arguments: 
