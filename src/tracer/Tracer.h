@@ -20,6 +20,8 @@ protected:
 
   bool RK1(double pt[3], double h);
   bool RK4(double pt[3], double h);
+  
+  bool Supercurrent(const double *X, double *J) const;
 
 protected:
   const GLDataset *_ds;

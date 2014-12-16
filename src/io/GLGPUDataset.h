@@ -13,8 +13,10 @@ public:
   bool OpenDataFile(const std::string& filename); 
   // void LoadTimeStep(int timestep);
   // void CloseDataFile();
-  void OpenNetCDFFile(const std::string& filename);
-  void WriteNetCDFFile(const std::string& filename);
+  bool OpenLegacyDataFile(const std::string& filename);
+  bool OpenBDATDataFile(const std::string& filename);
+  bool OpenNetCDFFile(const std::string& filename);
+  bool WriteNetCDFFile(const std::string& filename);
 
   void ComputeSupercurrentField();
   void GetSupercurrentField(const double **sc) const;

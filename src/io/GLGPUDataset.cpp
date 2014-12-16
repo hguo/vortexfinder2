@@ -11,8 +11,10 @@
 #include <netcdf.h>
 #endif
 
-static const int GLGPU_TAG_SIZE = 4;
-static const char GLGPU_TAG[] = "CA02"; 
+static const int GLGPU_LEGACY_TAG_SIZE = 4;
+static const int GLGPU_BDAT_TAG_SIZE = 4;
+static const char GLGPU_LEGACY_TAG[] = "CA02";
+static const char GLGPU_BDAT_TAG[] = "BDAT";
 
 enum {
   GLGPU_ENDIAN_LITTLE = 0, 
@@ -247,15 +249,23 @@ void GLGPUDataset::SerializeDataInfoToString(std::string& buf) const
 
 bool GLGPUDataset::OpenDataFile(const std::string &filename)
 {
+  if (OpenBDATDataFile(filename)) return true;
+  if (OpenLegacyDataFile(filename)) return true;
+
+  return false;
+}
+
+bool GLGPUDataset::OpenLegacyDataFile(const std::string &filename)
+{
   FILE *fp = fopen(filename.c_str(), "rb");
   if (!fp) return false;
 
   _data_name = filename;
 
   // tag check
-  char tag[GLGPU_TAG_SIZE+1] = {0};  
-  fread(tag, 1, GLGPU_TAG_SIZE, fp);
-  if (strcmp(tag, GLGPU_TAG) != 0) return false;
+  char tag[GLGPU_LEGACY_TAG_SIZE+1] = {0};  
+  fread(tag, 1, GLGPU_LEGACY_TAG_SIZE, fp);
+  if (strcmp(tag, GLGPU_LEGACY_TAG) != 0) return false;
 
   // endians
   int endian; 
@@ -441,6 +451,11 @@ bool GLGPUDataset::OpenDataFile(const std::string &filename)
   return true; 
 }
 
+bool GLGPUDataset::OpenBDATDataFile(const std::string& filename)
+{
+  return false;
+}
+
 void GLGPUDataset::ComputeSupercurrentField()
 {
   const int nvoxels = dims()[0]*dims()[1]*dims()[2];
@@ -479,7 +494,7 @@ void GLGPUDataset::ComputeSupercurrentField()
   }
 }
 
-void GLGPUDataset::WriteNetCDFFile(const std::string& filename)
+bool GLGPUDataset::WriteNetCDFFile(const std::string& filename)
 {
 #ifdef WITH_LIBMESH
   int ncid; 
@@ -513,8 +528,11 @@ void GLGPUDataset::WriteNetCDFFile(const std::string& filename)
   NC_SAFE_CALL( nc_put_vara_double(ncid, varids[7], starts, sizes, _scm) ); 
 
   NC_SAFE_CALL( nc_close(ncid) );
+
+  return true;
 #else
   assert(false);
+  return false;
 #endif
 }
 
