@@ -44,7 +44,7 @@ public: // properties
 
   // Magnetic potential
   void A(const double X[3], double A[3]) const; //!< compute the vector potential at given position
-  double Ax(const double X[3]) const {if (By()>0) return 0; else return -X[2]*By();}
+  double Ax(const double X[3]) const {if (By()>0) return 0; else return -X[1]*Bz();}
   double Ay(const double X[3]) const {if (By()>0) return X[0]*Bz(); else return 0;}
   double Az(const double X[3]) const {if (By()>0) return -X[0]*By(); else return X[1]*Bx();}
 

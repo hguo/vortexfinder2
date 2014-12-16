@@ -472,18 +472,9 @@ void GLGPUDataset::ComputeSupercurrentField()
                dy1 = (yq - yp) * dy(), 
                dz1 = (zq - zp) * dz(); 
 
-        // Q: should I do gauge transformation here? (seems not)
-#if 0
-        dphi[0] = (mod2pi(Phi(xq, y, z) - Phi(xp, y, z) + GaugeTransformation(xq, y, z, xp, y, z) + M_PI) - M_PI) / dx1;
-        dphi[1] = (mod2pi(Phi(x, yq, z) - Phi(x, yp, z) + GaugeTransformation(x, yq, z, x, yp, z) + M_PI) - M_PI) / dy1;
-        dphi[2] = (mod2pi(Phi(x, y, zq) - Phi(x, y, zp) + GaugeTransformation(x, y, zq, x, y, zp) + M_PI) - M_PI) / dz1;
-#else
         dphi[0] = (mod2pi(Phi(xq, y, z) - Phi(xp, y, z) + M_PI) - M_PI) / dx1;
         dphi[1] = (mod2pi(Phi(x, yq, z) - Phi(x, yp, z) + M_PI) - M_PI) / dy1;
         dphi[2] = (mod2pi(Phi(x, y, zq) - Phi(x, y, zp) + M_PI) - M_PI) / dz1;
-#endif
-
-        // fprintf(stderr, "A={%f, %f, %f}, dphi={%f, %f, %f}\n", Ax(pos), Ay(pos), Az(pos), dphi[0], dphi[1], dphi[2]);
 
         sc[0] = dphi[0] - Ax(pos);
         sc[1] = dphi[1] - Ay(pos);
