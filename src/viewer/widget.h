@@ -44,6 +44,8 @@ protected:
   void renderVortexTubes(); 
   void updateVortexTubes(int nPatches, float radius); 
 
+  void renderFieldLines();
+
 private:
   CGLTrackball _trackball;
 

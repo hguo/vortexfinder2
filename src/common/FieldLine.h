@@ -2,10 +2,12 @@
 #define _FIELDLINE_H
 
 #include <vector>
+#include <list>
 
 class FieldLine : public std::vector<double> {
 public:
-  FieldLine(); 
+  FieldLine();
+  FieldLine(const std::list<double>&);
   ~FieldLine(); 
 
   // (un)serialization for communication and I/O
@@ -15,6 +17,6 @@ public:
 
 void WriteFieldLines(const std::string& filename, const std::vector<FieldLine>& objs);
 
-void ReadFieldLines(const std::string& filename, std::vector<FieldLine>& objs); 
+bool ReadFieldLines(const std::string& filename, std::vector<FieldLine>& objs); 
 
 #endif

@@ -12,6 +12,11 @@ public:
   virtual void SetDataset(const GLDataset* ds) = 0;
 
   virtual void Trace() = 0;
+
+  void WriteFieldLines(const std::string& filename);
+
+protected:
+  std::vector<FieldLine> _fieldlines;
 }; 
 
 #endif

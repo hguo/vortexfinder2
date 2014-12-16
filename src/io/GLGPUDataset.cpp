@@ -462,21 +462,26 @@ void GLGPUDataset::ComputeSupercurrentField()
             yq = std::min(dims()[1]-1, y+1), 
             zp = std::max(0, z-1), 
             zq = std::min(dims()[2]-1, z+1); 
+        double dx1 = (xq - xp) * dx(), 
+               dy1 = (yq - yp) * dy(), 
+               dz1 = (zq - zp) * dz(); 
 
-        // Q: should I do gauge transformation here?
-#if 1
-        dphi[0] = 0.5 * (mod2pi(phase(xq, y, z) - phase(xp, y, z) + GaugeTransformation(xq, y, z, xp, y, z) + M_PI) - M_PI) / dx();
-        dphi[1] = 0.5 * (mod2pi(phase(x, yq, z) - phase(x, yp, z) + GaugeTransformation(x, yq, z, x, yp, z) + M_PI) - M_PI) / dy();
-        dphi[2] = 0.5 * (mod2pi(phase(x, y, zq) - phase(x, y, zp) + GaugeTransformation(x, y, zq, x, y, zp) + M_PI) - M_PI) / dz();
+        // Q: should I do gauge transformation here? (seems not)
+#if 0
+        dphi[0] = (mod2pi(phase(xq, y, z) - phase(xp, y, z) + GaugeTransformation(xq, y, z, xp, y, z) + M_PI) - M_PI) / dx1;
+        dphi[1] = (mod2pi(phase(x, yq, z) - phase(x, yp, z) + GaugeTransformation(x, yq, z, x, yp, z) + M_PI) - M_PI) / dy1;
+        dphi[2] = (mod2pi(phase(x, y, zq) - phase(x, y, zp) + GaugeTransformation(x, y, zq, x, y, zp) + M_PI) - M_PI) / dz1;
 #else
-        dphi[0] = 0.5 * (mod2pi(phase(xq, y, z) - phase(xp, y, z) + M_PI) - M_PI) / dx();
-        dphi[1] = 0.5 * (mod2pi(phase(x, yq, z) - phase(x, yp, z) + M_PI) - M_PI) / dy();
-        dphi[2] = 0.5 * (mod2pi(phase(x, y, zq) - phase(x, y, zp) + M_PI) - M_PI) / dz();
+        dphi[0] = (mod2pi(phase(xq, y, z) - phase(xp, y, z) + M_PI) - M_PI) / dx1;
+        dphi[1] = (mod2pi(phase(x, yq, z) - phase(x, yp, z) + M_PI) - M_PI) / dy1;
+        dphi[2] = (mod2pi(phase(x, y, zq) - phase(x, y, zp) + M_PI) - M_PI) / dz1;
 #endif
 
+        // fprintf(stderr, "A={%f, %f, %f}, dphi={%f, %f, %f}\n", Ax(pos), Ay(pos), Az(pos), dphi[0], dphi[1], dphi[2]);
+
         sc[0] = dphi[0] - Ax(pos);
-        sc[1] = dphi[1] - Ax(pos);
-        sc[2] = dphi[2] - Ax(pos);
+        sc[1] = dphi[1] - Ay(pos);
+        sc[2] = dphi[2] - Az(pos);
 
         texel3D(_scx, dims(), x, y, z) = sc[0]; 
         texel3D(_scy, dims(), x, y, z) = sc[1];

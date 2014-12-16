@@ -81,11 +81,11 @@ void WriteVortexObjects(const std::string& filename, const std::vector<VortexObj
   fclose(fp);
 }
 
-void ReadVortexOjbects(const std::string& filename, std::vector<VortexObject>& objs)
+bool ReadVortexOjbects(const std::string& filename, std::vector<VortexObject>& objs)
 {
   size_t count;
   FILE *fp = fopen(filename.c_str(), "rb");
-  assert(fp);
+  if (!fp) return false; 
 
   fread(&count, sizeof(size_t), 1, fp);
   size_t *sizes = (size_t*)malloc(count*sizeof(size_t));
@@ -103,4 +103,6 @@ void ReadVortexOjbects(const std::string& filename, std::vector<VortexObject>& o
 
   free(sizes); 
   fclose(fp); 
+
+  return true;
 }

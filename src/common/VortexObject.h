@@ -27,6 +27,6 @@ public:
 
 void WriteVortexObjects(const std::string& filename, const std::vector<VortexObject>& objs);
 
-void ReadVortexOjbects(const std::string& filename, std::vector<VortexObject>& objs); 
+bool ReadVortexOjbects(const std::string& filename, std::vector<VortexObject>& objs); 
 
 #endif

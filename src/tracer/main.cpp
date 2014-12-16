@@ -6,13 +6,21 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
+  if (argc<2) {
+    fprintf(stderr, "USAGE: %s <input_file>\n", argv[0]);
+    return EXIT_FAILURE;
+  }
+
+  const std::string filename = argv[1]; 
+
   GLGPUDataset ds;
-  ds.OpenDataFile("GL3D_Xfieldramp_inter_0437_cop.dat");
+  ds.OpenDataFile(filename);
   ds.ComputeSupercurrentField();
 
   GLGPUFieldLineTracer tracer;
   tracer.SetDataset(&ds);
   tracer.Trace();
+  tracer.WriteFieldLines(filename + ".trace");
 
   return 0;
 }

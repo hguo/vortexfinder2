@@ -95,6 +95,19 @@ void CGLWidget::resizeGL(int w, int h)
   CHECK_GLERROR(); 
 }
 
+void CGLWidget::renderFieldLines()
+{
+  glEnableClientState(GL_VERTEX_ARRAY); 
+  glEnableClientState(GL_COLOR_ARRAY); 
+  glVertexPointer(3, GL_FLOAT, 0, f_line_vertices.data()); 
+  glColorPointer(4, GL_FLOAT, 4*sizeof(GLfloat), f_line_colors.data());
+  
+  glMultiDrawArrays(GL_LINE_STRIP, f_line_indices.data(), f_line_vert_count.data(), f_line_vert_count.size());
+
+  glDisableClientState(GL_COLOR_ARRAY); 
+  glDisableClientState(GL_VERTEX_ARRAY); 
+}
+
 void CGLWidget::renderVortexLines()
 {
   glEnableClientState(GL_VERTEX_ARRAY); 
@@ -156,6 +169,8 @@ void CGLWidget::paintGL()
   renderVortexLines();
 #endif
 
+  renderFieldLines();
+
   CHECK_GLERROR(); 
 }
 
@@ -164,8 +179,24 @@ void CGLWidget::LoadFieldLines(const std::string& filename)
   std::vector<FieldLine> fieldlines;
   ReadFieldLines(filename, fieldlines);
 
+  float c[4] = {0, 0, 0, 1}; // color;
   for (int i=0; i<fieldlines.size(); i++) {
-    // TODO
+    int vertCount = fieldlines[i].size()/3;  
+   
+    for (int j=0; j<fieldlines[i].size(); j++) 
+      f_line_vertices.push_back(fieldlines[i][j]); 
+    
+    for (int l=0; l<vertCount; l++)  
+      for (int m=0; m<4; m++) 
+        f_line_colors.push_back(c[m]); 
+
+    f_line_vert_count.push_back(vertCount); 
+  }
+  
+  int cnt = 0; 
+  for (int i=0; i<f_line_vert_count.size(); i++) {
+    f_line_indices.push_back(cnt); 
+    cnt += f_line_vert_count[i]; 
   }
 }
 
@@ -175,7 +206,7 @@ void CGLWidget::LoadVortexObjects(const std::string& filename)
   ReadVortexOjbects(filename, vortex_objects); 
 
   for (int j=0; j<vortex_objects.size(); j++) { // iterate over v_objs
-  float c[4] = {1, 0, 0, 1}; // color;
+    float c[4] = {1, 0, 0, 1}; // color;
 #if 1
     switch (j%7) {
     case 0: c[0]=0; c[1]=0; c[2]=0; c[3]=1; break;

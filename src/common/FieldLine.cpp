@@ -4,6 +4,12 @@
 FieldLine::FieldLine()
 {
 }
+  
+FieldLine::FieldLine(const std::list<double>& l)
+{
+  for (std::list<double>::const_iterator it = l.begin(); it != l.end(); it++)
+    push_back(*it);
+}
 
 FieldLine::~FieldLine()
 {
@@ -62,11 +68,11 @@ void WriteFieldLines(const std::string& filename, const std::vector<FieldLine>& 
   fclose(fp);
 }
 
-void ReadFieldLines(const std::string& filename, std::vector<FieldLine>& objs)
+bool ReadFieldLines(const std::string& filename, std::vector<FieldLine>& objs)
 {
   size_t count;
   FILE *fp = fopen(filename.c_str(), "rb");
-  assert(fp);
+  if (!fp) return false;
 
   fread(&count, sizeof(size_t), 1, fp);
   size_t *sizes = (size_t*)malloc(count*sizeof(size_t));
@@ -83,5 +89,7 @@ void ReadFieldLines(const std::string& filename, std::vector<FieldLine>& objs)
   }
 
   free(sizes); 
-  fclose(fp); 
+  fclose(fp);
+
+  return true;
 }

@@ -18,8 +18,8 @@ bool lerp4D(const T *pt, const int* st, const int* sz, int num_vars, const T **p
 template <typename T>
 bool lerp2D(const T *pt, const int* st, const int* sz, int num_vars, const T **ptrs, T *vars)
 {
-  if (pt[0]<st[0] || pt[0]>=st[0]+sz[0] || 
-      pt[1]<st[1] || pt[1]>=st[1]+sz[1]) 
+  if (pt[0]<st[0] || pt[0]>=st[0]+sz[0]-1 || 
+      pt[1]<st[1] || pt[1]>=st[1]+sz[1]-1) 
     return false; 
 
   T p[4]; 
@@ -51,9 +51,9 @@ bool lerp2D(const T *pt, const int* st, const int* sz, int num_vars, const T **p
 template <typename T>
 bool lerp3D(const T *pt, const int* st, const int* sz, int num_vars, const T **ptrs, T *vars)
 {
-  if (pt[0]<st[0] || pt[0]>=st[0]+sz[0] || 
-      pt[1]<st[1] || pt[1]>=st[1]+sz[1] || 
-      pt[2]<st[2] || pt[2]>=st[2]+sz[2]) 
+  if (pt[0]<st[0] || pt[0]>=st[0]+sz[0]-1 || 
+      pt[1]<st[1] || pt[1]>=st[1]+sz[1]-1 || 
+      pt[2]<st[2] || pt[2]>=st[2]+sz[2]-1) 
     return false; 
 
   T p[8]; 
@@ -65,8 +65,8 @@ bool lerp3D(const T *pt, const int* st, const int* sz, int num_vars, const T **p
       k = floor(z); 
   int i1=i+1, j1=j+1, k1=k+1; 
   T x0 = i, x1 = i1, 
-        y0 = j, y1 = j1, 
-        z0 = k, z1 = k1; 
+    y0 = j, y1 = j1, 
+    z0 = k, z1 = k1; 
   int v; 
 
   for (v=0; v<num_vars; v++) {
@@ -96,10 +96,10 @@ bool lerp3D(const T *pt, const int* st, const int* sz, int num_vars, const T **p
 template <typename T>
 bool lerp4D(const T *pt, const int* st, const int* sz, int num_vars, const T **ptrs, T *vars)
 {
-  if (pt[0]<st[0] || pt[0]>=st[0]+sz[0] || 
-      pt[1]<st[1] || pt[1]>=st[1]+sz[1] || 
-      pt[2]<st[2] || pt[2]>=st[2]+sz[2] || 
-      pt[3]<st[3] || pt[3]>=st[3]+sz[3]) 
+  if (pt[0]<st[0] || pt[0]>=st[0]+sz[0]-1 || 
+      pt[1]<st[1] || pt[1]>=st[1]+sz[1]-1 || 
+      pt[2]<st[2] || pt[2]>=st[2]+sz[2]-1 || 
+      pt[3]<st[3] || pt[3]>=st[3]+sz[3]-1) 
     return false; 
 
   T p[16]; 
