@@ -1,6 +1,6 @@
 #include <iostream>
 #include "io/GLGPUDataset.h"
-#include "GLGPUTracer.h"
+#include "Tracer.h"
 
 using namespace std; 
 
@@ -17,7 +17,7 @@ int main(int argc, char **argv)
   ds.OpenDataFile(filename);
   ds.ComputeSupercurrentField();
 
-  GLGPUFieldLineTracer tracer;
+  FieldLineTracer tracer;
   tracer.SetDataset(&ds);
   tracer.Trace();
   tracer.WriteFieldLines(filename + ".trace");

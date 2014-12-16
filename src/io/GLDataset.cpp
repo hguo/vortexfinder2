@@ -80,10 +80,15 @@ double GLDataset::Flux(const double X[3][3]) const
 
 void GLDataset::A(const double X[3], double A[3]) const
 {
-  // A={z*By, x*Bz, y*Bx}
-  A[0] = X[2] * By(); 
-  A[1] = X[0] * Bz(); 
-  A[2] = X[1] * Bx();
+  if (By()>0) {
+    A[0] = 0;
+    A[1] = X[0] * Bz(); 
+    A[2] =-X[0] * By();
+  } else {
+    A[0] =-X[1] * Bz(); 
+    A[1] = 0; 
+    A[2] = X[1] * Bx();
+  }
 }
   
 bool GLDataset::Rho(const double X[3], double &rho) const

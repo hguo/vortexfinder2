@@ -208,14 +208,13 @@ void CGLWidget::LoadVortexObjects(const std::string& filename)
   for (int j=0; j<vortex_objects.size(); j++) { // iterate over v_objs
     float c[4] = {1, 0, 0, 1}; // color;
 #if 1
-    switch (j%7) {
-    case 0: c[0]=0; c[1]=0; c[2]=0; c[3]=1; break;
-    case 1: c[0]=0; c[1]=0; c[2]=1; c[3]=1; break;
-    case 2: c[0]=0; c[1]=1; c[2]=0; c[3]=1; break;
-    case 3: c[0]=0; c[1]=1; c[2]=1; c[3]=1; break;
-    case 4: c[0]=1; c[1]=0; c[2]=0; c[3]=1; break;
-    case 5: c[0]=1; c[1]=0; c[2]=1; c[3]=1; break;
-    case 6: c[0]=1; c[1]=1; c[2]=0; c[3]=1; break;
+    switch (j%6) {
+    case 0: c[0]=0; c[1]=0; c[2]=1; c[3]=1; break;
+    case 1: c[0]=0; c[1]=1; c[2]=0; c[3]=1; break;
+    case 2: c[0]=0; c[1]=1; c[2]=1; c[3]=1; break;
+    case 3: c[0]=1; c[1]=0; c[2]=0; c[3]=1; break;
+    case 4: c[0]=1; c[1]=0; c[2]=1; c[3]=1; break;
+    case 5: c[0]=1; c[1]=1; c[2]=0; c[3]=1; break;
     default: break; 
    }
 #endif

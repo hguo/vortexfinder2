@@ -3,8 +3,9 @@
 #include <cassert>
 #include <cmath>
 #include "common/Utils.hpp"
-#include "GLGPUDataset.h"
+#include "common/Lerp.hpp"
 #include "common/DataInfo.pb.h"
+#include "GLGPUDataset.h"
 
 #ifdef WITH_LIBMESH // suppose libmesh is built with netcdf
 #include <netcdf.h>
@@ -454,27 +455,16 @@ void GLGPUDataset::ComputeSupercurrentField()
   double dphi[3], sc[3], A[3];
 
   // central difference
-  for (int x=0; x<dims()[0]; x++) {
-    for (int y=0; y<dims()[1]; y++) {
-      for (int z=0; z<dims()[2]; z++) {
+  for (int x=1; x<dims()[0]-1; x++) {
+    for (int y=1; y<dims()[1]-1; y++) {
+      for (int z=1; z<dims()[2]-1; z++) {
         int idx[3] = {x, y, z}; 
         double pos[3]; 
         Idx2Pos(idx, pos);
 
-        // boundaries. TODO: pbc
-        int xp = std::max(0, x-1), 
-            xq = std::min(dims()[0]-1, x+1), 
-            yp = std::max(0, y-1), 
-            yq = std::min(dims()[1]-1, y+1), 
-            zp = std::max(0, z-1), 
-            zq = std::min(dims()[2]-1, z+1); 
-        double dx1 = (xq - xp) * dx(), 
-               dy1 = (yq - yp) * dy(), 
-               dz1 = (zq - zp) * dz(); 
-
-        dphi[0] = (mod2pi(Phi(xq, y, z) - Phi(xp, y, z) + M_PI) - M_PI) / dx1;
-        dphi[1] = (mod2pi(Phi(x, yq, z) - Phi(x, yp, z) + M_PI) - M_PI) / dy1;
-        dphi[2] = (mod2pi(Phi(x, y, zq) - Phi(x, y, zp) + M_PI) - M_PI) / dz1;
+        dphi[0] = 0.5 * (mod2pi(Phi(x+1, y, z) - Phi(x-1, y, z) + M_PI) - M_PI) / dx();
+        dphi[1] = 0.5 * (mod2pi(Phi(x, y+1, z) - Phi(x, y-1, z) + M_PI) - M_PI) / dy();
+        dphi[2] = 0.5 * (mod2pi(Phi(x, y, z+1) - Phi(x, y, z-1) + M_PI) - M_PI) / dz();
 
         sc[0] = dphi[0] - Ax(pos);
         sc[1] = dphi[1] - Ay(pos);
@@ -536,6 +526,16 @@ bool GLGPUDataset::Psi(const double X[3], double &re, double &im) const
 
 bool GLGPUDataset::Supercurrent(const double X[3], double J[3]) const
 {
-  // TODO 
-  return false;
+  static const int st[3] = {0};
+  double gpt[3];
+  const double *sc[3] = {_scx, _scy, _scz};
+  
+  Pos2Grid(X, gpt);
+  if (gpt[0]<=1 || gpt[0]>dims()[0]-2 || 
+      gpt[1]<=1 || gpt[1]>dims()[1]-2 || 
+      gpt[2]<=1 || gpt[2]>dims()[2]-2) return false;
+
+  if (!lerp3D(gpt, st, dims(), 3, sc, J))
+    return false;
+  else return true;
 }
