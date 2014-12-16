@@ -53,6 +53,12 @@ void GLGPUDataset::GetSupercurrentField(const double **sc) const
   sc[1] = _scy; 
   sc[2] = _scz;
 }
+  
+unsigned int GLGPUDataset::Pos2ElemId(const double X[]) const
+{
+  // TODO
+  return UINT_MAX;
+}
 
 void GLGPUDataset::ElemId2Idx(unsigned int id, int *idx) const
 {
@@ -79,7 +85,7 @@ void GLGPUDataset::Idx2Pos(const int idx[], double pos[]) const
     pos[i] = idx[i] * CellLengths()[i] + Origins()[i];
 }
 
-void GLGPUDataset::Pos2Id(const double pos[], int idx[]) const
+void GLGPUDataset::Pos2Idx(const double pos[], int idx[]) const
 {
   for (int i=0; i<3; i++)
     idx[i] = (pos[i] - Origins()[i]) / CellLengths()[i]; 

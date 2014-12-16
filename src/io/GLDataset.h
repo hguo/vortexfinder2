@@ -28,6 +28,8 @@ public: // mesh traversal & utils
   double Flux(const double X[3][3]) const; //!< flux for a triangle
   double Flux(int n, const double X[][3]) const; //!< flux for an arbitrary closed curve
 
+  virtual unsigned int Pos2ElemId(const double X[]) const = 0; //!< returns the elemId for a given position
+
 public: // properties
   int Dimensions() const {return 3;}  // currently only 3D data is supported
 
@@ -42,9 +44,9 @@ public: // properties
 
   // Magnetic potential
   void A(const double X[3], double A[3]) const; //!< compute the vector potential at given position
-  double Ax(const double X[3]) const {return X[2]*By();}
-  double Ay(const double X[3]) const {return X[0]*Bz();}
-  double Az(const double X[3]) const {return X[1]*Bx();}
+  double Ax(const double X[3]) const {if (By()>0) return 0; else return -X[2]*By();}
+  double Ay(const double X[3]) const {if (By()>0) return X[0]*Bz(); else return 0;}
+  double Az(const double X[3]) const {if (By()>0) return -X[0]*By(); else return X[1]*Bx();}
 
   // Geometries
   const double* Origins() const {return _origins;}

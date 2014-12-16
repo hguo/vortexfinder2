@@ -41,6 +41,8 @@ public:
   unsigned int v_var() const {return _v_var;}
 
 public:
+  unsigned int Pos2ElemId(const double X[]) const;
+  
   // Order parameters (direct access/linear interpolation)
   bool Psi(const double X[3], double &re, double &im) const;
 

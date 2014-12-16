@@ -144,6 +144,12 @@ void Condor2Dataset::ComputeSupercurrentField()
   // TODO
 }
 
+unsigned int Condor2Dataset::Pos2ElemId(const double X[]) const
+{
+  // TODO
+  return UINT_MAX;
+}
+
 bool Condor2Dataset::Psi(const double X[3], double &re, double &im) const
 {
   // TODO
