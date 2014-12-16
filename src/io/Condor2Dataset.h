@@ -7,6 +7,7 @@
 #include <libmesh/elem.h>
 #include <libmesh/equation_systems.h>
 #include <libmesh/nonlinear_implicit_system.h>
+#include <libmesh/point_locator_tree.h>
 #include <libmesh/exodusII_io.h>
 
 class Condor2Dataset : public libMesh::ParallelObject, public GLDataset
@@ -57,6 +58,7 @@ private:
   libMesh::ExodusII_IO *_exio; 
   libMesh::EquationSystems *_eqsys;
   libMesh::NonlinearImplicitSystem *_tsys;
+  libMesh::PointLocatorTree *_locator;
   
   unsigned int _u_var, _v_var;
 }; 

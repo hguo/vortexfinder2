@@ -9,7 +9,8 @@ Condor2Dataset::Condor2Dataset(const Parallel::Communicator &comm) :
   ParallelObject(comm), 
   _eqsys(NULL), 
   _exio(NULL), 
-  _mesh(NULL)
+  _mesh(NULL), 
+  _locator(NULL)
 {
 }
 
@@ -17,6 +18,7 @@ Condor2Dataset::~Condor2Dataset()
 {
   if (_eqsys) delete _eqsys; 
   if (_exio) delete _exio; 
+  if (_locator) delete _locator;
   if (_mesh) delete _mesh; 
 }
 
@@ -69,6 +71,9 @@ bool Condor2Dataset::OpenDataFile(const std::string& filename)
   _v_var = _tsys->add_variable("v", FIRST, LAGRANGE); 
 
   _eqsys->init(); 
+
+  /// point locator
+  _locator = new PointLocatorTree(*_mesh);
 
   // it takes some time (~0.5s) to compute the bounding box. is there any better way to get this information?
   ProbeBoundingBox();
@@ -146,8 +151,13 @@ void Condor2Dataset::ComputeSupercurrentField()
 
 unsigned int Condor2Dataset::Pos2ElemId(const double X[]) const
 {
-  // TODO
-  return UINT_MAX;
+  Point p(X[0], X[1], X[2]);
+  const Elem *elem = (*_locator)(p);
+
+  if (elem == NULL)
+    return UINT_MAX;
+  else 
+    return elem->id();
 }
 
 bool Condor2Dataset::Psi(const double X[3], double &re, double &im) const

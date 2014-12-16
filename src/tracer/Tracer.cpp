@@ -99,19 +99,19 @@ bool FieldLineTracer::RK4(double *X, double h)
   for (int i=0; i<3; i++) X[i] = X0[i] + 0.5 * k1[i];
   
   // 2nd RK step
-  if (!Supercurrent(X, J)) return true;
+  if (!Supercurrent(X, J)) return false;
   float k2[3]; 
   for (int i=0; i<3; i++) k2[i] = h * J[i];
   for (int i=0; i<3; i++) X[i] = X0[i] + 0.5 * k2[i];
   
   // 3rd RK step
-  if (!Supercurrent(X, J)) return true;
+  if (!Supercurrent(X, J)) return false;
   float k3[3]; 
   for (int i=0; i<3; i++) k3[i] = h * J[i];
   for (int i=0; i<3; i++) X[i] = X0[i] + k3[i];
 
   // 4th RK step
-  if (!Supercurrent(X, J)) return true;
+  if (!Supercurrent(X, J)) return false;
   for (int i=0; i<3; i++) 
     X[i] = X0[i] + (k1[i] + 2.0*(k2[i] + k3[i]) + h*J[i]) / 6.0;
 
