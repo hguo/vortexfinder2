@@ -24,7 +24,7 @@ enum {
 };
 
 GLGPUDataset::GLGPUDataset() : 
-  _re(NULL), _im(NULL), _amp(NULL), _phase(NULL), 
+  _re(NULL), _im(NULL), _rho(NULL), _phi(NULL), 
   _scx(NULL), _scy(NULL), _scz(NULL), _scm(NULL)
 {
   for (int i=0; i<3; i++) {
@@ -37,8 +37,8 @@ GLGPUDataset::~GLGPUDataset()
 {
   if (_re) free(_re);
   if (_im) free(_im);
-  if (_amp) free(_amp);
-  if (_phase) free (_phase);
+  if (_rho) free(_rho);
+  if (_phi) free (_phi);
   if (_scx) free(_scx);
 }
 
@@ -348,8 +348,8 @@ bool GLGPUDataset::OpenDataFile(const std::string &filename)
   // mem allocation 
   _re = (double*)malloc(sizeof(double)*count);  
   _im = (double*)malloc(sizeof(double)*count);
-  _amp = (double*)malloc(sizeof(double)*count);
-  _phase = (double*)malloc(sizeof(double)*count); 
+  _rho = (double*)malloc(sizeof(double)*count);
+  _phi = (double*)malloc(sizeof(double)*count); 
 
   if (datatype == GLGPU_TYPE_FLOAT) {
     // raw data
@@ -369,16 +369,16 @@ bool GLGPUDataset::OpenDataFile(const std::string &filename)
       for (int i=0; i<count; i++) {
         _re[i] = ch1[i]; 
         _im[i] = ch2[i]; 
-        _amp[i] = sqrt(_re[i]*_re[i] + _im[i]*_im[i]);
-        _phase[i] = atan2(_im[i], _re[i]); 
-        // fprintf(stderr, "amp=%f, phase=%f, re=%f, im=%f\n", _amp[i], _phase[i], _re[i], _im[i]); 
+        _rho[i] = sqrt(_re[i]*_re[i] + _im[i]*_im[i]);
+        _phi[i] = atan2(_im[i], _re[i]); 
+        // fprintf(stderr, "rho=%f, phi=%f, re=%f, im=%f\n", _rho[i], _phi[i], _re[i], _im[i]); 
       }
     } else if (optype == 1) {
       for (int i=0; i<count; i++) {
-        _amp[i] = ch1[i]; 
-        _phase[i] = ch2[i]; 
-        _re[i] = _amp[i] * cos(_phase[i]); 
-        _im[i] = _amp[i] * sin(_phase[i]);
+        _rho[i] = ch1[i]; 
+        _phi[i] = ch2[i]; 
+        _re[i] = _rho[i] * cos(_phi[i]); 
+        _im[i] = _rho[i] * sin(_phi[i]);
       }
     } else assert(false); 
   } else if (datatype == GLGPU_TYPE_DOUBLE) {
@@ -412,20 +412,20 @@ bool GLGPUDataset::OpenDataFile(const std::string &filename)
     if (optype == 0) {
       _re = ch1; 
       _im = ch2;
-      _amp = (double*)malloc(sizeof(double)*count);
-      _phase = (double*)malloc(sizeof(double)*count); 
+      _rho = (double*)malloc(sizeof(double)*count);
+      _phi = (double*)malloc(sizeof(double)*count); 
       for (int i=0; i<count; i++) {
-        _amp[i] = sqrt(_re[i]*_re[i] + _im[i]*_im[i]);
-        _phase[i] = atan2(_im[i], _re[i]); 
+        _rho[i] = sqrt(_re[i]*_re[i] + _im[i]*_im[i]);
+        _phi[i] = atan2(_im[i], _re[i]); 
       }
     } else if (optype == 1) {
-      _amp = ch1; 
-      _phase = ch2;
+      _rho = ch1; 
+      _phi = ch2;
       _re = (double*)malloc(sizeof(double)*count); 
       _im = (double*)malloc(sizeof(double)*count); 
       for (int i=0; i<count; i++) {
-        _re[i] = _amp[i] * cos(_phase[i]); 
-        _im[i] = _amp[i] * sin(_phase[i]); 
+        _re[i] = _rho[i] * cos(_phi[i]); 
+        _im[i] = _rho[i] * sin(_phi[i]); 
       }
     } else assert(false);
 #endif
@@ -468,13 +468,13 @@ void GLGPUDataset::ComputeSupercurrentField()
 
         // Q: should I do gauge transformation here? (seems not)
 #if 0
-        dphi[0] = (mod2pi(phase(xq, y, z) - phase(xp, y, z) + GaugeTransformation(xq, y, z, xp, y, z) + M_PI) - M_PI) / dx1;
-        dphi[1] = (mod2pi(phase(x, yq, z) - phase(x, yp, z) + GaugeTransformation(x, yq, z, x, yp, z) + M_PI) - M_PI) / dy1;
-        dphi[2] = (mod2pi(phase(x, y, zq) - phase(x, y, zp) + GaugeTransformation(x, y, zq, x, y, zp) + M_PI) - M_PI) / dz1;
+        dphi[0] = (mod2pi(Phi(xq, y, z) - Phi(xp, y, z) + GaugeTransformation(xq, y, z, xp, y, z) + M_PI) - M_PI) / dx1;
+        dphi[1] = (mod2pi(Phi(x, yq, z) - Phi(x, yp, z) + GaugeTransformation(x, yq, z, x, yp, z) + M_PI) - M_PI) / dy1;
+        dphi[2] = (mod2pi(Phi(x, y, zq) - Phi(x, y, zp) + GaugeTransformation(x, y, zq, x, y, zp) + M_PI) - M_PI) / dz1;
 #else
-        dphi[0] = (mod2pi(phase(xq, y, z) - phase(xp, y, z) + M_PI) - M_PI) / dx1;
-        dphi[1] = (mod2pi(phase(x, yq, z) - phase(x, yp, z) + M_PI) - M_PI) / dy1;
-        dphi[2] = (mod2pi(phase(x, y, zq) - phase(x, y, zp) + M_PI) - M_PI) / dz1;
+        dphi[0] = (mod2pi(Phi(xq, y, z) - Phi(xp, y, z) + M_PI) - M_PI) / dx1;
+        dphi[1] = (mod2pi(Phi(x, yq, z) - Phi(x, yp, z) + M_PI) - M_PI) / dy1;
+        dphi[2] = (mod2pi(Phi(x, y, zq) - Phi(x, y, zp) + M_PI) - M_PI) / dz1;
 #endif
 
         // fprintf(stderr, "A={%f, %f, %f}, dphi={%f, %f, %f}\n", Ax(pos), Ay(pos), Az(pos), dphi[0], dphi[1], dphi[2]);
@@ -506,8 +506,8 @@ void GLGPUDataset::WriteNetCDFFile(const std::string& filename)
   NC_SAFE_CALL( nc_def_dim(ncid, "z", sizes[0], &dimids[0]) );
   NC_SAFE_CALL( nc_def_dim(ncid, "y", sizes[1], &dimids[1]) );
   NC_SAFE_CALL( nc_def_dim(ncid, "x", sizes[2], &dimids[2]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "amp", NC_DOUBLE, 3, dimids, &varids[0]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "phase", NC_DOUBLE, 3, dimids, &varids[1]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "rho", NC_DOUBLE, 3, dimids, &varids[0]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "phi", NC_DOUBLE, 3, dimids, &varids[1]) );
   NC_SAFE_CALL( nc_def_var(ncid, "re", NC_DOUBLE, 3, dimids, &varids[2]) );
   NC_SAFE_CALL( nc_def_var(ncid, "im", NC_DOUBLE, 3, dimids, &varids[3]) );
   NC_SAFE_CALL( nc_def_var(ncid, "scx", NC_DOUBLE, 3, dimids, &varids[4]) );
@@ -516,8 +516,8 @@ void GLGPUDataset::WriteNetCDFFile(const std::string& filename)
   NC_SAFE_CALL( nc_def_var(ncid, "scm", NC_DOUBLE, 3, dimids, &varids[7]) );
   NC_SAFE_CALL( nc_enddef(ncid) );
 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[0], starts, sizes, _amp) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[1], starts, sizes, _phase) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[0], starts, sizes, _rho) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[1], starts, sizes, _phi) ); 
   NC_SAFE_CALL( nc_put_vara_double(ncid, varids[2], starts, sizes, _re) ); 
   NC_SAFE_CALL( nc_put_vara_double(ncid, varids[3], starts, sizes, _im) ); 
   NC_SAFE_CALL( nc_put_vara_double(ncid, varids[4], starts, sizes, _scx) ); 
@@ -529,4 +529,16 @@ void GLGPUDataset::WriteNetCDFFile(const std::string& filename)
 #else
   assert(false);
 #endif
+}
+
+bool GLGPUDataset::Psi(const double X[3], double &re, double &im) const
+{
+  // TODO
+  return false;
+}
+
+bool GLGPUDataset::Supercurrent(const double X[3], double J[3]) const
+{
+  // TODO 
+  return false;
 }

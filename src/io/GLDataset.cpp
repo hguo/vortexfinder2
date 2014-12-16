@@ -85,3 +85,25 @@ void GLDataset::A(const double X[3], double A[3]) const
   A[1] = X[0] * Bz(); 
   A[2] = X[1] * Bx();
 }
+  
+bool GLDataset::Rho(const double X[3], double &rho) const
+{
+  double re, im;
+  bool succ = Psi(X, re, im); 
+  if (!succ) return false; 
+  else {
+    rho = sqrt(re*re + im*im); 
+    return true;
+  }
+}
+
+bool GLDataset::Phi(const double X[3], double &phi) const
+{
+  double re, im;
+  bool succ = Psi(X, re, im); 
+  if (!succ) return false; 
+  else {
+    phi = atan2(im, re);
+    return true;
+  }
+}

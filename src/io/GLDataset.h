@@ -11,14 +11,15 @@ public:
   GLDataset(); 
   virtual ~GLDataset();
 
+  virtual void PrintInfo() const = 0;
+  virtual void SerializeDataInfoToString(std::string& buf) const = 0;
+
 public: // data I/O
   virtual bool OpenDataFile(const std::string& filename); 
   virtual void LoadTimeStep(int timestep);
   virtual void CloseDataFile();
 
   virtual void ComputeSupercurrentField() = 0;
-
-  virtual void SerializeDataInfoToString(std::string& buf) const = 0;
 
 public: // mesh traversal & utils
   virtual std::vector<unsigned int> Neighbors(unsigned int elem_id) const = 0;
@@ -32,26 +33,35 @@ public: // properties
 
   int TimeStep() const {return _timestep;}
 
+  // Magnetic field
   void SetMagneticField(const double B[3]);
-  void SetKex(double Kex);
-
   const double* B() const {return _B;}
   double Bx() const {return _B[0];} 
   double By() const {return _B[1];} 
   double Bz() const {return _B[2];}
 
+  // Magnetic potential
   void A(const double X[3], double A[3]) const; //!< compute the vector potential at given position
   double Ax(const double X[3]) const {return X[2]*By();}
   double Ay(const double X[3]) const {return X[0]*Bz();}
   double Az(const double X[3]) const {return X[1]*Bx();}
 
+  // Geometries
   const double* Origins() const {return _origins;}
   const double* Lengths() const {return _lengths;} 
 
+  // Kx
+  void SetKex(double Kex);
   double Kex() const {return _Kex;} 
   double Kex_dot() const {return _Kex_dot;}
 
-  virtual void PrintInfo() const = 0;
+  // Order parameters (direct access/linear interpolation)
+  virtual bool Psi(const double X[3], double &re, double &im) const = 0;
+  bool Rho(const double X[3], double &rho) const;
+  bool Phi(const double X[3], double &phi) const;
+
+  // Supercurrent field
+  virtual bool Supercurrent(const double X[3], double J[3]) const = 0;
 
 protected:
   int _timestep; 

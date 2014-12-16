@@ -52,8 +52,8 @@ void GLGPUVortexExtractor::ExtractElem(int *idx)
     double vertices[4][3];
     for (int i=0; i<4; i++) {
       _ds->Idx2Pos(X[i], vertices[i]);
-      re[i] = _ds->re(X[i][0], X[i][1], X[i][2]); 
-      im[i] = _ds->im(X[i][0], X[i][1], X[i][2]); 
+      re[i] = _ds->Re(X[i][0], X[i][1], X[i][2]); 
+      im[i] = _ds->Im(X[i][0], X[i][1], X[i][2]); 
       amp[i] = sqrt(re[i]*re[i] + im[i]*im[i]); 
       phase[i] = atan2(im[i], re[i]);
     }

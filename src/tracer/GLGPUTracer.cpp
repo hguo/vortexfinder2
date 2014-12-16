@@ -52,7 +52,7 @@ void GLGPUFieldLineTracer::Trace(const double seed[3])
   // forward
   while (1) {
     line.push_back(pt[0]); line.push_back(pt[1]); line.push_back(pt[2]); 
-    if (!rk1(pt, h)) break;
+    if (!RK1(pt, h)) break;
 
     n++;
     if (n>max_length-1) break; 
@@ -64,7 +64,7 @@ void GLGPUFieldLineTracer::Trace(const double seed[3])
   line.pop_front(); line.pop_front(); line.pop_front(); 
   while (1) {
     line.push_front(pt[2]); line.push_front(pt[1]); line.push_front(pt[0]); 
-    if (!rk1(pt, -h)) break;
+    if (!RK1(pt, -h)) break;
 
     n++;
     if (n>max_length-1) break; 
@@ -74,7 +74,7 @@ void GLGPUFieldLineTracer::Trace(const double seed[3])
   _fieldlines.push_back(line1);
 }
 
-bool GLGPUFieldLineTracer::rk1(double *pt, double h)
+bool GLGPUFieldLineTracer::RK1(double *pt, double h)
 {
   double v[3], gpt[3]; 
   const int st[3] = {0}, 

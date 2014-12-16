@@ -143,3 +143,15 @@ void Condor2Dataset::ComputeSupercurrentField()
 {
   // TODO
 }
+
+bool Condor2Dataset::Psi(const double X[3], double &re, double &im) const
+{
+  // TODO
+  return false;
+}
+
+bool Condor2Dataset::Supercurrent(const double X[3], double J[3]) const
+{
+  // TODO 
+  return false;
+}

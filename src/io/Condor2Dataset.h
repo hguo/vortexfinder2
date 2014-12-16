@@ -40,6 +40,13 @@ public:
   unsigned int u_var() const {return _u_var;}
   unsigned int v_var() const {return _v_var;}
 
+public:
+  // Order parameters (direct access/linear interpolation)
+  bool Psi(const double X[3], double &re, double &im) const;
+
+  // Supercurrent field
+  bool Supercurrent(const double X[3], double J[3]) const;
+
 private: 
   void ProbeBoundingBox();
 

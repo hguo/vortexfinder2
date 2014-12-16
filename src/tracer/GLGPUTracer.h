@@ -19,7 +19,8 @@ protected:
   void Trace(const double seed[3]);
  
 protected:
-  bool rk1(double pt[3], double h);
+  bool RK1(double pt[3], double h);
+  bool RK4(double pt[3], double h);
 
 private:
   const GLGPUDataset *_ds;
