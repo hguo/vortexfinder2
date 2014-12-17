@@ -149,7 +149,7 @@ double GLGPUDataset::GaugeTransformation(int x0, int y0, int z0, int x1, int y1,
   return GaugeTransformation(idx0, idx1);
 }
 
-std::vector<ElemIdType> GLGPUDataset::Neighbors(ElemIdType elem_id) const
+std::vector<ElemIdType> GLGPUDataset::GetNeighbors(ElemIdType elem_id) const
 {
   std::vector<ElemIdType> neighbors; 
 

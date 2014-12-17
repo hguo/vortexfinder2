@@ -46,7 +46,7 @@ public:
   double GaugeTransformation(int x0, int y0, int z0, int x1, int y1, int z1) const;
 
 public:
-  std::vector<ElemIdType> Neighbors(ElemIdType elem_id) const;
+  std::vector<ElemIdType> GetNeighbors(ElemIdType elem_id) const;
   bool GetFace(ElemIdType id, int face, double X[][3], double re[], double im[]) const;
 
 public:

@@ -139,7 +139,7 @@ void Condor2Dataset::LoadTimeStep(int timestep)
   // fprintf(stderr, "nodal solution copied, timestep=%d\n", timestep); 
 }
 
-std::vector<ElemIdType> Condor2Dataset::Neighbors(ElemIdType elem_id) const
+std::vector<ElemIdType> Condor2Dataset::GetNeighbors(ElemIdType elem_id) const
 {
   std::vector<ElemIdType> neighbors(4);
   const Elem* elem = mesh()->elem(elem_id); 

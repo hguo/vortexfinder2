@@ -27,7 +27,7 @@ public: // mesh info
   virtual int NrNodesPerFace() const = 0;
 
 public: // mesh traversal & utils
-  virtual std::vector<ElemIdType> Neighbors(ElemIdType elem_id) const = 0;
+  virtual std::vector<ElemIdType> GetNeighbors(ElemIdType elem_id) const = 0;
 
   double GaugeTransformation(const double X0[], const double X1[]) const;
   double Flux(const double X[3][3]) const; //!< flux for a triangle
