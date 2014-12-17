@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <list>
 #include <set>
+#include <libmesh/numeric_vector.h>
+#include <libmesh/dof_map.h>
 #include "common/Utils.hpp"
 #include "Condor2Extractor.h"
 #include "InverseInterpolation.h"
@@ -29,7 +31,7 @@ void Condor2VortexExtractor::Extract()
   const DofMap &dof_map  = _ds->tsys()->get_dof_map();  
   MeshBase::const_element_iterator it = _ds->mesh()->active_local_elements_begin(); 
   const MeshBase::const_element_iterator end = _ds->mesh()->active_local_elements_end(); 
-  const NumericVector<Number> *tsolution = _ds->tsys()->solution.get(); 
+  const NumericVector<Number> *ts = _ds->tsys()->solution.get(); 
  
   for (; it!=end; it++) {
     const Elem *elem = *it;
@@ -45,8 +47,8 @@ void Condor2VortexExtractor::Extract()
       dof_map.dof_indices(side.get(), v_di, _ds->v_var());
      
       // could use solution->get()
-      double u[3] = {(*tsolution)(u_di[0]), (*tsolution)(u_di[1]), (*tsolution)(u_di[2])}, 
-             v[3] = {(*tsolution)(v_di[0]), (*tsolution)(v_di[1]), (*tsolution)(v_di[2])};
+      double u[3] = {(*ts)(u_di[0]), (*ts)(u_di[1]), (*ts)(u_di[2])}, 
+             v[3] = {(*ts)(v_di[0]), (*ts)(v_di[1]), (*ts)(v_di[2])};
 
       Node *nodes[3] = {side->get_node(0), side->get_node(1), side->get_node(2)};
       double X[3][3] = {{nodes[0]->slice(0), nodes[0]->slice(1), nodes[0]->slice(2)}, 

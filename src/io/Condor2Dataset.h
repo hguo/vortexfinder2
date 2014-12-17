@@ -5,6 +5,7 @@
 #include <libmesh/libmesh.h>
 #include <libmesh/mesh.h>
 #include <libmesh/elem.h>
+#include <libmesh/fe_base.h>
 #include <libmesh/equation_systems.h>
 #include <libmesh/nonlinear_implicit_system.h>
 #include <libmesh/point_locator_tree.h>
@@ -59,6 +60,7 @@ private:
   libMesh::EquationSystems *_eqsys;
   libMesh::NonlinearImplicitSystem *_tsys;
   libMesh::PointLocatorTree *_locator;
+  libMesh::AutoPtr<libMesh::FEBase> _fe;
   
   unsigned int _u_var, _v_var;
 }; 

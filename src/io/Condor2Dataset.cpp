@@ -1,5 +1,7 @@
 #include <cassert>
 #include <cfloat>
+#include <libmesh/dof_map.h>
+#include <libmesh/numeric_vector.h>
 #include "Condor2Dataset.h"
 #include "common/DataInfo.pb.h"
 
@@ -9,7 +11,7 @@ Condor2Dataset::Condor2Dataset(const Parallel::Communicator &comm) :
   ParallelObject(comm), 
   _eqsys(NULL), 
   _exio(NULL), 
-  _mesh(NULL), 
+  _mesh(NULL),
   _locator(NULL)
 {
 }
@@ -71,6 +73,14 @@ bool Condor2Dataset::OpenDataFile(const std::string& filename)
   _v_var = _tsys->add_variable("v", FIRST, LAGRANGE); 
 
   _eqsys->init(); 
+
+  /// FE
+#if 0
+  const DofMap& dof_map = _tsys->get_dof_map();
+  FEType fe_type = dof_map.variable_type(2/*vnum*/);
+  AutoPtr<FEBase> febase(FEBase::build(_mesh->mesh_dimension(), fe_type));
+  _fe = febase;
+#endif
 
   /// point locator
   _locator = new PointLocatorTree(*_mesh);
@@ -169,6 +179,32 @@ bool Condor2Dataset::Psi(const double X[3], double &re, double &im) const
 
 bool Condor2Dataset::Supercurrent(const double X[3], double J[3]) const
 {
-  // TODO 
+  unsigned int elem_id = Pos2ElemId(X);
+  if (elem_id == UINT_MAX) return false;
+
+  const Elem* elem = _mesh->elem(elem_id);
+  const DofMap& dof_map = tsys()->get_dof_map();
+  const NumericVector<Number> *ts = tsys()->solution.get();
+
+  std::vector<dof_id_type> u_di, v_di;
+  dof_map.dof_indices(elem, u_di, u_var());
+  dof_map.dof_indices(elem, v_di, v_var());
+
+  double P[4][4];
+  for (int i=0; i<4; i++) {
+    const Node *node = elem->get_node(i);
+    for (int j=0; j<3; j++)
+      P[i][j] = node->slice(j);
+  }
+
+  double phi[4]; 
+  for (int i=0; i<4; i++) {
+    double u = (*ts)(u_di[i]), 
+           v = (*ts)(v_di[i]); 
+    phi[i] = atan2(v, u);
+  }
+
+  // TODO: gradient estimation
+
   return false;
 }

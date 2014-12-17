@@ -3,8 +3,6 @@
 
 #include <string>
 #include <map>
-#include <libmesh/numeric_vector.h>
-#include <libmesh/dof_map.h>
 #include "Extractor.h"
 #include "PuncturedElem.h"
 #include "io/Condor2Dataset.h"
