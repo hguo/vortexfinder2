@@ -139,9 +139,9 @@ void Condor2Dataset::LoadTimeStep(int timestep)
   // fprintf(stderr, "nodal solution copied, timestep=%d\n", timestep); 
 }
 
-std::vector<unsigned int> Condor2Dataset::Neighbors(unsigned int elem_id) const
+std::vector<ElemIdType> Condor2Dataset::Neighbors(ElemIdType elem_id) const
 {
-  std::vector<unsigned int> neighbors(4);
+  std::vector<ElemIdType> neighbors(4);
   const Elem* elem = mesh()->elem(elem_id); 
 
   for (int face=0; face<4; face++) {
@@ -160,7 +160,7 @@ void Condor2Dataset::ComputeSupercurrentField()
   // TODO
 }
 
-unsigned int Condor2Dataset::Pos2ElemId(const double X[]) const
+ElemIdType Condor2Dataset::Pos2ElemId(const double X[]) const
 {
   Point p(X[0], X[1], X[2]);
   const Elem *elem = (*_locator)(p);
@@ -179,7 +179,7 @@ bool Condor2Dataset::Psi(const double X[3], double &re, double &im) const
 
 bool Condor2Dataset::Supercurrent(const double X[3], double J[3]) const
 {
-  unsigned int elem_id = Pos2ElemId(X);
+  ElemIdType elem_id = Pos2ElemId(X);
   if (elem_id == UINT_MAX) return false;
 
   const Elem* elem = _mesh->elem(elem_id);

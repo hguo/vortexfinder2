@@ -6,6 +6,14 @@
 #cmakedefine WITH_PNETCDF 1
 #cmakedefine WITH_QT 1
 
+// define ElemIdType
+#if WITH_LIBMESH
+#include <libmesh/id_types.h>
+typedef libMesh::dof_id_type ElemIdType;
+#else
+typedef unsigned int ElemIdType;
+#endif
+
 // NetCDF error handling
 #define NC_SAFE_CALL(call) {\
   int retval = call;\

@@ -23,19 +23,19 @@ public: // data I/O
   virtual void ComputeSupercurrentField() = 0;
 
 public: // mesh traversal & utils
-  virtual std::vector<unsigned int> Neighbors(unsigned int elem_id) const = 0;
+  virtual std::vector<ElemIdType> Neighbors(ElemIdType elem_id) const = 0;
 
   double GaugeTransformation(const double X0[], const double X1[]) const;
   double Flux(const double X[3][3]) const; //!< flux for a triangle
   double Flux(int n, const double X[][3]) const; //!< flux for an arbitrary closed curve
 
-  virtual unsigned int Pos2ElemId(const double X[]) const = 0; //!< returns the elemId for a given position
+  virtual ElemIdType Pos2ElemId(const double X[]) const = 0; //!< returns the elemId for a given position
   
 public: // get faces 
-  // virtual void GetFace(unsigned int elem_id, int face, int *nvert, double X[][3], double re[][3], double im[][3]);
+  // virtual void GetFace(ElemIdType elem_id, int face, int *nvert, double X[][3], double re[][3], double im[][3]);
 
 public: // properties
-  int Dimensions() const {return 3;}  // currently only 3D data is supported
+  virtual int Dimensions() const = 0;
 
   int TimeStep() const {return _timestep;}
 

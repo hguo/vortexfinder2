@@ -7,7 +7,7 @@
 #include "def.h"
 
 class PuncturedElem; 
-typedef std::map<unsigned int, PuncturedElem*> PuncturedElemMap;
+typedef std::map<ElemIdType, PuncturedElem*> PuncturedElemMap;
 
 class PuncturedElem {
 public:
@@ -21,8 +21,8 @@ public:
     _pos.resize(NrFaces()*NrDims());
   }
 
-  void SetElemId(unsigned int id) {_elem_id = id;}
-  unsigned int ElemId() const {return _elem_id;}
+  void SetElemId(ElemIdType id) {_elem_id = id;}
+  ElemIdType ElemId() const {return _elem_id;}
 
   bool Punctured() const {return _bits.any();} // returns false if no punctured faces
 
@@ -60,7 +60,7 @@ public:
   }
 
 private:
-  unsigned int _elem_id;
+  ElemIdType _elem_id;
   std::bitset<16> _bits;
   std::vector<double> _pos; // punctured position
   std::vector<PuncturedElem*> _neighbors;

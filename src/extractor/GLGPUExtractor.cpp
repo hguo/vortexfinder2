@@ -38,7 +38,7 @@ void GLGPUVortexExtractor::Extract()
 void GLGPUVortexExtractor::ExtractElem(int *idx)
 {
   const double epsilon = 0.01;
-  unsigned int elem_id = _ds->Idx2ElemId(idx);
+  ElemIdType elem_id = _ds->Idx2ElemId(idx);
 
   PuncturedElem *pelem = new PuncturedElemHex;
   pelem->Init();

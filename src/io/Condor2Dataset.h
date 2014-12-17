@@ -17,6 +17,8 @@ public:
   Condor2Dataset(const libMesh::Parallel::Communicator &comm); 
   ~Condor2Dataset(); 
 
+  int Dimensions() const {return 3;}
+
 public: 
   bool OpenDataFile(const std::string& filename); 
   void LoadTimeStep(int timestep);
@@ -32,7 +34,7 @@ public:
   void SerializeDataInfoToString(std::string& buf) const;
 
 public:
-  std::vector<unsigned int> Neighbors(unsigned int elem_id) const;
+  std::vector<ElemIdType> Neighbors(ElemIdType id) const;
 
 public:
   libMesh::UnstructuredMesh* mesh() const {return _mesh;}
@@ -43,7 +45,7 @@ public:
   unsigned int v_var() const {return _v_var;}
 
 public:
-  unsigned int Pos2ElemId(const double X[]) const;
+  ElemIdType Pos2ElemId(const double X[]) const;
   
   // Order parameters (direct access/linear interpolation)
   bool Psi(const double X[3], double &re, double &im) const;

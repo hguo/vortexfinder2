@@ -73,13 +73,13 @@ void GLGPUDataset::GetSupercurrentField(const double **sc) const
   sc[2] = _scz;
 }
   
-unsigned int GLGPUDataset::Pos2ElemId(const double X[]) const
+ElemIdType GLGPUDataset::Pos2ElemId(const double X[]) const
 {
   // TODO
   return UINT_MAX;
 }
 
-void GLGPUDataset::ElemId2Idx(unsigned int id, int *idx) const
+void GLGPUDataset::ElemId2Idx(ElemIdType id, int *idx) const
 {
   int s = dims()[0] * dims()[1]; 
   int k = id / s; 
@@ -89,7 +89,7 @@ void GLGPUDataset::ElemId2Idx(unsigned int id, int *idx) const
   idx[0] = i; idx[1] = j; idx[2] = k;
 }
 
-unsigned int GLGPUDataset::Idx2ElemId(int *idx) const
+ElemIdType GLGPUDataset::Idx2ElemId(int *idx) const
 {
   for (int i=0; i<3; i++) 
     if (idx[i]<0 || idx[i]>=dims()[i])
@@ -200,9 +200,9 @@ void GLGPUDataset::GetFace(int idx0[3], int face, int X[4][3]) const
   }
 }
 
-std::vector<unsigned int> GLGPUDataset::Neighbors(unsigned int elem_id) const
+std::vector<ElemIdType> GLGPUDataset::Neighbors(ElemIdType elem_id) const
 {
-  std::vector<unsigned int> neighbors; 
+  std::vector<ElemIdType> neighbors; 
 
   int idx[3], idx1[3];
   ElemId2Idx(elem_id, idx); 
@@ -470,8 +470,8 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename)
     name = reader->ReadNextRecordInfo();
     if (name.size()==0) break;
     
-    unsigned int type = reader->RecType(), 
-                 recID = reader->RedID(); 
+    ElemIdType type = reader->RecType(), 
+               recID = reader->RedID(); 
     float f; // temp var
     
     reader->ReadNextRecordData(&buf);

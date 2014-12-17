@@ -9,7 +9,9 @@ class GLGPUDataset : public GLDataset
 public: 
   GLGPUDataset(); 
   ~GLGPUDataset();
- 
+
+  int Dimensions() const {return 3;}
+
   bool OpenDataFile(const std::string& filename); 
   // void LoadTimeStep(int timestep);
   // void CloseDataFile();
@@ -24,11 +26,11 @@ public:
   void SerializeDataInfoToString(std::string& buf) const;
   
 public:
-  unsigned int Pos2ElemId(const double X[]) const; 
+  ElemIdType Pos2ElemId(const double X[]) const; 
 
   // ElemId is encoded by the id of left-bottom corner node in the cell
-  void ElemId2Idx(unsigned int id, int *idx) const; 
-  unsigned int Idx2ElemId(int *idx) const;
+  void ElemId2Idx(ElemIdType id, int *idx) const; 
+  ElemIdType Idx2ElemId(int *idx) const;
  
   void Idx2Pos(const int idx[3], double pos[3]) const;
   void Pos2Idx(const double pos[3], int idx[3]) const;
@@ -42,7 +44,7 @@ public:
   double GaugeTransformation(int x0, int y0, int z0, int x1, int y1, int z1) const;
 
 public:
-  std::vector<unsigned int> Neighbors(unsigned int elem_id) const;
+  std::vector<ElemIdType> Neighbors(ElemIdType elem_id) const;
 
 public:
   void PrintInfo() const; 
