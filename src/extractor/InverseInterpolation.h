@@ -2,13 +2,13 @@
 #define _INVERSE_INTERPOLATION_H
 
 template <typename T>
-static inline bool find_zero_triangle(T r[3], T i[3], T lambda[3], T epsilon=0)
+static inline bool find_zero_barycentric(T re[3], T im[3], T lambda[3], T epsilon=0)
 {
-  T D = r[0]*i[1] + r[1]*i[2] + r[2]*i[0] - r[2]*i[1] - r[1]*i[0] - r[0]*i[2]; // TODO: check if D=0?
+  T D = re[0]*im[1] + re[1]*im[2] + re[2]*im[0] - re[2]*im[1] - re[1]*im[0] - re[0]*im[2]; // TODO: check if D=0?
   T det[3] = {
-    r[1]*i[2] - r[2]*i[1], 
-    r[2]*i[0] - r[0]*i[2], 
-    r[0]*i[1] - r[1]*i[0]
+    re[1]*im[2] - re[2]*im[1], 
+    re[2]*im[0] - re[0]*im[2], 
+    re[0]*im[1] - re[1]*im[0]
   };
 
   lambda[0] = det[0]/D; 
@@ -24,7 +24,7 @@ template <typename T>
 static inline bool find_zero_triangle(T re[3], T im[3], T X[3][3], T pos[3], T epsilon=0)
 {
   T lambda[3]; 
-  if (!find_zero_triangle(re, im, lambda, epsilon)) return false; 
+  if (!find_zero_barycentric(re, im, lambda, epsilon)) return false; 
 
   T R[3][2] = {{X[0][0]-X[2][0], X[1][0]-X[2][0]}, 
                {X[0][1]-X[2][1], X[1][1]-X[2][1]}, 
@@ -39,9 +39,8 @@ static inline bool find_zero_triangle(T re[3], T im[3], T X[3][3], T pos[3], T e
 
 // find the zero point in [0, 1]x[0, 1] quad, using generalized eigenvalue problem
 template <typename T>
-static inline bool find_zero_quad(T re[4], T im[4], T pos[2])
+static inline bool find_zero_unit_quad_bilinear(T re[4], T im[4], T pos[2], T epsilon=0)
 {
-  const T epsilon = 0.01; 
   T f00 = re[0], f10 = re[1], f01 = re[3], f11 = re[2], // counter-clockwise
     g00 = im[0], g10 = im[1], g01 = im[3], g11 = im[2];
   T A0 = f00 - f10 - f01 + f11, 
@@ -102,8 +101,6 @@ static inline bool find_zero_quad(T re[4], T im[4], T pos[2])
         break; 
       }
 
-  // if (!found) 
-  //   fprintf(stderr, "roots not found: {%f, %f}, {%f, %f}\n", x[0], y[0], x[1], y[1]);
   return found; 
 }
 
@@ -118,9 +115,8 @@ static inline bool find_zero_quad_center(T re[4], T im[4], T X[4][3], T pos[3])
 }
 
 template <typename T>
-static inline bool find_zero_quad_barycentric(T R[4], T I[4], T X[4][3], T pos[3])
+static inline bool find_zero_quad_barycentric(T R[4], T I[4], T X[4][3], T pos[3], T epsilon=0)
 {
-  const T epsilon = 0.01; 
   T X0[3][3] = {{X[0][0], X[0][1], X[0][2]}, 
                 {X[1][0], X[1][1], X[1][2]}, 
                 {X[2][0], X[2][1], X[2][2]}}, 
@@ -144,11 +140,11 @@ static inline bool find_zero_quad_barycentric(T R[4], T I[4], T X[4][3], T pos[3
 }
 
 template <typename T>
-static inline bool find_zero_quad_bilinear(T re[4], T im[4], T X[4][3], T pos[3])
+static inline bool find_zero_quad_bilinear(T re[4], T im[4], T X[4][3], T pos[3], T epsilon=0)
 {
   T p[2]; 
 
-  bool succ = find_zero_quad(re, im, p); 
+  bool succ = find_zero_unit_quad_bilinear(re, im, p, epsilon); 
   if (!succ) return false;
 
   double u[3], v[3]; 
@@ -169,10 +165,61 @@ static inline bool find_zero_quad_bilinear(T re[4], T im[4], T X[4][3], T pos[3]
 }
 
 template <typename T>
-static inline bool find_zero_quad_line_cross(T re[4], T im[4], T X[4][3], T pos[3])
+static inline bool find_zero_linear(T f0, T f1, T X0[3], T X1[3], T p[3])
+{
+  // (1-alpha)*f0 + alpha*f1 = 0
+  if (f0 - f1 == 0) return false;
+  
+  float alpha = f0 / (f0 - f1);
+  if (alpha<0 || alpha>=1) return false;
+
+  p[0] = (1-alpha)*X0[0] + alpha*X1[0];
+  p[1] = (1-alpha)*X0[1] + alpha*X1[1];
+  p[2] = (1-alpha)*X0[2] + alpha*X1[2];
+
+  return true;
+}
+
+template <typename T>
+static inline bool line_cross(T P0[3], T P1[3], T Q0[3], T Q1[3], T pos[3])
 {
   // TODO
+  T da[3] = {P1[0] - P0[0], P1[1] - P0[1], P1[2] - P0[2]}, 
+    db[3] = {Q1[0] - Q0[0], Q1[1] - Q0[1], Q1[2] - Q0[2]}, 
+    dc[3] = {Q0[0] - P0[0], Q0[1] - P0[1], Q0[2] - P0[2]};
+
+  // if (dot(dc, cross(da, db)) != 0.0) return false; // not coplanar
   return false;
+}
+
+template <typename T>
+static inline bool find_zero_quad_line_cross(T re[4], T im[4], T X[4][3], T pos[3], T epsilon=0)
+{
+  bool cr[4], ci[4]; 
+  T pr0[4][3], pi0[4][3];
+  T *pr[2], *pi[2];
+  
+  cr[0] = find_zero_linear(re[0], re[1], X[0], X[1], pr0[0]);
+  cr[1] = find_zero_linear(re[1], re[2], X[1], X[2], pr0[1]); 
+  cr[2] = find_zero_linear(re[2], re[3], X[2], X[3], pr0[2]); 
+  cr[3] = find_zero_linear(re[3], re[0], X[3], X[0], pr0[3]);
+  
+  ci[0] = find_zero_linear(im[0], im[1], X[0], X[1], pi0[0]);
+  ci[1] = find_zero_linear(im[1], im[2], X[1], X[2], pi0[1]); 
+  ci[2] = find_zero_linear(im[2], im[3], X[2], X[3], pi0[2]); 
+  ci[3] = find_zero_linear(im[3], im[0], X[3], X[0], pi0[3]);
+
+  int crs = cr[0] + cr[1] + cr[2] + cr[3], 
+      cis = ci[0] + ci[1] + ci[2] + ci[3];
+  if (crs!=2 || cis!=2) return false;
+
+  for (int i=0, k=0; i<4; i++) 
+    if (cr[i]) pr[k++] = pr0[i]; 
+  
+  for (int i=0, k=0; i<4; i++) 
+    if (ci[i]) pi[k++] = pi0[i]; 
+
+  return line_cross(pr[0], pr[1], pi[0], pi[1], pos);
 }
 
 #endif

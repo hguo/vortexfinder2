@@ -37,6 +37,7 @@ void GLGPUVortexExtractor::Extract()
 
 void GLGPUVortexExtractor::ExtractElem(int *idx)
 {
+  const double epsilon = 0.01;
   unsigned int elem_id = _ds->Idx2ElemId(idx);
 
   PuncturedElem *pelem = new PuncturedElemHex;
@@ -104,17 +105,17 @@ void GLGPUVortexExtractor::ExtractElem(int *idx)
       break;
 
     case INTERPOLATION_BARYCENTRIC: 
-      succ = find_zero_quad_barycentric(re, im, vertices, pos); 
+      succ = find_zero_quad_barycentric(re, im, vertices, pos, epsilon); 
       break; 
 
     case INTERPOLATION_BILINEAR: 
-      succ = find_zero_quad_bilinear(re, im, vertices, pos); 
+      succ = find_zero_quad_bilinear(re, im, vertices, pos, epsilon); 
       break;
     
     case INTERPOLATION_LINECROSS: // TODO
       fprintf(stderr, "FATAL: line cross not yet implemented. exiting.\n"); 
       assert(false);
-      succ = find_zero_quad_line_cross(re, im, vertices, pos); 
+      succ = find_zero_quad_line_cross(re, im, vertices, pos, epsilon); 
       break;
 
     default: 
