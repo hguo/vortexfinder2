@@ -20,8 +20,6 @@ public: // data I/O
   virtual void LoadTimeStep(int timestep);
   virtual void CloseDataFile();
 
-  virtual void ComputeSupercurrentField() = 0;
-
 public: // mesh info
   virtual int NrFacesPerElem() const = 0;
   virtual int NrNodesPerFace() const = 0;

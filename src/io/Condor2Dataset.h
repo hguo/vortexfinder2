@@ -26,8 +26,6 @@ public:
   void LoadTimeStep(int timestep);
   void CloseDataFile();
 
-  void ComputeSupercurrentField(); 
-
   // APIs for in-situ analysis
   void SetMesh(libMesh::Mesh*);
   void SetEquationSystems(libMesh::EquationSystems*);

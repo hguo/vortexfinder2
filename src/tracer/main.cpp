@@ -15,7 +15,6 @@ int main(int argc, char **argv)
 
   GLGPUDataset ds;
   ds.OpenDataFile(filename);
-  ds.ComputeSupercurrentField();
 
   FieldLineTracer tracer;
   tracer.SetDataset(&ds);

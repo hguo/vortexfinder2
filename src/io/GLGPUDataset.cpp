@@ -66,13 +66,6 @@ void GLGPUDataset::PrintInfo() const
   fprintf(stderr, "fluctuation_amp=%f\n", _fluctuation_amp); 
 }
 
-void GLGPUDataset::GetSupercurrentField(const double **sc) const
-{
-  sc[0] = _scx; 
-  sc[1] = _scy; 
-  sc[2] = _scz;
-}
-  
 ElemIdType GLGPUDataset::Pos2ElemId(const double X[]) const
 {
   // TODO
@@ -214,10 +207,15 @@ void GLGPUDataset::SerializeDataInfoToString(std::string& buf) const
 
 bool GLGPUDataset::OpenDataFile(const std::string &filename)
 {
-  if (OpenBDATDataFile(filename)) return true;
-  if (OpenLegacyDataFile(filename)) return true;
+  bool succ = false;
 
-  return false;
+  if (OpenBDATDataFile(filename)) succ = true; 
+  else if (OpenLegacyDataFile(filename)) succ = true;
+
+  if (succ)
+    ComputeSupercurrentField();
+
+  return succ;
 }
 
 bool GLGPUDataset::OpenLegacyDataFile(const std::string &filename)

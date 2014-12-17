@@ -155,11 +155,6 @@ std::vector<ElemIdType> Condor2Dataset::GetNeighbors(ElemIdType elem_id) const
   return neighbors;
 }
 
-void Condor2Dataset::ComputeSupercurrentField()
-{
-  // TODO
-}
-
 ElemIdType Condor2Dataset::Pos2ElemId(const double X[]) const
 {
   Point p(X[0], X[1], X[2]);

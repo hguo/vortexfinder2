@@ -23,7 +23,6 @@ public:
   bool WriteNetCDFFile(const std::string& filename);
 
   void ComputeSupercurrentField();
-  void GetSupercurrentField(const double **sc) const;
 
   void SerializeDataInfoToString(std::string& buf) const;
   
