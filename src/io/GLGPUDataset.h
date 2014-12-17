@@ -68,6 +68,9 @@ public:
   bool Supercurrent(const double X[3], double J[3]) const;
 
 private:
+  void Reset();
+
+private:
   int _dims[3]; 
   bool _pbc[3]; 
   double _cell_lengths[3]; 

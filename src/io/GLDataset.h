@@ -75,6 +75,8 @@ protected:
   double _lengths[3];
   double _B[3];
   double _Kex, _Kex_dot;
+  double _Jx;
+  double _V;
   double _fluctuation_amp; 
 }; 
 

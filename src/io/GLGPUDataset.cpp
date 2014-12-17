@@ -2,19 +2,19 @@
 #include <cstdio>
 #include <cassert>
 #include <cmath>
+#include <iostream>
 #include "common/Utils.hpp"
 #include "common/Lerp.hpp"
 #include "common/DataInfo.pb.h"
 #include "GLGPUDataset.h"
+#include "BDATReader.h"
 
 #ifdef WITH_LIBMESH // suppose libmesh is built with netcdf
 #include <netcdf.h>
 #endif
 
 static const int GLGPU_LEGACY_TAG_SIZE = 4;
-static const int GLGPU_BDAT_TAG_SIZE = 4;
 static const char GLGPU_LEGACY_TAG[] = "CA02";
-static const char GLGPU_BDAT_TAG[] = "BDAT";
 
 enum {
   GLGPU_ENDIAN_LITTLE = 0, 
@@ -30,10 +30,7 @@ GLGPUDataset::GLGPUDataset() :
   _re(NULL), _im(NULL), _rho(NULL), _phi(NULL), 
   _scx(NULL), _scy(NULL), _scz(NULL), _scm(NULL)
 {
-  for (int i=0; i<3; i++) {
-    _dims[i] = 1; 
-    _pbc[i] = false;
-  }
+  Reset();
 }
 
 GLGPUDataset::~GLGPUDataset()
@@ -43,6 +40,15 @@ GLGPUDataset::~GLGPUDataset()
   if (_rho) free(_rho);
   if (_phi) free (_phi);
   if (_scx) free(_scx);
+}
+
+void GLGPUDataset::Reset()
+{
+  for (int i=0; i<3; i++) {
+    _dims[i] = 1; 
+    _pbc[i] = false;
+  }
+  // TODO
 }
 
 void GLGPUDataset::PrintInfo() const
@@ -394,8 +400,8 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string &filename)
       for (int i=0; i<count; i++) {
         _rho[i] = ch1[i]; 
         _phi[i] = ch2[i]; 
-        _re[i] = _rho[i] * cos(_phi[i]); 
-        _im[i] = _rho[i] * sin(_phi[i]);
+        _re[i] = ch1[i] * cos(ch2[i]); 
+        _im[i] = ch1[i] * sin(ch2[i]);
       }
     } else assert(false); 
   } else if (datatype == GLGPU_TYPE_DOUBLE) {
@@ -453,6 +459,116 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string &filename)
 
 bool GLGPUDataset::OpenBDATDataFile(const std::string& filename)
 {
+  BDATReader *reader = new BDATReader(filename); 
+  if (!reader->Valid()) {
+    delete reader;
+    return false;
+  }
+
+  Reset();
+
+  std::string name, buf;
+  while (1) {
+    name = reader->ReadNextRecordInfo();
+    if (name.size()==0) break;
+    
+    unsigned int type = reader->RecType(), 
+                 recID = reader->RedID(); 
+    
+    reader->ReadNextRecordData(&buf);
+    void *p = (void*)buf.data();
+
+    if (name == "dim") {
+      assert(type == BDAT_INT32);
+      int dim; 
+      memcpy(&dim, p, sizeof(int));
+      assert(dim == 3);
+    } else if (name == "Nx") {
+      assert(type == BDAT_INT32);
+      memcpy(&_dims[0], p, sizeof(int));
+    } else if (name == "Ny") {
+      assert(type == BDAT_INT32);
+      memcpy(&_dims[1], p, sizeof(int));
+    } else if (name == "Nz") {
+      assert(type == BDAT_INT32);
+      memcpy(&_dims[2], p, sizeof(int));
+    } else if (name == "Lx") {
+      assert(type == BDAT_FLOAT);
+      memcpy(&_lengths[0], p, sizeof(float));
+    } else if (name == "Ly") {
+      assert(type == BDAT_FLOAT);
+      memcpy(&_lengths[1], p, sizeof(float));
+    } else if (name == "Lz") {
+      assert(type == BDAT_FLOAT);
+      memcpy(&_lengths[2], p, sizeof(float));
+    } else if (name == "Lz") {
+      assert(type == BDAT_FLOAT);
+    } else if (name == "BC") {
+      assert(type == BDAT_INT32);
+      int btype; 
+      memcpy(&btype, p, sizeof(int));
+      _pbc[0] = btype & 0x0000ff;
+      _pbc[1] = btype & 0x00ff00;
+      _pbc[2] = btype & 0xff0000; 
+    } else if (name == "zaniso") {
+      assert(type == BDAT_FLOAT);
+    } else if (name == "t") {
+      assert(type == BDAT_FLOAT);
+    } else if (name == "Tf") {
+      assert(type == BDAT_FLOAT);
+    } else if (name == "Bx") {
+      assert(type == BDAT_FLOAT);
+      memcpy(&_B[0], p, sizeof(float));
+    } else if (name == "By") {
+      assert(type == BDAT_FLOAT);
+      memcpy(&_B[1], p, sizeof(float));
+    } else if (name == "Bz") {
+      assert(type == BDAT_FLOAT);
+      memcpy(&_B[2], p, sizeof(float));
+    } else if (name == "Jxext") {
+      assert(type == BDAT_FLOAT);
+      memcpy(&_Jx, p, sizeof(float));
+    } else if (name == "K") {
+      assert(type == BDAT_FLOAT);
+      memcpy(&_Kex, p, sizeof(float));
+    } else if (name == "V") {
+      assert(type == BDAT_FLOAT);
+      memcpy(&_V, p, sizeof(float));
+    } else if (name == "psi") {
+      if (type == BDAT_FLOAT) {
+        int count = buf.size()/sizeof(float)/2;
+        int optype = recID == 2000 ? 0 : 1;
+        float *data = (float*)p;
+        
+        _re = (double*)malloc(sizeof(double)*count);
+        _im = (double*)malloc(sizeof(double)*count);
+        _rho = (double*)malloc(sizeof(double)*count);
+        _phi = (double*)malloc(sizeof(double)*count);
+
+        if (optype == 0) { // re, im
+          for (int i=0; i<count; i++) {
+            _re[i] = data[i*2];
+            _im[i] = data[i*2+1];
+            _rho[i] = sqrt(_re[i]*_re[i] + _im[i]*_im[i]);
+            _phi[i] = atan2(_im[i], _re[i]);
+          }
+        } else { // rho^2, phi
+          for (int i=0; i<count; i++) {
+            _rho[i] = sqrt(data[i*2]);
+            _phi[i] = data[i*2+1];
+            _re[i] = _rho[i] * cos(_phi[i]); 
+            _im[i] = _rho[i] * sin(_phi[i]);
+          }
+        }
+      } else if (type == BDAT_DOUBLE) {
+        // TODO
+        assert(false);
+      } else 
+        assert(false);
+    }
+  }
+
+  fprintf(stderr, "data read.\n");
   return false;
 }
 
@@ -508,8 +624,8 @@ bool GLGPUDataset::WriteNetCDFFile(const std::string& filename)
   NC_SAFE_CALL( nc_def_dim(ncid, "z", sizes[0], &dimids[0]) );
   NC_SAFE_CALL( nc_def_dim(ncid, "y", sizes[1], &dimids[1]) );
   NC_SAFE_CALL( nc_def_dim(ncid, "x", sizes[2], &dimids[2]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "rho", NC_DOUBLE, 3, dimids, &varids[0]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "phi", NC_DOUBLE, 3, dimids, &varids[1]) );
+  // NC_SAFE_CALL( nc_def_var(ncid, "rho", NC_DOUBLE, 3, dimids, &varids[0]) );
+  // NC_SAFE_CALL( nc_def_var(ncid, "phi", NC_DOUBLE, 3, dimids, &varids[1]) );
   NC_SAFE_CALL( nc_def_var(ncid, "re", NC_DOUBLE, 3, dimids, &varids[2]) );
   NC_SAFE_CALL( nc_def_var(ncid, "im", NC_DOUBLE, 3, dimids, &varids[3]) );
   NC_SAFE_CALL( nc_def_var(ncid, "scx", NC_DOUBLE, 3, dimids, &varids[4]) );

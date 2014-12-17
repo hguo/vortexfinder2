@@ -1,4 +1,5 @@
 set (io_sources
+  BDATReader.cpp
   GLGPUDataset.cpp
   GLDataset.cpp
 )
