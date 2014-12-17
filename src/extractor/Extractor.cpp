@@ -1,4 +1,5 @@
 #include "Extractor.h"
+#include "common/Utils.hpp"
 #include "io/GLDataset.h"
 #include <cassert>
 
@@ -148,4 +149,67 @@ void VortexExtractor::Trace()
   //   delete it->second;
   
   fprintf(stderr, "#vortex_objects=%ld\n", _vortex_objects.size());
+}
+
+bool VortexExtractor::ExtractElem(ElemIdType id)
+{
+  const int nfaces = _dataset->NrFacesPerElem(); 
+  PuncturedElem *pelem = NewPuncturedElem(id);
+ 
+  for (int face=0; face<nfaces; face++) {
+    const int nnodes = _dataset->NrNodesPerFace();
+    double X[nnodes][3], re[nnodes], im[nnodes]; 
+
+    _dataset->GetFace(id, face, X, re, im);
+
+    // compute rho & phi
+    double rho[nnodes], phi[nnodes];
+    for (int i=0; i<nnodes; i++) {
+      rho[i] = sqrt(re[i]*re[i] + im[i]*im[i]);
+      phi[i] = atan2(im[i], re[i]);
+    }
+
+    // calculating phase shift
+    double delta[nnodes], phase_shift = 0;
+    for (int i=0; i<nnodes; i++) {
+      int j = (i+1) % nnodes;
+      delta[i] = phi[j] - phi[i]; 
+      if (_gauge) 
+        delta[i] += _dataset->GaugeTransformation(X[i], X[j]); 
+      delta[i] = mod2pi(delta[i] + M_PI) - M_PI;
+      phase_shift -= delta[i];
+    }
+    phase_shift -= _dataset->Flux(nnodes, X);
+
+    // check if punctured
+    double critera = phase_shift / (2*M_PI);
+    if (fabs(critera)<0.5) continue; // not punctured
+
+    // chirality
+    int chirality = critera>0 ? 1 : -1;
+
+    // gauge transformation
+    if (_gauge) { 
+      for (int i=1; i<nnodes; i++) {
+        phi[i] = phi[i-1] + delta[i-1];
+        re[i] = rho[i] * cos(phi[i]); 
+        im[i] = rho[i] * sin(phi[i]);
+      }
+    }
+
+    // find zero
+    double pos[3];
+    if (FindZero(X, re, im, pos))
+      pelem->AddPuncturedFace(face, chirality, pos);
+    else 
+      fprintf(stderr, "FATAL: punctured but singularity not found.\n");
+  }
+
+  if (pelem->Punctured()) {
+    _punctured_elems[id] = pelem;
+    return true;
+  } else {
+    delete pelem;
+    return false;
+  }
 }

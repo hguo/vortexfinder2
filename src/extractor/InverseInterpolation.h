@@ -2,7 +2,7 @@
 #define _INVERSE_INTERPOLATION_H
 
 template <typename T>
-static inline bool find_zero_barycentric(T re[3], T im[3], T lambda[3], T epsilon=0)
+static inline bool find_zero_barycentric(const T re[3], const T im[3], T lambda[3], T epsilon=0)
 {
   T D = re[0]*im[1] + re[1]*im[2] + re[2]*im[0] - re[2]*im[1] - re[1]*im[0] - re[0]*im[2]; // TODO: check if D=0?
   T det[3] = {
@@ -21,7 +21,7 @@ static inline bool find_zero_barycentric(T re[3], T im[3], T lambda[3], T epsilo
 }
 
 template <typename T>
-static inline bool find_zero_triangle(T re[3], T im[3], T X[3][3], T pos[3], T epsilon=0)
+static inline bool find_zero_triangle(const T re[3], const T im[3], const T X[3][3], T pos[3], T epsilon=0)
 {
   T lambda[3]; 
   if (!find_zero_barycentric(re, im, lambda, epsilon)) return false; 
@@ -39,7 +39,7 @@ static inline bool find_zero_triangle(T re[3], T im[3], T X[3][3], T pos[3], T e
 
 // find the zero point in [0, 1]x[0, 1] quad, using generalized eigenvalue problem
 template <typename T>
-static inline bool find_zero_unit_quad_bilinear(T re[4], T im[4], T pos[2], T epsilon=0)
+static inline bool find_zero_unit_quad_bilinear(const T re[4], const T im[4], T pos[2], T epsilon=0)
 {
   T f00 = re[0], f10 = re[1], f01 = re[3], f11 = re[2], // counter-clockwise
     g00 = im[0], g10 = im[1], g01 = im[3], g11 = im[2];
@@ -105,7 +105,7 @@ static inline bool find_zero_unit_quad_bilinear(T re[4], T im[4], T pos[2], T ep
 }
 
 template <typename T>
-static inline bool find_zero_quad_center(T re[4], T im[4], T X[4][3], T pos[3])
+static inline bool find_zero_quad_center(const T re[4], const T im[4], const T X[4][3], T pos[3])
 {
   pos[0] = 0.25*(X[0][0] + X[1][0] + X[2][0] +X[3][0]);
   pos[1] = 0.25*(X[0][1] + X[1][1] + X[2][0] +X[3][1]);
@@ -115,7 +115,7 @@ static inline bool find_zero_quad_center(T re[4], T im[4], T X[4][3], T pos[3])
 }
 
 template <typename T>
-static inline bool find_zero_quad_barycentric(T R[4], T I[4], T X[4][3], T pos[3], T epsilon=0)
+static inline bool find_zero_quad_barycentric(const T R[4], const T I[4], const T X[4][3], T pos[3], T epsilon=0)
 {
   T X0[3][3] = {{X[0][0], X[0][1], X[0][2]}, 
                 {X[1][0], X[1][1], X[1][2]}, 
@@ -140,7 +140,7 @@ static inline bool find_zero_quad_barycentric(T R[4], T I[4], T X[4][3], T pos[3
 }
 
 template <typename T>
-static inline bool find_zero_quad_bilinear(T re[4], T im[4], T X[4][3], T pos[3], T epsilon=0)
+static inline bool find_zero_quad_bilinear(const T re[4], const T im[4], const T X[4][3], T pos[3], T epsilon=0)
 {
   T p[2]; 
 
@@ -165,7 +165,7 @@ static inline bool find_zero_quad_bilinear(T re[4], T im[4], T X[4][3], T pos[3]
 }
 
 template <typename T>
-static inline bool find_zero_linear(T f0, T f1, T X0[3], T X1[3], T p[3])
+static inline bool find_zero_linear(T f0, T f1, const T X0[3], const T X1[3], T p[3])
 {
   // (1-alpha)*f0 + alpha*f1 = 0
   if (f0 - f1 == 0) return false;
@@ -181,7 +181,7 @@ static inline bool find_zero_linear(T f0, T f1, T X0[3], T X1[3], T p[3])
 }
 
 template <typename T>
-static inline bool line_cross(T P0[3], T P1[3], T Q0[3], T Q1[3], T pos[3])
+static inline bool line_cross(const T P0[3], const T P1[3], const T Q0[3], const T Q1[3], T pos[3])
 {
   // TODO
   T da[3] = {P1[0] - P0[0], P1[1] - P0[1], P1[2] - P0[2]}, 
@@ -193,7 +193,7 @@ static inline bool line_cross(T P0[3], T P1[3], T Q0[3], T Q1[3], T pos[3])
 }
 
 template <typename T>
-static inline bool find_zero_quad_line_cross(T re[4], T im[4], T X[4][3], T pos[3], T epsilon=0)
+static inline bool find_zero_quad_line_cross(const T re[4], const T im[4], const T X[4][3], T pos[3], T epsilon=0)
 {
   bool cr[4], ci[4]; 
   T pr0[4][3], pi0[4][3];

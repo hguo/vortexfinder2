@@ -18,16 +18,12 @@ public:
   Condor2VortexExtractor(); 
   ~Condor2VortexExtractor();
 
-  void SetDataset(const GLDataset* ds);
-  const Condor2Dataset* Dataset() const {return _ds;}
-
   void Extract();
 
-private: 
-  int _verbose; 
-  bool _gauge; 
- 
-  const Condor2Dataset *_ds;
+protected:
+  PuncturedElem* NewPuncturedElem(ElemIdType) const;
+  
+  bool FindZero(const double X[][3], const double re[], const double im[], double pos[3]) const;
 }; 
 
 #endif

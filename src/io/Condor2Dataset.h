@@ -18,6 +18,8 @@ public:
   ~Condor2Dataset(); 
 
   int Dimensions() const {return 3;}
+  int NrFacesPerElem() const {return 4;}
+  int NrNodesPerFace() const {return 3;}
 
 public: 
   bool OpenDataFile(const std::string& filename); 
@@ -35,6 +37,7 @@ public:
 
 public:
   std::vector<ElemIdType> Neighbors(ElemIdType id) const;
+  bool GetFace(ElemIdType id, int face, double X[][3], double re[], double im[]) const;
 
 public:
   libMesh::UnstructuredMesh* mesh() const {return _mesh;}

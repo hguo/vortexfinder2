@@ -21,6 +21,12 @@ public:
   void WriteVortexObjects(const std::string& filename); 
 
 protected:
+  bool ExtractElem(ElemIdType id);
+  virtual PuncturedElem* NewPuncturedElem(ElemIdType) const = 0;
+
+  virtual bool FindZero(const double X[][3], const double re[], const double im[], double pos[3]) const = 0;
+
+protected:
   PuncturedElemMap _punctured_elems; 
   std::vector<VortexObject> _vortex_objects;
   

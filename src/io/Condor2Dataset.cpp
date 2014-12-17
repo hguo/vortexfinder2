@@ -208,3 +208,32 @@ bool Condor2Dataset::Supercurrent(const double X[3], double J[3]) const
 
   return false;
 }
+  
+bool Condor2Dataset::GetFace(ElemIdType id, int face, double X[][3], double re[], double im[]) const
+{
+  if (id == UINT_MAX) return false;
+  
+  const Elem* elem = _mesh->elem(id);
+  if (elem == NULL) return false;
+
+  AutoPtr<Elem> side = elem->side(face); // TODO: check if side exists
+  const DofMap& dof_map = tsys()->get_dof_map();
+  const NumericVector<Number> *ts = tsys()->solution.get();
+
+  std::vector<dof_id_type> u_di, v_di; 
+  dof_map.dof_indices(side.get(), u_di, u_var());
+  dof_map.dof_indices(side.get(), v_di, v_var());
+
+  // coordinates
+  for (int i=0; i<3; i++) 
+    for (int j=0; j<3; j++) 
+      X[i][j] = side->get_node(i)->slice(j);
+
+  // nodal values
+  for (int i=0; i<3; i++) {
+    re[i] = (*ts)(u_di[i]); 
+    im[i] = (*ts)(v_di[i]);
+  }
+
+  return true;
+}

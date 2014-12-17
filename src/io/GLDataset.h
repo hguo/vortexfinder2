@@ -22,6 +22,10 @@ public: // data I/O
 
   virtual void ComputeSupercurrentField() = 0;
 
+public: // mesh info
+  virtual int NrFacesPerElem() const = 0;
+  virtual int NrNodesPerFace() const = 0;
+
 public: // mesh traversal & utils
   virtual std::vector<ElemIdType> Neighbors(ElemIdType elem_id) const = 0;
 
@@ -32,7 +36,7 @@ public: // mesh traversal & utils
   virtual ElemIdType Pos2ElemId(const double X[]) const = 0; //!< returns the elemId for a given position
   
 public: // get faces 
-  // virtual void GetFace(ElemIdType elem_id, int face, int *nvert, double X[][3], double re[][3], double im[][3]);
+  virtual bool GetFace(ElemIdType id, int face, double X[][3], double re[], double im[]) const = 0;
 
 public: // properties
   virtual int Dimensions() const = 0;

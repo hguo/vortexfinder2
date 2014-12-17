@@ -11,6 +11,8 @@ public:
   ~GLGPUDataset();
 
   int Dimensions() const {return 3;}
+  int NrFacesPerElem() const {return 6;}
+  int NrNodesPerFace() const {return 4;}
 
   bool OpenDataFile(const std::string& filename); 
   // void LoadTimeStep(int timestep);
@@ -45,6 +47,7 @@ public:
 
 public:
   std::vector<ElemIdType> Neighbors(ElemIdType elem_id) const;
+  bool GetFace(ElemIdType id, int face, double X[][3], double re[], double im[]) const;
 
 public:
   void PrintInfo() const; 

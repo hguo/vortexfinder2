@@ -79,6 +79,19 @@ double GLDataset::Flux(const double X[3][3]) const
 
   return inner_product(_B, dS);
 }
+  
+double GLDataset::Flux(int n, const double X[][3]) const
+{
+  double flux = 0;
+  for (int i=0; i<n-2; i++) {
+    double X1[3][3] = {{X[0][0], X[0][1], X[0][2]}, 
+                       {X[i+1][0], X[i+1][1], X[i+1][2]}, 
+                       {X[i+2][0], X[i+2][1], X[i+2][2]}};
+    flux += Flux(X1);
+  }
+  
+  return flux;
+}
 
 void GLDataset::A(const double X[3], double A[3]) const
 {

@@ -149,57 +149,6 @@ double GLGPUDataset::GaugeTransformation(int x0, int y0, int z0, int x1, int y1,
   return GaugeTransformation(idx0, idx1);
 }
 
-void GLGPUDataset::GetFace(int idx0[3], int face, int X[4][3]) const
-{
-  int idx1[3] = {(idx0[0]+1)%dims()[0], (idx0[1]+1)%dims()[1], (idx0[2]+1)%dims()[2]}; 
-  
-  switch (face) {
-  case 0: // XY0
-    X[0][0] = idx0[0]; X[0][1] = idx0[1]; X[0][2] = idx0[2]; 
-    X[1][0] = idx0[0]; X[1][1] = idx1[1]; X[1][2] = idx0[2]; 
-    X[2][0] = idx1[0]; X[2][1] = idx1[1]; X[2][2] = idx0[2]; 
-    X[3][0] = idx1[0]; X[3][1] = idx0[1]; X[3][2] = idx0[2]; 
-    break; 
-  
-  case 1: // YZ0
-    X[0][0] = idx0[0]; X[0][1] = idx0[1]; X[0][2] = idx0[2]; 
-    X[1][0] = idx0[0]; X[1][1] = idx0[1]; X[1][2] = idx1[2]; 
-    X[2][0] = idx0[0]; X[2][1] = idx1[1]; X[2][2] = idx1[2]; 
-    X[3][0] = idx0[0]; X[3][1] = idx1[1]; X[3][2] = idx0[2]; 
-    break; 
-  
-  case 2: // ZX0
-    X[0][0] = idx0[0]; X[0][1] = idx0[1]; X[0][2] = idx0[2]; 
-    X[1][0] = idx1[0]; X[1][1] = idx0[1]; X[1][2] = idx0[2]; 
-    X[2][0] = idx1[0]; X[2][1] = idx0[1]; X[2][2] = idx1[2]; 
-    X[3][0] = idx0[0]; X[3][1] = idx0[1]; X[3][2] = idx1[2]; 
-    break; 
-  
-  case 3: // XY1
-    X[0][0] = idx0[0]; X[0][1] = idx0[1]; X[0][2] = idx1[2]; 
-    X[1][0] = idx1[0]; X[1][1] = idx0[1]; X[1][2] = idx1[2]; 
-    X[2][0] = idx1[0]; X[2][1] = idx1[1]; X[2][2] = idx1[2]; 
-    X[3][0] = idx0[0]; X[3][1] = idx1[1]; X[3][2] = idx1[2]; 
-    break; 
-
-  case 4: // YZ1
-    X[0][0] = idx1[0]; X[0][1] = idx0[1]; X[0][2] = idx0[2]; 
-    X[1][0] = idx1[0]; X[1][1] = idx1[1]; X[1][2] = idx0[2]; 
-    X[2][0] = idx1[0]; X[2][1] = idx1[1]; X[2][2] = idx1[2]; 
-    X[3][0] = idx1[0]; X[3][1] = idx0[1]; X[3][2] = idx1[2]; 
-    break; 
-
-  case 5: // ZX1
-    X[0][0] = idx0[0]; X[0][1] = idx1[1]; X[0][2] = idx0[2]; 
-    X[1][0] = idx0[0]; X[1][1] = idx1[1]; X[1][2] = idx1[2]; 
-    X[2][0] = idx1[0]; X[2][1] = idx1[1]; X[2][2] = idx1[2]; 
-    X[3][0] = idx1[0]; X[3][1] = idx1[1]; X[3][2] = idx0[2]; 
-    break; 
-
-  default: assert(0); break;  
-  }
-}
-
 std::vector<ElemIdType> GLGPUDataset::Neighbors(ElemIdType elem_id) const
 {
   std::vector<ElemIdType> neighbors; 
@@ -687,3 +636,118 @@ bool GLGPUDataset::Supercurrent(const double X[3], double J[3]) const
     return false;
   else return true;
 }
+
+bool GLGPUDataset::GetFace(ElemIdType id, int face, double X[][3], double re[], double im[]) const
+{
+  int idx0[3]; 
+  ElemId2Idx(id, idx0);
+  int idx1[3] = {(idx0[0]+1)%dims()[0], (idx0[1]+1)%dims()[1], (idx0[2]+1)%dims()[2]}; 
+  
+  int V[4][3];
+
+  switch (face) {
+  case 0: // XY0
+    V[0][0] = idx0[0]; V[0][1] = idx0[1]; V[0][2] = idx0[2]; 
+    V[1][0] = idx0[0]; V[1][1] = idx1[1]; V[1][2] = idx0[2]; 
+    V[2][0] = idx1[0]; V[2][1] = idx1[1]; V[2][2] = idx0[2]; 
+    V[3][0] = idx1[0]; V[3][1] = idx0[1]; V[3][2] = idx0[2]; 
+    break; 
+  
+  case 1: // YZ0
+    V[0][0] = idx0[0]; V[0][1] = idx0[1]; V[0][2] = idx0[2]; 
+    V[1][0] = idx0[0]; V[1][1] = idx0[1]; V[1][2] = idx1[2]; 
+    V[2][0] = idx0[0]; V[2][1] = idx1[1]; V[2][2] = idx1[2]; 
+    V[3][0] = idx0[0]; V[3][1] = idx1[1]; V[3][2] = idx0[2]; 
+    break; 
+  
+  case 2: // ZX0
+    V[0][0] = idx0[0]; V[0][1] = idx0[1]; V[0][2] = idx0[2]; 
+    V[1][0] = idx1[0]; V[1][1] = idx0[1]; V[1][2] = idx0[2]; 
+    V[2][0] = idx1[0]; V[2][1] = idx0[1]; V[2][2] = idx1[2]; 
+    V[3][0] = idx0[0]; V[3][1] = idx0[1]; V[3][2] = idx1[2]; 
+    break; 
+  
+  case 3: // XY1
+    V[0][0] = idx0[0]; V[0][1] = idx0[1]; V[0][2] = idx1[2]; 
+    V[1][0] = idx1[0]; V[1][1] = idx0[1]; V[1][2] = idx1[2]; 
+    V[2][0] = idx1[0]; V[2][1] = idx1[1]; V[2][2] = idx1[2]; 
+    V[3][0] = idx0[0]; V[3][1] = idx1[1]; V[3][2] = idx1[2]; 
+    break; 
+
+  case 4: // YZ1
+    V[0][0] = idx1[0]; V[0][1] = idx0[1]; V[0][2] = idx0[2]; 
+    V[1][0] = idx1[0]; V[1][1] = idx1[1]; V[1][2] = idx0[2]; 
+    V[2][0] = idx1[0]; V[2][1] = idx1[1]; V[2][2] = idx1[2]; 
+    V[3][0] = idx1[0]; V[3][1] = idx0[1]; V[3][2] = idx1[2]; 
+    break; 
+
+  case 5: // ZX1
+    V[0][0] = idx0[0]; V[0][1] = idx1[1]; V[0][2] = idx0[2]; 
+    V[1][0] = idx0[0]; V[1][1] = idx1[1]; V[1][2] = idx1[2]; 
+    V[2][0] = idx1[0]; V[2][1] = idx1[1]; V[2][2] = idx1[2]; 
+    V[3][0] = idx1[0]; V[3][1] = idx1[1]; V[3][2] = idx0[2]; 
+    break; 
+
+  default: return false; 
+  }
+
+  for (int i=0; i<4; i++) {
+    Idx2Pos(V[i], X[i]); 
+    re[i] = Re(V[i][0], V[i][1], V[i][2]);
+    im[i] = Im(V[i][0], V[i][1], V[i][2]);
+  }
+
+  return true;
+}
+
+void GLGPUDataset::GetFace(int idx0[3], int face, int X[4][3]) const
+{
+  int idx1[3] = {(idx0[0]+1)%dims()[0], (idx0[1]+1)%dims()[1], (idx0[2]+1)%dims()[2]}; 
+  
+  switch (face) {
+  case 0: // XY0
+    X[0][0] = idx0[0]; X[0][1] = idx0[1]; X[0][2] = idx0[2]; 
+    X[1][0] = idx0[0]; X[1][1] = idx1[1]; X[1][2] = idx0[2]; 
+    X[2][0] = idx1[0]; X[2][1] = idx1[1]; X[2][2] = idx0[2]; 
+    X[3][0] = idx1[0]; X[3][1] = idx0[1]; X[3][2] = idx0[2]; 
+    break; 
+  
+  case 1: // YZ0
+    X[0][0] = idx0[0]; X[0][1] = idx0[1]; X[0][2] = idx0[2]; 
+    X[1][0] = idx0[0]; X[1][1] = idx0[1]; X[1][2] = idx1[2]; 
+    X[2][0] = idx0[0]; X[2][1] = idx1[1]; X[2][2] = idx1[2]; 
+    X[3][0] = idx0[0]; X[3][1] = idx1[1]; X[3][2] = idx0[2]; 
+    break; 
+  
+  case 2: // ZX0
+    X[0][0] = idx0[0]; X[0][1] = idx0[1]; X[0][2] = idx0[2]; 
+    X[1][0] = idx1[0]; X[1][1] = idx0[1]; X[1][2] = idx0[2]; 
+    X[2][0] = idx1[0]; X[2][1] = idx0[1]; X[2][2] = idx1[2]; 
+    X[3][0] = idx0[0]; X[3][1] = idx0[1]; X[3][2] = idx1[2]; 
+    break; 
+  
+  case 3: // XY1
+    X[0][0] = idx0[0]; X[0][1] = idx0[1]; X[0][2] = idx1[2]; 
+    X[1][0] = idx1[0]; X[1][1] = idx0[1]; X[1][2] = idx1[2]; 
+    X[2][0] = idx1[0]; X[2][1] = idx1[1]; X[2][2] = idx1[2]; 
+    X[3][0] = idx0[0]; X[3][1] = idx1[1]; X[3][2] = idx1[2]; 
+    break; 
+
+  case 4: // YZ1
+    X[0][0] = idx1[0]; X[0][1] = idx0[1]; X[0][2] = idx0[2]; 
+    X[1][0] = idx1[0]; X[1][1] = idx1[1]; X[1][2] = idx0[2]; 
+    X[2][0] = idx1[0]; X[2][1] = idx1[1]; X[2][2] = idx1[2]; 
+    X[3][0] = idx1[0]; X[3][1] = idx0[1]; X[3][2] = idx1[2]; 
+    break; 
+
+  case 5: // ZX1
+    X[0][0] = idx0[0]; X[0][1] = idx1[1]; X[0][2] = idx0[2]; 
+    X[1][0] = idx0[0]; X[1][1] = idx1[1]; X[1][2] = idx1[2]; 
+    X[2][0] = idx1[0]; X[2][1] = idx1[1]; X[2][2] = idx1[2]; 
+    X[3][0] = idx1[0]; X[3][1] = idx1[1]; X[3][2] = idx0[2]; 
+    break; 
+
+  default: assert(0); break;  
+  }
+}
+

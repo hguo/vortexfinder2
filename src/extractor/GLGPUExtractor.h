@@ -17,18 +17,15 @@ public:
   GLGPUVortexExtractor(); 
   ~GLGPUVortexExtractor();
 
-  void SetDataset(const GLDataset *ds); 
   void SetInterpolationMode(int);
 
   void Extract();
 
-private:
-  void ExtractElem(int *idx);
-
-  double gauge(int *x0, int *x1) const;
+protected:
+  PuncturedElem* NewPuncturedElem(ElemIdType) const;
+  bool FindZero(const double X[][3], const double re[], const double im[], double pos[3]) const;
 
 private: 
-  const GLGPUDataset *_ds; 
   int _interpolation_mode;
 }; 
 

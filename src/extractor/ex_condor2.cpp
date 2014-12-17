@@ -43,7 +43,7 @@ static bool parse_arg(int argc, char **argv)
     case 'k': Kex = atof(optarg); break;
     case 'x': B[0] = atof(optarg); b_set = true; break;
     case 'y': B[1] = atof(optarg); b_set = true; break;
-    case 'z': B[2] = atof(optarg); b_set = true; break;
+    case 'z': B[2] = -atof(optarg); b_set = true; break; // seems the sign of Bz is reversed
     case 't': T0 = atoi(optarg); break;
     case 'T': T = atoi(optarg); break;
     default: break; 
