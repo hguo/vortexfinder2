@@ -11,6 +11,7 @@ public:
   GLDataset(); 
   virtual ~GLDataset();
 
+  bool Valid() const {return _valid;}
   virtual void PrintInfo() const = 0;
   virtual void SerializeDataInfoToString(std::string& buf) const = 0;
 
@@ -78,6 +79,8 @@ protected:
   double _Jx;
   double _V;
   double _fluctuation_amp; 
+
+  bool _valid;
 }; 
 
 #endif

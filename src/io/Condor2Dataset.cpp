@@ -78,6 +78,7 @@ bool Condor2Dataset::OpenDataFile(const std::string& filename)
   // it takes some time (~0.5s) to compute the bounding box. is there any better way to get this information?
   ProbeBoundingBox();
 
+  _valid = true;
   return true; 
 }
 

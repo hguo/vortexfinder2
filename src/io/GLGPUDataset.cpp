@@ -53,7 +53,17 @@ void GLGPUDataset::Reset()
 
 void GLGPUDataset::PrintInfo() const
 {
-  // TODO
+  fprintf(stderr, "dims={%d, %d, %d}\n", _dims[0], _dims[1], _dims[2]); 
+  fprintf(stderr, "pbc={%d, %d, %d}\n", _pbc[0], _pbc[1], _pbc[2]); 
+  fprintf(stderr, "origins={%f, %f, %f}\n", _origins[0], _origins[1], _origins[2]);
+  fprintf(stderr, "lengths={%f, %f, %f}\n", _lengths[0], _lengths[1], _lengths[2]);
+  fprintf(stderr, "cell_lengths={%f, %f, %f}\n", _cell_lengths[0], _cell_lengths[1], _cell_lengths[2]); 
+  fprintf(stderr, "B={%f, %f, %f}\n", _B[0], _B[1], _B[2]);
+  fprintf(stderr, "Kex=%f, Kex_dot=%f\n", _Kex, _Kex_dot); 
+  fprintf(stderr, "Jx=%f\n", _Jx);
+  fprintf(stderr, "V=%f\n", _V);
+  // fprintf(stderr, "time=%f\n", time); 
+  fprintf(stderr, "fluctuation_amp=%f\n", _fluctuation_amp); 
 }
 
 void GLGPUDataset::GetSupercurrentField(const double **sc) const
@@ -280,7 +290,6 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string &filename)
   // num_dims
   int num_dims; 
   fread(&num_dims, sizeof(int), 1, fp);
-  fprintf(stderr, "num_dims=%d\n", num_dims); 
 
   // data type
   int size_real, datatype; 
@@ -301,9 +310,6 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string &filename)
     }
     _origins[i] = -0.5*_lengths[i];
   }
-  fprintf(stderr, "dims={%d, %d, %d}\n", _dims[0], _dims[1], _dims[2]); 
-  fprintf(stderr, "origins={%f, %f, %f}\n", _origins[0], _origins[1], _origins[2]);
-  fprintf(stderr, "lengths={%f, %f, %f}\n", _lengths[0], _lengths[1], _lengths[2]);
 
   // dummy
   int dummy; 
@@ -327,10 +333,6 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string &filename)
     fread(_B, sizeof(double), 3, fp);
     fread(&Jx, sizeof(double), GLGPU_TYPE_FLOAT, fp); 
   }
-    
-  // fprintf(stderr, "time=%f\n", time); 
-  fprintf(stderr, "fluctuation_amp=%f\n", _fluctuation_amp); 
-  fprintf(stderr, "B={%f, %f, %f}\n", _B[0], _B[1], _B[2]); 
 
   // btype
   int btype; 
@@ -338,17 +340,14 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string &filename)
   _pbc[0] = btype & 0x0000ff;
   _pbc[1] = btype & 0x00ff00;
   _pbc[2] = btype & 0xff0000; 
-  fprintf(stderr, "pbc={%d, %d, %d}\n", _pbc[0], _pbc[1], _pbc[2]); 
   // update cell lengths 
   for (int i=0; i<num_dims; i++) 
     if (_pbc[i]) _cell_lengths[i] = _lengths[i] / _dims[i];  
     else _cell_lengths[i] = _lengths[i] / (_dims[i]-1); 
-  fprintf(stderr, "cell_lengths={%f, %f, %f}\n", _cell_lengths[0], _cell_lengths[1], _cell_lengths[2]); 
 
   // optype
   int optype; 
   fread(&optype, sizeof(int), 1, fp);
-  fprintf(stderr, "optype=%d\n", optype); 
   if (datatype == GLGPU_TYPE_FLOAT) {
     float Kex, Kex_dot; 
     fread(&Kex, sizeof(float), 1, fp);
@@ -359,14 +358,12 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string &filename)
     fread(&_Kex, sizeof(double), 1, fp);
     fread(&_Kex_dot, sizeof(double), 1, fp); 
   }
-  fprintf(stderr, "Kex=%f, Kex_dot=%f\n", _Kex, _Kex_dot); 
 
   int count = 1; 
   for (int i=0; i<num_dims; i++) 
     count *= _dims[i]; 
 
   int offset = ftell(fp);
-  fprintf(stderr, "offset=%d\n", offset); 
   
   // mem allocation 
   _re = (double*)malloc(sizeof(double)*count);  
@@ -453,7 +450,8 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string &filename)
     } else assert(false);
 #endif
   }
-  
+ 
+  _valid = true;
   return true; 
 }
 
@@ -474,6 +472,7 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename)
     
     unsigned int type = reader->RecType(), 
                  recID = reader->RedID(); 
+    float f; // temp var
     
     reader->ReadNextRecordData(&buf);
     void *p = (void*)buf.data();
@@ -494,15 +493,16 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename)
       memcpy(&_dims[2], p, sizeof(int));
     } else if (name == "Lx") {
       assert(type == BDAT_FLOAT);
-      memcpy(&_lengths[0], p, sizeof(float));
+      memcpy(&f, p, sizeof(float));
+      _lengths[0] = f;
     } else if (name == "Ly") {
       assert(type == BDAT_FLOAT);
-      memcpy(&_lengths[1], p, sizeof(float));
+      memcpy(&f, p, sizeof(float));
+      _lengths[1] = f;
     } else if (name == "Lz") {
       assert(type == BDAT_FLOAT);
-      memcpy(&_lengths[2], p, sizeof(float));
-    } else if (name == "Lz") {
-      assert(type == BDAT_FLOAT);
+      memcpy(&f, p, sizeof(float));
+      _lengths[2] = f;
     } else if (name == "BC") {
       assert(type == BDAT_INT32);
       int btype; 
@@ -518,22 +518,28 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename)
       assert(type == BDAT_FLOAT);
     } else if (name == "Bx") {
       assert(type == BDAT_FLOAT);
-      memcpy(&_B[0], p, sizeof(float));
+      memcpy(&f, p, sizeof(float));
+      _B[0] = f;
     } else if (name == "By") {
       assert(type == BDAT_FLOAT);
-      memcpy(&_B[1], p, sizeof(float));
+      memcpy(&f, p, sizeof(float));
+      _B[1] = f;
     } else if (name == "Bz") {
       assert(type == BDAT_FLOAT);
-      memcpy(&_B[2], p, sizeof(float));
+      memcpy(&f, p, sizeof(float));
+      _B[2] = f;
     } else if (name == "Jxext") {
       assert(type == BDAT_FLOAT);
-      memcpy(&_Jx, p, sizeof(float));
+      memcpy(&f, p, sizeof(float));
+      _Jx = f;
     } else if (name == "K") {
       assert(type == BDAT_FLOAT);
-      memcpy(&_Kex, p, sizeof(float));
+      memcpy(&f, p, sizeof(float));
+      _Kex = f;
     } else if (name == "V") {
       assert(type == BDAT_FLOAT);
-      memcpy(&_V, p, sizeof(float));
+      memcpy(&f, p, sizeof(float));
+      _V = f;
     } else if (name == "psi") {
       if (type == BDAT_FLOAT) {
         int count = buf.size()/sizeof(float)/2;
@@ -568,8 +574,16 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename)
     }
   }
 
-  fprintf(stderr, "data read.\n");
-  return false;
+  // update necessary variables
+  for (int i=0; i<3; i++) {
+    _origins[i] = -0.5*_lengths[i];
+    if (_pbc[i]) _cell_lengths[i] = _lengths[i] / _dims[i];  
+    else _cell_lengths[i] = _lengths[i] / (_dims[i]-1); 
+  }
+
+  _valid = true;
+  
+  return true;
 }
 
 void GLGPUDataset::ComputeSupercurrentField()

@@ -109,13 +109,19 @@ int main(int argc, char **argv)
   Condor2Dataset ds(init.comm()); 
   ds.SetMagneticField(B); 
   ds.SetKex(Kex);
+  ds.PrintInfo();
+  
+  ds.OpenDataFile(filename_in);
+  if (!ds.Valid()) {
+    fprintf(stderr, "Invalid input data.\n");
+    return EXIT_FAILURE;
+  }
   
   Condor2VortexExtractor extractor;
   extractor.SetDataset(&ds);
   // extractor.SetVerbose(verbose);
   extractor.SetGaugeTransformation(!nogauge);
 
-  ds.OpenDataFile(filename_in);
   for (int t=T0; t<T0+T; t++) {
     fprintf(stderr, "Analyzing timestep %d...\n", t); 
     

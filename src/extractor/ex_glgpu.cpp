@@ -79,6 +79,11 @@ int main(int argc, char **argv)
 
   GLGPUDataset ds;
   ds.OpenDataFile(filename_in);
+  if (!ds.Valid()) {
+    fprintf(stderr, "Invalid input data.\n");
+    return EXIT_FAILURE;
+  }
+  ds.PrintInfo();
   
   GLGPUVortexExtractor extractor;
   extractor.SetDataset(&ds);
