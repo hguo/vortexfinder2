@@ -6,7 +6,6 @@ int main(int argc, char **argv)
 
   GLGPUDataset *dataset = new GLGPUDataset; 
   dataset->OpenDataFile(filename);
-  dataset->ComputeSupercurrentField();
   dataset->WriteNetCDFFile(filename + ".nc");
 
   delete dataset; 

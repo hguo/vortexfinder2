@@ -34,7 +34,7 @@ public:
   void SerializeDataInfoToString(std::string& buf) const;
 
 public:
-  std::vector<ElemIdType> GetNeighbors(ElemIdType id) const;
+  std::vector<ElemIdType> GetNeighborIds(ElemIdType id) const;
   bool GetFace(ElemIdType id, int face, double X[][3], double re[], double im[]) const;
 
 public:

@@ -27,7 +27,7 @@ enum {
 };
 
 GLGPUDataset::GLGPUDataset() : 
-  _re(NULL), _im(NULL), _rho(NULL), _phi(NULL), 
+  _re(NULL), _im(NULL), 
   _scx(NULL), _scy(NULL), _scz(NULL), _scm(NULL)
 {
   Reset();
@@ -37,8 +37,6 @@ GLGPUDataset::~GLGPUDataset()
 {
   if (_re) free(_re);
   if (_im) free(_im);
-  if (_rho) free(_rho);
-  if (_phi) free (_phi);
   if (_scx) free(_scx);
 }
 
@@ -123,26 +121,8 @@ double GLGPUDataset::Flux(int face) const
   default: assert(false);
   }
 }
-  
-double GLGPUDataset::GaugeTransformation(const int idx0[3], const int idx1[3]) const
-{
-  double X0[3], X1[3]; 
 
-  Idx2Pos(idx0, X0); 
-  Idx2Pos(idx1, X1); 
-  
-  return GLDataset::GaugeTransformation(X0, X1);
-}
-
-double GLGPUDataset::GaugeTransformation(int x0, int y0, int z0, int x1, int y1, int z1) const
-{
-  int idx0[3] = {x0, y0, z0}, 
-      idx1[3] = {x1, y1, z1}; 
-
-  return GaugeTransformation(idx0, idx1);
-}
-
-std::vector<ElemIdType> GLGPUDataset::GetNeighbors(ElemIdType elem_id) const
+std::vector<ElemIdType> GLGPUDataset::GetNeighborIds(ElemIdType elem_id) const
 {
   std::vector<ElemIdType> neighbors; 
 
@@ -315,8 +295,6 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string &filename)
   // mem allocation 
   _re = (double*)malloc(sizeof(double)*count);  
   _im = (double*)malloc(sizeof(double)*count);
-  _rho = (double*)malloc(sizeof(double)*count);
-  _phi = (double*)malloc(sizeof(double)*count); 
 
   if (datatype == GLGPU_TYPE_FLOAT) {
     // raw data
@@ -336,14 +314,10 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string &filename)
       for (int i=0; i<count; i++) {
         _re[i] = ch1[i]; 
         _im[i] = ch2[i]; 
-        _rho[i] = sqrt(_re[i]*_re[i] + _im[i]*_im[i]);
-        _phi[i] = atan2(_im[i], _re[i]); 
         // fprintf(stderr, "rho=%f, phi=%f, re=%f, im=%f\n", _rho[i], _phi[i], _re[i], _im[i]); 
       }
     } else if (optype == 1) {
       for (int i=0; i<count; i++) {
-        _rho[i] = ch1[i]; 
-        _phi[i] = ch2[i]; 
         _re[i] = ch1[i] * cos(ch2[i]); 
         _im[i] = ch1[i] * sin(ch2[i]);
       }
@@ -495,22 +469,18 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename)
         
         _re = (double*)malloc(sizeof(double)*count);
         _im = (double*)malloc(sizeof(double)*count);
-        _rho = (double*)malloc(sizeof(double)*count);
-        _phi = (double*)malloc(sizeof(double)*count);
 
         if (optype == 0) { // re, im
           for (int i=0; i<count; i++) {
             _re[i] = data[i*2];
             _im[i] = data[i*2+1];
-            _rho[i] = sqrt(_re[i]*_re[i] + _im[i]*_im[i]);
-            _phi[i] = atan2(_im[i], _re[i]);
           }
         } else { // rho^2, phi
           for (int i=0; i<count; i++) {
-            _rho[i] = sqrt(data[i*2]);
-            _phi[i] = data[i*2+1];
-            _re[i] = _rho[i] * cos(_phi[i]); 
-            _im[i] = _rho[i] * sin(_phi[i]);
+            double rho = sqrt(data[i*2]), 
+                   phi = data[i*2+1];
+            _re[i] = rho * cos(phi); 
+            _im[i] = rho * sin(phi);
           }
         }
       } else if (type == BDAT_DOUBLE) {
@@ -595,8 +565,8 @@ bool GLGPUDataset::WriteNetCDFFile(const std::string& filename)
   NC_SAFE_CALL( nc_def_var(ncid, "scm", NC_DOUBLE, 3, dimids, &varids[7]) );
   NC_SAFE_CALL( nc_enddef(ncid) );
 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[0], starts, sizes, _rho) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[1], starts, sizes, _phi) ); 
+  // NC_SAFE_CALL( nc_put_vara_double(ncid, varids[0], starts, sizes, _rho) ); 
+  // NC_SAFE_CALL( nc_put_vara_double(ncid, varids[1], starts, sizes, _phi) ); 
   NC_SAFE_CALL( nc_put_vara_double(ncid, varids[2], starts, sizes, _re) ); 
   NC_SAFE_CALL( nc_put_vara_double(ncid, varids[3], starts, sizes, _im) ); 
   NC_SAFE_CALL( nc_put_vara_double(ncid, varids[4], starts, sizes, _scx) ); 
@@ -696,56 +666,5 @@ bool GLGPUDataset::GetFace(ElemIdType id, int face, double X[][3], double re[], 
   }
 
   return true;
-}
-
-void GLGPUDataset::GetFace(int idx0[3], int face, int X[4][3]) const
-{
-  int idx1[3] = {(idx0[0]+1)%dims()[0], (idx0[1]+1)%dims()[1], (idx0[2]+1)%dims()[2]}; 
-  
-  switch (face) {
-  case 0: // XY0
-    X[0][0] = idx0[0]; X[0][1] = idx0[1]; X[0][2] = idx0[2]; 
-    X[1][0] = idx0[0]; X[1][1] = idx1[1]; X[1][2] = idx0[2]; 
-    X[2][0] = idx1[0]; X[2][1] = idx1[1]; X[2][2] = idx0[2]; 
-    X[3][0] = idx1[0]; X[3][1] = idx0[1]; X[3][2] = idx0[2]; 
-    break; 
-  
-  case 1: // YZ0
-    X[0][0] = idx0[0]; X[0][1] = idx0[1]; X[0][2] = idx0[2]; 
-    X[1][0] = idx0[0]; X[1][1] = idx0[1]; X[1][2] = idx1[2]; 
-    X[2][0] = idx0[0]; X[2][1] = idx1[1]; X[2][2] = idx1[2]; 
-    X[3][0] = idx0[0]; X[3][1] = idx1[1]; X[3][2] = idx0[2]; 
-    break; 
-  
-  case 2: // ZX0
-    X[0][0] = idx0[0]; X[0][1] = idx0[1]; X[0][2] = idx0[2]; 
-    X[1][0] = idx1[0]; X[1][1] = idx0[1]; X[1][2] = idx0[2]; 
-    X[2][0] = idx1[0]; X[2][1] = idx0[1]; X[2][2] = idx1[2]; 
-    X[3][0] = idx0[0]; X[3][1] = idx0[1]; X[3][2] = idx1[2]; 
-    break; 
-  
-  case 3: // XY1
-    X[0][0] = idx0[0]; X[0][1] = idx0[1]; X[0][2] = idx1[2]; 
-    X[1][0] = idx1[0]; X[1][1] = idx0[1]; X[1][2] = idx1[2]; 
-    X[2][0] = idx1[0]; X[2][1] = idx1[1]; X[2][2] = idx1[2]; 
-    X[3][0] = idx0[0]; X[3][1] = idx1[1]; X[3][2] = idx1[2]; 
-    break; 
-
-  case 4: // YZ1
-    X[0][0] = idx1[0]; X[0][1] = idx0[1]; X[0][2] = idx0[2]; 
-    X[1][0] = idx1[0]; X[1][1] = idx1[1]; X[1][2] = idx0[2]; 
-    X[2][0] = idx1[0]; X[2][1] = idx1[1]; X[2][2] = idx1[2]; 
-    X[3][0] = idx1[0]; X[3][1] = idx0[1]; X[3][2] = idx1[2]; 
-    break; 
-
-  case 5: // ZX1
-    X[0][0] = idx0[0]; X[0][1] = idx1[1]; X[0][2] = idx0[2]; 
-    X[1][0] = idx0[0]; X[1][1] = idx1[1]; X[1][2] = idx1[2]; 
-    X[2][0] = idx1[0]; X[2][1] = idx1[1]; X[2][2] = idx1[2]; 
-    X[3][0] = idx1[0]; X[3][1] = idx1[1]; X[3][2] = idx0[2]; 
-    break; 
-
-  default: assert(0); break;  
-  }
 }
 

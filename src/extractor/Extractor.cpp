@@ -55,7 +55,7 @@ void VortexExtractor::Trace()
       it->second->visited = true; 
       to_erase.push_back(it);
 
-      std::vector<ElemIdType> neighbors = _dataset->GetNeighbors(it->first); 
+      std::vector<ElemIdType> neighbors = _dataset->GetNeighborIds(it->first); 
       for (int i=0; i<neighbors.size(); i++) {
         ElemIdType id = neighbors[i]; 
         if (id != UINT_MAX && it->second->IsPunctured(i)) {
@@ -96,7 +96,7 @@ void VortexExtractor::Trace()
         if (it == ordinary_pelems.end() || it->second->visited) break;
         it->second->visited = true;
 
-        std::vector<ElemIdType> neighbors = _dataset->GetNeighbors(it->first); 
+        std::vector<ElemIdType> neighbors = _dataset->GetNeighborIds(it->first); 
         for (int face=0; face<neighbors.size(); face++) 
           if (it->second->Chirality(face) == 1) {
             if (it != seed) to_erase.push_back(it); 
@@ -120,7 +120,7 @@ void VortexExtractor::Trace()
         if (it == ordinary_pelems.end() || it->second->visited) break;
         it->second->visited = true;
 
-        std::vector<ElemIdType> neighbors = _dataset->GetNeighbors(it->first); 
+        std::vector<ElemIdType> neighbors = _dataset->GetNeighborIds(it->first); 
         for (int face=0; face<neighbors.size(); face++) 
           if (it->second->Chirality(face) == -1) {
             if (it != seed) to_erase.push_back(it); 

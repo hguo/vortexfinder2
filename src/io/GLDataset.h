@@ -21,24 +21,21 @@ public: // data I/O
   virtual void CloseDataFile();
 
 public: // mesh info
+  virtual int Dimensions() const = 0;
   virtual int NrFacesPerElem() const = 0;
   virtual int NrNodesPerFace() const = 0;
 
-public: // mesh traversal & utils
-  virtual std::vector<ElemIdType> GetNeighbors(ElemIdType elem_id) const = 0;
+public: // mesh utils
+  virtual std::vector<ElemIdType> GetNeighborIds(ElemIdType elem_id) const = 0;
+  virtual bool GetFace(ElemIdType id, int face, double X[][3], double re[], double im[]) const = 0;
+  virtual ElemIdType Pos2ElemId(const double X[]) const = 0; //!< returns the elemId for a given position
 
+public: // transformations and utils
   double GaugeTransformation(const double X0[], const double X1[]) const;
   double Flux(const double X[3][3]) const; //!< flux for a triangle
   double Flux(int n, const double X[][3]) const; //!< flux for an arbitrary closed curve
 
-  virtual ElemIdType Pos2ElemId(const double X[]) const = 0; //!< returns the elemId for a given position
-  
-public: // get faces 
-  virtual bool GetFace(ElemIdType id, int face, double X[][3], double re[], double im[]) const = 0;
-
 public: // properties
-  virtual int Dimensions() const = 0;
-
   int TimeStep() const {return _timestep;}
 
   // Magnetic field
@@ -53,6 +50,9 @@ public: // properties
   double Ax(const double X[3]) const {if (By()>0) return 0; else return -X[1]*Bz();}
   double Ay(const double X[3]) const {if (By()>0) return X[0]*Bz(); else return 0;}
   double Az(const double X[3]) const {if (By()>0) return -X[0]*By(); else return X[1]*Bx();}
+
+  // Voltage
+  double V() const {return _V;}
 
   // Geometries
   const double* Origins() const {return _origins;}
