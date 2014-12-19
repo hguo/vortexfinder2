@@ -33,6 +33,7 @@ public: // mesh utils
 
 public: // transformations and utils
   double GaugeTransformation(const double X0[], const double X1[]) const;
+  double QP(const double X0[], const double X1[]) const;
   double Flux(const double X[3][3]) const; //!< flux for a triangle
   double Flux(int n, const double X[][3]) const; //!< flux for an arbitrary closed curve
 

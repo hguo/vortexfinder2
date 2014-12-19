@@ -45,7 +45,28 @@ void GLDataset::CloseDataFile()
 {
   // no impl
 }
-  
+ 
+double GLDataset::QP(const double X0[], const double X1[]) const
+{
+  const double *L = Lengths();
+  double d[3] = {X1[0] - X0[0], X1[1] - X0[1], X1[2] - X0[2]};
+  int p[3] = {0}; // 0: not crossed; 1: positive; -1: negative
+
+  for (int i=0; i<3; i++) {
+    d[i] = X1[i] - X0[i];
+    if (d[i]>L[i]/2) {d[i] -= L[i]; p[i] = 1;}
+    else if (d[i]<-L[i]/2) {d[i] += L[i]; p[i] = -1;}
+  }
+
+  if (By()>0 && p[0]!=0) {
+    return p[0] * (L[0]*Bz()*X0[1] - L[2]*By()*X0[2]); // FIXME: the cross point
+  } else if (p[1]!=0) {
+    return p[1] * (-L[2]*Bz()*X0[0] + L[2]*Bx()*X0[2]);
+  }
+
+  return 0.0;
+}
+
 double GLDataset::GaugeTransformation(const double X0[], const double X1[]) const
 {
   double gx, gy, gz; 

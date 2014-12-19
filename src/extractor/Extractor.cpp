@@ -177,7 +177,7 @@ bool VortexExtractor::ExtractElem(ElemIdType id)
       int j = (i+1) % nnodes;
       delta[i] = phi[j] - phi[i]; 
       if (_gauge) 
-        delta[i] += _dataset->GaugeTransformation(X[i], X[j]); 
+        delta[i] += _dataset->GaugeTransformation(X[i], X[j]) + _dataset->QP(X[i], X[j]); 
       delta[i] = mod2pi(delta[i] + M_PI) - M_PI;
       phase_shift -= delta[i];
     }

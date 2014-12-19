@@ -11,6 +11,10 @@ inline static T mod2pi(T x)
   return y; 
 }
 
+template <typename T> int sgn(T x) {
+  return (T(0) < x) - (x < T(0));
+}
+
 template <typename T>
 static inline void cross_product(const T A[3], const T B[3], T C[3])
 {
