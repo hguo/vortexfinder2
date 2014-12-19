@@ -43,6 +43,7 @@ public: // mesh utils
 public: // transformations and utils
   // counter-cloce wise sides facing outer
   double Flux(int faceType) const;
+  double QP(const double X0[], const double X1[]) const;
 
 public: // rectilinear grid
   const int* dims() const {return _dims;}
