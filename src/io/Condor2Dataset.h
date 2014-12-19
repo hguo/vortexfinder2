@@ -36,6 +36,7 @@ public:
 public:
   std::vector<ElemIdType> GetNeighborIds(ElemIdType id) const;
   bool GetFace(ElemIdType id, int face, double X[][3], double re[], double im[]) const;
+  bool OnBoundary(ElemIdType id) const;
 
 public:
   libMesh::UnstructuredMesh* mesh() const {return _mesh;}

@@ -204,6 +204,13 @@ bool Condor2Dataset::Supercurrent(const double X[3], double J[3]) const
   return false;
 }
   
+bool Condor2Dataset::OnBoundary(ElemIdType id) const
+{
+  const Elem* elem = mesh()->elem(id);
+  if (elem == NULL) return false;
+  else return elem->on_boundary();
+}
+  
 bool Condor2Dataset::GetFace(ElemIdType id, int face, double X[][3], double re[], double im[]) const
 {
   if (id == UINT_MAX) return false;

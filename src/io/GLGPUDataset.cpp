@@ -131,12 +131,12 @@ std::vector<ElemIdType> GLGPUDataset::GetNeighborIds(ElemIdType elem_id) const
 
   for (int face=0; face<6; face++) {
     switch (face) {
-    case 0: idx1[0] = idx[0]; idx1[1] = idx[1]; idx1[2] = idx[2]-1; break; 
-    case 1: idx1[0] = idx[0]-1; idx1[1] = idx[1]; idx1[2] = idx[2]; break;
-    case 2: idx1[0] = idx[0]; idx1[1] = idx[1]-1; idx1[2] = idx[2]; break;
-    case 3: idx1[0] = idx[0]; idx1[1] = idx[1]; idx1[2] = idx[2]+1; break; 
-    case 4: idx1[0] = idx[0]+1; idx1[1] = idx[1]; idx1[2] = idx[2]; break;
-    case 5: idx1[0] = idx[0]; idx1[1] = idx[1]+1; idx1[2] = idx[2]; break;
+    case 0: idx1[0] = idx[0];   idx1[1] = idx[1];   idx1[2] = idx[2]-1; break; 
+    case 1: idx1[0] = idx[0]-1; idx1[1] = idx[1];   idx1[2] = idx[2];   break;
+    case 2: idx1[0] = idx[0];   idx1[1] = idx[1]-1; idx1[2] = idx[2];   break;
+    case 3: idx1[0] = idx[0];   idx1[1] = idx[1];   idx1[2] = idx[2]+1; break; 
+    case 4: idx1[0] = idx[0]+1; idx1[1] = idx[1];   idx1[2] = idx[2];   break;
+    case 5: idx1[0] = idx[0];   idx1[1] = idx[1]+1; idx1[2] = idx[2];   break;
     default: break;
     }
 
@@ -603,6 +603,17 @@ bool GLGPUDataset::Supercurrent(const double X[3], double J[3]) const
   if (!lerp3D(gpt, st, dims(), 3, sc, J))
     return false;
   else return true;
+}
+  
+bool GLGPUDataset::OnBoundary(ElemIdType id) const
+{
+  int idx[3];
+  ElemId2Idx(id, idx);
+
+  for (int i=0; i<3; i++) 
+    if (idx[i] == 0 || idx[i] == dims()[i]-1) return true;
+
+  return false;
 }
 
 bool GLGPUDataset::GetFace(ElemIdType id, int face, double X[][3], double re[], double im[]) const

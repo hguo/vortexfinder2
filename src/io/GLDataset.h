@@ -29,6 +29,7 @@ public: // mesh utils
   virtual std::vector<ElemIdType> GetNeighborIds(ElemIdType elem_id) const = 0;
   virtual bool GetFace(ElemIdType id, int face, double X[][3], double re[], double im[]) const = 0;
   virtual ElemIdType Pos2ElemId(const double X[]) const = 0; //!< returns the elemId for a given position
+  virtual bool OnBoundary(ElemIdType id) const = 0;
 
 public: // transformations and utils
   double GaugeTransformation(const double X0[], const double X1[]) const;

@@ -30,6 +30,7 @@ public: // mesh utils
   std::vector<ElemIdType> GetNeighborIds(ElemIdType elem_id) const;
   bool GetFace(ElemIdType id, int face, double X[][3], double re[], double im[]) const;
   ElemIdType Pos2ElemId(const double X[]) const; 
+  bool OnBoundary(ElemIdType id) const;
 
   // ElemId is encoded by the id of left-bottom corner node in the cell
   void ElemId2Idx(ElemIdType id, int *idx) const; 

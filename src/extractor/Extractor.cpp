@@ -108,6 +108,7 @@ void VortexExtractor::Trace()
             }
           }
 
+        if (_dataset->OnBoundary(id)) break;
         if (!traced) break;
       }
 
@@ -132,6 +133,7 @@ void VortexExtractor::Trace()
             }
           }
 
+        if (_dataset->OnBoundary(id)) break;
         if (!traced) break;
       }
 

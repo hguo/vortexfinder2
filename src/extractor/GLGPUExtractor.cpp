@@ -21,12 +21,15 @@ void GLGPUVortexExtractor::SetInterpolationMode(int mode)
 
 void GLGPUVortexExtractor::Extract()
 {
-  int idx[3]; 
+  int idx[3], idx1[3];
   const GLGPUDataset *ds = (const GLGPUDataset*)_dataset; 
 
-  for (idx[0]=0; idx[0]<ds->dims()[0]-1; idx[0]++) 
-    for (idx[1]=0; idx[1]<ds->dims()[1]-1; idx[1]++) 
-      for (idx[2]=0; idx[2]<ds->dims()[2]-1; idx[2]++) {
+  for (int i=0; i<3; i++) 
+    idx1[i] = ds->pbc()[i] ? ds->dims()[i] : ds->dims()[i]-1;
+
+  for (idx[0]=0; idx[0]<idx1[0]; idx[0]++) 
+    for (idx[1]=0; idx[1]<idx1[1]; idx[1]++) 
+      for (idx[2]=0; idx[2]<idx1[2]; idx[2]++) {
         ElemIdType id = ds->Idx2ElemId(idx);
         ExtractElem(id);
       }
