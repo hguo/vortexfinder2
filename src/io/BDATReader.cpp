@@ -39,6 +39,7 @@ static std::string RecType2String(unsigned int recType)
 BDATReader::BDATReader(const std::string& filename) 
   : state(BDAT_STATE_HEADER)
 {
+  valid = true;
   fp = fopen(filename.c_str(), "rb");
 
   if (!fp) {
@@ -48,8 +49,9 @@ BDATReader::BDATReader(const std::string& filename)
   
   std::string signature; 
   ReadString(4, &signature);
-  if (signature != BDATSignature) 
+  if (signature != BDATSignature) {
     valid = false;
+  }
 
   unsigned int BOM; 
   Read(BDAT_UINT32, &BOM);
