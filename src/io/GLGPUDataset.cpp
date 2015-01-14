@@ -108,6 +108,7 @@ void GLGPUDataset::Pos2Grid(const double pos[], double gpos[]) const
     gpos[i] = (pos[i] - Origins()[i]) / CellLengths()[i]; 
 }
 
+#if 0
 double GLGPUDataset::Flux(int face) const
 {
   // TODO: pre-compute the flux
@@ -121,6 +122,30 @@ double GLGPUDataset::Flux(int face) const
   default: assert(false);
   }
   return 0.0;
+}
+#endif
+
+double GLGPUDataset::GaugeTransformation(const double X0[], const double X1[]) const
+{
+  double gx, gy, gz; 
+  double dx = X1[0] - X0[0], 
+         dy = X1[1] - X0[1], 
+         dz = X1[2] - X0[2]; 
+  double x = X0[0] + 0.5*dx, 
+         y = X0[1] + 0.5*dy, 
+         z = X0[2] + 0.5*dz;
+
+  if (By()>0) { // Y-Z gauge
+    gx = dx * Kex(); 
+    gy =-dy * x * Bz(); // -dy*x^hat*Bz
+    gz = dz * x * By(); //  dz*x^hat*By
+  } else { // X-Z gauge
+    gx = dx * y * Bz() + dx * Kex(); //  dx*y^hat*Bz + dx*K
+    gy = 0; 
+    gz =-dz * y * Bx(); // -dz*y^hat*Bx
+  }
+
+  return gx + gy + gz; 
 }
 
 std::vector<ElemIdType> GLGPUDataset::GetNeighborIds(ElemIdType elem_id) const
@@ -141,11 +166,13 @@ std::vector<ElemIdType> GLGPUDataset::GetNeighborIds(ElemIdType elem_id) const
     default: break;
     }
 
+#if 0 // pbc
     for (int i=0; i<3; i++) 
       if (pbc()[i]) {
         idx1[i] = idx1[i] % dims()[i]; 
         if (idx1[i]<0) idx1[i] += dims()[i];
       }
+#endif
     
     neighbors.push_back(Idx2ElemId(idx1)); 
   }
@@ -647,7 +674,7 @@ double GLGPUDataset::QP(const double X0[], const double X1[]) const
   } else return 0.0;
 }
 
-bool GLGPUDataset::GetFace(ElemIdType id, int face, double X[][3], double re[], double im[]) const
+bool GLGPUDataset::GetFace(ElemIdType id, int face, double X[][3], double A[][3], double re[], double im[]) const
 {
   int idx0[3]; 
   ElemId2Idx(id, idx0);
@@ -705,8 +732,16 @@ bool GLGPUDataset::GetFace(ElemIdType id, int face, double X[][3], double re[], 
     Idx2Pos(V[i], X[i]); 
     re[i] = Re(V[i][0], V[i][1], V[i][2]);
     im[i] = Im(V[i][0], V[i][1], V[i][2]);
+    GLGPUDataset::A(X[i], A[i]);
   }
 
   return true;
 }
 
+bool GLGPUDataset::A(const double X[3], double A[3]) const
+{
+  A[0] = Ax(X);
+  A[1] = Ay(X);
+  A[2] = Az(X);
+  return true;
+}

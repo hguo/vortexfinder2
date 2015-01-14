@@ -45,10 +45,6 @@ void Condor2Dataset::SerializeDataInfoToString(std::string& buf) const
     pb.set_lz(Lengths()[2]); 
   }
 
-  pb.set_bx(Bx());
-  pb.set_by(By());
-  pb.set_bz(Bz());
-
   pb.set_kex(Kex());
 
   pb.SerializeToString(&buf);
@@ -71,6 +67,11 @@ bool Condor2Dataset::OpenDataFile(const std::string& filename)
   _tsys = &(_eqsys->add_system<NonlinearImplicitSystem>("GLsys"));
   _u_var = _tsys->add_variable("u", FIRST, LAGRANGE);
   _v_var = _tsys->add_variable("v", FIRST, LAGRANGE); 
+  
+  _asys = &(_eqsys->add_system<System>("Auxsys"));
+  _Ax_var = _asys->add_variable("Ax", FIRST, LAGRANGE);
+  _Ay_var = _asys->add_variable("Ay", FIRST, LAGRANGE); 
+  _Az_var = _asys->add_variable("Az", FIRST, LAGRANGE); 
 
   _eqsys->init(); 
 
@@ -135,6 +136,10 @@ void Condor2Dataset::LoadTimeStep(int timestep)
   /// copy nodal data
   _exio->copy_nodal_solution(*_tsys, "u", "u", timestep); 
   _exio->copy_nodal_solution(*_tsys, "v", "v", timestep);
+
+  _exio->copy_nodal_solution(*_asys, "Ax", "A_x", timestep);
+  _exio->copy_nodal_solution(*_asys, "Ay", "A_y", timestep);
+  _exio->copy_nodal_solution(*_asys, "Az", "A_z", timestep);
   
   // fprintf(stderr, "nodal solution copied, timestep=%d\n", timestep); 
 }
@@ -178,12 +183,23 @@ bool Condor2Dataset::Supercurrent(const double X[3], double J[3]) const
   if (elem_id == UINT_MAX) return false;
 
   const Elem* elem = _mesh->elem(elem_id);
-  const DofMap& dof_map = tsys()->get_dof_map();
-  const NumericVector<Number> *ts = tsys()->solution.get();
 
+  // tsys
+  const DofMap& dof_map = tsys()->get_dof_map(); 
+  const NumericVector<Number> *ts = tsys()->solution.get();
+  
   std::vector<dof_id_type> u_di, v_di;
   dof_map.dof_indices(elem, u_di, u_var());
   dof_map.dof_indices(elem, v_di, v_var());
+
+  // asys
+  const DofMap& dof_map1 = asys()->get_dof_map();
+  const NumericVector<Number> *as = asys()->solution.get();
+
+  std::vector<dof_id_type> Ax_di, Ay_di, Az_di;
+  dof_map1.dof_indices(elem, Ax_di, Ax_var());
+  dof_map1.dof_indices(elem, Ay_di, Ay_var());
+  dof_map1.dof_indices(elem, Az_di, Az_var());
 
   double P[4][4];
   for (int i=0; i<4; i++) {
@@ -192,11 +208,15 @@ bool Condor2Dataset::Supercurrent(const double X[3], double J[3]) const
       P[i][j] = node->slice(j);
   }
 
-  double phi[4]; 
+  double phi[4];
+  double A[4][3];
   for (int i=0; i<4; i++) {
     double u = (*ts)(u_di[i]), 
            v = (*ts)(v_di[i]); 
     phi[i] = atan2(v, u);
+    A[i][0] = (*as)(Ax_di[i]);
+    A[i][1] = (*as)(Ay_di[i]);
+    A[i][2] = (*as)(Az_di[i]);
   }
 
   // TODO: gradient estimation
@@ -211,7 +231,7 @@ bool Condor2Dataset::OnBoundary(ElemIdType id) const
   else return elem->on_boundary();
 }
   
-bool Condor2Dataset::GetFace(ElemIdType id, int face, double X[][3], double re[], double im[]) const
+bool Condor2Dataset::GetFace(ElemIdType id, int face, double X[][3], double A[][3], double re[], double im[]) const
 {
   if (id == UINT_MAX) return false;
   
@@ -219,12 +239,23 @@ bool Condor2Dataset::GetFace(ElemIdType id, int face, double X[][3], double re[]
   if (elem == NULL) return false;
 
   AutoPtr<Elem> side = elem->side(face); // TODO: check if side exists
-  const DofMap& dof_map = tsys()->get_dof_map();
+ 
+  // tsys
+  const DofMap& dof_map = tsys()->get_dof_map(); 
   const NumericVector<Number> *ts = tsys()->solution.get();
-
+  
   std::vector<dof_id_type> u_di, v_di; 
   dof_map.dof_indices(side.get(), u_di, u_var());
   dof_map.dof_indices(side.get(), v_di, v_var());
+
+  // asys
+  const DofMap& dof_map1 = asys()->get_dof_map();
+  const NumericVector<Number> *as = asys()->solution.get();
+
+  std::vector<dof_id_type> Ax_di, Ay_di, Az_di;
+  dof_map1.dof_indices(side.get(), Ax_di, Ax_var());
+  dof_map1.dof_indices(side.get(), Ay_di, Ay_var());
+  dof_map1.dof_indices(side.get(), Az_di, Az_var());
 
   // coordinates
   for (int i=0; i<3; i++) 
@@ -235,7 +266,16 @@ bool Condor2Dataset::GetFace(ElemIdType id, int face, double X[][3], double re[]
   for (int i=0; i<3; i++) {
     re[i] = (*ts)(u_di[i]); 
     im[i] = (*ts)(v_di[i]);
+    A[i][0] = (*as)(Ax_di[i]);
+    A[i][1] = (*as)(Ay_di[i]);
+    A[i][2] = (*as)(Az_di[i]);
   }
 
   return true;
+}
+
+bool Condor2Dataset::A(const double X[3], double A[3]) const
+{
+  assert(false);
+  return false;
 }

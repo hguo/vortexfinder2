@@ -5,7 +5,6 @@
 #include "extractor/Condor2Extractor.h"
 
 static std::string filename_in, filename_out;
-static double B[3] = {0.0}; 
 static double Kex = 0;
 static int nogauge = 0,  
            verbose = 0, 
@@ -19,9 +18,6 @@ static struct option longopts[] = {
   {"input", required_argument, 0, 'i'},
   {"output", required_argument, 0, 'o'},
   {"Kx", required_argument, 0, 'k'}, 
-  {"Bx", required_argument, 0, 'x'}, 
-  {"By", required_argument, 0, 'y'}, 
-  {"Bz", required_argument, 0, 'z'}, 
   {"t", required_argument, 0, 't'}, 
   {"T", required_argument, 0, 'T'}, 
   {0, 0, 0, 0} 
@@ -30,7 +26,6 @@ static struct option longopts[] = {
 static bool parse_arg(int argc, char **argv)
 {
   int c; 
-  bool b_set = false;  
 
   while (1) {
     int option_index = 0;
@@ -41,9 +36,6 @@ static bool parse_arg(int argc, char **argv)
     case 'i': filename_in = optarg; break;
     case 'o': filename_out = optarg; break;
     case 'k': Kex = atof(optarg); break;
-    case 'x': B[0] = atof(optarg); b_set = true; break;
-    case 'y': B[1] = atof(optarg); b_set = true; break;
-    case 'z': B[2] = -atof(optarg); b_set = true; break; // seems the sign of Bz is reversed
     case 't': T0 = atoi(optarg); break;
     case 'T': T = atoi(optarg); break;
     default: break; 
@@ -58,10 +50,7 @@ static bool parse_arg(int argc, char **argv)
   if (filename_in.empty()) {
     fprintf(stderr, "FATAL: input filename not given.\n"); 
     return false;
-  } else if (!b_set) {
-    fprintf(stderr, "FATAL: magnetic field B not given.\n");
-    return false; 
-  }
+  } 
   
   if (filename_out.empty()) 
     filename_out = filename_in + ".vortex"; 
@@ -71,7 +60,6 @@ static bool parse_arg(int argc, char **argv)
     fprintf(stderr, "filename_in=%s\n", filename_in.c_str()); 
     fprintf(stderr, "filename_out=%s\n", filename_out.c_str()); 
     fprintf(stderr, "Kex=%f\n", Kex); 
-    fprintf(stderr, "B={%f, %f, %f}\n", B[0], B[1], B[2]);
     fprintf(stderr, "nogauge=%d\n", nogauge);
     fprintf(stderr, "t=%d\n", T0);
     fprintf(stderr, "T=%d\n", T);
@@ -90,7 +78,6 @@ static void print_help(int argc, char **argv)
   fprintf(stderr, "\t--benchmark Enable benchmark\n"); 
   fprintf(stderr, "\t--nogauge   Disable gauge transformation\n"); 
   fprintf(stderr, "\t--Kx        Kx\n");
-  fprintf(stderr, "\t--B*        Magnetic field\n");
   fprintf(stderr, "\t-t          Starting time step for the analysis\n"); 
   fprintf(stderr, "\t-T          Number of time step for the analysis\n"); 
   fprintf(stderr, "\n");
@@ -107,7 +94,6 @@ int main(int argc, char **argv)
   libMesh::LibMeshInit init(1, argv); // set argc to 1 to supress PETSc warnings. 
  
   Condor2Dataset ds(init.comm()); 
-  ds.SetMagneticField(B); 
   ds.SetKex(Kex);
   ds.PrintInfo();
   

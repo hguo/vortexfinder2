@@ -10,8 +10,10 @@
 #if WITH_LIBMESH
 #include <libmesh/id_types.h>
 typedef libMesh::dof_id_type ElemIdType;
+typedef libMesh::dof_id_type NodeIdType;
 #else
 typedef unsigned int ElemIdType;
+typedef unsigned int NodeIdType;
 #endif
 
 // NetCDF error handling

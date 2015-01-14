@@ -13,16 +13,10 @@ GLDataset::GLDataset() :
 {
   memset(_origins, 0, sizeof(double)*3); 
   memset(_lengths, 0, sizeof(double)*3); 
-  memset(_B, 0, sizeof(double)*3); 
 }
 
 GLDataset::~GLDataset()
 {
-}
-
-void GLDataset::SetMagneticField(const double B[3])
-{
-  memcpy(_B, B, sizeof(double)*3); 
 }
 
 void GLDataset::SetKex(double Kex)
@@ -45,35 +39,34 @@ void GLDataset::CloseDataFile()
 {
   // no impl
 }
- 
+
+double GLDataset::GaugeTransformation(const double X0[], const double X1[], const double A0[], const double A1[]) const
+{
+  // \int dl * (Kx^hat - A(l))
+
+  double dX[3] = {X1[0] - X0[0], X1[1] - X0[1], X1[2] - X0[2]};
+  double A[3] = {0.5*(A0[0]+A1[0]), 0.5*(A0[1]+A1[1]), 0.5*(A0[2]+A1[2])};
+
+  double gl = Kex() * dX[0];
+  double ga = -inner_product(A, dX);
+
+  return gl + ga;
+}
+
+double GLDataset::LineIntegral(const double X0[], const double X1[], const double A0[], const double A1[]) const
+{
+  double dX[3] = {X1[0] - X0[0], X1[1] - X0[1], X1[2] - X0[2]};
+  double A[3] = {0.5*(A0[0]+A1[0]), 0.5*(A0[1]+A1[1]), 0.5*(A0[2]+A1[2])};
+
+  return inner_product(A, dX);
+}
+
 double GLDataset::QP(const double X0[], const double X1[]) const
 {
   return 0.0;
 }
 
-double GLDataset::GaugeTransformation(const double X0[], const double X1[]) const
-{
-  double gx, gy, gz; 
-  double dx = X1[0] - X0[0], 
-         dy = X1[1] - X0[1], 
-         dz = X1[2] - X0[2]; 
-  double x = X0[0] + 0.5*dx, 
-         y = X0[1] + 0.5*dy, 
-         z = X0[2] + 0.5*dz;
-
-  if (By()>0) { // Y-Z gauge
-    gx = dx * Kex(); 
-    gy =-dy * x * Bz(); // -dy*x^hat*Bz
-    gz = dz * x * By(); //  dz*x^hat*By
-  } else { // X-Z gauge
-    gx = dx * y * Bz() + dx * Kex(); //  dx*y^hat*Bz + dx*K
-    gy = 0; 
-    gz =-dz * y * Bx(); // -dz*y^hat*Bx
-  }
-
-  return gx + gy + gz; 
-}
-
+#if 0
 double GLDataset::Flux(const double X[3][3]) const
 {
   double A[3] = {X[1][0] - X[0][0], X[1][1] - X[0][1], X[1][2] - X[0][2]}, 
@@ -84,7 +77,7 @@ double GLDataset::Flux(const double X[3][3]) const
 
   return inner_product(_B, dS);
 }
-  
+
 double GLDataset::Flux(int n, const double X[][3]) const
 {
   double flux = 0;
@@ -110,7 +103,8 @@ void GLDataset::A(const double X[3], double A[3]) const
     A[2] = X[1] * Bx();
   }
 }
-  
+#endif 
+
 bool GLDataset::Rho(const double X[3], double &rho) const
 {
   double re, im;

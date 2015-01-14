@@ -28,7 +28,7 @@ public: // mesh info
   
 public: // mesh utils
   std::vector<ElemIdType> GetNeighborIds(ElemIdType elem_id) const;
-  bool GetFace(ElemIdType id, int face, double X[][3], double re[], double im[]) const;
+  bool GetFace(ElemIdType id, int face, double X[][3], double A[][3], double re[], double im[]) const;
   ElemIdType Pos2ElemId(const double X[]) const; 
   bool OnBoundary(ElemIdType id) const;
 
@@ -41,7 +41,8 @@ public: // mesh utils
   void Pos2Grid(const double pos[3], double gpos[3]) const; //!< to grid coordinates
 
 public: // transformations and utils
-  // counter-cloce wise sides facing outer
+  double GaugeTransformation(const double X0[], const double X1[]) const;
+
   double Flux(int faceType) const;
   double QP(const double X0[], const double X1[]) const;
 
@@ -53,6 +54,19 @@ public: // rectilinear grid
   double dx() const {return _cell_lengths[0];}
   double dy() const {return _cell_lengths[1];}
   double dz() const {return _cell_lengths[2];}
+  
+  // Magnetic potential
+  bool A(const double X[3], double A[3]) const; //!< compute the vector potential at given position
+  double Ax(const double X[3]) const {if (By()>0) return 0; else return -X[1]*Bz();}
+  double Ay(const double X[3]) const {if (By()>0) return X[0]*Bz(); else return 0;}
+  double Az(const double X[3]) const {if (By()>0) return -X[0]*By(); else return X[1]*Bx();}
+  
+  // Magnetic field
+  void SetMagneticField(const double B[3]);
+  const double* B() const {return _B;}
+  double Bx() const {return _B[0];} 
+  double By() const {return _B[1];} 
+  double Bz() const {return _B[2];}
 
 public: // data access
   const double& Re(int x, int y, int z) const {return texel3D(_re, _dims, x, y, z);}
@@ -74,6 +88,8 @@ private:
   int _dims[3]; 
   bool _pbc[3]; 
   double _cell_lengths[3]; 
+
+  double _B[3];
 
   double *_re, *_im; // , *_rho, *_phi;
   double *_scx, *_scy, *_scz, *_scm; // supercurrent field and its magnitude

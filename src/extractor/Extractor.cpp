@@ -160,9 +160,9 @@ bool VortexExtractor::ExtractElem(ElemIdType id)
  
   for (int face=0; face<nfaces; face++) {
     const int nnodes = _dataset->NrNodesPerFace();
-    double X[nnodes][3], re[nnodes], im[nnodes]; 
+    double X[nnodes][3], A[nnodes][3], re[nnodes], im[nnodes]; 
 
-    _dataset->GetFace(id, face, X, re, im);
+    _dataset->GetFace(id, face, X, A, re, im);
 
     // compute rho & phi
     double rho[nnodes], phi[nnodes];
@@ -177,11 +177,11 @@ bool VortexExtractor::ExtractElem(ElemIdType id)
       int j = (i+1) % nnodes;
       delta[i] = phi[j] - phi[i]; 
       if (_gauge) 
-        delta[i] += _dataset->GaugeTransformation(X[i], X[j]) + _dataset->QP(X[i], X[j]); 
+        delta[i] += _dataset->GaugeTransformation(X[i], X[j], A[i], A[j]) + _dataset->QP(X[i], X[j]); 
       delta[i] = mod2pi(delta[i] + M_PI) - M_PI;
       phase_shift -= delta[i];
+      phase_shift -= _dataset->LineIntegral(X[i], X[j], A[i], A[j]);
     }
-    phase_shift -= _dataset->Flux(nnodes, X);
 
     // check if punctured
     double critera = phase_shift / (2*M_PI);
@@ -203,11 +203,13 @@ bool VortexExtractor::ExtractElem(ElemIdType id)
     double pos[3];
     if (FindZero(X, re, im, pos))
       pelem->AddPuncturedFace(face, chirality, pos);
-    // else fprintf(stderr, "WARNING: punctured but singularity not found.\n");
+    else fprintf(stderr, "WARNING: punctured but singularity not found.\n");
   }
 
   if (pelem->Punctured()) {
     _punctured_elems[id] = pelem;
+    if (pelem->Degree() != 2 && !_dataset->OnBoundary(id))
+      fprintf(stderr, "degree=%d\n", pelem->Degree());
     return true;
   } else {
     delete pelem;
