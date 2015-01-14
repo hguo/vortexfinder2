@@ -482,6 +482,7 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename)
                    phi = data[i*2+1];
             _re[i] = rho * cos(phi); 
             _im[i] = rho * sin(phi);
+            // fprintf(stderr, "rho=%f, phi=%f\n", rho, phi);
           }
         }
       } else if (type == BDAT_DOUBLE) {
@@ -552,12 +553,22 @@ bool GLGPUDataset::WriteNetCDFFile(const std::string& filename)
   size_t starts[3] = {0, 0, 0}, 
          sizes[3]  = {_dims[2], _dims[1], _dims[0]};
 
+  const int cnt = sizes[0]*sizes[1]*sizes[2];
+  double *rho = (double*)malloc(sizeof(double)*cnt), 
+         *phi = (double*)malloc(sizeof(double)*cnt);
+  for (int i=0; i<cnt; i++) {
+    rho[i] = sqrt(_re[i]*_re[i] + _im[i]*_im[i]);
+    phi[i] = atan2(_im[i], _re[i]);
+  }
+
+  fprintf(stderr, "filename=%s\n", filename.c_str());
+
   NC_SAFE_CALL( nc_create(filename.c_str(), NC_CLOBBER | NC_64BIT_OFFSET, &ncid) ); 
   NC_SAFE_CALL( nc_def_dim(ncid, "z", sizes[0], &dimids[0]) );
   NC_SAFE_CALL( nc_def_dim(ncid, "y", sizes[1], &dimids[1]) );
   NC_SAFE_CALL( nc_def_dim(ncid, "x", sizes[2], &dimids[2]) );
-  // NC_SAFE_CALL( nc_def_var(ncid, "rho", NC_DOUBLE, 3, dimids, &varids[0]) );
-  // NC_SAFE_CALL( nc_def_var(ncid, "phi", NC_DOUBLE, 3, dimids, &varids[1]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "rho", NC_DOUBLE, 3, dimids, &varids[0]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "phi", NC_DOUBLE, 3, dimids, &varids[1]) );
   NC_SAFE_CALL( nc_def_var(ncid, "re", NC_DOUBLE, 3, dimids, &varids[2]) );
   NC_SAFE_CALL( nc_def_var(ncid, "im", NC_DOUBLE, 3, dimids, &varids[3]) );
   NC_SAFE_CALL( nc_def_var(ncid, "scx", NC_DOUBLE, 3, dimids, &varids[4]) );
@@ -566,8 +577,8 @@ bool GLGPUDataset::WriteNetCDFFile(const std::string& filename)
   NC_SAFE_CALL( nc_def_var(ncid, "scm", NC_DOUBLE, 3, dimids, &varids[7]) );
   NC_SAFE_CALL( nc_enddef(ncid) );
 
-  // NC_SAFE_CALL( nc_put_vara_double(ncid, varids[0], starts, sizes, _rho) ); 
-  // NC_SAFE_CALL( nc_put_vara_double(ncid, varids[1], starts, sizes, _phi) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[0], starts, sizes, rho) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[1], starts, sizes, phi) ); 
   NC_SAFE_CALL( nc_put_vara_double(ncid, varids[2], starts, sizes, _re) ); 
   NC_SAFE_CALL( nc_put_vara_double(ncid, varids[3], starts, sizes, _im) ); 
   NC_SAFE_CALL( nc_put_vara_double(ncid, varids[4], starts, sizes, _scx) ); 

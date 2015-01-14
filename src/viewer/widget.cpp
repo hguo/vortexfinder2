@@ -2,6 +2,8 @@
 #include <QMatrix4x4>
 #include <QDebug>
 #include <OpenGL/glu.h>
+#include <fstream>
+#include <iostream>
 #include "widget.h"
 #include "common/DataInfo.pb.h"
 #include "common/VortexObject.h"
@@ -240,7 +242,64 @@ void CGLWidget::LoadVortexObjects(const std::string& filename)
     v_line_indices.push_back(cnt); 
     cnt += v_line_vert_count[i]; 
   }
+  v_line_indices.push_back(cnt); 
 
+  updateVortexTubes(20, 0.5); 
+}
+
+void CGLWidget::LoadVortexOjbectsFromTextFile(const std::string& filename)
+{
+  std::ifstream ifs(filename);
+  if (!ifs.is_open()) return;
+
+  const float c[4] = {1, 0, 0, 1}; 
+
+  std::string line;
+  int vertCount = 0;
+  getline(ifs, line);
+
+  float x0, y0, z0, x, y, z;
+  while (getline(ifs, line)) {
+    if (line[0] == '#') {
+      v_line_vert_count.push_back(vertCount); 
+      vertCount = 0;
+      continue;
+    }
+
+    std::stringstream ss(line);
+    ss >> x >> y >> z;
+        
+    v_line_vertices.push_back(x); 
+    v_line_vertices.push_back(y); 
+    v_line_vertices.push_back(z);
+    for (int m=0; m<4; m++) 
+      v_line_colors.push_back(c[m]); 
+
+    if (vertCount > 1) {
+      float dist = sqrt((x-x0)*(x-x0) + (y-y0)*(y-y0) + (z-z0)*(z-z0)); 
+      if (dist > 3) {
+        v_line_vert_count.push_back(vertCount); 
+        vertCount = 0;
+      }
+    }
+    x0 = x; y0 = y; z0 = z;
+
+    vertCount ++;
+  }
+
+  if (vertCount != 0)
+    v_line_vert_count.push_back(vertCount); 
+  
+  int cnt = 0; 
+  for (int i=0; i<v_line_vert_count.size(); i++) {
+    v_line_indices.push_back(cnt); 
+    cnt += v_line_vert_count[i]; 
+  }
+  v_line_indices.push_back(cnt); 
+    
+  
+  fprintf(stderr, "n=%ld\n", v_line_vertices.size()/3); 
+  
   updateVortexTubes(20, 0.5); 
 }
 

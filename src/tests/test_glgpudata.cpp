@@ -2,7 +2,8 @@
 
 int main(int argc, char **argv)
 {
-  const std::string filename = "GL3D_Xfieldramp_inter_0437_cop.dat";
+  if (argc<2) return 1; 
+  const std::string filename = argv[1]; // = "GL3D_Xfieldramp_inter_0437_cop.dat";
 
   GLGPUDataset *dataset = new GLGPUDataset; 
   dataset->OpenDataFile(filename);

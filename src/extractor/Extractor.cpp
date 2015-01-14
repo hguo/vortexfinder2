@@ -203,7 +203,7 @@ bool VortexExtractor::ExtractElem(ElemIdType id)
     double pos[3];
     if (FindZero(X, re, im, pos))
       pelem->AddPuncturedFace(face, chirality, pos);
-    // else fprintf(stderr, "FATAL: punctured but singularity not found.\n");
+    // else fprintf(stderr, "WARNING: punctured but singularity not found.\n");
   }
 
   if (pelem->Punctured()) {

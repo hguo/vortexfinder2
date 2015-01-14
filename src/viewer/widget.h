@@ -28,6 +28,8 @@ public:
   ~CGLWidget(); 
 
   void LoadVortexObjects(const std::string& filename); 
+  void LoadVortexOjbectsFromTextFile(const std::string& filename);
+  
   void LoadFieldLines(const std::string& filename);
 
 protected:
