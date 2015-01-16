@@ -11,15 +11,17 @@ Condor2Dataset::Condor2Dataset(const Parallel::Communicator &comm) :
   ParallelObject(comm), 
   _eqsys(NULL), 
   _exio(NULL), 
-  _mesh(NULL)
+  _mesh(NULL),
+  _locator(NULL)
 {
 }
 
 Condor2Dataset::~Condor2Dataset()
 {
-  if (_eqsys) delete _eqsys; 
-  if (_exio) delete _exio; 
-  if (_mesh) delete _mesh; 
+  if (_eqsys) delete _eqsys;
+  if (_exio) delete _exio;
+  if (_locator) delete _locator;
+  if (_mesh) delete _mesh;
 }
 
 void Condor2Dataset::PrintInfo() const
@@ -75,6 +77,9 @@ bool Condor2Dataset::OpenDataFile(const std::string& filename)
 
   _eqsys->init(); 
 
+  /// point locator
+  _locator = new PointLocatorTree(*_mesh);
+
   // it takes some time (~0.5s) to compute the bounding box. is there any better way to get this information?
   ProbeBoundingBox();
 
@@ -107,11 +112,11 @@ void Condor2Dataset::ProbeBoundingBox()
   }
 
   _origins[0] = L[0]; 
-  _origins[1] = L[0]; 
-  _origins[2] = L[0]; 
+  _origins[1] = L[1]; 
+  _origins[2] = L[2]; 
   _lengths[0] = U[0] - L[0]; 
   _lengths[1] = U[1] - L[1]; 
-  _lengths[2] = U[2] - L[2]; 
+  _lengths[2] = U[2] - L[2];
 }
 
 void Condor2Dataset::LoadTimeStep(int timestep)
@@ -155,10 +160,7 @@ ElemIdType Condor2Dataset::Pos2ElemId(const double X[]) const
 {
   Point p(X[0], X[1], X[2]);
   
-  AutoPtr<PointLocatorBase> locator_ptr = _mesh->sub_point_locator();
-  PointLocatorBase &locator = *locator_ptr;
-
-  const Elem *e = locator(p);
+  const Elem *e = (*_locator)(p);
   if (e == NULL) return UINT_MAX;
   else return e->id();
 }
@@ -167,10 +169,7 @@ bool Condor2Dataset::A(const double X[3], double A[3]) const
 {
   Point p(X[0], X[1], X[2]);
 
-  AutoPtr<PointLocatorBase> locator_ptr = _mesh->sub_point_locator();
-  PointLocatorBase &locator = *locator_ptr;
-
-  const Elem *e = locator(p);
+  const Elem *e = (*_locator)(p);
   if (e == NULL) return false;
 
   A[0] = asys()->point_value(_Ax_var, p, e);
@@ -184,10 +183,7 @@ bool Condor2Dataset::Psi(const double X[3], double &re, double &im) const
 {
   Point p(X[0], X[1], X[2]);
 
-  AutoPtr<PointLocatorBase> locator_ptr = _mesh->sub_point_locator();
-  PointLocatorBase &locator = *locator_ptr;
-
-  const Elem *e = locator(p);
+  const Elem *e = (*_locator)(p);
   if (e == NULL) return false;
 
   re = tsys()->point_value(_u_var, p, e);
@@ -199,27 +195,84 @@ bool Condor2Dataset::Psi(const double X[3], double &re, double &im) const
 bool Condor2Dataset::Supercurrent(const double X[3], double J[3]) const
 {
   Point p(X[0], X[1], X[2]);
+ 
+  clock_t t0 = clock();
 
-  AutoPtr<PointLocatorBase> locator_ptr = _mesh->sub_point_locator();
-  PointLocatorBase &locator = *locator_ptr;
-
-  const Elem *e = locator(p);
+  // const Elem *e = (*_locator)(p);
+  const Elem* e = LocateElemCoherently(X);
   if (e == NULL) return false;
 
-  double A[3];
-  A[0] = asys()->point_value(_Ax_var, p, e);
-  A[1] = asys()->point_value(_Ay_var, p, e);
-  A[2] = asys()->point_value(_Az_var, p, e);
+  clock_t t1 = clock();
 
-  Gradient g = asys()->point_gradient(_phi_var, p, e);
+  double A[3];
+  A[0] = asys()->point_value(_Ax_var, p, *e);
+  A[1] = asys()->point_value(_Ay_var, p, *e);
+  A[2] = asys()->point_value(_Az_var, p, *e);
+  
+  clock_t t2 = clock();
+
+  // FIXME: use mod2pi to fix difference
+  Gradient g = asys()->point_gradient(_phi_var, p, *e);
+  
+  clock_t t3 = clock();
 
   J[0] = g.slice(0) - A[0];
   J[1] = g.slice(1) - A[1];
   J[2] = g.slice(2) - A[2];
+ 
+#if 0
+  float t = (float)(t3-t0)/CLOCKS_PER_SEC;
+  if (t>0.001) {
+    fprintf(stderr, "Slow LERP, e=%u, X={%f, %f, %f}, J={%f, %f, %f}\n", 
+        e->id(),
+        X[0], X[1], X[2], 
+        // g.slice(0), g.slice(1), g.slice(2), 
+        // A[0], A[1], A[2],
+        J[0], J[1], J[2]);
+    
+    fprintf(stderr, "t_loc=%f, t_A=%f, t_g=%f\n", 
+        (float)(t1-t0)/CLOCKS_PER_SEC, 
+        (float)(t2-t1)/CLOCKS_PER_SEC,
+        (float)(t3-t2)/CLOCKS_PER_SEC);
+  }
+#endif
 
   return true;
 }
+ 
+const Elem* Condor2Dataset::LocateElemCoherently(const double X[3]) const
+{
+  static const Elem* e_last = NULL;
   
+  if (X[0] < Origins()[0] || X[0] > Origins()[0] + Lengths()[0] ||
+      X[1] < Origins()[1] || X[1] > Origins()[1] + Lengths()[1] || 
+      X[2] < Origins()[2] || X[2] > Origins()[2] + Lengths()[2])
+    return NULL;
+  
+  Point p(X[0], X[1], X[2]);
+
+  /// check if p is inside last queried element or neighbors
+  if (e_last != NULL) {
+    if (e_last->contains_point(p)) {
+      // fprintf(stderr, "hit last.\n");
+      return e_last;
+    }
+    else {
+      for (int i=0; i<e_last->n_neighbors(); i++) {
+        const Elem* e = e_last->neighbor(i);
+        if (e != NULL && e->contains_point(p)) {
+          // fprintf(stderr, "hit last neighbor.\n");
+          e_last = e;
+          return e;
+        }
+      }
+    }
+  }
+  
+  e_last = (*_locator)(p);
+  return e_last;
+}
+
 bool Condor2Dataset::OnBoundary(ElemIdType id) const
 {
   const Elem* elem = mesh()->elem(id);

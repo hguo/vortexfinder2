@@ -8,6 +8,7 @@
 #include <libmesh/fe_base.h>
 #include <libmesh/equation_systems.h>
 #include <libmesh/nonlinear_implicit_system.h>
+#include <libmesh/point_locator_tree.h>
 #include <libmesh/exodusII_io.h>
 
 class Condor2Dataset : public libMesh::ParallelObject, public GLDataset
@@ -65,11 +66,15 @@ private:
   void ProbeBoundingBox();
 
 private:
+  const libMesh::Elem* LocateElemCoherently(const double X[3]) const; // not thread-safe
+
+private:
   libMesh::UnstructuredMesh *_mesh;
   libMesh::ExodusII_IO *_exio; 
   libMesh::EquationSystems *_eqsys;
   libMesh::NonlinearImplicitSystem *_tsys;
   libMesh::System *_asys;
+  libMesh::PointLocatorTree *_locator;
   
   unsigned int _u_var, _v_var;
   unsigned int _Ax_var, _Ay_var, _Az_var;

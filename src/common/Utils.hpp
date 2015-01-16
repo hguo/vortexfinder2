@@ -24,6 +24,18 @@ static inline void cross_product(const T A[3], const T B[3], T C[3])
 }
 
 template <typename T>
+static inline void normalize(T X[3])
+{
+  T length = sqrt(X[0]*X[0] + X[1]*X[1] + X[2]*X[2]);
+
+  if (length>0) {
+    X[0] /= length;
+    X[1] /= length;
+    X[2] /= length;
+  }
+}
+
+template <typename T>
 static inline T inner_product(const T A[3], const T B[3])
 {
   return A[0]*B[0] + A[1]*B[1] + A[2]*B[2];
