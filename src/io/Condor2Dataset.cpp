@@ -11,8 +11,7 @@ Condor2Dataset::Condor2Dataset(const Parallel::Communicator &comm) :
   ParallelObject(comm), 
   _eqsys(NULL), 
   _exio(NULL), 
-  _mesh(NULL),
-  _locator(NULL)
+  _mesh(NULL)
 {
 }
 
@@ -20,7 +19,6 @@ Condor2Dataset::~Condor2Dataset()
 {
   if (_eqsys) delete _eqsys; 
   if (_exio) delete _exio; 
-  if (_locator) delete _locator;
   if (_mesh) delete _mesh; 
 }
 
@@ -71,20 +69,11 @@ bool Condor2Dataset::OpenDataFile(const std::string& filename)
   _asys = &(_eqsys->add_system<System>("Auxsys"));
   _Ax_var = _asys->add_variable("Ax", FIRST, LAGRANGE);
   _Ay_var = _asys->add_variable("Ay", FIRST, LAGRANGE); 
-  _Az_var = _asys->add_variable("Az", FIRST, LAGRANGE); 
+  _Az_var = _asys->add_variable("Az", FIRST, LAGRANGE);
+  // _rho_var = _asys->add_variable("rho", FIRST, LAGRANGE);
+  _phi_var = _asys->add_variable("phi", FIRST, LAGRANGE);
 
   _eqsys->init(); 
-
-  /// FE
-#if 0
-  const DofMap& dof_map = _tsys->get_dof_map();
-  FEType fe_type = dof_map.variable_type(2/*vnum*/);
-  AutoPtr<FEBase> febase(FEBase::build(_mesh->mesh_dimension(), fe_type));
-  _fe = febase;
-#endif
-
-  /// point locator
-  _locator = new PointLocatorTree(*_mesh);
 
   // it takes some time (~0.5s) to compute the bounding box. is there any better way to get this information?
   ProbeBoundingBox();
@@ -140,6 +129,8 @@ void Condor2Dataset::LoadTimeStep(int timestep)
   _exio->copy_nodal_solution(*_asys, "Ax", "A_x", timestep);
   _exio->copy_nodal_solution(*_asys, "Ay", "A_y", timestep);
   _exio->copy_nodal_solution(*_asys, "Az", "A_z", timestep);
+  // _exio->copy_nodal_solution(*_asys, "rho", "rho", timestep);
+  _exio->copy_nodal_solution(*_asys, "phi", "phi", timestep);
   
   // fprintf(stderr, "nodal solution copied, timestep=%d\n", timestep); 
 }
@@ -163,65 +154,70 @@ std::vector<ElemIdType> Condor2Dataset::GetNeighborIds(ElemIdType elem_id) const
 ElemIdType Condor2Dataset::Pos2ElemId(const double X[]) const
 {
   Point p(X[0], X[1], X[2]);
-  const Elem *elem = (*_locator)(p);
+  
+  AutoPtr<PointLocatorBase> locator_ptr = _mesh->sub_point_locator();
+  PointLocatorBase &locator = *locator_ptr;
 
-  if (elem == NULL)
-    return UINT_MAX;
-  else 
-    return elem->id();
+  const Elem *e = locator(p);
+  if (e == NULL) return UINT_MAX;
+  else return e->id();
+}
+
+bool Condor2Dataset::A(const double X[3], double A[3]) const
+{
+  Point p(X[0], X[1], X[2]);
+
+  AutoPtr<PointLocatorBase> locator_ptr = _mesh->sub_point_locator();
+  PointLocatorBase &locator = *locator_ptr;
+
+  const Elem *e = locator(p);
+  if (e == NULL) return false;
+
+  A[0] = asys()->point_value(_Ax_var, p, e);
+  A[1] = asys()->point_value(_Ay_var, p, e);
+  A[2] = asys()->point_value(_Az_var, p, e);
+
+  return true;
 }
 
 bool Condor2Dataset::Psi(const double X[3], double &re, double &im) const
 {
-  // TODO
-  return false;
+  Point p(X[0], X[1], X[2]);
+
+  AutoPtr<PointLocatorBase> locator_ptr = _mesh->sub_point_locator();
+  PointLocatorBase &locator = *locator_ptr;
+
+  const Elem *e = locator(p);
+  if (e == NULL) return false;
+
+  re = tsys()->point_value(_u_var, p, e);
+  im = tsys()->point_value(_v_var, p, e);
+
+  return true;
 }
 
 bool Condor2Dataset::Supercurrent(const double X[3], double J[3]) const
 {
-  ElemIdType elem_id = Pos2ElemId(X);
-  if (elem_id == UINT_MAX) return false;
+  Point p(X[0], X[1], X[2]);
 
-  const Elem* elem = _mesh->elem(elem_id);
+  AutoPtr<PointLocatorBase> locator_ptr = _mesh->sub_point_locator();
+  PointLocatorBase &locator = *locator_ptr;
 
-  // tsys
-  const DofMap& dof_map = tsys()->get_dof_map(); 
-  const NumericVector<Number> *ts = tsys()->solution.get();
-  
-  std::vector<dof_id_type> u_di, v_di;
-  dof_map.dof_indices(elem, u_di, u_var());
-  dof_map.dof_indices(elem, v_di, v_var());
+  const Elem *e = locator(p);
+  if (e == NULL) return false;
 
-  // asys
-  const DofMap& dof_map1 = asys()->get_dof_map();
-  const NumericVector<Number> *as = asys()->solution.get();
+  double A[3];
+  A[0] = asys()->point_value(_Ax_var, p, e);
+  A[1] = asys()->point_value(_Ay_var, p, e);
+  A[2] = asys()->point_value(_Az_var, p, e);
 
-  std::vector<dof_id_type> Ax_di, Ay_di, Az_di;
-  dof_map1.dof_indices(elem, Ax_di, Ax_var());
-  dof_map1.dof_indices(elem, Ay_di, Ay_var());
-  dof_map1.dof_indices(elem, Az_di, Az_var());
+  Gradient g = asys()->point_gradient(_phi_var, p, e);
 
-  double P[4][4];
-  for (int i=0; i<4; i++) {
-    const Node *node = elem->get_node(i);
-    for (int j=0; j<3; j++)
-      P[i][j] = node->slice(j);
-  }
+  J[0] = g.slice(0) - A[0];
+  J[1] = g.slice(1) - A[1];
+  J[2] = g.slice(2) - A[2];
 
-  double phi[4];
-  double A[4][3];
-  for (int i=0; i<4; i++) {
-    double u = (*ts)(u_di[i]), 
-           v = (*ts)(v_di[i]); 
-    phi[i] = atan2(v, u);
-    A[i][0] = (*as)(Ax_di[i]);
-    A[i][1] = (*as)(Ay_di[i]);
-    A[i][2] = (*as)(Az_di[i]);
-  }
-
-  // TODO: gradient estimation
-
-  return false;
+  return true;
 }
   
 bool Condor2Dataset::OnBoundary(ElemIdType id) const
@@ -272,10 +268,4 @@ bool Condor2Dataset::GetFace(ElemIdType id, int face, double X[][3], double A[][
   }
 
   return true;
-}
-
-bool Condor2Dataset::A(const double X[3], double A[3]) const
-{
-  assert(false);
-  return false;
 }
