@@ -4,6 +4,7 @@
 #include <libmesh/numeric_vector.h>
 #include "Condor2Dataset.h"
 #include "common/DataInfo.pb.h"
+#include "common/Utils.hpp"
 
 using namespace libMesh;
 
@@ -73,7 +74,7 @@ bool Condor2Dataset::OpenDataFile(const std::string& filename)
   _Ay_var = _asys->add_variable("Ay", FIRST, LAGRANGE); 
   _Az_var = _asys->add_variable("Az", FIRST, LAGRANGE);
   // _rho_var = _asys->add_variable("rho", FIRST, LAGRANGE);
-  _phi_var = _asys->add_variable("phi", FIRST, LAGRANGE);
+  // _phi_var = _asys->add_variable("phi", FIRST, LAGRANGE);
 
   _eqsys->init(); 
 
@@ -135,7 +136,7 @@ void Condor2Dataset::LoadTimeStep(int timestep)
   _exio->copy_nodal_solution(*_asys, "Ay", "A_y", timestep);
   _exio->copy_nodal_solution(*_asys, "Az", "A_z", timestep);
   // _exio->copy_nodal_solution(*_asys, "rho", "rho", timestep);
-  _exio->copy_nodal_solution(*_asys, "phi", "phi", timestep);
+  // _exio->copy_nodal_solution(*_asys, "phi", "phi", timestep);
   
   // fprintf(stderr, "nodal solution copied, timestep=%d\n", timestep); 
 }
@@ -181,8 +182,12 @@ bool Condor2Dataset::A(const double X[3], double A[3]) const
 
 bool Condor2Dataset::Psi(const double X[3], double &re, double &im) const
 {
+  if (X[0] < Origins()[0] || X[0] > Origins()[0] + Lengths()[0] ||
+      X[1] < Origins()[1] || X[1] > Origins()[1] + Lengths()[1] || 
+      X[2] < Origins()[2] || X[2] > Origins()[2] + Lengths()[2])
+    return false;
+  
   Point p(X[0], X[1], X[2]);
-
   const Elem *e = (*_locator)(p);
   if (e == NULL) return false;
 
@@ -194,48 +199,35 @@ bool Condor2Dataset::Psi(const double X[3], double &re, double &im) const
 
 bool Condor2Dataset::Supercurrent(const double X[3], double J[3]) const
 {
-  Point p(X[0], X[1], X[2]);
- 
-  clock_t t0 = clock();
+  // magnetic potential
+  double A[3]; 
+  if (!Condor2Dataset::A(X, A)) return false;
 
-  // const Elem *e = (*_locator)(p);
-  const Elem* e = LocateElemCoherently(X);
-  if (e == NULL) return false;
+  // grad(theta)
+  double dtheta[3];
+  const double eps = 0.5;
+  const double Xd[3][2][3] = {
+    {{X[0]-eps, X[1], X[2]}, {X[0]+eps, X[1], X[2]}}, 
+    {{X[0], X[1]-eps, X[2]}, {X[0], X[1]+eps, X[2]}},
+    {{X[0], X[1], X[2]-eps}, {X[0], X[1], X[2]+eps}}
+  };
+  double phi[3][2];
 
-  clock_t t1 = clock();
+  for (int i=0; i<3; i++) 
+    for (int j=0; j<2; j++)
+      if (!Phi(Xd[i][j], phi[i][j])) 
+          return false;
 
-  double A[3];
-  A[0] = asys()->point_value(_Ax_var, p, *e);
-  A[1] = asys()->point_value(_Ay_var, p, *e);
-  A[2] = asys()->point_value(_Az_var, p, *e);
-  
-  clock_t t2 = clock();
+  dtheta[0] = (mod2pi(phi[0][1] - phi[0][0] + M_PI) - M_PI) / (2*eps);
+  dtheta[1] = (mod2pi(phi[1][1] - phi[1][0] + M_PI) - M_PI) / (2*eps);
+  dtheta[2] = (mod2pi(phi[2][1] - phi[2][0] + M_PI) - M_PI) / (2*eps);
 
-  // FIXME: use mod2pi to fix difference
-  Gradient g = asys()->point_gradient(_phi_var, p, *e);
-  
-  clock_t t3 = clock();
+  J[0] = dtheta[0] - A[0];
+  J[1] = dtheta[1] - A[1];
+  J[2] = dtheta[2] - A[2];
 
-  J[0] = g.slice(0) - A[0];
-  J[1] = g.slice(1) - A[1];
-  J[2] = g.slice(2) - A[2];
- 
-#if 0
-  float t = (float)(t3-t0)/CLOCKS_PER_SEC;
-  if (t>0.001) {
-    fprintf(stderr, "Slow LERP, e=%u, X={%f, %f, %f}, J={%f, %f, %f}\n", 
-        e->id(),
-        X[0], X[1], X[2], 
-        // g.slice(0), g.slice(1), g.slice(2), 
-        // A[0], A[1], A[2],
-        J[0], J[1], J[2]);
-    
-    fprintf(stderr, "t_loc=%f, t_A=%f, t_g=%f\n", 
-        (float)(t1-t0)/CLOCKS_PER_SEC, 
-        (float)(t2-t1)/CLOCKS_PER_SEC,
-        (float)(t3-t2)/CLOCKS_PER_SEC);
-  }
-#endif
+  // fprintf(stderr, "X={%f, %f, %f}, J={%f, %f, %f}\n", 
+  //     X[0], X[1], X[2], J[0], J[1], J[2]);
 
   return true;
 }

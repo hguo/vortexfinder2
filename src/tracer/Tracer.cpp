@@ -47,7 +47,7 @@ void FieldLineTracer::Trace()
 
 void FieldLineTracer::Trace(const double seed[3])
 {
-  static const int max_length = 8192; 
+  static const int max_length = 1024; 
   const double h = 0.05; 
   double X[3] = {seed[0], seed[1], seed[2]}; 
 
@@ -58,8 +58,8 @@ void FieldLineTracer::Trace(const double seed[3])
   // forward
   for (int n=0; n<max_length; n++) {
     line.push_back(X[0]); line.push_back(X[1]); line.push_back(X[2]); 
-    if (!RK4(X, h)) break;
-    // if (!RK1(X, h)) break;
+    // if (!RK4(X, h)) break;
+    if (!RK1(X, h)) break;
   }
  
   // backward
@@ -67,8 +67,8 @@ void FieldLineTracer::Trace(const double seed[3])
   line.pop_front(); line.pop_front(); line.pop_front(); 
   for (int n=0; n<max_length; n++) {
     line.push_front(X[2]); line.push_front(X[1]); line.push_front(X[0]); 
-    if (!RK4(X, -h)) break;
-    // if (!RK1(X, -h)) break;
+    // if (!RK4(X, -h)) break;
+    if (!RK1(X, -h)) break;
   }
 
   FieldLine line1(line);

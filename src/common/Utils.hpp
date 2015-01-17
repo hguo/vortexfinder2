@@ -36,6 +36,13 @@ static inline void normalize(T X[3])
 }
 
 template <typename T>
+static inline T dist(const T A[3], const T B[3])
+{
+  T d[3] = {A[0] - B[0], A[1] - B[1], A[2] - B[2]};
+  return sqrt(d[0]*d[0] + d[1]*d[1] + d[2]*d[2]);
+}
+
+template <typename T>
 static inline T inner_product(const T A[3], const T B[3])
 {
   return A[0]*B[0] + A[1]*B[1] + A[2]*B[2];

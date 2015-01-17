@@ -78,7 +78,7 @@ private:
   
   unsigned int _u_var, _v_var;
   unsigned int _Ax_var, _Ay_var, _Az_var;
-  unsigned int _rho_var, _phi_var;
+  // unsigned int _rho_var, _phi_var;
 }; 
 
 #endif
