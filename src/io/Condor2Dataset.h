@@ -5,7 +5,7 @@
 #include <libmesh/libmesh.h>
 #include <libmesh/mesh.h>
 #include <libmesh/elem.h>
-#include <libmesh/fe_base.h>
+#include <libmesh/numeric_vector.h>
 #include <libmesh/equation_systems.h>
 #include <libmesh/nonlinear_implicit_system.h>
 #include <libmesh/point_locator_tree.h>
@@ -37,6 +37,11 @@ public:
   std::vector<ElemIdType> GetNeighborIds(ElemIdType id) const;
   bool GetFace(ElemIdType id, int face, double X[][3], double A[][3], double re[], double im[]) const;
   bool OnBoundary(ElemIdType id) const;
+
+  bool GetSpaceTimePrism(ElemIdType id, int face, double X[][3], 
+      double A0[][3], double A1[][3], 
+      double re0[], double re1[],
+      double im0[], double im1[]) const;
 
 public:
   libMesh::UnstructuredMesh* mesh() const {return _mesh;}
@@ -79,6 +84,9 @@ private:
   unsigned int _u_var, _v_var;
   unsigned int _Ax_var, _Ay_var, _Az_var;
   // unsigned int _rho_var, _phi_var;
+
+  libMesh::AutoPtr<libMesh::NumericVector<libMesh::Number> > _tsolution, _tsolution1;
+  libMesh::AutoPtr<libMesh::NumericVector<libMesh::Number> > _asolution, _asolution1;
 }; 
 
 #endif

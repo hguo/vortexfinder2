@@ -30,6 +30,11 @@ public: // mesh utils
   virtual bool GetFace(ElemIdType id, int face, double X[][3], double A[][3], double re[], double im[]) const = 0;
   virtual ElemIdType Pos2ElemId(const double X[]) const = 0; //!< returns the elemId for a given position
   virtual bool OnBoundary(ElemIdType id) const = 0;
+  
+  virtual bool GetSpaceTimePrism(ElemIdType id, int face, double X[][3], 
+      double A0[][3], double A1[][3], 
+      double re0[], double re1[],
+      double im0[], double im1[]) const;
 
 public: // transformations and utils
   virtual double GaugeTransformation(const double X0[], const double X1[], const double A0[], const double A1[]) const;

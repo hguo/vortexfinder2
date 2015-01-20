@@ -126,3 +126,11 @@ bool GLDataset::Phi(const double X[3], double &phi) const
     return true;
   }
 }
+
+bool GLDataset::GetSpaceTimePrism(ElemIdType id, int face, double X[][3], 
+      double A0[][3], double A1[][3], 
+      double re0[], double re1[],
+      double im0[], double im1[]) const
+{
+  return false;
+}
