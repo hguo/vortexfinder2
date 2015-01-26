@@ -7,7 +7,7 @@
 
 GLDataset::GLDataset() : 
   _Kex(0), _Kex_dot(0), _fluctuation_amp(0), 
-  _V(0), _Jx(0),
+  _V(0), _Jxext(0),
   _timestep(0), 
   _valid(false)
 {

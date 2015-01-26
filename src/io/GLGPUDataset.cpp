@@ -28,7 +28,7 @@ enum {
 
 GLGPUDataset::GLGPUDataset() : 
   _re(NULL), _im(NULL), 
-  _scx(NULL), _scy(NULL), _scz(NULL), _scm(NULL)
+  _Jx(NULL), _Jy(NULL), _Jz(NULL)
 {
   Reset();
 }
@@ -37,7 +37,7 @@ GLGPUDataset::~GLGPUDataset()
 {
   if (_re) free(_re);
   if (_im) free(_im);
-  if (_scx) free(_scx);
+  if (_Jx) free(_Jx);
 }
 
 void GLGPUDataset::Reset()
@@ -58,7 +58,7 @@ void GLGPUDataset::PrintInfo() const
   fprintf(stderr, "cell_lengths={%f, %f, %f}\n", _cell_lengths[0], _cell_lengths[1], _cell_lengths[2]); 
   fprintf(stderr, "B={%f, %f, %f}\n", _B[0], _B[1], _B[2]);
   fprintf(stderr, "Kex=%f, Kex_dot=%f\n", _Kex, _Kex_dot); 
-  fprintf(stderr, "Jx=%f\n", _Jx);
+  fprintf(stderr, "Jxext=%f\n", _Jxext);
   fprintf(stderr, "V=%f\n", _V);
   // fprintf(stderr, "time=%f\n", time); 
   fprintf(stderr, "fluctuation_amp=%f\n", _fluctuation_amp); 
@@ -480,7 +480,7 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename)
     } else if (name == "Jxext") {
       assert(type == BDAT_FLOAT);
       memcpy(&f, p, sizeof(float));
-      _Jx = f;
+      _Jxext = f;
     } else if (name == "K") {
       assert(type == BDAT_FLOAT);
       memcpy(&f, p, sizeof(float));
@@ -536,14 +536,14 @@ void GLGPUDataset::ComputeSupercurrentField()
 {
   const int nvoxels = dims()[0]*dims()[1]*dims()[2];
 
-  if (_scx != NULL) free(_scx);
-  _scx = (double*)malloc(4*sizeof(double)*nvoxels);
-  _scy = _scx + nvoxels; 
-  _scz = _scy + nvoxels;
-  _scm = _scz + nvoxels;
-  memset(_scx, 0, 3*sizeof(double)*nvoxels);
+  if (_Jx != NULL) free(_Jx);
+  _Jx = (double*)malloc(3*sizeof(double)*nvoxels);
+  _Jy = _Jx + nvoxels; 
+  _Jz = _Jy + nvoxels;
+  memset(_Jx, 0, 3*sizeof(double)*nvoxels);
  
-  double dphi[3], sc[3], A[3];
+  double u, v, rho;
+  double du[3], dv[3], dphi[3], A[3], J[3];
 
   // central difference
   for (int x=1; x<dims()[0]-1; x++) {
@@ -553,18 +553,35 @@ void GLGPUDataset::ComputeSupercurrentField()
         double pos[3]; 
         Idx2Pos(idx, pos);
 
+#if 1 // gradient estimation by \grad\psi or \grad\theta
+        du[0] = 0.5 * (Re(x+1, y, z) - Re(x-1, y, z)) / dx();
+        du[1] = 0.5 * (Re(x, y+1, z) - Re(x, y-1, z)) / dy();
+        du[2] = 0.5 * (Re(x, y, z+1) - Re(x, y, z-1)) / dz();
+        
+        dv[0] = 0.5 * (Im(x+1, y, z) - Im(x-1, y, z)) / dx();
+        dv[1] = 0.5 * (Im(x, y+1, z) - Im(x, y-1, z)) / dy();
+        dv[2] = 0.5 * (Im(x, y, z+1) - Im(x, y, z-1)) / dz();
+
+        u = Re(x, y, z); 
+        v = Im(x, y, z);
+        rho = sqrt(u*u + v*v);
+
+        J[0] = (u*dv[0] - v*du[0]) / rho - A[0];
+        J[1] = (u*dv[1] - v*du[1]) / rho - A[1];
+        J[2] = (u*dv[2] - v*du[2]) / rho - A[2];
+#else
         dphi[0] = 0.5 * (mod2pi(Phi(x+1, y, z) - Phi(x-1, y, z) + M_PI) - M_PI) / dx();
         dphi[1] = 0.5 * (mod2pi(Phi(x, y+1, z) - Phi(x, y-1, z) + M_PI) - M_PI) / dy();
         dphi[2] = 0.5 * (mod2pi(Phi(x, y, z+1) - Phi(x, y, z-1) + M_PI) - M_PI) / dz();
 
-        sc[0] = dphi[0] - Ax(pos);
-        sc[1] = dphi[1] - Ay(pos);
-        sc[2] = dphi[2] - Az(pos);
+        J[0] = dphi[0] - Ax(pos);
+        J[1] = dphi[1] - Ay(pos);
+        J[2] = dphi[2] - Az(pos);
+#endif
 
-        texel3D(_scx, dims(), x, y, z) = sc[0]; 
-        texel3D(_scy, dims(), x, y, z) = sc[1];
-        texel3D(_scz, dims(), x, y, z) = sc[2];
-        texel3D(_scm, dims(), x, y, z) = sqrt(sc[0]*sc[0] + sc[1]*sc[1] + sc[2]*sc[2]);
+        texel3D(_Jx, dims(), x, y, z) = J[0]; 
+        texel3D(_Jy, dims(), x, y, z) = J[1];
+        texel3D(_Jz, dims(), x, y, z) = J[2];
       }
     }
   }
@@ -598,20 +615,20 @@ bool GLGPUDataset::WriteNetCDFFile(const std::string& filename)
   NC_SAFE_CALL( nc_def_var(ncid, "phi", NC_DOUBLE, 3, dimids, &varids[1]) );
   NC_SAFE_CALL( nc_def_var(ncid, "re", NC_DOUBLE, 3, dimids, &varids[2]) );
   NC_SAFE_CALL( nc_def_var(ncid, "im", NC_DOUBLE, 3, dimids, &varids[3]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "scx", NC_DOUBLE, 3, dimids, &varids[4]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "scy", NC_DOUBLE, 3, dimids, &varids[5]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "scz", NC_DOUBLE, 3, dimids, &varids[6]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "scm", NC_DOUBLE, 3, dimids, &varids[7]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "Jx", NC_DOUBLE, 3, dimids, &varids[4]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "Jy", NC_DOUBLE, 3, dimids, &varids[5]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "Jz", NC_DOUBLE, 3, dimids, &varids[6]) );
+  // NC_SAFE_CALL( nc_def_var(ncid, "scm", NC_DOUBLE, 3, dimids, &varids[7]) );
   NC_SAFE_CALL( nc_enddef(ncid) );
 
   NC_SAFE_CALL( nc_put_vara_double(ncid, varids[0], starts, sizes, rho) ); 
   NC_SAFE_CALL( nc_put_vara_double(ncid, varids[1], starts, sizes, phi) ); 
   NC_SAFE_CALL( nc_put_vara_double(ncid, varids[2], starts, sizes, _re) ); 
   NC_SAFE_CALL( nc_put_vara_double(ncid, varids[3], starts, sizes, _im) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[4], starts, sizes, _scx) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[5], starts, sizes, _scy) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[6], starts, sizes, _scz) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[7], starts, sizes, _scm) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[4], starts, sizes, _Jx) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[5], starts, sizes, _Jy) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[6], starts, sizes, _Jz) ); 
+  // NC_SAFE_CALL( nc_put_vara_double(ncid, varids[7], starts, sizes, _scm) ); 
 
   NC_SAFE_CALL( nc_close(ncid) );
 
@@ -632,7 +649,7 @@ bool GLGPUDataset::Supercurrent(const double X[3], double J[3]) const
 {
   static const int st[3] = {0};
   double gpt[3];
-  const double *sc[3] = {_scx, _scy, _scz};
+  const double *sc[3] = {_Jx, _Jy, _Jz};
   
   Pos2Grid(X, gpt);
   if (gpt[0]<=1 || gpt[0]>dims()[0]-2 || 

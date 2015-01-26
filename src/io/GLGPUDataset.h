@@ -91,8 +91,8 @@ private:
 
   double _B[3];
 
-  double *_re, *_im; // , *_rho, *_phi;
-  double *_scx, *_scy, *_scz, *_scm; // supercurrent field and its magnitude
+  double *_re, *_im;
+  double *_Jx, *_Jy, *_Jz;
 }; 
 
 #endif
