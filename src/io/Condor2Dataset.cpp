@@ -209,35 +209,31 @@ bool Condor2Dataset::Psi(const double X[3], double &re, double &im) const
 
 bool Condor2Dataset::Supercurrent(const double X[3], double J[3]) const
 {
-  // magnetic potential
-  double A[3]; 
-  if (!Condor2Dataset::A(X, A)) return false;
+  Point p(X[0], X[1], X[2]);
 
-  // grad(theta)
-  double dtheta[3];
-  const double eps = 0.5;
-  const double Xd[3][2][3] = {
-    {{X[0]-eps, X[1], X[2]}, {X[0]+eps, X[1], X[2]}}, 
-    {{X[0], X[1]-eps, X[2]}, {X[0], X[1]+eps, X[2]}},
-    {{X[0], X[1], X[2]-eps}, {X[0], X[1], X[2]+eps}}
-  };
-  double phi[3][2];
+  const Elem *e = (*_locator)(p);
+  if (e == NULL) return false;
 
-  for (int i=0; i<3; i++) 
-    for (int j=0; j<2; j++)
-      if (!Phi(Xd[i][j], phi[i][j])) 
-          return false;
+  NumberVectorValue A;
+  A(0) = asys()->point_value(_Ax_var, p, e);
+  A(1) = asys()->point_value(_Ay_var, p, e);
+  A(2) = asys()->point_value(_Az_var, p, e);
 
-  dtheta[0] = (mod2pi(phi[0][1] - phi[0][0] + M_PI) - M_PI) / (2*eps);
-  dtheta[1] = (mod2pi(phi[1][1] - phi[1][0] + M_PI) - M_PI) / (2*eps);
-  dtheta[2] = (mod2pi(phi[2][1] - phi[2][0] + M_PI) - M_PI) / (2*eps);
+  double u, v;
+  Gradient du, dv;
 
-  J[0] = dtheta[0] - A[0];
-  J[1] = dtheta[1] - A[1];
-  J[2] = dtheta[2] - A[2];
+  u = tsys()->point_value(_u_var, p, e);
+  v = tsys()->point_value(_v_var, p, e);
+  du = tsys()->point_gradient(_u_var, p, e);
+  dv = tsys()->point_gradient(_v_var, p, e);
 
-  // fprintf(stderr, "X={%f, %f, %f}, J={%f, %f, %f}\n", 
-  //     X[0], X[1], X[2], J[0], J[1], J[2]);
+  double amp = sqrt(u*u + v*v);
+
+  NumberVectorValue Js = (u*dv - v*du)/amp - A;
+
+  J[0] = Js(0);
+  J[1] = Js(1);
+  J[2] = Js(2);
 
   return true;
 }
