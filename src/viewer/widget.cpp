@@ -2,6 +2,7 @@
 #include <QMatrix4x4>
 #include <QDebug>
 #include <OpenGL/glu.h>
+#include <GLUT/glut.h>
 #include <fstream>
 #include <iostream>
 #include "widget.h"
@@ -164,6 +165,14 @@ void CGLWidget::paintGL()
   glMatrixMode(GL_MODELVIEW); 
   glLoadIdentity(); 
   glLoadMatrixd(mvmatrix.data()); 
+
+#if 0
+  glColor3f(0.f, 0.f, 0.f);
+  glPushMatrix();
+  glScalef(32.f, 64.f, 64.f);
+  glutWireCube(1.0);
+  glPopMatrix();
+#endif
 
 #if 1
   renderVortexTubes();

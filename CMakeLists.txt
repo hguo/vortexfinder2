@@ -39,11 +39,13 @@ endif ()
 
 if (WITH_QT)
   find_package (OpenGL REQUIRED)
+  find_package (GLUT REQUIRED)
   find_package (Qt4 REQUIRED COMPONENTS QtCore QtGui QtOpenGL)
   include (${QT_USE_FILE})
   include_directories (
     ${QT_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
+    ${GLUT_INCLUDE_DIR}
   )
 endif ()
 

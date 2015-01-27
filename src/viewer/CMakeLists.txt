@@ -16,6 +16,7 @@ add_executable (viewer ${viewer_sources} ${viewer_headers})
 target_link_libraries (viewer 
   glcommon
   ${QT_LIBRARIES}
+  ${GLUT_LIBRARY}
   ${OPENGL_LIBRARIES}
 )
 set_target_properties (viewer PROPERTIES AUTOMOC ON)

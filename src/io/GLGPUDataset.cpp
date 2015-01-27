@@ -543,7 +543,7 @@ void GLGPUDataset::ComputeSupercurrentField()
   memset(_Jx, 0, 3*sizeof(double)*nvoxels);
  
   double u, v, rho;
-  double du[3], dv[3], dphi[3], A[3], J[3];
+  double du[3], dv[3], dphi[3], J[3];
 
   // central difference
   for (int x=1; x<dims()[0]-1; x++) {
@@ -553,7 +553,7 @@ void GLGPUDataset::ComputeSupercurrentField()
         double pos[3]; 
         Idx2Pos(idx, pos);
 
-#if 1 // gradient estimation by \grad\psi or \grad\theta
+#if 0 // gradient estimation by \grad\psi or \grad\theta
         du[0] = 0.5 * (Re(x+1, y, z) - Re(x-1, y, z)) / dx();
         du[1] = 0.5 * (Re(x, y+1, z) - Re(x, y-1, z)) / dy();
         du[2] = 0.5 * (Re(x, y, z+1) - Re(x, y, z-1)) / dz();
@@ -566,9 +566,9 @@ void GLGPUDataset::ComputeSupercurrentField()
         v = Im(x, y, z);
         rho = sqrt(u*u + v*v);
 
-        J[0] = (u*dv[0] - v*du[0]) / rho - A[0];
-        J[1] = (u*dv[1] - v*du[1]) / rho - A[1];
-        J[2] = (u*dv[2] - v*du[2]) / rho - A[2];
+        J[0] = (u*dv[0] - v*du[0]) / rho - Ax(pos);
+        J[1] = (u*dv[1] - v*du[1]) / rho - Ay(pos);
+        J[2] = (u*dv[2] - v*du[2]) / rho - Az(pos);
 #else
         dphi[0] = 0.5 * (mod2pi(Phi(x+1, y, z) - Phi(x-1, y, z) + M_PI) - M_PI) / dx();
         dphi[1] = 0.5 * (mod2pi(Phi(x, y+1, z) - Phi(x, y-1, z) + M_PI) - M_PI) / dy();
