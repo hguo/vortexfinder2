@@ -595,7 +595,7 @@ bool GLGPUDataset::WriteNetCDFFile(const std::string& filename)
   int varids[8];
 
   size_t starts[3] = {0, 0, 0}, 
-         sizes[3]  = {_dims[2], _dims[1], _dims[0]};
+         sizes[3]  = {(size_t)_dims[2], (size_t)_dims[1], (size_t)_dims[0]};
 
   const int cnt = sizes[0]*sizes[1]*sizes[2];
   double *rho = (double*)malloc(sizeof(double)*cnt), 

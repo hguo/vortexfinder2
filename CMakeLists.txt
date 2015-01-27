@@ -49,4 +49,7 @@ if (WITH_QT)
   )
 endif ()
 
+# enable c++11
+list(APPEND CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+
 subdirs (src)
