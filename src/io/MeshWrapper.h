@@ -26,13 +26,16 @@ public:
   explicit MeshWrapper(const libMesh::Parallel::Communicator &comm, unsigned char dim=1) : 
     libMesh::Mesh(comm, dim) {}
   
-  ~MeshWrapper() {}
+  ~MeshWrapper();
 
 public:
-  Side* GetSide(SideIdType s, int &chirality);
-  Side* AddSide(SideIdType s, const Face* f);
+  void InitializeWrapper();
 
+  Side* GetSide(SideIdType s, int &chirality);
   Face* GetFace(FaceIdType f, int &chirality);
+  
+protected:
+  Side* AddSide(SideIdType s, const Face* f);
   Face* AddFace(FaceIdType f, const libMesh::Elem* elem);
 
 protected:
@@ -42,11 +45,11 @@ protected:
 
 /////
 struct Side {
-  std::vector<const Face*> faces;
+  std::vector<const Face*> faces; // faces which contains this side
 };
 
 struct Face {
-  // std::vector<const Elem*> elems; // a face could only be shared by two elements
+  // std::vector<const Elem*> elems; // elements which contains this face
   const libMesh::Elem *elem_front, *elem_back; // front: same chirality; back: opposite chirality
   std::vector<const Side*> sides;
 

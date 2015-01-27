@@ -60,6 +60,7 @@ bool Condor2Dataset::OpenDataFile(const std::string& filename)
   _exio->read(filename);
   _mesh->allow_renumbering(false); 
   _mesh->prepare_for_use();
+  _mesh->InitializeWrapper();
 
   /// equation systems
   _eqsys = new EquationSystems(*_mesh); 

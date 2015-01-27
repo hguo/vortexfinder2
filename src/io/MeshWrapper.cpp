@@ -33,6 +33,23 @@ FaceIdType AlternateFace(FaceIdType f, int rotation, int chirality)
 }
 
 ///////
+MeshWrapper::~MeshWrapper()
+{
+  for (std::map<FaceIdType, Face*>::iterator it = _face_map.begin(); 
+       it != _face_map.end(); it ++)
+  {
+    delete it->second;
+  }
+  _face_map.clear();
+
+  for (std::map<SideIdType, Side*>::iterator it = _side_map.begin();
+       it != _side_map.end(); it ++)
+  {
+    delete it->second;
+  }
+  _side_map.clear();
+}
+
 Side* MeshWrapper::GetSide(SideIdType s, int &chirality)
 {
   for (chirality=0; chirality<2; chirality++) {
@@ -84,4 +101,29 @@ Face* MeshWrapper::AddFace(FaceIdType f, const Elem* elem)
     face->elem_back = elem;
 
   return face;
+}
+
+void MeshWrapper::InitializeWrapper()
+{
+  MeshBase::const_element_iterator it = local_elements_begin(); 
+  const MeshBase::const_element_iterator end = local_elements_end(); 
+
+  for (; it!=end; it++) {
+    const Elem *e = *it;
+    for (int i=0; i<e->n_neighbors(); i++) {
+      AutoPtr<Elem> face = e->side(i);
+      
+      FaceIdType fid(face->node(0), face->node(1), face->node(2));
+      Face *f = AddFace(fid, e);
+
+      SideIdType s0(face->node(0), face->node(1)), 
+                 s1(face->node(1), face->node(2)),
+                 s2(face->node(2), face->node(0));
+      f->sides.push_back( AddSide(s0, f) );
+      f->sides.push_back( AddSide(s1, f) );
+      f->sides.push_back( AddSide(s2, f) );
+    }
+  }
+
+  // fprintf(stderr, "n_faces=%lu, n_sides=%lu\n", _face_map.size(), _side_map.size());
 }
