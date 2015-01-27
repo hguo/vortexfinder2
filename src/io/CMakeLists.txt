@@ -6,6 +6,7 @@ set (io_sources
   
 if (WITH_LIBMESH)
   set (io_sources ${io_sources}
+    MeshWrapper.cpp
     Condor2Dataset.cpp)
 endif ()
 

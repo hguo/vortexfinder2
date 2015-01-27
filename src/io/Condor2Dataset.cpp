@@ -55,7 +55,7 @@ bool Condor2Dataset::OpenDataFile(const std::string& filename)
   _data_name = filename;
 
   /// mesh
-  _mesh = new Mesh(comm()); 
+  _mesh = new MeshWrapper(comm()); 
   _exio = new ExodusII_IO(*_mesh);
   _exio->read(filename);
   _mesh->allow_renumbering(false); 

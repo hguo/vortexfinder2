@@ -2,14 +2,7 @@
 #define _CONDOR2_DATASET_H
 
 #include "GLDataset.h"
-#include <libmesh/libmesh.h>
-#include <libmesh/mesh.h>
-#include <libmesh/elem.h>
-#include <libmesh/numeric_vector.h>
-#include <libmesh/equation_systems.h>
-#include <libmesh/nonlinear_implicit_system.h>
-#include <libmesh/point_locator_tree.h>
-#include <libmesh/exodusII_io.h>
+#include "MeshWrapper.h"
 
 class Condor2Dataset : public libMesh::ParallelObject, public GLDataset
 {
@@ -44,7 +37,8 @@ public:
       double im0[], double im1[]) const;
 
 public:
-  libMesh::UnstructuredMesh* mesh() const {return _mesh;}
+  // libMesh::UnstructuredMesh* mesh() const {return _mesh;}
+  MeshWrapper* mesh() const {return _mesh;}
   libMesh::EquationSystems* eqsys() const {return _eqsys;}
   libMesh::NonlinearImplicitSystem* tsys() const {return _tsys;}
   libMesh::System* asys() const {return _asys;}
@@ -74,7 +68,8 @@ private:
   const libMesh::Elem* LocateElemCoherently(const double X[3]) const; // not thread-safe
 
 private:
-  libMesh::UnstructuredMesh *_mesh;
+  // libMesh::UnstructuredMesh *_mesh;
+  MeshWrapper *_mesh;
   libMesh::ExodusII_IO *_exio; 
   libMesh::EquationSystems *_eqsys;
   libMesh::NonlinearImplicitSystem *_tsys;
