@@ -3,7 +3,7 @@
 
 using namespace libMesh;
 
-SideIdType AlternateSide(SideIdType s, int chirality)
+EdgeIdType AlternateEdge(EdgeIdType s, int chirality)
 {
   if (chirality)
     return s;
@@ -42,7 +42,7 @@ MeshWrapper::~MeshWrapper()
   }
   _face_map.clear();
 
-  for (std::map<SideIdType, Side*>::iterator it = _side_map.begin();
+  for (std::map<EdgeIdType, Edge*>::iterator it = _side_map.begin();
        it != _side_map.end(); it ++)
   {
     delete it->second;
@@ -50,24 +50,26 @@ MeshWrapper::~MeshWrapper()
   _side_map.clear();
 }
 
-Side* MeshWrapper::GetSide(SideIdType s, int &chirality)
+Edge* MeshWrapper::GetEdge(EdgeIdType s, int &chirality)
 {
   for (chirality=0; chirality<2; chirality++) {
-    std::map<SideIdType, Side*>::iterator it = _side_map.find(AlternateSide(s, chirality)); 
+    std::map<EdgeIdType, Edge*>::iterator it = _side_map.find(AlternateEdge(s, chirality)); 
     if (it != _side_map.end())
       return it->second;
   }
   return NULL;
 }
 
-Side* MeshWrapper::AddSide(SideIdType s, const Face* f)
+Edge* MeshWrapper::AddEdge(EdgeIdType s, const Face* f)
 {
   int chirality;
-  Side *side = GetSide(s, chirality);
+  Edge *side = GetEdge(s, chirality);
 
   if (side == NULL) {
-    side = new Side;
-    _side_map.insert(std::pair<SideIdType, Side*>(s, side));
+    side = new Edge;
+    side->nodes.push_back(std::get<0>(s));
+    side->nodes.push_back(std::get<1>(s));
+    _side_map.insert(std::pair<EdgeIdType, Edge*>(s, side));
   }
 
   side->faces.push_back(f);
@@ -85,20 +87,29 @@ Face* MeshWrapper::GetFace(FaceIdType f, int &chirality)
   return NULL;
 }
 
-Face* MeshWrapper::AddFace(FaceIdType f, const Elem* elem)
+Face* MeshWrapper::AddFace(const Elem* e, int i)
 {
+  AutoPtr<Elem> f = e->side(i);
+  FaceIdType fid(f->node(0), f->node(1), f->node(2));
+  
   int chirality;
-  Face *face = GetFace(f, chirality);
+  Face *face = GetFace(fid, chirality);
 
   if (face == NULL) {
     face = new Face;
-    _face_map.insert(std::pair<FaceIdType, Face*>(f, face));
+    face->nodes.push_back(f->node(0));
+    face->nodes.push_back(f->node(1));
+    face->nodes.push_back(f->node(2));
+    _face_map.insert(std::pair<FaceIdType, Face*>(fid, face));
   }
 
-  if (chirality)
-    face->elem_front = elem;
-  else 
-    face->elem_back = elem;
+  if (chirality) {
+    face->elem_front = e->id();
+    face->elem_face_front = i;
+  } else {
+    face->elem_back = e->id();
+    face->elem_face_back = i;
+  }
 
   return face;
 }
@@ -110,18 +121,15 @@ void MeshWrapper::InitializeWrapper()
 
   for (; it!=end; it++) {
     const Elem *e = *it;
-    for (int i=0; i<e->n_neighbors(); i++) {
-      AutoPtr<Elem> face = e->side(i);
-      
-      FaceIdType fid(face->node(0), face->node(1), face->node(2));
-      Face *f = AddFace(fid, e);
+    for (int i=0; i<e->n_sides(); i++) {
+      Face *f = AddFace(e, i);
 
-      SideIdType s0(face->node(0), face->node(1)), 
-                 s1(face->node(1), face->node(2)),
-                 s2(face->node(2), face->node(0));
-      f->sides.push_back( AddSide(s0, f) );
-      f->sides.push_back( AddSide(s1, f) );
-      f->sides.push_back( AddSide(s2, f) );
+      EdgeIdType s0(f->nodes[0], f->nodes[1]), 
+                 s1(f->nodes[1], f->nodes[2]),
+                 s2(f->nodes[2], f->nodes[0]);
+      f->sides.push_back( AddEdge(s0, f) );
+      f->sides.push_back( AddEdge(s1, f) );
+      f->sides.push_back( AddEdge(s2, f) );
     }
   }
 

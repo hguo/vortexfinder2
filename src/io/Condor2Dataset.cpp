@@ -321,7 +321,28 @@ bool Condor2Dataset::GetFace(ElemIdType id, int face, double X[][3], double A[][
 
   return true;
 }
-  
+
+bool Condor2Dataset::GetFaceValues(const Face *f, double X[][3], double A[][3], double re[], double im[]) const
+{
+  const NumericVector<Number> &ts = *_tsolution;
+  const NumericVector<Number> &as = *_asolution;
+
+  for (int i=0; i<3; i++) {
+    const Node& node = _mesh->node(f->nodes[i]);
+
+    for (int j=0; j<3; j++) 
+      X[i][j] = node(j);
+
+    A[i][0] = as( node.dof_number(asys()->number(), _Ax_var, 0) );
+    A[i][1] = as( node.dof_number(asys()->number(), _Ax_var, 0) );
+    A[i][2] = as( node.dof_number(asys()->number(), _Ax_var, 0) );
+    re[i] = ts( node.dof_number(tsys()->number(), _u_var, 0) );
+    im[i] = ts( node.dof_number(tsys()->number(), _v_var, 0) );
+  }
+
+  return false;
+}
+
 bool Condor2Dataset::GetSpaceTimePrism(ElemIdType id, int face, double X[][3], 
       double A0[][3], double A1[][3], 
       double re0[], double re1[],

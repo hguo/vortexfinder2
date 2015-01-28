@@ -23,6 +23,7 @@ public:
 protected:
   bool ExtractElem(ElemIdType id);
   virtual PuncturedElem* NewPuncturedElem(ElemIdType) const = 0;
+  void AddPuncturedFace(ElemIdType id, int f, int chirality, double pos[]);
 
   virtual bool FindZero(const double X[][3], const double re[], const double im[], double pos[3]) const = 0;
 

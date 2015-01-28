@@ -16,7 +16,7 @@ int main(int argc, char **argv)
   if (argc >= 3) filename_trace = argv[2]; 
 
   QApplication app(argc, argv); 
-  glutInit(&argc, argv);
+  // glutInit(&argc, argv);
 
   QGLFormat fmt = QGLFormat::defaultFormat();
   fmt.setSampleBuffers(true);

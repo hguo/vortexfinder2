@@ -553,7 +553,7 @@ void GLGPUDataset::ComputeSupercurrentField()
         double pos[3]; 
         Idx2Pos(idx, pos);
 
-#if 0 // gradient estimation by \grad\psi or \grad\theta
+#if 1 // gradient estimation by \grad\psi or \grad\theta
         du[0] = 0.5 * (Re(x+1, y, z) - Re(x-1, y, z)) / dx();
         du[1] = 0.5 * (Re(x, y+1, z) - Re(x, y-1, z)) / dy();
         du[2] = 0.5 * (Re(x, y, z+1) - Re(x, y, z-1)) / dz();

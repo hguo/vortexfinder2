@@ -216,3 +216,20 @@ bool VortexExtractor::ExtractElem(ElemIdType id)
     return false;
   }
 }
+
+void VortexExtractor::AddPuncturedFace(ElemIdType id, int f, int chirality, double pos[])
+{
+  if (id == UINT_MAX) return; // ignore
+
+  PuncturedElemMap::iterator it = _punctured_elems.find(id);
+  PuncturedElem *pelem;
+
+  if (it == _punctured_elems.end()) {
+    pelem = NewPuncturedElem(id);
+    _punctured_elems[id] = pelem;
+  } else {
+    pelem = it->second;
+  }
+
+  pelem->AddPuncturedFace(f, chirality, pos);
+}

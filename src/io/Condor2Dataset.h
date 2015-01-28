@@ -36,6 +36,8 @@ public:
       double re0[], double re1[],
       double im0[], double im1[]) const;
 
+  bool GetFaceValues(const Face* f, double X[][3], double A[][3], double re[], double im[]) const;
+
 public:
   // libMesh::UnstructuredMesh* mesh() const {return _mesh;}
   MeshWrapper* mesh() const {return _mesh;}
@@ -75,7 +77,7 @@ private:
   libMesh::NonlinearImplicitSystem *_tsys;
   libMesh::System *_asys;
   libMesh::PointLocatorTree *_locator;
-  
+
   unsigned int _u_var, _v_var;
   unsigned int _Ax_var, _Ay_var, _Az_var;
   // unsigned int _rho_var, _phi_var;

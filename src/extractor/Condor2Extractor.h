@@ -19,6 +19,7 @@ public:
   ~Condor2VortexExtractor();
 
   void Extract();
+  void ExtractFace(const Face*);
 
 protected:
   PuncturedElem* NewPuncturedElem(ElemIdType) const;
