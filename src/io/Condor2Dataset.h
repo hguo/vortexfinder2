@@ -31,12 +31,8 @@ public:
   bool GetFace(ElemIdType id, int face, double X[][3], double A[][3], double re[], double im[]) const;
   bool OnBoundary(ElemIdType id) const;
 
-  bool GetSpaceTimePrism(ElemIdType id, int face, double X[][3], 
-      double A0[][3], double A1[][3], 
-      double re0[], double re1[],
-      double im0[], double im1[]) const;
-
   bool GetFaceValues(const Face* f, double X[][3], double A[][3], double re[], double im[]) const;
+  bool GetFacePrismValues(const Face* f, double X[6][3], double A[6][3], double re[6], double im[6]) const;
 
 public:
   // libMesh::UnstructuredMesh* mesh() const {return _mesh;}

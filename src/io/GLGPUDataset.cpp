@@ -542,7 +542,7 @@ void GLGPUDataset::ComputeSupercurrentField()
   _Jz = _Jy + nvoxels;
   memset(_Jx, 0, 3*sizeof(double)*nvoxels);
  
-  double u, v, rho;
+  double u, v, rho2;
   double du[3], dv[3], dphi[3], J[3];
 
   // central difference
@@ -564,19 +564,23 @@ void GLGPUDataset::ComputeSupercurrentField()
 
         u = Re(x, y, z); 
         v = Im(x, y, z);
-        rho = sqrt(u*u + v*v);
+        rho2 = u*u + v*v;
 
-        J[0] = (u*dv[0] - v*du[0]) / rho - Ax(pos);
-        J[1] = (u*dv[1] - v*du[1]) / rho - Ay(pos);
-        J[2] = (u*dv[2] - v*du[2]) / rho - Az(pos);
-#else
+        J[0] = (u*dv[0] - v*du[0]) / rho2 - Ax(pos); // + Kex();
+        J[1] = (u*dv[1] - v*du[1]) / rho2 - Ay(pos);
+        J[2] = (u*dv[2] - v*du[2]) / rho2 - Az(pos);
+// #else
         dphi[0] = 0.5 * (mod2pi(Phi(x+1, y, z) - Phi(x-1, y, z) + M_PI) - M_PI) / dx();
         dphi[1] = 0.5 * (mod2pi(Phi(x, y+1, z) - Phi(x, y-1, z) + M_PI) - M_PI) / dy();
         dphi[2] = 0.5 * (mod2pi(Phi(x, y, z+1) - Phi(x, y, z-1) + M_PI) - M_PI) / dz();
 
+        fprintf(stderr, "J={%f, %f, %f}, ", J[0], J[1], J[2]);
+
         J[0] = dphi[0] - Ax(pos);
         J[1] = dphi[1] - Ay(pos);
         J[2] = dphi[2] - Az(pos);
+        
+        fprintf(stderr, "J'={%f, %f, %f}\n", J[0], J[1], J[2]);
 #endif
 
         texel3D(_Jx, dims(), x, y, z) = J[0]; 
@@ -649,14 +653,14 @@ bool GLGPUDataset::Supercurrent(const double X[3], double J[3]) const
 {
   static const int st[3] = {0};
   double gpt[3];
-  const double *sc[3] = {_Jx, _Jy, _Jz};
+  const double *j[3] = {_Jx, _Jy, _Jz};
   
   Pos2Grid(X, gpt);
-  if (gpt[0]<=1 || gpt[0]>dims()[0]-2 || 
-      gpt[1]<=1 || gpt[1]>dims()[1]-2 || 
-      gpt[2]<=1 || gpt[2]>dims()[2]-2) return false;
+  if (isnan(gpt[0]) || gpt[0]<=1 || gpt[0]>dims()[0]-2 || 
+      isnan(gpt[1]) || gpt[1]<=1 || gpt[1]>dims()[1]-2 || 
+      isnan(gpt[2]) || gpt[2]<=1 || gpt[2]>dims()[2]-2) return false;
 
-  if (!lerp3D(gpt, st, dims(), 3, sc, J))
+  if (!lerp3D(gpt, st, dims(), 3, j, J))
     return false;
   else return true;
 }

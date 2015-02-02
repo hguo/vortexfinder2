@@ -138,13 +138,14 @@ void Condor2Dataset::LoadTimeStep(int timestep)
   _asolution = _asys->solution->clone();
   
   // next time step
-  fprintf(stderr, "copying nodal solution, timestep=%d\n", timestep+1);
+  int timestep1 = timestep + 512;
+  fprintf(stderr, "copying nodal solution, timestep=%d\n", timestep1);
   
-  _exio->copy_nodal_solution(*_tsys, "u", "u", timestep+1); 
-  _exio->copy_nodal_solution(*_tsys, "v", "v", timestep+1);
-  _exio->copy_nodal_solution(*_asys, "Ax", "A_x", timestep+1);
-  _exio->copy_nodal_solution(*_asys, "Ay", "A_y", timestep+1);
-  _exio->copy_nodal_solution(*_asys, "Az", "A_z", timestep+1);
+  _exio->copy_nodal_solution(*_tsys, "u", "u", timestep1); 
+  _exio->copy_nodal_solution(*_tsys, "v", "v", timestep1);
+  _exio->copy_nodal_solution(*_asys, "Ax", "A_x", timestep1);
+  _exio->copy_nodal_solution(*_asys, "Ay", "A_y", timestep1);
+  _exio->copy_nodal_solution(*_asys, "Az", "A_z", timestep1);
 
   _tsolution1 = _tsys->solution->clone();
   _asolution1 = _asys->solution->clone();
@@ -343,59 +344,32 @@ bool Condor2Dataset::GetFaceValues(const Face *f, double X[][3], double A[][3], 
   return false;
 }
 
-bool Condor2Dataset::GetSpaceTimePrism(ElemIdType id, int face, double X[][3], 
-      double A0[][3], double A1[][3], 
-      double re0[], double re1[],
-      double im0[], double im1[]) const
+bool Condor2Dataset::GetFacePrismValues(const Face* f, double X[][3],
+    double A[6][3], double re[6], double im[6]) const
 {
-  if (id == UINT_MAX) return false;
-  
-  const Elem* elem = _mesh->elem(id);
-  if (elem == NULL) return false;
-
-  AutoPtr<Elem> side = elem->side(face); // TODO: check if side exists
-
-  // tsys
-  const DofMap& dof_map_tsys = tsys()->get_dof_map(); 
-  const NumericVector<Number> &ts0 = *_tsolution;
+  const NumericVector<Number> &ts = *_tsolution;
   const NumericVector<Number> &ts1 = *_tsolution1;
-  
-  std::vector<dof_id_type> u_di, v_di; 
-  dof_map_tsys.dof_indices(side.get(), u_di, u_var());
-  dof_map_tsys.dof_indices(side.get(), v_di, v_var());
-
-  // asys
-  const DofMap& dof_map_asys = asys()->get_dof_map();
-  const NumericVector<Number> &as0 = *_asolution;
+  const NumericVector<Number> &as = *_asolution;
   const NumericVector<Number> &as1 = *_asolution1;
 
-  std::vector<dof_id_type> Ax_di, Ay_di, Az_di;
-  dof_map_asys.dof_indices(side.get(), Ax_di, Ax_var());
-  dof_map_asys.dof_indices(side.get(), Ay_di, Ay_var());
-  dof_map_asys.dof_indices(side.get(), Az_di, Az_var());
-  
-  // coordinates
-  for (int i=0; i<3; i++) 
+  for (int i=0; i<3; i++) {
+    const Node& node = _mesh->node(f->nodes[i]);
+
     for (int j=0; j<3; j++) 
-      X[i][j] = side->get_node(i)->slice(j);
+      X[i][j] = node(j);
 
-  // nodal values, t=0
-  for (int i=0; i<3; i++) {
-    re0[i] = ts0(u_di[i]); 
-    im0[i] = ts0(v_di[i]);
-    A0[i][0] = as0(Ax_di[i]);
-    A0[i][1] = as0(Ay_di[i]);
-    A0[i][2] = as0(Az_di[i]);
-  }
-  
-  // nodal values, t=1
-  for (int i=0; i<3; i++) {
-    re1[i] = ts1(u_di[i]); 
-    im1[i] = ts1(v_di[i]);
-    A1[i][0] = as1(Ax_di[i]);
-    A1[i][1] = as1(Ay_di[i]);
-    A1[i][2] = as1(Az_di[i]);
+    A[i][0] = as( node.dof_number(asys()->number(), _Ax_var, 0) );
+    A[i][1] = as( node.dof_number(asys()->number(), _Ax_var, 0) );
+    A[i][2] = as( node.dof_number(asys()->number(), _Ax_var, 0) );
+    re[i] = ts( node.dof_number(tsys()->number(), _u_var, 0) );
+    im[i] = ts( node.dof_number(tsys()->number(), _v_var, 0) );
+    
+    A[i+3][0] = as1( node.dof_number(asys()->number(), _Ax_var, 0) );
+    A[i+3][1] = as1( node.dof_number(asys()->number(), _Ax_var, 0) );
+    A[i+3][2] = as1( node.dof_number(asys()->number(), _Ax_var, 0) );
+    re[i+3] = ts1( node.dof_number(tsys()->number(), _u_var, 0) );
+    im[i+3] = ts1( node.dof_number(tsys()->number(), _v_var, 0) );
   }
 
-  return true;
+  return false;
 }
