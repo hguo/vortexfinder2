@@ -128,16 +128,20 @@ void MeshWrapper::InitializeWrapper()
   }
 
   // reorganize to vector
+  FaceIdType i = 0;
   for (std::map<FaceIdType3, Face*>::const_iterator it = _face_map.begin(); 
        it != _face_map.end(); it ++) 
   {
+    it->second->id = i ++;
     _faces.push_back(it->second);
   }
   _face_map.clear();
 
+  EdgeIdType j = 0;
   for (std::map<EdgeIdType2, Edge*>::const_iterator it = _edge_map.begin();
        it != _edge_map.end(); it ++)
   {
+    it->second->id = j ++;
     _edges.push_back(it->second);
   }
   _edge_map.clear();

@@ -55,11 +55,14 @@ protected:
 
 /////
 struct Edge {
+  EdgeIdType id;
   std::vector<NodeIdType> nodes;
   std::vector<const Face*> faces; // faces which contains this edge
 };
 
 struct Face {
+  FaceIdType id;
+
   // std::vector<ElemIdType> elems; // elements which contains this face
   // const libMesh::Elem *elem_front, *elem_back; // front: same chirality; back: opposite chirality
   ElemIdType elem_front, elem_back;
