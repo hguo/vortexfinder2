@@ -17,6 +17,7 @@ public:
 public: 
   bool OpenDataFile(const std::string& filename); 
   void LoadTimeStep(int timestep);
+  void LoadNextTimeStep(int span=1);
   void CloseDataFile();
 
   // APIs for in-situ analysis

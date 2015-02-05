@@ -170,7 +170,7 @@ static inline bool find_zero_linear(T f0, T f1, const T X0[3], const T X1[3], T 
   // (1-alpha)*f0 + alpha*f1 = 0
   if (f0 - f1 == 0) return false;
   
-  float alpha = f0 / (f0 - f1);
+  T alpha = f0 / (f0 - f1);
   if (alpha<0 || alpha>=1) return false;
 
   p[0] = (1-alpha)*X0[0] + alpha*X1[0];

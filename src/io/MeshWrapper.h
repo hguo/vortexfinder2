@@ -11,11 +11,11 @@
 #include <libmesh/exodusII_io.h>
 #include "def.h"
 
-typedef std::tuple<NodeIdType, NodeIdType> EdgeIdType;
-typedef std::tuple<NodeIdType, NodeIdType, NodeIdType> FaceIdType;
+typedef std::tuple<NodeIdType, NodeIdType> EdgeIdType2;
+typedef std::tuple<NodeIdType, NodeIdType, NodeIdType> FaceIdType3;
 
-EdgeIdType AlternateEdge(EdgeIdType s, int chirality);
-FaceIdType AlternateFace(FaceIdType f, int rotation, int chirality);
+EdgeIdType2 AlternateEdge(EdgeIdType2 s, int chirality);
+FaceIdType3 AlternateFace(FaceIdType3 f, int rotation, int chirality);
 
 struct Edge;
 struct Face;
@@ -31,39 +31,32 @@ public:
 public:
   void InitializeWrapper();
 
-  Edge* GetEdge(EdgeIdType s, int &chirality);
-  Face* GetFace(FaceIdType f, int &chirality);
+  EdgeIdType NrEdges() const;
+  FaceIdType NrFaces() const;
 
-public:
-  typedef std::map<FaceIdType, Face*>::const_iterator const_face_iterator;
-  typedef std::map<FaceIdType, Face*>::iterator face_iterator;
+  const Edge* GetEdge(EdgeIdType i) const;
+  const Face* GetFace(FaceIdType i) const;
 
-  typedef std::map<EdgeIdType, Edge*>::const_iterator const_side_iterator;
-  typedef std::map<EdgeIdType, Edge*>::iterator side_iterator;
+protected: // only used in initialization stage
+  Edge* GetEdge(EdgeIdType2 s, int &chirality);
+  Face* GetFace(FaceIdType3 f, int &chirality);
 
-  const_face_iterator face_begin() const {return _face_map.begin();}
-  const_face_iterator face_end() const {return _face_map.end();}
-  face_iterator face_begin() {return _face_map.begin();}
-  face_iterator face_end() {return _face_map.end();}
-
-  const_side_iterator side_begin() const {return _side_map.begin();}
-  const_side_iterator side_end() const {return _side_map.end();}
-  side_iterator side_begin() {return _side_map.begin();}
-  side_iterator side_end() {return _side_map.end();}
-
-protected:
-  Edge* AddEdge(EdgeIdType s, const Face* f);
+  Edge* AddEdge(EdgeIdType2 s, const Face* f);
   Face* AddFace(const libMesh::Elem* elem, int faceId);
 
 protected:
-  std::map<FaceIdType, Face*> _face_map;
-  std::map<EdgeIdType, Edge*> _side_map;
+  std::map<EdgeIdType2, Edge*> _edge_map;
+  std::map<FaceIdType3, Face*> _face_map;
+
+protected:
+  std::vector<Edge*> _edges;
+  std::vector<Face*> _faces;
 };
 
 /////
 struct Edge {
   std::vector<NodeIdType> nodes;
-  std::vector<const Face*> faces; // faces which contains this side
+  std::vector<const Face*> faces; // faces which contains this edge
 };
 
 struct Face {
@@ -71,7 +64,7 @@ struct Face {
   // const libMesh::Elem *elem_front, *elem_back; // front: same chirality; back: opposite chirality
   ElemIdType elem_front, elem_back;
   int elem_face_front, elem_face_back; // the face id in elements
-  std::vector<const Edge*> sides;
+  std::vector<const Edge*> edges;
   std::vector<NodeIdType> nodes;
 
   explicit Face() : elem_front(UINT_MAX), elem_back(UINT_MAX) {}

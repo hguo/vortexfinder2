@@ -36,10 +36,8 @@ void Condor2VortexExtractor::Extract()
     ExtractElem(elem->id());
   }
 #else
-  for (MeshWrapper::const_face_iterator it = ds->mesh()->face_begin();
-       it != ds->mesh()->face_end(); it ++) 
-  {
-    const Face *f = it->second;
+  for (FaceIdType i=0; i<ds->mesh()->NrFaces(); i++) {
+    const Face *f = ds->mesh()->GetFace(i);
     // ExtractFace(f);
     ExtractFacePrism(f);
   }
@@ -208,6 +206,30 @@ int Condor2VortexExtractor::CheckVirtualFace(double X[2][3], double A[4][3], dou
   
   double phase_shift = -(delta[0] + delta[1] + delta[2] + delta[3]);
   double critera = phase_shift / (2*M_PI);
+
+#if 1
+  if (fabs(critera)<0.5) return 0;
+
+  // gauge transformation
+  for (int i=1; i<4; i++) {
+    phi[i] = phi[i-1] + delta[i-1];
+    re[i] = rho[i] * cos(phi[i]); 
+    im[i] = rho[i] * sin(phi[i]);
+  }
+
+  // find zero
+  double p[2];
+  bool succ = find_zero_unit_quad_bilinear(re, im, p);
+  if (succ) {
+    double pos[3] = {
+      (1-p[0]) * X[0][0] + p[0] * X[1][0], 
+      (1-p[0]) * X[0][1] + p[0] * X[1][1], 
+      (1-p[0]) * X[0][2] + p[0] * X[1][2]}; 
+    fprintf(stderr, "X={%f, %f, %f}, t=%f\n", pos[0], pos[1], pos[2], p[1]);
+  } else {
+    fprintf(stderr, "zero not found.\n");
+  }
+#endif
 
   if (critera > 0.5) return 1; 
   else if (critera < -0.5) return -1;

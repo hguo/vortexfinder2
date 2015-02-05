@@ -136,21 +136,22 @@ void Condor2Dataset::LoadTimeStep(int timestep)
 
   _tsolution = _tsys->solution->clone();
   _asolution = _asys->solution->clone();
-  
-  // next time step
-  int timestep1 = timestep + 512;
-  fprintf(stderr, "copying nodal solution, timestep=%d\n", timestep1);
-  
-  _exio->copy_nodal_solution(*_tsys, "u", "u", timestep1); 
-  _exio->copy_nodal_solution(*_tsys, "v", "v", timestep1);
-  _exio->copy_nodal_solution(*_asys, "Ax", "A_x", timestep1);
-  _exio->copy_nodal_solution(*_asys, "Ay", "A_y", timestep1);
-  _exio->copy_nodal_solution(*_asys, "Az", "A_z", timestep1);
+}
 
-  _tsolution1 = _tsys->solution->clone();
-  _asolution1 = _asys->solution->clone();
-  
-  fprintf(stderr, "solutions copied.\n");
+void Condor2Dataset::LoadNextTimeStep(int span)
+{
+  _timestep1 = _timestep + span;
+
+  AutoPtr<NumericVector<Number> > ts = _tsolution;
+  AutoPtr<NumericVector<Number> > as = _asolution;
+
+  LoadTimeStep(_timestep1);
+
+  _tsolution1 = _tsolution;
+  _asolution1 = _asolution;
+
+  _tsolution = ts;
+  _asolution = as;
 }
 
 std::vector<ElemIdType> Condor2Dataset::GetNeighborIds(ElemIdType elem_id) const

@@ -18,6 +18,7 @@ public:
 public: // data I/O
   virtual bool OpenDataFile(const std::string& filename); 
   virtual void LoadTimeStep(int timestep);
+  virtual void LoadNextTimeStep(int span=1);
   virtual void CloseDataFile();
 
 public: // mesh info
@@ -46,6 +47,7 @@ public: // transformations and utils
 
 public: // properties
   int TimeStep() const {return _timestep;}
+  int TimeStep1() const {return _timestep1;}
 
   // Voltage
   double V() const {return _V;}
@@ -71,7 +73,7 @@ public: // properties
   virtual bool Supercurrent(const double X[3], double J[3]) const = 0;
 
 protected:
-  int _timestep; 
+  int _timestep, _timestep1; 
   std::vector<double> _time_stamps; 
 
   std::string _data_name;

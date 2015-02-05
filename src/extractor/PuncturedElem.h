@@ -98,4 +98,12 @@ class PuncturedElemHex : public PuncturedElem
   int NrFaces() const {return 6;}
 };
 
+
+// Prisms (space-time)
+class PuncturedPrismTri : public PuncturedElem
+{
+  int NrDims() const {return 0;} // we do not need to keep the coordinates
+  int NrFaces() const {return 5;} // two real faces and two virtual faces  
+};
+
 #endif
