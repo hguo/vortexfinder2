@@ -43,6 +43,14 @@ PuncturedElem* GLGPUVortexExtractor::NewPuncturedElem(ElemIdType id) const
   return p;
 }
   
+PuncturedElem* GLGPUVortexExtractor::NewPuncturedPrism(FaceIdType id) const
+{
+  PuncturedElem *p = new PuncturedPrismQuad;
+  p->Init();
+  p->SetElemId(id);
+  return p;
+}
+  
 bool GLGPUVortexExtractor::FindZero(const double X[][3], const double re[], const double im[], double pos[3]) const
 {
   const double epsilon = 0.01;

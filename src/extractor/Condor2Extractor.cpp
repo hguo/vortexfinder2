@@ -243,7 +243,15 @@ PuncturedElem* Condor2VortexExtractor::NewPuncturedElem(ElemIdType id) const
   p->SetElemId(id);
   return p;
 }
-  
+
+PuncturedElem* Condor2VortexExtractor::NewPuncturedPrism(FaceIdType id) const
+{
+  PuncturedElem *p = new PuncturedPrismTri;
+  p->Init();
+  p->SetElemId(id);
+  return p;
+}
+
 bool Condor2VortexExtractor::FindZero(const double X[][3], const double re[], const double im[], double pos[3]) const
 {
   return find_zero_triangle(re, im, X, pos, 0.05);

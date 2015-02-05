@@ -23,6 +23,8 @@ public:
 
 protected:
   PuncturedElem* NewPuncturedElem(ElemIdType) const;
+  PuncturedElem* NewPuncturedPrism(FaceIdType) const;
+  
   bool FindZero(const double X[][3], const double re[], const double im[], double pos[3]) const;
 
 private: 

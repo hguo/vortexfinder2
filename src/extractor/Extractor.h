@@ -25,7 +25,7 @@ protected:
   void AddPuncturedFace(ElemIdType id, int f, int chirality, double pos[]);
   
   virtual PuncturedElem* NewPuncturedElem(ElemIdType) const = 0;
-  // virtual PuncturedElem* NewPuncturedPrism(FaceIdType) const = 0;
+  virtual PuncturedElem* NewPuncturedPrism(FaceIdType) const = 0;
 
   virtual bool FindZero(const double X[][3], const double re[], const double im[], double pos[3]) const = 0;
 
