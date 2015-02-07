@@ -54,19 +54,21 @@ Edge* MeshWrapper::GetEdge(EdgeIdType2 s, int &chirality)
   return NULL;
 }
 
-Edge* MeshWrapper::AddEdge(EdgeIdType2 s, const Face* f)
+Edge* MeshWrapper::AddEdge(EdgeIdType2 e, const Face* f, int eid)
 {
   int chirality;
-  Edge *edge = GetEdge(s, chirality);
+  Edge *edge = GetEdge(e, chirality);
 
   if (edge == NULL) {
     edge = new Edge;
-    edge->nodes.push_back(std::get<0>(s));
-    edge->nodes.push_back(std::get<1>(s));
-    _edge_map.insert(std::pair<EdgeIdType2, Edge*>(s, edge));
+    edge->node0 = std::get<0>(e);
+    edge->node1 = std::get<1>(e);
+    _edge_map.insert(std::pair<EdgeIdType2, Edge*>(e, edge));
   }
 
   edge->faces.push_back(f);
+  edge->face_chiralities.push_back(chirality);
+  edge->face_edge_id.push_back(eid);
   return edge;
 }
 
@@ -121,9 +123,9 @@ void MeshWrapper::InitializeWrapper()
       EdgeIdType2 s0(f->nodes[0], f->nodes[1]), 
                   s1(f->nodes[1], f->nodes[2]),
                   s2(f->nodes[2], f->nodes[0]);
-      f->edges.push_back( AddEdge(s0, f) );
-      f->edges.push_back( AddEdge(s1, f) );
-      f->edges.push_back( AddEdge(s2, f) );
+      f->edges.push_back( AddEdge(s0, f, 0) );
+      f->edges.push_back( AddEdge(s1, f, 1) );
+      f->edges.push_back( AddEdge(s2, f, 2) );
     }
   }
 

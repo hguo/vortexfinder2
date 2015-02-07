@@ -759,6 +759,12 @@ bool GLGPUDataset::GetFace(ElemIdType id, int face, double X[][3], double A[][3]
   return true;
 }
 
+bool GLGPUDataset::GetSpaceTimeEdgeValues(const Edge* e, double X[][3], double A[][3], double re[], double im[]) const
+{
+  // TODO
+  return false;
+}
+
 bool GLGPUDataset::A(const double X[3], double A[3]) const
 {
   A[0] = Ax(X);

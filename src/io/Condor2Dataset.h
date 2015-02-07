@@ -34,6 +34,8 @@ public:
 
   bool GetFaceValues(const Face* f, double X[][3], double A[][3], double re[], double im[]) const;
   bool GetFacePrismValues(const Face* f, double X[6][3], double A[6][3], double re[6], double im[6]) const;
+  
+  bool GetSpaceTimeEdgeValues(const Edge*, double X[][3], double A[][3], double re[], double im[]) const;
 
 public:
   // libMesh::UnstructuredMesh* mesh() const {return _mesh;}

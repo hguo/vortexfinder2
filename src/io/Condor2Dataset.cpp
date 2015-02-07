@@ -336,13 +336,13 @@ bool Condor2Dataset::GetFaceValues(const Face *f, double X[][3], double A[][3], 
       X[i][j] = node(j);
 
     A[i][0] = as( node.dof_number(asys()->number(), _Ax_var, 0) );
-    A[i][1] = as( node.dof_number(asys()->number(), _Ax_var, 0) );
-    A[i][2] = as( node.dof_number(asys()->number(), _Ax_var, 0) );
+    A[i][1] = as( node.dof_number(asys()->number(), _Ay_var, 0) );
+    A[i][2] = as( node.dof_number(asys()->number(), _Az_var, 0) );
     re[i] = ts( node.dof_number(tsys()->number(), _u_var, 0) );
     im[i] = ts( node.dof_number(tsys()->number(), _v_var, 0) );
   }
 
-  return false;
+  return true;
 }
 
 bool Condor2Dataset::GetFacePrismValues(const Face* f, double X[][3],
@@ -360,17 +360,61 @@ bool Condor2Dataset::GetFacePrismValues(const Face* f, double X[][3],
       X[i][j] = node(j);
 
     A[i][0] = as( node.dof_number(asys()->number(), _Ax_var, 0) );
-    A[i][1] = as( node.dof_number(asys()->number(), _Ax_var, 0) );
-    A[i][2] = as( node.dof_number(asys()->number(), _Ax_var, 0) );
+    A[i][1] = as( node.dof_number(asys()->number(), _Ay_var, 0) );
+    A[i][2] = as( node.dof_number(asys()->number(), _Az_var, 0) );
     re[i] = ts( node.dof_number(tsys()->number(), _u_var, 0) );
     im[i] = ts( node.dof_number(tsys()->number(), _v_var, 0) );
     
     A[i+3][0] = as1( node.dof_number(asys()->number(), _Ax_var, 0) );
-    A[i+3][1] = as1( node.dof_number(asys()->number(), _Ax_var, 0) );
-    A[i+3][2] = as1( node.dof_number(asys()->number(), _Ax_var, 0) );
+    A[i+3][1] = as1( node.dof_number(asys()->number(), _Ay_var, 0) );
+    A[i+3][2] = as1( node.dof_number(asys()->number(), _Az_var, 0) );
     re[i+3] = ts1( node.dof_number(tsys()->number(), _u_var, 0) );
     im[i+3] = ts1( node.dof_number(tsys()->number(), _v_var, 0) );
   }
 
-  return false;
+  return true;
+}
+ 
+bool Condor2Dataset::GetSpaceTimeEdgeValues(const Edge* e, double X[][3], double A[][3], double re[], double im[]) const
+{
+  const NumericVector<Number> &ts = *_tsolution;
+  const NumericVector<Number> &ts1 = *_tsolution1;
+  const NumericVector<Number> &as = *_asolution;
+  const NumericVector<Number> &as1 = *_asolution1;
+  
+  const Node& node0 = _mesh->node(e->node0), 
+              node1 = _mesh->node(e->node1);
+
+  for (int j=0; j<3; j++) {
+    X[0][j] = node0(j);
+    X[1][j] = node1(j);
+  }
+
+  A[0][0] = as( node0.dof_number(asys()->number(), _Ax_var, 0) );
+  A[0][1] = as( node0.dof_number(asys()->number(), _Ay_var, 0) );
+  A[0][2] = as( node0.dof_number(asys()->number(), _Az_var, 0) );
+
+  A[1][0] = as( node1.dof_number(asys()->number(), _Ax_var, 0) );
+  A[1][1] = as( node1.dof_number(asys()->number(), _Ay_var, 0) );
+  A[1][2] = as( node1.dof_number(asys()->number(), _Az_var, 0) );
+  
+  A[2][0] = as1( node1.dof_number(asys()->number(), _Ax_var, 0) );
+  A[2][1] = as1( node1.dof_number(asys()->number(), _Ay_var, 0) );
+  A[2][2] = as1( node1.dof_number(asys()->number(), _Az_var, 0) );
+  
+  A[3][0] = as1( node0.dof_number(asys()->number(), _Ax_var, 0) );
+  A[3][1] = as1( node0.dof_number(asys()->number(), _Ay_var, 0) );
+  A[3][2] = as1( node0.dof_number(asys()->number(), _Az_var, 0) );
+
+  re[0] = ts( node0.dof_number(tsys()->number(), _u_var, 0) );
+  re[1] = ts( node1.dof_number(tsys()->number(), _u_var, 0) );
+  re[2] = ts1( node1.dof_number(tsys()->number(), _u_var, 0) );
+  re[3] = ts1( node0.dof_number(tsys()->number(), _u_var, 0) );
+
+  im[0] = ts( node0.dof_number(tsys()->number(), _v_var, 0) );
+  im[1] = ts( node1.dof_number(tsys()->number(), _v_var, 0) );
+  im[2] = ts1( node1.dof_number(tsys()->number(), _v_var, 0) );
+  im[3] = ts1( node0.dof_number(tsys()->number(), _v_var, 0) );
+
+  return true;
 }

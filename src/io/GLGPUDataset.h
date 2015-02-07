@@ -29,6 +29,9 @@ public: // mesh info
 public: // mesh utils
   std::vector<ElemIdType> GetNeighborIds(ElemIdType elem_id) const;
   bool GetFace(ElemIdType id, int face, double X[][3], double A[][3], double re[], double im[]) const;
+  
+  bool GetSpaceTimeEdgeValues(const Edge*, double X[][3], double A[][3], double re[], double im[]) const;
+
   ElemIdType Pos2ElemId(const double X[]) const; 
   bool OnBoundary(ElemIdType id) const;
 

@@ -233,3 +233,20 @@ void VortexExtractor::AddPuncturedFace(ElemIdType id, int f, int chirality, doub
 
   pelem->AddPuncturedFace(f, chirality, pos);
 }
+
+void VortexExtractor::AddPuncturedVirtualElemFace(FaceIdType id, int e, int chirality)
+{
+  if (id == UINT_MAX) return;
+
+  PuncturedElemMap::iterator it = _punctured_velems.find(id);
+  PuncturedElem *pelem;
+
+  if (it == _punctured_velems.end()) {
+    pelem = NewPuncturedVirtualElem(id);
+    _punctured_velems[id] = pelem;
+  } else {
+    pelem = it->second;
+  }
+
+  pelem->AddPuncturedFace(e, chirality, NULL);
+}

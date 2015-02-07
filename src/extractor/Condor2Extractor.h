@@ -21,15 +21,18 @@ public:
   void Extract();
   void ExtractFace(const Face*);
   void ExtractFacePrism(const Face*);
+  void ExtractSpaceTimeEdge(const Edge*);
 
   int CheckFace(double X[3][3], double A[3][3], double re[3], double im[3]) const; // returns chirality
   int CheckVirtualFace(double X[2][3], double A[4][3], double re[4], double im[4]) const; // return chirality
 
 protected:
   PuncturedElem* NewPuncturedElem(ElemIdType) const;
-  PuncturedElem* NewPuncturedPrism(FaceIdType) const;
+  PuncturedElem* NewPuncturedVirtualElem(FaceIdType) const;
   
   bool FindZero(const double X[][3], const double re[], const double im[], double pos[3]) const;
+
+protected:
 }; 
 
 #endif

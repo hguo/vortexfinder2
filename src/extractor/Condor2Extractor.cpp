@@ -27,7 +27,7 @@ void Condor2VortexExtractor::Extract()
 
   const Condor2Dataset *ds = (const Condor2Dataset*)_dataset;
 
-#if 0
+#if 1
   MeshBase::const_element_iterator it = ds->mesh()->active_local_elements_begin(); 
   const MeshBase::const_element_iterator end = ds->mesh()->active_local_elements_end(); 
  
@@ -36,11 +36,18 @@ void Condor2VortexExtractor::Extract()
     ExtractElem(elem->id());
   }
 #else
+#if 0
   for (FaceIdType i=0; i<ds->mesh()->NrFaces(); i++) {
     const Face *f = ds->mesh()->GetFace(i);
-    // ExtractFace(f);
-    ExtractFacePrism(f);
+    ExtractFace(f);
+    // ExtractFacePrism(f);
   }
+#else
+  for (EdgeIdType i=0; i<ds->mesh()->NrEdges(); i++) {
+    const Edge *e = ds->mesh()->GetEdge(i);
+    ExtractSpaceTimeEdge(e);
+  }
+#endif
   
   fprintf(stderr, "n_invalid=%d, n_pure=%d, n_self=%d\n", n_invalid, n_pure, n_self);
 #endif
@@ -100,6 +107,23 @@ void Condor2VortexExtractor::ExtractFace(const Face* f)
   }
 }
 
+void Condor2VortexExtractor::ExtractSpaceTimeEdge(const Edge* e)
+{
+  const Condor2Dataset *ds = (const Condor2Dataset*)_dataset;
+  double X[4][3], A[4][3], re[3], im[3];
+  
+  ds->GetSpaceTimeEdgeValues(e, X, A, re, im);
+
+  int chirality = CheckVirtualFace(X, A, re, im);
+
+  if (chirality != 0) {
+    // fprintf(stderr, "punctured edge: {%d, %d}, chirality=%d\n", 
+    //     e->node0, e->node1, chirality);
+    // TODO
+    // AddPuncturedVirtualElemFace();
+  }
+}
+
 void Condor2VortexExtractor::ExtractFacePrism(const Face* f)
 {
   const Condor2Dataset *ds = (const Condor2Dataset*)_dataset;
@@ -133,9 +157,9 @@ void Condor2VortexExtractor::ExtractFacePrism(const Face* f)
   double X2[2][3] = {{X[2][0], X[2][1], X[2][2]}, 
                      {X[0][0], X[0][1], X[0][2]}}, 
          A2[4][3] = {{A[2][0], A[2][1], A[2][2]},
-                    {A[0][0], A[0][1], A[0][2]}, 
-                    {A[3][0], A[3][1], A[3][2]}, 
-                    {A[5][0], A[5][1], A[5][2]}}, 
+                     {A[0][0], A[0][1], A[0][2]}, 
+                     {A[3][0], A[3][1], A[3][2]}, 
+                     {A[5][0], A[5][1], A[5][2]}}, 
          re2[4] = {re[2], re[0], re[3], re[5]}, 
          im2[4] = {im[2], im[0], im[3], im[5]};
   
@@ -155,6 +179,7 @@ void Condor2VortexExtractor::ExtractFacePrism(const Face* f)
   if (pure) n_pure ++; 
   if (self) n_self ++;
 
+  if (fpsum != 0) fprintf(stderr, "invalid:\n");
   if (punctured) 
     fprintf(stderr, "%d\t%d\t%d\t%d\t%d\n", fp0, fp1, vfp[0], vfp[1], vfp[2]);
 }
@@ -195,7 +220,7 @@ int Condor2VortexExtractor::CheckVirtualFace(double X[2][3], double A[4][3], dou
   double delta[4] = {
     phi[1] - phi[0] + _dataset->GaugeTransformation(X[0], X[1], A[0], A[1]), // TODO: QP
     phi[2] - phi[1], // no gauge transformation along the time axis
-    phi[3] - phi[2] + _dataset->GaugeTransformation(X[1], X[0], A[3], A[2]), 
+    phi[3] - phi[2] + _dataset->GaugeTransformation(X[1], X[0], A[2], A[3]), 
     phi[0] - phi[3]
   };
 
@@ -244,7 +269,7 @@ PuncturedElem* Condor2VortexExtractor::NewPuncturedElem(ElemIdType id) const
   return p;
 }
 
-PuncturedElem* Condor2VortexExtractor::NewPuncturedPrism(FaceIdType id) const
+PuncturedElem* Condor2VortexExtractor::NewPuncturedVirtualElem(FaceIdType id) const
 {
   PuncturedElem *p = new PuncturedPrismTri;
   p->Init();
@@ -254,5 +279,6 @@ PuncturedElem* Condor2VortexExtractor::NewPuncturedPrism(FaceIdType id) const
 
 bool Condor2VortexExtractor::FindZero(const double X[][3], const double re[], const double im[], double pos[3]) const
 {
+  // return find_zero_triangle(re, im, X, pos, 0.05);
   return find_zero_triangle(re, im, X, pos, 0.05);
 }
