@@ -1,4 +1,5 @@
 #include "MeshGraph.h"
+#include "MeshGraph.pb.h"
 #include <cassert>
 
 EdgeIdType2 AlternateEdge(EdgeIdType2 e, int chirality)
@@ -56,6 +57,11 @@ FaceIdType4 AlternateFace(FaceIdType4 f, int rotation, int chirality)
 ////////////////////////
 MeshGraph::~MeshGraph()
 {
+  Clear();
+}
+
+void MeshGraph::Clear()
+{
   for (int i=0; i<edges.size(); i++) 
     delete edges[i]; 
 
@@ -65,7 +71,7 @@ MeshGraph::~MeshGraph()
   for (int i=0; i<cells.size(); i++)
     delete cells[i];
 }
-  
+
 MeshGraphBuilder::MeshGraphBuilder(CellIdType n_cells, MeshGraph& mg)
   : _mg(mg)
 {

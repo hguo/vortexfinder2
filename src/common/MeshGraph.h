@@ -62,6 +62,10 @@ struct MeshGraph {
   std::vector<CCell*> cells;
 
   ~MeshGraph();
+
+  void Clear();
+  void SerializeToString(std::string &str) const;
+  void ParseFromString(const std::string &str);
 };
 
 

@@ -27,3 +27,9 @@ message PBCell {
 
   repeated uint32 neighbor_cells = 4;
 };
+
+message PBMeshGraph {
+  repeated PBEdge edges = 1;
+  repeated PBFace faces = 2;
+  repeated PBCell cells = 3;
+};

@@ -1,9 +1,11 @@
 set (common_sources
+  MeshGraph.cpp
   VortexObject.cpp
   FieldLine.cpp
 )
 
 set (common_protos
+  MeshGraph.proto
   DataInfo.proto
   VortexObject.proto
   FieldLine.proto

@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include "def.h"
-#include "MeshGraph.h"
+#include "common/MeshGraph.h"
 
 class GLDataset 
 {
@@ -26,23 +26,15 @@ public: // data I/O
 
 public: // mesh info
   virtual int Dimensions() const = 0;
-  virtual int NrFacesPerElem() const = 0;
+  virtual int NrFacesPerCell() const = 0;
   virtual int NrNodesPerFace() const = 0;
 
 public: // mesh utils
-#if 0
-  virtual std::vector<ElemIdType> GetNeighborIds(ElemIdType elem_id) const = 0;
-  virtual bool GetFace(ElemIdType id, int face, double X[][3], double A[][3], double re[], double im[]) const = 0;
-  virtual ElemIdType Pos2ElemId(const double X[]) const = 0; //!< returns the elemId for a given position
-  virtual bool OnBoundary(ElemIdType id) const = 0;
- 
-  virtual bool GetSpaceTimePrism(ElemIdType id, int face, double X[][3], 
-      double A0[][3], double A1[][3], 
-      double re0[], double re1[],
-      double im0[], double im1[]) const;
+  virtual void GetFaceValues(const CFace*, int time, double X[][3], double A[][3], double re[], double im[]) const = 0;
+  virtual void GetSpaceTimeEdgeValues(const CEdge*, double X[][3], double A[][3], double re[], double im[]) const = 0;
   
-  virtual bool GetSpaceTimeEdgeValues(const Edge*, double X[][3], double A[][3], double re[], double im[]) const = 0;
-#endif
+  virtual CellIdType Pos2CellId(const double X[]) const = 0; //!< returns the elemId for a given position
+  virtual bool OnBoundary(ElemIdType id) const = 0;
 
 public: // transformations and utils
   virtual double GaugeTransformation(const double X0[], const double X1[], const double A0[], const double A1[]) const;

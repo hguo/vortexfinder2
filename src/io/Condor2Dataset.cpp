@@ -131,7 +131,7 @@ void Condor2Dataset::BuildMeshGraph()
   delete builder;
   
   fprintf(stderr, "mesh graph built..\n");
-  fprintf(stderr, "#node=%lu, #edge=%lu, #face=%lu, #cell=%lu\n", 
+  fprintf(stderr, "#node=%u, #edge=%lu, #face=%lu, #cell=%lu\n", 
       _mesh->n_nodes(), _mg.edges.size(), _mg.faces.size(), _mg.cells.size());
 }
 
@@ -174,24 +174,24 @@ void Condor2Dataset::LoadTimeStep(int timestep)
   _exio->copy_nodal_solution(*_asys, "Ay", "A_y", timestep);
   _exio->copy_nodal_solution(*_asys, "Az", "A_z", timestep);
 
-  _tsolution = _tsys->solution->clone();
-  _asolution = _asys->solution->clone();
+  _ts = _tsys->solution->clone();
+  _as = _asys->solution->clone();
 }
 
 void Condor2Dataset::LoadNextTimeStep(int span)
 {
   _timestep1 = _timestep + span;
 
-  AutoPtr<NumericVector<Number> > ts = _tsolution;
-  AutoPtr<NumericVector<Number> > as = _asolution;
+  AutoPtr<NumericVector<Number> > ts = _ts;
+  AutoPtr<NumericVector<Number> > as = _as;
 
   LoadTimeStep(_timestep1);
 
-  _tsolution1 = _tsolution;
-  _asolution1 = _asolution;
+  _ts1 = _ts;
+  _as1 = _as;
 
-  _tsolution = ts;
-  _asolution = as;
+  _ts = ts;
+  _as = as;
 }
 
 #if 0
@@ -212,7 +212,7 @@ std::vector<ElemIdType> Condor2Dataset::GetNeighborIds(ElemIdType elem_id) const
 }
 #endif
 
-ElemIdType Condor2Dataset::Pos2ElemId(const double X[]) const
+CellIdType Condor2Dataset::Pos2CellId(const double X[]) const
 {
   Point p(X[0], X[1], X[2]);
   
@@ -316,7 +316,6 @@ const Elem* Condor2Dataset::LocateElemCoherently(const double X[3]) const
   return e_last;
 }
 
-#if 0
 bool Condor2Dataset::OnBoundary(ElemIdType id) const
 {
   const Elem* elem = mesh()->elem(id);
@@ -324,53 +323,11 @@ bool Condor2Dataset::OnBoundary(ElemIdType id) const
   else return elem->on_boundary();
 }
 
-bool Condor2Dataset::GetFace(ElemIdType id, int face, double X[][3], double A[][3], double re[], double im[]) const
-{
-  if (id == UINT_MAX) return false;
-  
-  const Elem* elem = _mesh->elem(id);
-  if (elem == NULL) return false;
-
-  AutoPtr<Elem> side = elem->side(face); // TODO: check if side exists
- 
-  // tsys
-  const DofMap& dof_map_tsys = tsys()->get_dof_map(); 
-  const NumericVector<Number> &ts = *_tsolution;
-  
-  std::vector<dof_id_type> u_di, v_di; 
-  dof_map_tsys.dof_indices(side.get(), u_di, u_var());
-  dof_map_tsys.dof_indices(side.get(), v_di, v_var());
-
-  // asys
-  const DofMap& dof_map_asys = asys()->get_dof_map();
-  const NumericVector<Number> &as = *_asolution;
-
-  std::vector<dof_id_type> Ax_di, Ay_di, Az_di;
-  dof_map_asys.dof_indices(side.get(), Ax_di, Ax_var());
-  dof_map_asys.dof_indices(side.get(), Ay_di, Ay_var());
-  dof_map_asys.dof_indices(side.get(), Az_di, Az_var());
-
-  // coordinates
-  for (int i=0; i<3; i++) 
-    for (int j=0; j<3; j++) 
-      X[i][j] = side->get_node(i)->slice(j);
-
-  // nodal values
-  for (int i=0; i<3; i++) {
-    re[i] = ts(u_di[i]); 
-    im[i] = ts(v_di[i]);
-    A[i][0] = as(Ax_di[i]);
-    A[i][1] = as(Ay_di[i]);
-    A[i][2] = as(Az_di[i]);
-  }
-
-  return true;
-}
-
+#if 0
 bool Condor2Dataset::GetFaceValues(const Face *f, double X[][3], double A[][3], double re[], double im[]) const
 {
-  const NumericVector<Number> &ts = *_tsolution;
-  const NumericVector<Number> &as = *_asolution;
+  const NumericVector<Number> &ts = *_ts;
+  const NumericVector<Number> &as = *_as;
 
   for (int i=0; i<3; i++) {
     const Node& node = _mesh->node(f->nodes[i]);
@@ -391,10 +348,10 @@ bool Condor2Dataset::GetFaceValues(const Face *f, double X[][3], double A[][3], 
 bool Condor2Dataset::GetFacePrismValues(const Face* f, double X[][3],
     double A[6][3], double re[6], double im[6]) const
 {
-  const NumericVector<Number> &ts = *_tsolution;
-  const NumericVector<Number> &ts1 = *_tsolution1;
-  const NumericVector<Number> &as = *_asolution;
-  const NumericVector<Number> &as1 = *_asolution1;
+  const NumericVector<Number> &ts = *_ts;
+  const NumericVector<Number> &ts1 = *_ts1;
+  const NumericVector<Number> &as = *_as;
+  const NumericVector<Number> &as1 = *_as1;
 
   for (int i=0; i<3; i++) {
     const Node& node = _mesh->node(f->nodes[i]);
@@ -420,10 +377,10 @@ bool Condor2Dataset::GetFacePrismValues(const Face* f, double X[][3],
  
 bool Condor2Dataset::GetSpaceTimeEdgeValues(const Edge* e, double X[][3], double A[][3], double re[], double im[]) const
 {
-  const NumericVector<Number> &ts = *_tsolution;
-  const NumericVector<Number> &ts1 = *_tsolution1;
-  const NumericVector<Number> &as = *_asolution;
-  const NumericVector<Number> &as1 = *_asolution1;
+  const NumericVector<Number> &ts = *_ts;
+  const NumericVector<Number> &ts1 = *_ts1;
+  const NumericVector<Number> &as = *_as;
+  const NumericVector<Number> &as1 = *_as1;
   
   const Node& node0 = _mesh->node(e->node0), 
               node1 = _mesh->node(e->node1);
@@ -462,3 +419,69 @@ bool Condor2Dataset::GetSpaceTimeEdgeValues(const Edge* e, double X[][3], double
   return true;
 }
 #endif
+
+void Condor2Dataset::GetFaceValues(const CFace* f, int time, double X[][3], double A[][3], double re[], double im[]) const
+{
+  const NumericVector<Number> &ts = time == 0 ? *_ts : *_ts1;
+  const NumericVector<Number> &as = time == 0 ? *_as : *_as1;
+ 
+  const Node nodes[3] = {
+    _mesh->node(f->nodes[0]), 
+    _mesh->node(f->nodes[1]), 
+    _mesh->node(f->nodes[2])};
+
+  for (int i=0; i<3; i++) {
+    for (int j=0; j<3; j++) {
+      X[i][j] = nodes[i](j); 
+    }
+
+    A[i][0] = as( nodes[i].dof_number(asys()->number(), _Ax_var, 0) );
+    A[i][1] = as( nodes[i].dof_number(asys()->number(), _Ay_var, 0) );
+    A[i][2] = as( nodes[i].dof_number(asys()->number(), _Az_var, 0) );
+
+    re[i] = ts( nodes[i].dof_number(tsys()->number(), _u_var, 0) );
+    im[i] = ts( nodes[i].dof_number(tsys()->number(), _v_var, 0) );
+  }
+}
+
+void Condor2Dataset::GetSpaceTimeEdgeValues(const CEdge* e, double X[][3], double A[][3], double re[], double im[]) const
+{
+  const NumericVector<Number> &ts = *_ts;
+  const NumericVector<Number> &ts1 = *_ts1;
+  const NumericVector<Number> &as = *_as;
+  const NumericVector<Number> &as1 = *_as1;
+  
+  const Node& node0 = _mesh->node(e->node0), 
+              node1 = _mesh->node(e->node1);
+ 
+  for (int j=0; j<3; j++) {
+    X[0][j] = node0(j);
+    X[1][j] = node1(j);
+  }
+
+  A[0][0] = as( node0.dof_number(asys()->number(), _Ax_var, 0) );
+  A[0][1] = as( node0.dof_number(asys()->number(), _Ay_var, 0) );
+  A[0][2] = as( node0.dof_number(asys()->number(), _Az_var, 0) );
+
+  A[1][0] = as( node1.dof_number(asys()->number(), _Ax_var, 0) );
+  A[1][1] = as( node1.dof_number(asys()->number(), _Ay_var, 0) );
+  A[1][2] = as( node1.dof_number(asys()->number(), _Az_var, 0) );
+  
+  A[2][0] = as1( node1.dof_number(asys()->number(), _Ax_var, 0) );
+  A[2][1] = as1( node1.dof_number(asys()->number(), _Ay_var, 0) );
+  A[2][2] = as1( node1.dof_number(asys()->number(), _Az_var, 0) );
+  
+  A[3][0] = as1( node0.dof_number(asys()->number(), _Ax_var, 0) );
+  A[3][1] = as1( node0.dof_number(asys()->number(), _Ay_var, 0) );
+  A[3][2] = as1( node0.dof_number(asys()->number(), _Az_var, 0) );
+
+  re[0] = ts( node0.dof_number(tsys()->number(), _u_var, 0) );
+  re[1] = ts( node1.dof_number(tsys()->number(), _u_var, 0) );
+  re[2] = ts1( node1.dof_number(tsys()->number(), _u_var, 0) );
+  re[3] = ts1( node0.dof_number(tsys()->number(), _u_var, 0) );
+
+  im[0] = ts( node0.dof_number(tsys()->number(), _v_var, 0) );
+  im[1] = ts( node1.dof_number(tsys()->number(), _v_var, 0) );
+  im[2] = ts1( node1.dof_number(tsys()->number(), _v_var, 0) );
+  im[3] = ts1( node0.dof_number(tsys()->number(), _v_var, 0) );
+}

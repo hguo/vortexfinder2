@@ -18,7 +18,7 @@ public:
   ~Condor2Dataset(); 
 
   int Dimensions() const {return 3;}
-  int NrFacesPerElem() const {return 4;}
+  int NrFacesPerCell() const {return 4;}
   int NrNodesPerFace() const {return 3;}
 
 public: 
@@ -37,16 +37,11 @@ public:
   void SerializeDataInfoToString(std::string& buf) const;
 
 public:
-#if 0
-  std::vector<ElemIdType> GetNeighborIds(ElemIdType id) const;
-  bool GetFace(ElemIdType id, int face, double X[][3], double A[][3], double re[], double im[]) const;
-  bool OnBoundary(ElemIdType id) const;
-
-  bool GetFaceValues(const Face* f, double X[][3], double A[][3], double re[], double im[]) const;
-  bool GetFacePrismValues(const Face* f, double X[6][3], double A[6][3], double re[6], double im[6]) const;
+  void GetFaceValues(const CFace*, int time, double X[][3], double A[][3], double re[], double im[]) const;
+  void GetSpaceTimeEdgeValues(const CEdge*, double X[][3], double A[][3], double re[], double im[]) const;
   
-  bool GetSpaceTimeEdgeValues(const Edge*, double X[][3], double A[][3], double re[], double im[]) const;
-#endif
+  CellIdType Pos2CellId(const double X[]) const; //!< returns the elemId for a given position
+  bool OnBoundary(ElemIdType id) const;
 
 public:
   libMesh::UnstructuredMesh* mesh() const {return _mesh;}
@@ -61,8 +56,6 @@ public:
   unsigned int Az_var() const {return _Az_var;}
 
 public:
-  ElemIdType Pos2ElemId(const double X[]) const;
-  
   // Order parameters (direct access/linear interpolation)
   bool Psi(const double X[3], double &re, double &im) const;
 
@@ -90,8 +83,8 @@ private:
   unsigned int _Ax_var, _Ay_var, _Az_var;
   // unsigned int _rho_var, _phi_var;
 
-  libMesh::AutoPtr<libMesh::NumericVector<libMesh::Number> > _tsolution, _tsolution1;
-  libMesh::AutoPtr<libMesh::NumericVector<libMesh::Number> > _asolution, _asolution1;
+  libMesh::AutoPtr<libMesh::NumericVector<libMesh::Number> > _ts, _ts1;
+  libMesh::AutoPtr<libMesh::NumericVector<libMesh::Number> > _as, _as1;
 }; 
 
 #endif
