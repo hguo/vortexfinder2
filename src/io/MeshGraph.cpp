@@ -54,14 +54,14 @@ FaceIdType4 AlternateFace(FaceIdType4 f, int rotation, int chirality)
 }
 
 ////////////////////////
-CMeshGraphBuilder::CMeshGraphBuilder(ElemIdType n_elems, CMeshGraph& mg)
+MeshGraphBuilder::MeshGraphBuilder(CellIdType n_elems, MeshGraph& mg)
   : _mg(mg)
 {
-  for (ElemIdType i=0; i<n_elems; i++)
-    mg.elems.push_back(new CElem);
+  for (CellIdType i=0; i<n_elems; i++)
+    mg.elems.push_back(new CCell);
 }
 
-CEdge* CMeshGraphBuilder_Tet::GetEdge(EdgeIdType2 e, int &chirality)
+CEdge* MeshGraphBuilder_Tet::GetEdge(EdgeIdType2 e, int &chirality)
 {
   for (chirality=0; chirality<2; chirality++) {
     std::map<EdgeIdType2, CEdge*>::iterator it = _edge_map.find(AlternateEdge(e, chirality)); 
@@ -71,7 +71,7 @@ CEdge* CMeshGraphBuilder_Tet::GetEdge(EdgeIdType2 e, int &chirality)
   return NULL;
 }
 
-CFace* CMeshGraphBuilder_Tet::GetFace(FaceIdType3 f, int &chirality)
+CFace* MeshGraphBuilder_Tet::GetFace(FaceIdType3 f, int &chirality)
 {
   for (chirality=0; chirality<2; chirality++) 
     for (int rotation=0; rotation<3; rotation++) {
@@ -82,7 +82,7 @@ CFace* CMeshGraphBuilder_Tet::GetFace(FaceIdType3 f, int &chirality)
   return NULL;
 }
 
-CEdge* CMeshGraphBuilder_Tet::AddEdge(EdgeIdType2 e, int &chirality, const CFace *f, int eid)
+CEdge* MeshGraphBuilder_Tet::AddEdge(EdgeIdType2 e, int &chirality, const CFace *f, int eid)
 {
   CEdge *edge = GetEdge(e, chirality);
 
@@ -101,7 +101,7 @@ CEdge* CMeshGraphBuilder_Tet::AddEdge(EdgeIdType2 e, int &chirality, const CFace
   return edge;
 }
 
-CFace* CMeshGraphBuilder_Tet::AddFace(FaceIdType3 f, int &chirality, const CElem *el, int fid)
+CFace* MeshGraphBuilder_Tet::AddFace(FaceIdType3 f, int &chirality, const CCell *el, int fid)
 {
   CFace *face = GetFace(fid, chirality);
 
@@ -137,12 +137,12 @@ CFace* CMeshGraphBuilder_Tet::AddFace(FaceIdType3 f, int &chirality, const CElem
   return face;
 }
 
-CElem* CMeshGraphBuilder_Tet::AddElem(ElemIdType i,
+CCell* MeshGraphBuilder_Tet::AddCell(CellIdType i,
     const std::vector<NodeIdType> &nodes, 
-    const std::vector<ElemIdType> &neighbors, 
+    const std::vector<CellIdType> &neighbors, 
     const std::vector<FaceIdType3> &faces)
 {
-  CElem *elem = _mg.elems[i];
+  CCell *elem = _mg.elems[i];
   _mg.elems[i] = elem;
 
   // nodes
@@ -169,7 +169,7 @@ CElem* CMeshGraphBuilder_Tet::AddElem(ElemIdType i,
   return elem;
 }
 
-void CMeshGraphBuilder_Tet::Build()
+void MeshGraphBuilder_Tet::Build()
 {
   // reorganize to vector
   FaceIdType i = 0;

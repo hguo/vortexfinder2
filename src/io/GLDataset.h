@@ -80,7 +80,7 @@ public: // properties
   virtual bool Supercurrent(const double X[3], double J[3]) const = 0;
 
 protected: // mesh graph
-  CMeshGraph _mg;
+  MeshGraph _mg;
 
 protected:
   int _timestep, _timestep1; 

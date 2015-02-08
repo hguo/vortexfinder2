@@ -8,7 +8,7 @@
 
 struct CEdge;
 struct CFace;
-struct CElem;
+struct CCell;
 
 typedef std::tuple<NodeIdType, NodeIdType> EdgeIdType2;
 typedef std::tuple<NodeIdType, NodeIdType, NodeIdType> FaceIdType3;
@@ -37,14 +37,14 @@ struct CFace {
   std::vector<int> edge_chiralities;
 
   // neighbor elems, only two, chirality(elem0)=-1, chirality(elem1)=1
-  const CElem *neighbor_elem0, *neighbor_elem1;
+  const CCell *neighbor_elem0, *neighbor_elem1;
   int neighbor_elem0_fid, neighbor_elem1_fid;
 
   // utils
   bool on_boundary() const {return neighbor_elem0 == NULL || neighbor_elem1 == NULL;}
 };
 
-struct CElem {
+struct CCell {
   // nodes (ordered)
   std::vector<NodeIdType> nodes;
 
@@ -53,44 +53,44 @@ struct CElem {
   std::vector<int> face_chiralities;
 
   // neighbor elems (ordered)
-  std::vector<const CElem*> neighbor_elems;
+  std::vector<const CCell*> neighbor_elems;
 };
 
-struct CMeshGraph {
+struct MeshGraph {
   std::vector<CEdge*> edges;
   std::vector<CFace*> faces;
-  std::vector<CElem*> elems;
+  std::vector<CCell*> elems;
 
   // TODO: deconstructor
 };
 
 
-class CMeshGraphBuilder {
+class MeshGraphBuilder {
 public:
-  explicit CMeshGraphBuilder(ElemIdType n_elems, CMeshGraph& mg);
-  virtual ~CMeshGraphBuilder() {}
+  explicit MeshGraphBuilder(CellIdType n_elems, MeshGraph& mg);
+  virtual ~MeshGraphBuilder() {}
  
   virtual void Build() = 0;
 
 protected:
-  CMeshGraph &_mg;
+  MeshGraph &_mg;
 };
 
-class CMeshGraphBuilder_Tet : public CMeshGraphBuilder {
+class MeshGraphBuilder_Tet : public MeshGraphBuilder {
 public:
-  explicit CMeshGraphBuilder_Tet(ElemIdType n_elems, CMeshGraph& mg) : CMeshGraphBuilder(n_elems, mg) {}
-  ~CMeshGraphBuilder_Tet() {}
+  explicit MeshGraphBuilder_Tet(CellIdType n_elems, MeshGraph& mg) : MeshGraphBuilder(n_elems, mg) {}
+  ~MeshGraphBuilder_Tet() {}
 
-  CElem* AddElem(ElemIdType i, 
+  CCell* AddCell(CellIdType i, 
       const std::vector<NodeIdType> &nodes, 
-      const std::vector<ElemIdType> &neighbors, 
+      const std::vector<CellIdType> &neighbors, 
       const std::vector<FaceIdType3> &faces);
 
   void Build();
 
 private:
   CEdge* AddEdge(EdgeIdType2 e, int &chirality, const CFace* f, int eid);
-  CFace* AddFace(FaceIdType3 f, int &chirality, const CElem* el, int fid);
+  CFace* AddFace(FaceIdType3 f, int &chirality, const CCell* el, int fid);
   CEdge* GetEdge(EdgeIdType2 e, int &chirality);
   CFace* GetFace(FaceIdType3 f, int &chirality);
 
@@ -99,7 +99,7 @@ private:
   std::map<FaceIdType3, CFace*> _face_map;
 };
 
-class CMeshGraphBuilder_Hex : public CMeshGraphBuilder {
+class MeshGraphBuilder_Hex : public MeshGraphBuilder {
 public:
 };
 

@@ -100,7 +100,7 @@ void Condor2Dataset::BuildMeshGraph()
 {
   fprintf(stderr, "building mesh graph..\n");
 
-  CMeshGraphBuilder_Tet *builder = new CMeshGraphBuilder_Tet(_mesh->n_elem(), _mg);
+  MeshGraphBuilder_Tet *builder = new MeshGraphBuilder_Tet(_mesh->n_elem(), _mg);
   
   MeshBase::const_element_iterator it = mesh()->local_elements_begin(); 
   const MeshBase::const_element_iterator end = mesh()->local_elements_end(); 
@@ -124,7 +124,7 @@ void Condor2Dataset::BuildMeshGraph()
       faces.push_back(std::make_tuple(f->node(0), f->node(1), f->node(2)));
     }
 
-    builder->AddElem(e->id(), nodes, neighbors, faces);
+    builder->AddCell(e->id(), nodes, neighbors, faces);
   }
 
   delete builder;
