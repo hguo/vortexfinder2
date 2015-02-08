@@ -127,9 +127,12 @@ void Condor2Dataset::BuildMeshGraph()
     builder->AddCell(e->id(), nodes, neighbors, faces);
   }
 
+  builder->Build();
   delete builder;
   
   fprintf(stderr, "mesh graph built..\n");
+  fprintf(stderr, "#node=%lu, #edge=%lu, #face=%lu, #cell=%lu\n", 
+      _mesh->n_nodes(), _mg.edges.size(), _mg.faces.size(), _mg.cells.size());
 }
 
 void Condor2Dataset::ProbeBoundingBox()

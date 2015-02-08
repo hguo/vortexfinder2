@@ -23,9 +23,9 @@ struct CEdge {
   NodeIdType node0, node1;
 
   // neighbor faces (unordered)
-  std::vector<const CFace*> neighbor_faces;
-  std::vector<int> neighbor_face_chiralities;
-  std::vector<int> neighbor_face_eid; // the edge id in the corresponding face
+  std::vector<const CFace*> contained_faces;
+  std::vector<int> contained_face_chiralities;
+  std::vector<int> contained_face_eid; // the edge id in the corresponding face
 };
 
 struct CFace {
@@ -37,11 +37,11 @@ struct CFace {
   std::vector<int> edge_chiralities;
 
   // neighbor cells, only two, chirality(cell0)=-1, chirality(cell1)=1
-  const CCell *neighbor_cell0, *neighbor_cell1;
-  int neighbor_cell0_fid, neighbor_cell1_fid;
+  const CCell *contained_cell0, *contained_cell1;
+  int contained_cell0_fid, contained_cell1_fid;
 
   // utils
-  bool on_boundary() const {return neighbor_cell0 == NULL || neighbor_cell1 == NULL;}
+  bool on_boundary() const {return contained_cell0 == NULL || contained_cell1 == NULL;}
 };
 
 struct CCell {
