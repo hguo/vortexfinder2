@@ -1,8 +1,15 @@
 #ifndef _CONDOR2_DATASET_H
 #define _CONDOR2_DATASET_H
 
+#include <libmesh/libmesh.h>
+#include <libmesh/mesh.h>
+#include <libmesh/elem.h>
+#include <libmesh/numeric_vector.h>
+#include <libmesh/equation_systems.h>
+#include <libmesh/nonlinear_implicit_system.h>
+#include <libmesh/point_locator_tree.h>
+#include <libmesh/exodusII_io.h>
 #include "GLDataset.h"
-#include "MeshWrapper.h"
 
 class Condor2Dataset : public libMesh::ParallelObject, public GLDataset
 {
@@ -20,6 +27,8 @@ public:
   void LoadNextTimeStep(int span=1);
   void CloseDataFile();
 
+  void BuildMeshGraph();
+
   // APIs for in-situ analysis
   void SetMesh(libMesh::Mesh*);
   void SetEquationSystems(libMesh::EquationSystems*);
@@ -28,6 +37,7 @@ public:
   void SerializeDataInfoToString(std::string& buf) const;
 
 public:
+#if 0
   std::vector<ElemIdType> GetNeighborIds(ElemIdType id) const;
   bool GetFace(ElemIdType id, int face, double X[][3], double A[][3], double re[], double im[]) const;
   bool OnBoundary(ElemIdType id) const;
@@ -36,10 +46,10 @@ public:
   bool GetFacePrismValues(const Face* f, double X[6][3], double A[6][3], double re[6], double im[6]) const;
   
   bool GetSpaceTimeEdgeValues(const Edge*, double X[][3], double A[][3], double re[], double im[]) const;
+#endif
 
 public:
-  // libMesh::UnstructuredMesh* mesh() const {return _mesh;}
-  MeshWrapper* mesh() const {return _mesh;}
+  libMesh::UnstructuredMesh* mesh() const {return _mesh;}
   libMesh::EquationSystems* eqsys() const {return _eqsys;}
   libMesh::NonlinearImplicitSystem* tsys() const {return _tsys;}
   libMesh::System* asys() const {return _asys;}
@@ -69,8 +79,7 @@ private:
   const libMesh::Elem* LocateElemCoherently(const double X[3]) const; // not thread-safe
 
 private:
-  // libMesh::UnstructuredMesh *_mesh;
-  MeshWrapper *_mesh;
+  libMesh::UnstructuredMesh *_mesh;
   libMesh::ExodusII_IO *_exio; 
   libMesh::EquationSystems *_eqsys;
   libMesh::NonlinearImplicitSystem *_tsys;

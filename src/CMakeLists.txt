@@ -5,7 +5,8 @@ include_directories (
 
 configure_file (def.h.cmake def.h)
 
-subdirs (common io extractor tracer)
+# subdirs (common io extractor tracer)
+subdirs (common io tracer)
 
 if (WITH_QT)
   subdirs (viewer)

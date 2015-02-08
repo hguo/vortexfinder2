@@ -20,6 +20,8 @@ public: // data I/O
   bool OpenBDATDataFile(const std::string& filename);
   bool OpenNetCDFFile(const std::string& filename);
   bool WriteNetCDFFile(const std::string& filename);
+  
+  void BuildMeshGraph();
 
 public: // mesh info
   int Dimensions() const {return 3;}
@@ -27,10 +29,12 @@ public: // mesh info
   int NrNodesPerFace() const {return 4;}
   
 public: // mesh utils
+#if 0
   std::vector<ElemIdType> GetNeighborIds(ElemIdType elem_id) const;
   bool GetFace(ElemIdType id, int face, double X[][3], double A[][3], double re[], double im[]) const;
   
   bool GetSpaceTimeEdgeValues(const Edge*, double X[][3], double A[][3], double re[], double im[]) const;
+#endif
 
   ElemIdType Pos2ElemId(const double X[]) const; 
   bool OnBoundary(ElemIdType id) const;

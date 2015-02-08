@@ -4,8 +4,7 @@
 #include <string>
 #include <vector>
 #include "def.h"
-#include "Edge.h"
-#include "Face.h"
+#include "MeshGraph.h"
 
 class GLDataset 
 {
@@ -23,12 +22,15 @@ public: // data I/O
   virtual void LoadNextTimeStep(int span=1);
   virtual void CloseDataFile();
 
+  virtual void BuildMeshGraph() = 0;
+
 public: // mesh info
   virtual int Dimensions() const = 0;
   virtual int NrFacesPerElem() const = 0;
   virtual int NrNodesPerFace() const = 0;
 
 public: // mesh utils
+#if 0
   virtual std::vector<ElemIdType> GetNeighborIds(ElemIdType elem_id) const = 0;
   virtual bool GetFace(ElemIdType id, int face, double X[][3], double A[][3], double re[], double im[]) const = 0;
   virtual ElemIdType Pos2ElemId(const double X[]) const = 0; //!< returns the elemId for a given position
@@ -40,6 +42,7 @@ public: // mesh utils
       double im0[], double im1[]) const;
   
   virtual bool GetSpaceTimeEdgeValues(const Edge*, double X[][3], double A[][3], double re[], double im[]) const = 0;
+#endif
 
 public: // transformations and utils
   virtual double GaugeTransformation(const double X0[], const double X1[], const double A0[], const double A1[]) const;
@@ -75,6 +78,9 @@ public: // properties
 
   // Supercurrent field
   virtual bool Supercurrent(const double X[3], double J[3]) const = 0;
+
+protected: // mesh graph
+  CMeshGraph _mg;
 
 protected:
   int _timestep, _timestep1; 

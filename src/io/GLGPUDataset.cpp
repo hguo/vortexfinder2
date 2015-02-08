@@ -64,6 +64,11 @@ void GLGPUDataset::PrintInfo() const
   fprintf(stderr, "fluctuation_amp=%f\n", _fluctuation_amp); 
 }
 
+void GLGPUDataset::BuildMeshGraph()
+{
+
+}
+
 ElemIdType GLGPUDataset::Pos2ElemId(const double X[]) const
 {
   // TODO
@@ -148,6 +153,7 @@ double GLGPUDataset::GaugeTransformation(const double X0[], const double X1[]) c
   return gx + gy + gz; 
 }
 
+#if 0
 std::vector<ElemIdType> GLGPUDataset::GetNeighborIds(ElemIdType elem_id) const
 {
   std::vector<ElemIdType> neighbors; 
@@ -179,6 +185,7 @@ std::vector<ElemIdType> GLGPUDataset::GetNeighborIds(ElemIdType elem_id) const
 
   return neighbors; 
 }
+#endif
   
 void GLGPUDataset::SerializeDataInfoToString(std::string& buf) const
 {
@@ -695,6 +702,7 @@ double GLGPUDataset::QP(const double X0[], const double X1[]) const
   } else return 0.0;
 }
 
+#if 0
 bool GLGPUDataset::GetFace(ElemIdType id, int face, double X[][3], double A[][3], double re[], double im[]) const
 {
   int idx0[3]; 
@@ -764,6 +772,7 @@ bool GLGPUDataset::GetSpaceTimeEdgeValues(const Edge* e, double X[][3], double A
   // TODO
   return false;
 }
+#endif
 
 bool GLGPUDataset::A(const double X[3], double A[3]) const
 {

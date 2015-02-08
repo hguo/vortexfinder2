@@ -55,12 +55,13 @@ bool Condor2Dataset::OpenDataFile(const std::string& filename)
   _data_name = filename;
 
   /// mesh
-  _mesh = new MeshWrapper(comm()); 
+  _mesh = new Mesh(comm()); 
   _exio = new ExodusII_IO(*_mesh);
   _exio->read(filename);
   _mesh->allow_renumbering(false); 
   _mesh->prepare_for_use();
-  _mesh->InitializeWrapper();
+
+  BuildMeshGraph();
 
   /// equation systems
   _eqsys = new EquationSystems(*_mesh); 
@@ -93,6 +94,42 @@ void Condor2Dataset::CloseDataFile()
   if (_eqsys) delete _eqsys; 
   if (_exio) delete _exio; 
   if (_mesh) delete _mesh; 
+}
+
+void Condor2Dataset::BuildMeshGraph()
+{
+  fprintf(stderr, "building mesh graph..\n");
+
+  CMeshGraphBuilder_Tet *builder = new CMeshGraphBuilder_Tet(_mesh->n_elem(), _mg);
+  
+  MeshBase::const_element_iterator it = mesh()->local_elements_begin(); 
+  const MeshBase::const_element_iterator end = mesh()->local_elements_end(); 
+
+  for (; it!=end; it++) {
+    const Elem *e = *it;
+    std::vector<NodeIdType> nodes;
+    std::vector<ElemIdType> neighbors;
+    std::vector<FaceIdType3> faces;
+
+    for (int i=0; i<e->n_nodes(); i++)
+      nodes.push_back(e->node(i));
+
+    for (int i=0; i<e->n_sides(); i++) {
+      if (e->neighbor(i) != NULL) 
+        neighbors.push_back(e->neighbor(i)->id());
+      else 
+        neighbors.push_back(UINT_MAX);
+
+      AutoPtr<Elem> f = e->side(i);
+      faces.push_back(std::make_tuple(f->node(0), f->node(1), f->node(2)));
+    }
+
+    builder->AddElem(e->id(), nodes, neighbors, faces);
+  }
+
+  delete builder;
+  
+  fprintf(stderr, "mesh graph built..\n");
 }
 
 void Condor2Dataset::ProbeBoundingBox()
@@ -154,6 +191,7 @@ void Condor2Dataset::LoadNextTimeStep(int span)
   _asolution = as;
 }
 
+#if 0
 std::vector<ElemIdType> Condor2Dataset::GetNeighborIds(ElemIdType elem_id) const
 {
   std::vector<ElemIdType> neighbors(4);
@@ -169,6 +207,7 @@ std::vector<ElemIdType> Condor2Dataset::GetNeighborIds(ElemIdType elem_id) const
 
   return neighbors;
 }
+#endif
 
 ElemIdType Condor2Dataset::Pos2ElemId(const double X[]) const
 {
@@ -274,6 +313,7 @@ const Elem* Condor2Dataset::LocateElemCoherently(const double X[3]) const
   return e_last;
 }
 
+#if 0
 bool Condor2Dataset::OnBoundary(ElemIdType id) const
 {
   const Elem* elem = mesh()->elem(id);
@@ -418,3 +458,4 @@ bool Condor2Dataset::GetSpaceTimeEdgeValues(const Edge* e, double X[][3], double
 
   return true;
 }
+#endif
