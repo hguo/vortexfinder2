@@ -54,11 +54,23 @@ FaceIdType4 AlternateFace(FaceIdType4 f, int rotation, int chirality)
 }
 
 ////////////////////////
-MeshGraphBuilder::MeshGraphBuilder(CellIdType n_elems, MeshGraph& mg)
+MeshGraph::~MeshGraph()
+{
+  for (int i=0; i<edges.size(); i++) 
+    delete edges[i]; 
+
+  for (int i=0; i<faces.size(); i++)
+    delete faces[i];
+
+  for (int i=0; i<cells.size(); i++)
+    delete cells[i];
+}
+  
+MeshGraphBuilder::MeshGraphBuilder(CellIdType n_cells, MeshGraph& mg)
   : _mg(mg)
 {
-  for (CellIdType i=0; i<n_elems; i++)
-    mg.elems.push_back(new CCell);
+  for (CellIdType i=0; i<n_cells; i++)
+    mg.cells.push_back(new CCell);
 }
 
 CEdge* MeshGraphBuilder_Tet::GetEdge(EdgeIdType2 e, int &chirality)
@@ -127,11 +139,11 @@ CFace* MeshGraphBuilder_Tet::AddFace(FaceIdType3 f, int &chirality, const CCell 
   }
 
   if (chirality == 1) {
-    face->neighbor_elem1 = el;
-    face->neighbor_elem1_fid = fid;
+    face->neighbor_cell1 = el;
+    face->neighbor_cell1_fid = fid;
   } else if (chirality == -1) {
-    face->neighbor_elem0 = el;
-    face->neighbor_elem0_fid = fid;
+    face->neighbor_cell0 = el;
+    face->neighbor_cell0_fid = fid;
   }
 
   return face;
@@ -142,18 +154,18 @@ CCell* MeshGraphBuilder_Tet::AddCell(CellIdType i,
     const std::vector<CellIdType> &neighbors, 
     const std::vector<FaceIdType3> &faces)
 {
-  CCell *elem = _mg.elems[i];
-  _mg.elems[i] = elem;
+  CCell *cell = _mg.cells[i];
+  _mg.cells[i] = cell;
 
   // nodes
-  elem->nodes = nodes;
+  cell->nodes = nodes;
 
-  // neighbor elems
+  // neighbor cells
   for (int i=0; i<neighbors.size(); i++) {
     if (neighbors[i] != UINT_MAX)
-      elem->neighbor_elems.push_back(_mg.elems[neighbors[i]]);
+      cell->neighbor_cells.push_back(_mg.cells[neighbors[i]]);
     else 
-      elem->neighbor_elems.push_back(NULL);
+      cell->neighbor_cells.push_back(NULL);
   }
 
   // faces and edges
@@ -161,12 +173,12 @@ CCell* MeshGraphBuilder_Tet::AddCell(CellIdType i,
     int chirality; 
     FaceIdType3 fid = faces[i];
 
-    CFace *face = AddFace(fid, chirality, elem, i);
-    elem->faces.push_back(face);
-    elem->face_chiralities.push_back(chirality);
+    CFace *face = AddFace(fid, chirality, cell, i);
+    cell->faces.push_back(face);
+    cell->face_chiralities.push_back(chirality);
   }
 
-  return elem;
+  return cell;
 }
 
 void MeshGraphBuilder_Tet::Build()

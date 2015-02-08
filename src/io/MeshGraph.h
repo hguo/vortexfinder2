@@ -36,12 +36,12 @@ struct CFace {
   std::vector<CEdge*> edges;
   std::vector<int> edge_chiralities;
 
-  // neighbor elems, only two, chirality(elem0)=-1, chirality(elem1)=1
-  const CCell *neighbor_elem0, *neighbor_elem1;
-  int neighbor_elem0_fid, neighbor_elem1_fid;
+  // neighbor cells, only two, chirality(cell0)=-1, chirality(cell1)=1
+  const CCell *neighbor_cell0, *neighbor_cell1;
+  int neighbor_cell0_fid, neighbor_cell1_fid;
 
   // utils
-  bool on_boundary() const {return neighbor_elem0 == NULL || neighbor_elem1 == NULL;}
+  bool on_boundary() const {return neighbor_cell0 == NULL || neighbor_cell1 == NULL;}
 };
 
 struct CCell {
@@ -52,22 +52,22 @@ struct CCell {
   std::vector<const CFace*> faces;
   std::vector<int> face_chiralities;
 
-  // neighbor elems (ordered)
-  std::vector<const CCell*> neighbor_elems;
+  // neighbor cells (ordered)
+  std::vector<const CCell*> neighbor_cells;
 };
 
 struct MeshGraph {
   std::vector<CEdge*> edges;
   std::vector<CFace*> faces;
-  std::vector<CCell*> elems;
+  std::vector<CCell*> cells;
 
-  // TODO: deconstructor
+  ~MeshGraph();
 };
 
 
 class MeshGraphBuilder {
 public:
-  explicit MeshGraphBuilder(CellIdType n_elems, MeshGraph& mg);
+  explicit MeshGraphBuilder(CellIdType n_cells, MeshGraph& mg);
   virtual ~MeshGraphBuilder() {}
  
   virtual void Build() = 0;
@@ -78,7 +78,7 @@ protected:
 
 class MeshGraphBuilder_Tet : public MeshGraphBuilder {
 public:
-  explicit MeshGraphBuilder_Tet(CellIdType n_elems, MeshGraph& mg) : MeshGraphBuilder(n_elems, mg) {}
+  explicit MeshGraphBuilder_Tet(CellIdType n_cells, MeshGraph& mg) : MeshGraphBuilder(n_cells, mg) {}
   ~MeshGraphBuilder_Tet() {}
 
   CCell* AddCell(CellIdType i, 
