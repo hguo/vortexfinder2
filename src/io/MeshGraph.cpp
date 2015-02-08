@@ -107,8 +107,8 @@ CEdge* MeshGraphBuilder_Tet::AddEdge(EdgeIdType2 e, int &chirality, const CFace 
   }
 
   edge->contained_faces.push_back(f);
-  edge->contained_face_chiralities.push_back(chirality);
-  edge->contained_face_eid.push_back(eid);
+  edge->contained_faces_chirality.push_back(chirality);
+  edge->contained_faces_eid.push_back(eid);
   
   return edge;
 }
@@ -132,7 +132,7 @@ CFace* MeshGraphBuilder_Tet::AddFace(FaceIdType3 f, int &chirality, const CCell 
     for (int i=0; i<3; i++) {
       CEdge *edge = AddEdge(e[i], chirality, face, i);
       face->edges.push_back(edge);
-      face->edge_chiralities.push_back(chirality);
+      face->edges_chirality.push_back(chirality);
     }
 
     chirality = 1;
@@ -175,7 +175,7 @@ CCell* MeshGraphBuilder_Tet::AddCell(CellIdType i,
 
     CFace *face = AddFace(fid, chirality, cell, i);
     cell->faces.push_back(face);
-    cell->face_chiralities.push_back(chirality);
+    cell->faces_chirality.push_back(chirality);
   }
 
   return cell;
