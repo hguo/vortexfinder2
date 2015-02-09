@@ -37,8 +37,8 @@ public:
   void SerializeDataInfoToString(std::string& buf) const;
 
 public:
-  void GetFaceValues(const CFace*, int time, double X[][3], double A[][3], double re[], double im[]) const;
-  void GetSpaceTimeEdgeValues(const CEdge*, double X[][3], double A[][3], double re[], double im[]) const;
+  void GetFaceValues(const CFace&, int time, double X[][3], double A[][3], double re[], double im[]) const;
+  void GetSpaceTimeEdgeValues(const CEdge&, double X[][3], double A[][3], double re[], double im[]) const;
   
   CellIdType Pos2CellId(const double X[]) const; //!< returns the elemId for a given position
   bool OnBoundary(ElemIdType id) const;

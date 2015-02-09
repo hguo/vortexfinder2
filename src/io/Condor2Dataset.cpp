@@ -100,7 +100,7 @@ void Condor2Dataset::BuildMeshGraph()
 {
   fprintf(stderr, "building mesh graph..\n");
 
-  MeshGraphBuilder_Tet *builder = new MeshGraphBuilder_Tet(_mesh->n_elem(), _mg);
+  MeshGraphBuilder_Tet *builder = new MeshGraphBuilder_Tet(_mg);
   
   MeshBase::const_element_iterator it = mesh()->local_elements_begin(); 
   const MeshBase::const_element_iterator end = mesh()->local_elements_end(); 
@@ -124,10 +124,9 @@ void Condor2Dataset::BuildMeshGraph()
       faces.push_back(std::make_tuple(f->node(0), f->node(1), f->node(2)));
     }
 
-    builder->AddCell(e->id(), nodes, neighbors, faces);
+    builder->AddCell(nodes, neighbors, faces);
   }
 
-  builder->Build();
   delete builder;
   
   fprintf(stderr, "mesh graph built..\n");
@@ -420,15 +419,15 @@ bool Condor2Dataset::GetSpaceTimeEdgeValues(const Edge* e, double X[][3], double
 }
 #endif
 
-void Condor2Dataset::GetFaceValues(const CFace* f, int time, double X[][3], double A[][3], double re[], double im[]) const
+void Condor2Dataset::GetFaceValues(const CFace& f, int time, double X[][3], double A[][3], double re[], double im[]) const
 {
   const NumericVector<Number> &ts = time == 0 ? *_ts : *_ts1;
   const NumericVector<Number> &as = time == 0 ? *_as : *_as1;
  
   const Node nodes[3] = {
-    _mesh->node(f->nodes[0]), 
-    _mesh->node(f->nodes[1]), 
-    _mesh->node(f->nodes[2])};
+    _mesh->node(f.nodes[0]), 
+    _mesh->node(f.nodes[1]), 
+    _mesh->node(f.nodes[2])};
 
   for (int i=0; i<3; i++) {
     for (int j=0; j<3; j++) {
@@ -444,15 +443,15 @@ void Condor2Dataset::GetFaceValues(const CFace* f, int time, double X[][3], doub
   }
 }
 
-void Condor2Dataset::GetSpaceTimeEdgeValues(const CEdge* e, double X[][3], double A[][3], double re[], double im[]) const
+void Condor2Dataset::GetSpaceTimeEdgeValues(const CEdge& e, double X[][3], double A[][3], double re[], double im[]) const
 {
   const NumericVector<Number> &ts = *_ts;
   const NumericVector<Number> &ts1 = *_ts1;
   const NumericVector<Number> &as = *_as;
   const NumericVector<Number> &as1 = *_as1;
   
-  const Node& node0 = _mesh->node(e->node0), 
-              node1 = _mesh->node(e->node1);
+  const Node& node0 = _mesh->node(e.node0), 
+              node1 = _mesh->node(e.node1);
  
   for (int j=0; j<3; j++) {
     X[0][j] = node0(j);

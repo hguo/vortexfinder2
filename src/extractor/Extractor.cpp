@@ -99,23 +99,23 @@ void VortexExtractor::Trace()
 
       visited.insert(current);
 
-      CFace *face = mg.faces[current];
-      for (int i=0; i<face->edges.size(); i++) {
+      const CFace &face = mg.faces[current];
+      for (int i=0; i<face.edges.size(); i++) {
         // find punctured edges
-        CEdge *edge = face->edges[i];
-        EdgeIdType e = edge->id;
+        EdgeIdType e = face.edges[i];
         if (_punctured_edges.find(e) != _punctured_edges.end()) {
+          const CEdge &edge = mg.edges[e];
           const PuncturedEdge& pe = _punctured_edges[e];
           if (current_time >= pe.t) continue; // time ascending order
           
-          int echirality = face->edges_chirality[i] * pe.chirality;
+          int echirality = face.edges_chirality[i] * pe.chirality;
           if (current_chirality == echirality) {
             /// find neighbor faces who chontain this edge
             // fprintf(stderr, "--fid=%u, found edge eid=%u, t=%f\n", current, e, pe.t);
-            for (int j=0; j<edge->contained_faces.size(); j++) {
-              if (visited.find(edge->contained_faces[j]->id) == visited.end()) { // not found in visited faces
-                to_visit.push_back(edge->contained_faces[j]->id);
-                to_visit_chirality.push_back(edge->contained_faces_chirality[j] * current_chirality);
+            for (int j=0; j<edge.contained_faces.size(); j++) {
+              if (visited.find(edge.contained_faces[j]) == visited.end()) { // not found in visited faces
+                to_visit.push_back(edge.contained_faces[j]);
+                to_visit_chirality.push_back(edge.contained_faces_chirality[j] * current_chirality);
                 to_visit_time.push_back(pe.t);
               }
             }

@@ -62,14 +62,6 @@ MeshGraph::~MeshGraph()
 
 void MeshGraph::Clear()
 {
-  for (int i=0; i<edges.size(); i++) 
-    delete edges[i]; 
-
-  for (int i=0; i<faces.size(); i++)
-    delete faces[i];
-
-  for (int i=0; i<cells.size(); i++)
-    delete cells[i];
 }
 
 void MeshGraph::SerializeToString(std::string &str) const
@@ -102,121 +94,127 @@ void MeshGraph::SerializeToString(std::string &str) const
 #endif
 }
 
-MeshGraphBuilder::MeshGraphBuilder(CellIdType n_cells, MeshGraph& mg)
+MeshGraphBuilder::MeshGraphBuilder(MeshGraph& mg)
   : _mg(mg)
 {
-  for (CellIdType i=0; i<n_cells; i++)
-    mg.cells.push_back(new CCell);
 }
 
-CEdge* MeshGraphBuilder_Tet::GetEdge(EdgeIdType2 e, int &chirality)
+EdgeIdType MeshGraphBuilder_Tet::GetEdge(EdgeIdType2 e2, int &chirality)
 {
   for (chirality=-1; chirality<2; chirality+=2) {
-    std::map<EdgeIdType2, CEdge*>::iterator it = _edge_map.find(AlternateEdge(e, chirality)); 
+    std::map<EdgeIdType2, EdgeIdType>::iterator it = _edge_map.find(AlternateEdge(e2, chirality)); 
     if (it != _edge_map.end())
       return it->second;
   }
-  return NULL;
+  return UINT_MAX;
 }
 
-CFace* MeshGraphBuilder_Tet::GetFace(FaceIdType3 f, int &chirality)
+FaceIdType MeshGraphBuilder_Tet::GetFace(FaceIdType3 f3, int &chirality)
 {
   for (chirality=-1; chirality<2; chirality+=2) 
     for (int rotation=0; rotation<3; rotation++) {
-      std::map<FaceIdType3, CFace*>::iterator it = _face_map.find(AlternateFace(f, rotation, chirality));
+      std::map<FaceIdType3, FaceIdType>::iterator it = _face_map.find(AlternateFace(f3, rotation, chirality));
       if (it != _face_map.end())
         return it->second;
     }
-  return NULL;
+  return UINT_MAX;
 }
 
-CEdge* MeshGraphBuilder_Tet::AddEdge(EdgeIdType2 e, int &chirality, const CFace *f, int eid)
+EdgeIdType MeshGraphBuilder_Tet::AddEdge(EdgeIdType2 e2, int &chirality, FaceIdType f, int eid)
 {
-  CEdge *edge = GetEdge(e, chirality);
+  EdgeIdType e = GetEdge(e2, chirality);
 
-  if (edge == NULL) {
-    edge = new CEdge;
-    edge->node0 = std::get<0>(e);
-    edge->node1 = std::get<1>(e);
-    _edge_map.insert(std::pair<EdgeIdType2, CEdge*>(e, edge));
+  if (e == UINT_MAX) {
+    e = _mg.edges.size();
+    _edge_map.insert(std::pair<EdgeIdType2, EdgeIdType>(e2, e));
+    
+    CEdge edge1;
+    edge1.node0 = std::get<0>(e2);
+    edge1.node1 = std::get<1>(e2);
+    
+    _mg.edges.push_back(edge1);
     chirality = 1;
   }
-
-  edge->contained_faces.push_back(f);
-  edge->contained_faces_chirality.push_back(chirality);
-  edge->contained_faces_eid.push_back(eid);
   
-  return edge;
+  CEdge &edge = _mg.edges[e];
+
+  edge.contained_faces.push_back(f);
+  edge.contained_faces_chirality.push_back(chirality);
+  edge.contained_faces_eid.push_back(eid);
+  
+  return e;
 }
 
-CFace* MeshGraphBuilder_Tet::AddFace(FaceIdType3 f, int &chirality, const CCell *el, int fid)
+FaceIdType MeshGraphBuilder_Tet::AddFace(FaceIdType3 f3, int &chirality, CellIdType c, int fid)
 {
-  CFace *face = GetFace(f, chirality);
+  FaceIdType f = GetFace(f3, chirality);
 
-  if (face == NULL) {
-    face = new CFace;
-    face->nodes.push_back(std::get<0>(f));
-    face->nodes.push_back(std::get<1>(f));
-    face->nodes.push_back(std::get<2>(f));
-    _face_map.insert(std::pair<FaceIdType3, CFace*>(f, face));
+  if (f == UINT_MAX) {
+    f = _face_map.size();
+    _face_map.insert(std::pair<FaceIdType3, FaceIdType>(f3, f));
+    
+    CFace face1;
+    face1.nodes.push_back(std::get<0>(f3));
+    face1.nodes.push_back(std::get<1>(f3));
+    face1.nodes.push_back(std::get<2>(f3));
 
-    EdgeIdType2 e[3] = {
-      std::make_tuple(std::get<0>(f), std::get<1>(f)),
-      std::make_tuple(std::get<1>(f), std::get<2>(f)),
-      std::make_tuple(std::get<2>(f), std::get<0>(f))};
+    EdgeIdType2 e2[3] = {
+      std::make_tuple(std::get<0>(f3), std::get<1>(f3)),
+      std::make_tuple(std::get<1>(f3), std::get<2>(f3)),
+      std::make_tuple(std::get<2>(f3), std::get<0>(f3))};
 
     for (int i=0; i<3; i++) {
-      CEdge *edge = AddEdge(e[i], chirality, face, i);
-      face->edges.push_back(edge);
-      face->edges_chirality.push_back(chirality);
+      EdgeIdType e = AddEdge(e2[i], chirality, f, i);
+      face1.edges.push_back(e);
+      face1.edges_chirality.push_back(chirality);
     }
-
+    
+    _mg.faces.push_back(face1);
     chirality = 1;
   }
+  
+  CFace &face = _mg.faces[f];
 
   if (chirality == 1) {
-    face->contained_cell1 = el;
-    face->contained_cell1_fid = fid;
+    face.contained_cell1 = c;
+    face.contained_cell1_fid = fid;
   } else if (chirality == -1) {
-    face->contained_cell0 = el;
-    face->contained_cell0_fid = fid;
+    face.contained_cell0 = c;
+    face.contained_cell0_fid = fid;
   }
 
-  return face;
+  return f;
 }
 
-CCell* MeshGraphBuilder_Tet::AddCell(CellIdType i,
+CellIdType MeshGraphBuilder_Tet::AddCell(
     const std::vector<NodeIdType> &nodes, 
     const std::vector<CellIdType> &neighbors, 
     const std::vector<FaceIdType3> &faces)
 {
-  CCell *cell = _mg.cells[i];
-  _mg.cells[i] = cell;
+  CellIdType c = _mg.cells.size();
+  CCell cell;
 
   // nodes
-  cell->nodes = nodes;
+  cell.nodes = nodes;
 
   // neighbor cells
-  for (int i=0; i<neighbors.size(); i++) {
-    if (neighbors[i] != UINT_MAX)
-      cell->neighbor_cells.push_back(_mg.cells[neighbors[i]]);
-    else 
-      cell->neighbor_cells.push_back(NULL);
-  }
+  cell.neighbor_cells = neighbors;
 
   // faces and edges
   for (int i=0; i<faces.size(); i++) {
     int chirality; 
-    FaceIdType3 fid = faces[i];
+    FaceIdType3 f3 = faces[i];
 
-    CFace *face = AddFace(fid, chirality, cell, i);
-    cell->faces.push_back(face);
-    cell->faces_chirality.push_back(chirality);
+    FaceIdType f = AddFace(f3, chirality, c, i);
+    cell.faces.push_back(f);
+    cell.faces_chirality.push_back(chirality);
   }
 
-  return cell;
+  _mg.cells.push_back(cell);
+  return c;
 }
 
+#if 0
 void MeshGraphBuilder_Tet::Build()
 {
   // reorganize to vector
@@ -238,3 +236,4 @@ void MeshGraphBuilder_Tet::Build()
   }
   _edge_map.clear();
 }
+#endif

@@ -19,53 +19,47 @@ FaceIdType3 AlternateFace(FaceIdType3 f, int rotation, int chirality);
 FaceIdType4 AlternateFace(FaceIdType4 f, int rotation, int chirality);
 
 struct CEdge {
-  EdgeIdType id;
-
   // nodes
   NodeIdType node0, node1;
 
   // neighbor faces (unordered)
-  std::vector<const CFace*> contained_faces;
+  std::vector<FaceIdType> contained_faces;
   std::vector<int> contained_faces_chirality;
   std::vector<int> contained_faces_eid; // the edge id in the corresponding face
 };
 
 struct CFace {
-  FaceIdType id;
-
   // nodes (ordered)
   std::vector<NodeIdType> nodes;
 
   // edges (ordered)
-  std::vector<CEdge*> edges;
+  std::vector<EdgeIdType> edges;
   std::vector<int> edges_chirality;
 
   // neighbor cells, only two, chirality(cell0)=-1, chirality(cell1)=1
-  const CCell *contained_cell0, *contained_cell1;
+  CellIdType contained_cell0, contained_cell1;
   int contained_cell0_fid, contained_cell1_fid;
 
   // utils
-  bool on_boundary() const {return contained_cell0 == NULL || contained_cell1 == NULL;}
+  // bool on_boundary() const {return contained_cell0 == NULL || contained_cell1 == NULL;}
 };
 
 struct CCell {
-  CellIdType id;
-
   // nodes (ordered)
   std::vector<NodeIdType> nodes;
 
   // faces (ordered)
-  std::vector<const CFace*> faces;
+  std::vector<FaceIdType> faces;
   std::vector<int> faces_chirality;
 
   // neighbor cells (ordered)
-  std::vector<const CCell*> neighbor_cells;
+  std::vector<CellIdType> neighbor_cells;
 };
 
 struct MeshGraph {
-  std::vector<CEdge*> edges;
-  std::vector<CFace*> faces;
-  std::vector<CCell*> cells;
+  std::vector<CEdge> edges;
+  std::vector<CFace> faces;
+  std::vector<CCell> cells;
 
   ~MeshGraph();
 
@@ -77,10 +71,10 @@ struct MeshGraph {
 
 class MeshGraphBuilder {
 public:
-  explicit MeshGraphBuilder(CellIdType n_cells, MeshGraph& mg);
+  explicit MeshGraphBuilder(MeshGraph& mg);
   virtual ~MeshGraphBuilder() {}
  
-  virtual void Build() = 0;
+  // virtual void Build() = 0;
 
 protected:
   MeshGraph &_mg;
@@ -88,25 +82,25 @@ protected:
 
 class MeshGraphBuilder_Tet : public MeshGraphBuilder {
 public:
-  explicit MeshGraphBuilder_Tet(CellIdType n_cells, MeshGraph& mg) : MeshGraphBuilder(n_cells, mg) {}
+  explicit MeshGraphBuilder_Tet(MeshGraph& mg) : MeshGraphBuilder(mg) {}
   ~MeshGraphBuilder_Tet() {}
 
-  CCell* AddCell(CellIdType i, 
+  CellIdType AddCell(
       const std::vector<NodeIdType> &nodes, 
       const std::vector<CellIdType> &neighbors, 
       const std::vector<FaceIdType3> &faces);
 
-  void Build();
+  // void Build();
 
 private:
-  CEdge* AddEdge(EdgeIdType2 e, int &chirality, const CFace* f, int eid);
-  CFace* AddFace(FaceIdType3 f, int &chirality, const CCell* el, int fid);
-  CEdge* GetEdge(EdgeIdType2 e, int &chirality);
-  CFace* GetFace(FaceIdType3 f, int &chirality);
+  EdgeIdType AddEdge(EdgeIdType2 e2, int &chirality, FaceIdType f, int eid);
+  FaceIdType AddFace(FaceIdType3 f3, int &chirality, CellIdType c, int fid);
+  EdgeIdType GetEdge(EdgeIdType2 e2, int &chirality);
+  FaceIdType GetFace(FaceIdType3 f3, int &chirality);
 
 private:
-  std::map<EdgeIdType2, CEdge*> _edge_map;
-  std::map<FaceIdType3, CFace*> _face_map;
+  std::map<EdgeIdType2, EdgeIdType> _edge_map;
+  std::map<FaceIdType3, FaceIdType> _face_map;
 };
 
 class MeshGraphBuilder_Hex : public MeshGraphBuilder {
