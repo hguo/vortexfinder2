@@ -1,6 +1,8 @@
 #ifndef _INVERSE_INTERPOLATION_H
 #define _INVERSE_INTERPOLATION_H
 
+#include <cmath>
+
 template <typename T>
 static inline bool find_zero_barycentric(const T re[3], const T im[3], T lambda[3], T epsilon=0)
 {

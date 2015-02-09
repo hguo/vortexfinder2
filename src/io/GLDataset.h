@@ -22,12 +22,14 @@ public: // data I/O
   virtual void LoadNextTimeStep(int span=1);
   virtual void CloseDataFile();
 
-  virtual void BuildMeshGraph() = 0;
-
 public: // mesh info
   virtual int Dimensions() const = 0;
   virtual int NrFacesPerCell() const = 0;
   virtual int NrNodesPerFace() const = 0;
+  
+  virtual void BuildMeshGraph() = 0;
+
+  const MeshGraph& MeshGraph() const {return _mg;}
 
 public: // mesh utils
   virtual void GetFaceValues(const CFace*, int time, double X[][3], double A[][3], double re[], double im[]) const = 0;
@@ -72,7 +74,7 @@ public: // properties
   virtual bool Supercurrent(const double X[3], double J[3]) const = 0;
 
 protected: // mesh graph
-  MeshGraph _mg;
+  struct MeshGraph _mg;
 
 protected:
   int _timestep, _timestep1; 

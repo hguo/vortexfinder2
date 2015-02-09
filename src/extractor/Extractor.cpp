@@ -1,6 +1,7 @@
 #include "Extractor.h"
 #include "common/Utils.hpp"
 #include "io/GLDataset.h"
+#include <set>
 #include <cassert>
 
 VortexExtractor::VortexExtractor() :
@@ -30,6 +31,129 @@ void VortexExtractor::WriteVortexObjects(const std::string& filename)
   ::WriteVortexObjects(filename, _vortex_objects); 
 }
 
+void VortexExtractor::AddPuncturedFace(FaceIdType id, int time, int chirality, const double pos[])
+{
+  // face
+  PuncturedFace pf;
+
+  pf.chirality = chirality;
+  memcpy(pf.pos, pos, sizeof(double)*3);
+
+  if (time == 0)
+    _punctured_faces[id] = pf;
+  else 
+    _punctured_faces1[id] = pf;
+}
+
+void VortexExtractor::AddPuncturedEdge(EdgeIdType id, int chirality, double t)
+{
+  // edge
+  PuncturedEdge pe;
+
+  pe.chirality = chirality;
+  pe.t = t;
+
+  _punctured_edges[id] = pe;
+}
+  
+bool VortexExtractor::FindSpaceTimeEdgeZero(const double re[], const double im[], double &t) const
+{
+  double p[2];
+  if (!find_zero_unit_quad_bilinear(re, im, p))
+    return false;
+
+  t = p[1];
+  return true;
+}
+
+void VortexExtractor::Trace()
+{
+  fprintf(stderr, "Tracing over time, #pf0=%ld, #pf1=%ld, #pe=%ld\n", 
+      _punctured_faces.size(), _punctured_faces1.size(), _punctured_edges.size());
+  const MeshGraph &mg = _dataset->MeshGraph();
+
+  for (std::map<FaceIdType, PuncturedFace>::iterator it = _punctured_faces.begin(); 
+       it != _punctured_faces.end(); it ++) 
+  {
+    fprintf(stderr, "fid=%u:\n", it->first);
+
+    std::vector<FaceIdType> related;
+    
+    std::list<FaceIdType> to_visit;
+    std::list<int> to_visit_chirality; // face chirality
+    std::list<double >to_visit_time;
+    std::set<FaceIdType> visited;
+
+    to_visit.push_back(it->first);
+    to_visit_chirality.push_back(it->second.chirality);
+    to_visit_time.push_back(0);
+
+    while (!to_visit.empty()) {
+      FaceIdType current = to_visit.front();
+      int current_chirality = to_visit_chirality.front();
+      double current_time = to_visit_time.front();
+
+      to_visit.pop_front();
+      to_visit_chirality.pop_front();
+      to_visit_time.pop_front();
+
+      visited.insert(current);
+
+      CFace *face = mg.faces[current];
+      for (int i=0; i<face->edges.size(); i++) {
+        // find punctured edges
+        CEdge *edge = face->edges[i];
+        EdgeIdType e = edge->id;
+        if (_punctured_edges.find(e) != _punctured_edges.end()) {
+          const PuncturedEdge& pe = _punctured_edges[e];
+          if (current_time >= pe.t) continue; // time ascending order
+          
+          int echirality = face->edges_chirality[i] * pe.chirality;
+          if (current_chirality == echirality) {
+            /// find neighbor faces who chontain this edge
+            // fprintf(stderr, "fid=%u, found edge eid=%u, t=%f\n", current, e, pe.t);
+            for (int j=0; j<edge->contained_faces.size(); j++) {
+              if (visited.find(edge->contained_faces[j]->id) == visited.end()) { // not found in visited faces
+                to_visit.push_back(edge->contained_faces[j]->id);
+                to_visit_chirality.push_back(edge->contained_faces_chirality[j] * current_chirality);
+                to_visit_time.push_back(pe.t);
+              }
+            }
+          }
+        }
+      }
+
+      if (_punctured_faces1.find(current) != _punctured_faces1.end() && 
+          _punctured_faces1[current].chirality == current_chirality) 
+      {
+        std::list<FaceIdType>::iterator it0 = to_visit.begin(); 
+        std::list<int>::iterator it1 = to_visit_chirality.begin();
+        std::list<double>::iterator it2 = to_visit_time.begin();
+
+        fprintf(stderr,"  {%u, %d, %f}->", it->first, it->second.chirality, 0.0);
+        for (int i=0; i<to_visit.size(); i++) {
+          fprintf(stderr, "{%u, %d, %f}->", *it0, *it1, *it2);
+          it0++; it1++; it2++;
+        }
+        fprintf(stderr, "{%u, %d, %f}\n", current, current_chirality, 1.0);
+        
+        related.push_back(current);
+      }
+    }
+
+#if 0
+    fprintf(stderr, "fid=%u, related={", it->first);
+    for (int i=0; i<related.size(); i++)
+      if (i<related.size()-1)
+        fprintf(stderr, "%u, ", related[i]);
+      else 
+        fprintf(stderr, "%u", related[i]);
+    fprintf(stderr, "}\n");
+#endif
+  }
+}
+
+#if 0
 void VortexExtractor::Trace()
 {
   fprintf(stderr, "tracing, #punctured_elems=%ld.\n", _punctured_elems.size());
@@ -216,37 +340,4 @@ bool VortexExtractor::ExtractElem(ElemIdType id)
     return false;
   }
 }
-
-void VortexExtractor::AddPuncturedFace(ElemIdType id, int f, int chirality, double pos[])
-{
-  if (id == UINT_MAX) return; // ignore
-
-  PuncturedElemMap::iterator it = _punctured_elems.find(id);
-  PuncturedElem *pelem;
-
-  if (it == _punctured_elems.end()) {
-    pelem = NewPuncturedElem(id);
-    _punctured_elems[id] = pelem;
-  } else {
-    pelem = it->second;
-  }
-
-  pelem->AddPuncturedFace(f, chirality, pos);
-}
-
-void VortexExtractor::AddPuncturedVirtualElemFace(FaceIdType id, int e, int chirality)
-{
-  if (id == UINT_MAX) return;
-
-  PuncturedElemMap::iterator it = _punctured_velems.find(id);
-  PuncturedElem *pelem;
-
-  if (it == _punctured_velems.end()) {
-    pelem = NewPuncturedVirtualElem(id);
-    _punctured_velems[id] = pelem;
-  } else {
-    pelem = it->second;
-  }
-
-  pelem->AddPuncturedFace(e, chirality, NULL);
-}
+#endif

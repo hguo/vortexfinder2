@@ -1,0 +1,18 @@
+message PBPuncturedFace {
+  required uint32 faceId = 1;
+  required int32 chirality = 2;
+  optional double x = 3;
+  optional double y = 4;
+  optional double z = 5;
+};
+
+message PBPuncturedEdge {
+  required uint32 edgeId = 1;
+  required int32 chirality = 2;
+  optional double t = 3;
+};
+
+message PBPuncturedElems {
+  repeated PBPuncturedFace faces = 1;
+  repeated PBPuncturedEdge edges = 2;
+};

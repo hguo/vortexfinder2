@@ -72,6 +72,32 @@ void MeshGraph::Clear()
     delete cells[i];
 }
 
+void MeshGraph::SerializeToString(std::string &str) const
+{
+  PBMeshGraph pmg;
+
+#if 0
+  for (int i=0; i<edges.size(); i++) {
+    PBEdge *pedge = pmg.add_edges();
+    pedge->set_node0( edges[i].node0 );
+    pedge->set_node1( edges[i].node1 );
+
+    for (int j=0; j<edges[i].contained_faces.size(); j++) {
+      pedge->add_contained_faces( edges[i].contained_faces[j] );
+      pedge->add_contained_faces_chirality ( edges[i].contained_faces_chirality[j] );
+      pedge->add_contained_faces_eid( edges[i].contained_faces_eid[j] );
+    }
+  }
+
+  for (int i=0; i<faces.size(); i++) {
+    PBFace *pface = pmg.add_faces();
+
+    for (int j=0; j<faces[i].nodes.size(); j++) 
+      pface->add_nodes(faces[i].nodes[j]);
+  }
+#endif
+}
+
 MeshGraphBuilder::MeshGraphBuilder(CellIdType n_cells, MeshGraph& mg)
   : _mg(mg)
 {
@@ -194,7 +220,7 @@ void MeshGraphBuilder_Tet::Build()
   for (std::map<FaceIdType3, CFace*>::const_iterator it = _face_map.begin(); 
        it != _face_map.end(); it ++) 
   {
-    // it->second->id = i ++;
+    it->second->id = i ++;
     _mg.faces.push_back(it->second);
   }
   _face_map.clear();
@@ -203,7 +229,7 @@ void MeshGraphBuilder_Tet::Build()
   for (std::map<EdgeIdType2, CEdge*>::const_iterator it = _edge_map.begin();
        it != _edge_map.end(); it ++)
   {
-    // it->second->id = j ++;
+    it->second->id = j ++;
     _mg.edges.push_back(it->second);
   }
   _edge_map.clear();

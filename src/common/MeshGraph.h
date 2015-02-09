@@ -19,6 +19,8 @@ FaceIdType3 AlternateFace(FaceIdType3 f, int rotation, int chirality);
 FaceIdType4 AlternateFace(FaceIdType4 f, int rotation, int chirality);
 
 struct CEdge {
+  EdgeIdType id;
+
   // nodes
   NodeIdType node0, node1;
 
@@ -29,6 +31,8 @@ struct CEdge {
 };
 
 struct CFace {
+  FaceIdType id;
+
   // nodes (ordered)
   std::vector<NodeIdType> nodes;
 
@@ -45,6 +49,8 @@ struct CFace {
 };
 
 struct CCell {
+  CellIdType id;
+
   // nodes (ordered)
   std::vector<NodeIdType> nodes;
 

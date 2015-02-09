@@ -17,49 +17,86 @@ Condor2VortexExtractor::~Condor2VortexExtractor()
 {
 }
 
-static int n_invalid = 0, 
-           n_pure = 0, 
-           n_self = 0;
-
 void Condor2VortexExtractor::Extract()
 {
-  _punctured_elems.clear(); 
+  const MeshGraph& mg = _dataset->MeshGraph();
 
-  const Condor2Dataset *ds = (const Condor2Dataset*)_dataset;
-
-#if 1
-  MeshBase::const_element_iterator it = ds->mesh()->active_local_elements_begin(); 
-  const MeshBase::const_element_iterator end = ds->mesh()->active_local_elements_end(); 
- 
-  for (; it!=end; it++) {
-    const Elem *elem = *it;
-    ExtractElem(elem->id());
+  for (FaceIdType i=0; i<mg.faces.size(); i++) {
+    ExtractFace(i, 0);
+    ExtractFace(i, 1);
   }
-#else
-#if 0
-  for (FaceIdType i=0; i<ds->mesh()->NrFaces(); i++) {
-    const Face *f = ds->mesh()->GetFace(i);
-    ExtractFace(f);
-    // ExtractFacePrism(f);
-  }
-#else
-  for (EdgeIdType i=0; i<ds->mesh()->NrEdges(); i++) {
-    const Edge *e = ds->mesh()->GetEdge(i);
-    ExtractSpaceTimeEdge(e);
-  }
-#endif
   
-  fprintf(stderr, "n_invalid=%d, n_pure=%d, n_self=%d\n", n_invalid, n_pure, n_self);
-#endif
+  for (EdgeIdType i=0; i<mg.edges.size(); i++) 
+    ExtractSpaceTimeEdge(i);
 }
 
-void Condor2VortexExtractor::ExtractFace(const Face* f)
+void Condor2VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
+{
+  const Condor2Dataset *ds = (const Condor2Dataset*)_dataset;
+  const CEdge* e = _dataset->MeshGraph().edges[id];
+
+  double X[4][3], A[4][3], re[3], im[3];
+  ds->GetSpaceTimeEdgeValues(e, X, A, re, im);
+
+  double rho[4], phi[4];
+  for (int i=0; i<4; i++) {
+    rho[i] = sqrt(re[i]*re[i] + im[i]*im[i]);
+    phi[i] = atan2(im[i], re[i]);
+  }
+
+  double delta[4] = {
+    phi[1] - phi[0],
+    phi[2] - phi[1], // no gauge transformation along the time axis
+    phi[3] - phi[2],
+    phi[0] - phi[3]
+  };
+
+  if (_gauge) {
+    delta[0] += _dataset->GaugeTransformation(X[0], X[1], A[0], A[1]);
+    delta[2] += _dataset->GaugeTransformation(X[1], X[0], A[2], A[3]);
+  }
+
+  for (int i=0; i<4; i++) 
+    delta[i] = mod2pi(delta[i] + M_PI) - M_PI;
+
+  // TODO: is it necessary to do line integral? 
+  
+  double phase_shift = -(delta[0] + delta[1] + delta[2] + delta[3]);
+  double critera = phase_shift / (2*M_PI);
+
+  int chirality;
+  if (critera > 0.5) chirality = 1; 
+  else if (critera < -0.5) chirality = -1;
+  else return;
+
+  // gauge transformation
+  if (_gauge) {
+    for (int i=1; i<4; i++) {
+      phi[i] = phi[i-1] + delta[i-1];
+      re[i] = rho[i] * cos(phi[i]); 
+      im[i] = rho[i] * sin(phi[i]);
+    }
+  }
+
+  // find zero
+  double t = 0;
+  if (FindSpaceTimeEdgeZero(re, im, t)) {
+    fprintf(stderr, "punctured edge: eid=%u, chirality=%d, t=%f\n", 
+        id, chirality, t);
+    AddPuncturedEdge(id, chirality, t);
+  } else {
+    fprintf(stderr, "WARNING: zero time not found.\n");
+  }
+}
+
+void Condor2VortexExtractor::ExtractFace(FaceIdType id, int time)
 {
   const Condor2Dataset *ds = (const Condor2Dataset*)_dataset;
   const int nnodes = ds->NrNodesPerFace();
+  const CFace* f = _dataset->MeshGraph().faces[id];
+  
   double X[3][3], A[3][3], re[3], im[3];
-
-  ds->GetFaceValues(f, X, A, re, im);
+  ds->GetFaceValues(f, time, X, A, re, im);
     
   // compute rho & phi
   double rho[nnodes], phi[nnodes];
@@ -98,32 +135,21 @@ void Condor2VortexExtractor::ExtractFace(const Face* f)
 
   // find zero
   double pos[3];
-  if (FindZero(X, re, im, pos)) {
-    AddPuncturedFace(f->elem_front, f->elem_face_front, chirality, pos);
-    AddPuncturedFace(f->elem_back, f->elem_face_back, -chirality, pos);
-    // fprintf(stderr, "punctured point p={%f, %f, %f}\n", pos[0], pos[1], pos[2]);
+  if (FindFaceZero(X, re, im, pos)) {
+    AddPuncturedFace(id, time, chirality, pos);
+    fprintf(stderr, "fid=%u, t=%d, p={%f, %f, %f}\n", id, time, pos[0], pos[1], pos[2]);
   } else {
     fprintf(stderr, "WARNING: punctured but singularity not found.\n");
   }
 }
 
-void Condor2VortexExtractor::ExtractSpaceTimeEdge(const Edge* e)
+bool Condor2VortexExtractor::FindFaceZero(const double X[][3], const double re[], const double im[], double pos[3]) const
 {
-  const Condor2Dataset *ds = (const Condor2Dataset*)_dataset;
-  double X[4][3], A[4][3], re[3], im[3];
-  
-  ds->GetSpaceTimeEdgeValues(e, X, A, re, im);
-
-  int chirality = CheckVirtualFace(X, A, re, im);
-
-  if (chirality != 0) {
-    // fprintf(stderr, "punctured edge: {%d, %d}, chirality=%d\n", 
-    //     e->node0, e->node1, chirality);
-    // TODO
-    // AddPuncturedVirtualElemFace();
-  }
+  // return find_zero_triangle(re, im, X, pos, 0.05);
+  return find_zero_triangle(re, im, X, pos, 0.05);
 }
 
+#if 0
 void Condor2VortexExtractor::ExtractFacePrism(const Face* f)
 {
   const Condor2Dataset *ds = (const Condor2Dataset*)_dataset;
@@ -208,77 +234,4 @@ int Condor2VortexExtractor::CheckFace(double X[3][3], double A[3][3], double re[
   else if (critera < -0.5) return -1;
   else return 0;
 }
-
-int Condor2VortexExtractor::CheckVirtualFace(double X[2][3], double A[4][3], double re[4], double im[4]) const
-{
-  double rho[4], phi[4];
-  for (int i=0; i<4; i++) {
-    rho[i] = sqrt(re[i]*re[i] + im[i]*im[i]);
-    phi[i] = atan2(im[i], re[i]);
-  }
-
-  double delta[4] = {
-    phi[1] - phi[0] + _dataset->GaugeTransformation(X[0], X[1], A[0], A[1]), // TODO: QP
-    phi[2] - phi[1], // no gauge transformation along the time axis
-    phi[3] - phi[2] + _dataset->GaugeTransformation(X[1], X[0], A[2], A[3]), 
-    phi[0] - phi[3]
-  };
-
-  for (int i=0; i<4; i++) 
-    delta[i] = mod2pi(delta[i] + M_PI) - M_PI;
-
-  // TODO: is it necessary to do line integral? 
-  
-  double phase_shift = -(delta[0] + delta[1] + delta[2] + delta[3]);
-  double critera = phase_shift / (2*M_PI);
-
-#if 1
-  if (fabs(critera)<0.5) return 0;
-
-  // gauge transformation
-  for (int i=1; i<4; i++) {
-    phi[i] = phi[i-1] + delta[i-1];
-    re[i] = rho[i] * cos(phi[i]); 
-    im[i] = rho[i] * sin(phi[i]);
-  }
-
-  // find zero
-  double p[2];
-  bool succ = find_zero_unit_quad_bilinear(re, im, p);
-  if (succ) {
-    double pos[3] = {
-      (1-p[0]) * X[0][0] + p[0] * X[1][0], 
-      (1-p[0]) * X[0][1] + p[0] * X[1][1], 
-      (1-p[0]) * X[0][2] + p[0] * X[1][2]}; 
-    fprintf(stderr, "X={%f, %f, %f}, t=%f\n", pos[0], pos[1], pos[2], p[1]);
-  } else {
-    fprintf(stderr, "zero not found.\n");
-  }
 #endif
-
-  if (critera > 0.5) return 1; 
-  else if (critera < -0.5) return -1;
-  else return 0;
-}
-
-PuncturedElem* Condor2VortexExtractor::NewPuncturedElem(ElemIdType id) const
-{
-  PuncturedElem *p = new PuncturedElemTet;
-  p->Init();
-  p->SetElemId(id);
-  return p;
-}
-
-PuncturedElem* Condor2VortexExtractor::NewPuncturedVirtualElem(FaceIdType id) const
-{
-  PuncturedElem *p = new PuncturedPrismTri;
-  p->Init();
-  p->SetElemId(id);
-  return p;
-}
-
-bool Condor2VortexExtractor::FindZero(const double X[][3], const double re[], const double im[], double pos[3]) const
-{
-  // return find_zero_triangle(re, im, X, pos, 0.05);
-  return find_zero_triangle(re, im, X, pos, 0.05);
-}

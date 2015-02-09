@@ -1,24 +1,29 @@
 #ifndef _PUNCTURE_H
 #define _PUNCTURE_H
 
-struct CPuncturedFace
+struct PuncturedFace
 {
-  CFace *face;
   int chirality;
-  std::vector<double> pos;
+  double pos[3];
+  
+  bool visited; 
+
+  PuncturedFace() : visited(false) {}
 };
 
-struct CPuncturedEdge
+struct PuncturedEdge
 {
-  CEdge *edge;
   int chirality; 
   double t; // punctured time
+  
+  bool visited; 
+
+  PuncturedEdge() : visited(false) {}
 };
 
 struct PuncturedElem
 {
-  CElem *elem;
-  std::vector<int> chiralities; // chiralities on faces
+  int chiralities[6]; // chiralities on faces
 };
 
 #endif

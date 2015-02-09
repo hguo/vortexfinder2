@@ -4,7 +4,6 @@
 #include <string>
 #include <map>
 #include "Extractor.h"
-#include "PuncturedElem.h"
 #include "io/Condor2Dataset.h"
 
 /* 
@@ -19,20 +18,16 @@ public:
   ~Condor2VortexExtractor();
 
   void Extract();
-  void ExtractFace(const Face*);
-  void ExtractFacePrism(const Face*);
-  void ExtractSpaceTimeEdge(const Edge*);
-
-  int CheckFace(double X[3][3], double A[3][3], double re[3], double im[3]) const; // returns chirality
-  int CheckVirtualFace(double X[2][3], double A[4][3], double re[4], double im[4]) const; // return chirality
 
 protected:
-  PuncturedElem* NewPuncturedElem(ElemIdType) const;
-  PuncturedElem* NewPuncturedVirtualElem(FaceIdType) const;
-  
-  bool FindZero(const double X[][3], const double re[], const double im[], double pos[3]) const;
+  void ExtractFace(FaceIdType, int time); // time=0 or 1
+  void ExtractSpaceTimeEdge(EdgeIdType);
+
+  int CheckFace(const double X[3][3], const double A[3][3], const double re[3], const double im[3], double pos[3]) const; // returns chirality
+  int CheckSpaceTimeEdge(const double X[2][3], const double A[4][3], const double re[4], const double im[4], double &t) const; // return chirality
 
 protected:
+  bool FindFaceZero(const double X[][3], const double re[], const double im[], double pos[3]) const;
 }; 
 
 #endif

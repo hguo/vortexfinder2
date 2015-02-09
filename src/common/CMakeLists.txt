@@ -9,6 +9,7 @@ set (common_protos
   DataInfo.proto
   VortexObject.proto
   FieldLine.proto
+  Puncture.proto
 )
 
 protobuf_generate_cpp (common_proto_sources common_proto_headers ${common_protos})

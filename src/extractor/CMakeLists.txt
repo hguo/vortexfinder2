@@ -1,6 +1,6 @@
 set (extractor_sources
   Extractor.cpp
-  GLGPUExtractor.cpp
+  # GLGPUExtractor.cpp
 )
 
 if (WITH_LIBMESH)
@@ -16,5 +16,5 @@ if (WITH_LIBMESH)
   target_link_libraries (extractor_condor2 glextractor)
 endif ()
 
-add_executable (extractor_glgpu ex_glgpu.cpp)
-target_link_libraries (extractor_glgpu glextractor)
+# add_executable (extractor_glgpu ex_glgpu.cpp)
+# target_link_libraries (extractor_glgpu glextractor)
