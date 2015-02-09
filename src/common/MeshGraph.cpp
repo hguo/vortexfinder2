@@ -79,13 +79,13 @@ void MeshGraph::SerializeToString(std::string &str) const
 #if 0
   for (int i=0; i<edges.size(); i++) {
     PBEdge *pedge = pmg.add_edges();
-    pedge->set_node0( edges[i].node0 );
-    pedge->set_node1( edges[i].node1 );
+    pedge->set_node0( edges[i]->node0 );
+    pedge->set_node1( edges[i]->node1 );
 
-    for (int j=0; j<edges[i].contained_faces.size(); j++) {
-      pedge->add_contained_faces( edges[i].contained_faces[j] );
-      pedge->add_contained_faces_chirality ( edges[i].contained_faces_chirality[j] );
-      pedge->add_contained_faces_eid( edges[i].contained_faces_eid[j] );
+    for (int j=0; j<edges[i]->contained_faces.size(); j++) {
+      pedge->add_contained_faces( edges[i]->contained_faces[j]->id );
+      pedge->add_contained_faces_chirality( edges[i]->contained_faces_chirality[j] );
+      pedge->add_contained_faces_eid( edges[i]->contained_faces_eid[j] );
     }
   }
 
@@ -93,7 +93,11 @@ void MeshGraph::SerializeToString(std::string &str) const
     PBFace *pface = pmg.add_faces();
 
     for (int j=0; j<faces[i].nodes.size(); j++) 
-      pface->add_nodes(faces[i].nodes[j]);
+      pface->add_nodes(faces[i]->nodes[j]);
+
+    for (int j=0; j<faces[i].edges.size(); j++) {
+      pface->add_edges(faces[i]->edges[j]->id);
+    }
   }
 #endif
 }

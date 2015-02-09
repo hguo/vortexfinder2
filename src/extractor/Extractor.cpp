@@ -111,7 +111,7 @@ void VortexExtractor::Trace()
           int echirality = face->edges_chirality[i] * pe.chirality;
           if (current_chirality == echirality) {
             /// find neighbor faces who chontain this edge
-            // fprintf(stderr, "fid=%u, found edge eid=%u, t=%f\n", current, e, pe.t);
+            // fprintf(stderr, "--fid=%u, found edge eid=%u, t=%f\n", current, e, pe.t);
             for (int j=0; j<edge->contained_faces.size(); j++) {
               if (visited.find(edge->contained_faces[j]->id) == visited.end()) { // not found in visited faces
                 to_visit.push_back(edge->contained_faces[j]->id);
@@ -130,12 +130,12 @@ void VortexExtractor::Trace()
         std::list<int>::iterator it1 = to_visit_chirality.begin();
         std::list<double>::iterator it2 = to_visit_time.begin();
 
-        fprintf(stderr,"  {%u, %d, %f}->", it->first, it->second.chirality, 0.0);
+        fprintf(stderr,"  {%u, %.2f}->", it->first, 0.0);
         for (int i=0; i<to_visit.size(); i++) {
-          fprintf(stderr, "{%u, %d, %f}->", *it0, *it1, *it2);
+          fprintf(stderr, "{%u, %.2f}->", *it0, *it2);
           it0++; it1++; it2++;
         }
-        fprintf(stderr, "{%u, %d, %f}\n", current, current_chirality, 1.0);
+        fprintf(stderr, "{%u, %.2f}\n", current, 1.0);
         
         related.push_back(current);
       }
