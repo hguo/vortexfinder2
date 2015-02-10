@@ -21,13 +21,23 @@ void Condor2VortexExtractor::Extract()
 {
   const MeshGraph& mg = _dataset->MeshGraph();
 
-  for (FaceIdType i=0; i<mg.faces.size(); i++) {
-    ExtractFace(i, 0);
-    ExtractFace(i, 1);
+  if (!LoadPuncturedFaces()) {
+    for (FaceIdType i=0; i<mg.faces.size(); i++) 
+      ExtractFace(i, 0);
+    SavePuncturedFaces();
   }
-  
-  for (EdgeIdType i=0; i<mg.edges.size(); i++) 
-    ExtractSpaceTimeEdge(i);
+ 
+  if (!LoadPuncturedFaces1()) {
+    for (FaceIdType i=0; i<mg.faces.size(); i++) 
+      ExtractFace(i, 1);
+    SavePuncturedFaces1();
+  }
+ 
+  if (!LoadPuncturedEdges()) {
+    for (EdgeIdType i=0; i<mg.edges.size(); i++) 
+      ExtractSpaceTimeEdge(i);
+    SavePuncturedEdges();
+  }
 }
 
 void Condor2VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)

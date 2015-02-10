@@ -21,6 +21,14 @@ public:
 
   void WriteVortexObjects(const std::string& filename); 
 
+  bool SavePuncturedEdges() const;
+  bool SavePuncturedFaces() const; 
+  bool SavePuncturedFaces1() const; 
+  bool LoadPuncturedEdges();
+  bool LoadPuncturedFaces();
+  bool LoadPuncturedFaces1();
+  void ClearPuncturedObjects();
+
 protected:
   void AddPuncturedFace(FaceIdType, int time, int chirality, const double pos[3]);
   void AddPuncturedEdge(EdgeIdType, int chirality, double t);

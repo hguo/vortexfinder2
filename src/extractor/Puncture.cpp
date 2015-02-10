@@ -82,6 +82,7 @@ bool UnserializePuncturedEdges(std::map<EdgeIdType, PuncturedEdge> &m, const std
   PBPuncturedEdges pedges;
   if (!pedges.ParseFromString(buf)) return false;
 
+  m.clear();
   for (int i=0; i<pedges.edges_size(); i++) {
     PuncturedEdge edge;
     edge.chirality = pedges.edges(i).chirality();

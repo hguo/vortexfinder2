@@ -2,6 +2,7 @@
 #include "common/Utils.hpp"
 #include "io/GLDataset.h"
 #include <set>
+#include <cstdlib>
 #include <cassert>
 
 VortexExtractor::VortexExtractor() :
@@ -29,6 +30,64 @@ void VortexExtractor::SetGaugeTransformation(bool g)
 void VortexExtractor::WriteVortexObjects(const std::string& filename)
 {
   ::WriteVortexObjects(filename, _vortex_objects); 
+}
+
+void VortexExtractor::ClearPuncturedObjects()
+{
+  _punctured_edges.clear();
+  _punctured_faces.clear();
+  _punctured_faces1.clear();
+}
+
+bool VortexExtractor::SavePuncturedEdges() const
+{
+  const GLDataset *ds = _dataset;
+  std::ostringstream os; 
+  os << ds->DataName() << ".pe." << ds->TimeStep() << "." << ds->TimeStep1();
+  return ::SavePuncturedEdges(_punctured_edges, os.str());
+}
+
+bool VortexExtractor::SavePuncturedFaces() const
+{
+  const GLDataset *ds = _dataset;
+  std::ostringstream os; 
+  os << ds->DataName() << ".pf." << ds->TimeStep();
+  fprintf(stderr, "pf_filename=%s\n", os.str().c_str());
+  return ::SavePuncturedFaces(_punctured_faces, os.str());
+}
+
+bool VortexExtractor::SavePuncturedFaces1() const
+{
+  const GLDataset *ds = _dataset;
+  std::ostringstream os; 
+  os << ds->DataName() << ".pf." << ds->TimeStep1();
+  return ::SavePuncturedFaces(_punctured_faces1, os.str());
+}
+
+bool VortexExtractor::LoadPuncturedEdges()
+{
+  const GLDataset *ds = _dataset;
+  std::ostringstream os; 
+  os << ds->DataName() << ".pe." << ds->TimeStep() << "." << ds->TimeStep1();
+  return ::LoadPuncturedEdges(_punctured_edges, os.str());
+}
+
+bool VortexExtractor::LoadPuncturedFaces()
+{
+  const GLDataset *ds = _dataset;
+  std::ostringstream os; 
+  os << ds->DataName() << ".pf." << ds->TimeStep();
+  fprintf(stderr, "loading punctured faces %s\n", os.str().c_str());
+  return ::LoadPuncturedFaces(_punctured_faces, os.str());
+}
+
+bool VortexExtractor::LoadPuncturedFaces1()
+{
+  const GLDataset *ds = _dataset;
+  std::ostringstream os; 
+  os << ds->DataName() << ".pf." << ds->TimeStep1();
+  fprintf(stderr, "loading punctured faces %s\n", os.str().c_str());
+  return ::LoadPuncturedFaces(_punctured_faces1, os.str());
 }
 
 void VortexExtractor::AddPuncturedFace(FaceIdType id, int time, int chirality, const double pos[])

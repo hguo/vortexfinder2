@@ -22,8 +22,9 @@ public:
   int NrNodesPerFace() const {return 3;}
 
 public: 
-  bool OpenDataFile(const std::string& filename); 
-  void LoadTimeStep(int timestep);
+  bool OpenDataFile(const std::string& filename);
+  void SetTimeStep(int);
+  void LoadCurrentTimeStep();
   void LoadNextTimeStep(int span=1);
   void CloseDataFile();
 
@@ -67,6 +68,7 @@ public:
 
 private: 
   void ProbeBoundingBox();
+  void LoadTimeStep(int timestep);
 
 private:
   const libMesh::Elem* LocateElemCoherently(const double X[3]) const; // not thread-safe

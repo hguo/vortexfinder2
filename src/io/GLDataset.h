@@ -22,6 +22,8 @@ public: // data I/O
   virtual void LoadNextTimeStep(int span=1);
   virtual void CloseDataFile();
 
+  std::string DataName() const {return _data_name;}
+
 public: // mesh info
   virtual int Dimensions() const = 0;
   virtual int NrFacesPerCell() const = 0;
