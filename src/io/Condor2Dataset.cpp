@@ -171,7 +171,6 @@ void Condor2Dataset::ProbeBoundingBox()
 void Condor2Dataset::LoadTimeStep(int timestep)
 {
   assert(_exio != NULL); 
-  _timestep = timestep;
 
   fprintf(stderr, "copying nodal solution, timestep=%d\n", timestep);
 
