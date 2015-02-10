@@ -45,6 +45,26 @@ void GLDataset::CloseDataFile()
   // no impl
 }
 
+bool GLDataset::LoadDefaultMeshGraph()
+{
+  return LoadMeshGraph(_data_name + ".mg");
+}
+
+bool GLDataset::LoadMeshGraph(const std::string& filename)
+{
+  return _mg.ParseFromFile(filename);
+}
+
+void GLDataset::SaveDefaultMeshGraph()
+{
+  SaveMeshGraph(_data_name + ".mg");
+}
+
+void GLDataset::SaveMeshGraph(const std::string& filename)
+{
+  _mg.SerializeToFile(filename);
+}
+
 double GLDataset::GaugeTransformation(const double X0[], const double X1[], const double A0[], const double A1[]) const
 {
   // \int dl * (Kx^hat - A(l))

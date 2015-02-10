@@ -98,7 +98,13 @@ void Condor2Dataset::CloseDataFile()
 
 void Condor2Dataset::BuildMeshGraph()
 {
-  fprintf(stderr, "building mesh graph..\n");
+  fprintf(stderr, "initializing mesh graph..\n");
+  if (LoadDefaultMeshGraph()) {
+    fprintf(stderr, "loaded default mesh graph:\n");
+    fprintf(stderr, "#node=%u, #edge=%lu, #face=%lu, #cell=%lu\n", 
+        _mesh->n_nodes(), _mg.edges.size(), _mg.faces.size(), _mg.cells.size());
+    return;
+  }
 
   MeshGraphBuilder_Tet *builder = new MeshGraphBuilder_Tet(_mg);
   
@@ -132,6 +138,9 @@ void Condor2Dataset::BuildMeshGraph()
   fprintf(stderr, "mesh graph built..\n");
   fprintf(stderr, "#node=%u, #edge=%lu, #face=%lu, #cell=%lu\n", 
       _mesh->n_nodes(), _mg.edges.size(), _mg.faces.size(), _mg.cells.size());
+
+  // SaveDefaultMeshGraph();
+  // fprintf(stderr, "mesh graph saved.\n");
 }
 
 void Condor2Dataset::ProbeBoundingBox()

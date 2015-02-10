@@ -1,5 +1,6 @@
 #include "MeshGraph.h"
 #include "MeshGraph.pb.h"
+#include <google/protobuf/io/coded_stream.h> // for parsing large message
 #include <cassert>
 
 EdgeIdType2 AlternateEdge(EdgeIdType2 e, int chirality)
@@ -62,22 +63,24 @@ MeshGraph::~MeshGraph()
 
 void MeshGraph::Clear()
 {
+  edges.clear();
+  faces.clear();
+  cells.clear();
 }
 
 void MeshGraph::SerializeToString(std::string &str) const
 {
   PBMeshGraph pmg;
 
-#if 0
   for (int i=0; i<edges.size(); i++) {
     PBEdge *pedge = pmg.add_edges();
-    pedge->set_node0( edges[i]->node0 );
-    pedge->set_node1( edges[i]->node1 );
+    pedge->set_node0( edges[i].node0 );
+    pedge->set_node1( edges[i].node1 );
 
-    for (int j=0; j<edges[i]->contained_faces.size(); j++) {
-      pedge->add_contained_faces( edges[i]->contained_faces[j]->id );
-      pedge->add_contained_faces_chirality( edges[i]->contained_faces_chirality[j] );
-      pedge->add_contained_faces_eid( edges[i]->contained_faces_eid[j] );
+    for (int j=0; j<edges[i].contained_faces.size(); j++) {
+      pedge->add_contained_faces( edges[i].contained_faces[j] );
+      pedge->add_contained_faces_chirality( edges[i].contained_faces_chirality[j] );
+      pedge->add_contained_faces_eid( edges[i].contained_faces_eid[j] );
     }
   }
 
@@ -85,13 +88,123 @@ void MeshGraph::SerializeToString(std::string &str) const
     PBFace *pface = pmg.add_faces();
 
     for (int j=0; j<faces[i].nodes.size(); j++) 
-      pface->add_nodes(faces[i]->nodes[j]);
+      pface->add_nodes(faces[i].nodes[j]);
 
     for (int j=0; j<faces[i].edges.size(); j++) {
-      pface->add_edges(faces[i]->edges[j]->id);
+      pface->add_edges(faces[i].edges[j]);
+    }
+
+    pface->set_contained_cell0(faces[i].contained_cell0);
+    pface->set_contained_cell0_fid(faces[i].contained_cell0_fid);
+    pface->set_contained_cell1(faces[i].contained_cell1);
+    pface->set_contained_cell1_fid(faces[i].contained_cell1_fid);
+  }
+
+  for (int i=0; i<cells.size(); i++) {
+    PBCell *pcell = pmg.add_cells();
+
+    for (int j=0; j<cells[i].nodes.size(); j++)
+      pcell->add_nodes(cells[i].nodes[j]);
+
+    for (int j=0; j<cells[i].faces.size(); j++) {
+      pcell->add_faces(cells[i].faces[j]);
+      pcell->add_faces_chirality(cells[i].faces_chirality[j]);
+      pcell->add_neighbor_cells(cells[i].neighbor_cells[j]);
     }
   }
-#endif
+
+  pmg.SerializeToString(&str);
+}
+
+bool MeshGraph::ParseFromString(const std::string& str)
+{
+  PBMeshGraph pmg;
+
+  google::protobuf::io::CodedInputStream stream((uint8_t*)str.data(), str.size());
+  stream.SetTotalBytesLimit(INT_MAX, INT_MAX/2);
+  // if (!pmg.ParseFromCodedStream(&stream)) 
+  if (!pmg.MergeFromCodedStream(&stream)) 
+    return false;
+
+  Clear();
+
+  for (int i=0; i<pmg.edges_size(); i++) {
+    PBEdge pedge = pmg.edges(i);
+    CEdge edge;
+
+    edge.node0 = pedge.node0();
+    edge.node1 = pedge.node1();
+
+    for (int j=0; j<pedge.contained_faces_size(); j++) {
+      edge.contained_faces.push_back( pedge.contained_faces(j) );
+      edge.contained_faces_chirality.push_back( pedge.contained_faces_chirality(j) );
+      edge.contained_faces_eid.push_back( pedge.contained_faces_eid(j) );
+    }
+
+    edges.push_back(edge);
+  }
+
+  for (int i=0; i<pmg.faces_size(); i++) {
+    PBFace pface = pmg.faces(i);
+    CFace face;
+
+    for (int j=0; j<pface.nodes_size(); j++)
+      face.nodes.push_back( pface.nodes(j) );
+
+    for (int j=0; j<pface.edges_size(); j++) 
+      face.edges.push_back( pface.edges(j) );
+
+    face.contained_cell0 = pface.contained_cell0();
+    face.contained_cell0_fid = pface.contained_cell0_fid();
+    face.contained_cell1 = pface.contained_cell1();
+    face.contained_cell1_fid = pface.contained_cell1_fid();
+  }
+
+  for (int i=0; i<pmg.cells_size(); i++) {
+    PBCell pcell = pmg.cells(i); 
+    CCell cell;
+  
+    for (int j=0; j<pcell.nodes_size(); j++)
+      cell.nodes.push_back( pcell.nodes(j) );
+
+    for (int j=0; j<pcell.faces_size(); j++) {
+      cell.faces.push_back( pcell.faces(j) );
+      cell.faces_chirality.push_back( pcell.faces_chirality(j) );
+    }
+
+    for (int j=0; j<pcell.neighbor_cells_size(); j++)
+      cell.neighbor_cells.push_back( pcell.neighbor_cells(j) );
+  }
+
+  return true;
+}
+
+void MeshGraph::SerializeToFile(const std::string& filename) const
+{
+  FILE *fp = fopen(filename.c_str(), "wb");
+
+  std::string buf;
+  SerializeToString(buf);
+  fwrite(buf.data(), 1, buf.size(), fp);
+
+  fclose(fp);
+}
+
+bool MeshGraph::ParseFromFile(const std::string& filename)
+{
+  FILE *fp = fopen(filename.c_str(), "rb"); 
+  if (!fp) return false;
+
+  fseek(fp, 0L, SEEK_END);
+  size_t sz = ftell(fp);
+
+  std::string buf;
+  buf.resize(sz);
+  fseek(fp, 0L, SEEK_SET);
+  size_t sz1 = fread((char*)buf.data(), 1, sz, fp);
+  fclose(fp);
+
+  return ParseFromString(buf);
 }
 
 MeshGraphBuilder::MeshGraphBuilder(MeshGraph& mg)
@@ -213,27 +326,3 @@ CellIdType MeshGraphBuilder_Tet::AddCell(
   _mg.cells.push_back(cell);
   return c;
 }
-
-#if 0
-void MeshGraphBuilder_Tet::Build()
-{
-  // reorganize to vector
-  FaceIdType i = 0;
-  for (std::map<FaceIdType3, CFace*>::const_iterator it = _face_map.begin(); 
-       it != _face_map.end(); it ++) 
-  {
-    it->second->id = i ++;
-    _mg.faces.push_back(it->second);
-  }
-  _face_map.clear();
-
-  EdgeIdType j = 0;
-  for (std::map<EdgeIdType2, CEdge*>::const_iterator it = _edge_map.begin();
-       it != _edge_map.end(); it ++)
-  {
-    it->second->id = j ++;
-    _mg.edges.push_back(it->second);
-  }
-  _edge_map.clear();
-}
-#endif

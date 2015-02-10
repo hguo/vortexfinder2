@@ -14,9 +14,9 @@ typedef std::tuple<NodeIdType, NodeIdType> EdgeIdType2;
 typedef std::tuple<NodeIdType, NodeIdType, NodeIdType> FaceIdType3;
 typedef std::tuple<NodeIdType, NodeIdType, NodeIdType, NodeIdType> FaceIdType4;
 
-EdgeIdType2 AlternateEdge(EdgeIdType2 e, int chirality);
-FaceIdType3 AlternateFace(FaceIdType3 f, int rotation, int chirality);
-FaceIdType4 AlternateFace(FaceIdType4 f, int rotation, int chirality);
+EdgeIdType2 AlternateEdge(EdgeIdType2 e2, int chirality);
+FaceIdType3 AlternateFace(FaceIdType3 f3, int rotation, int chirality);
+FaceIdType4 AlternateFace(FaceIdType4 f4, int rotation, int chirality);
 
 struct CEdge {
   // nodes
@@ -65,7 +65,10 @@ struct MeshGraph {
 
   void Clear();
   void SerializeToString(std::string &str) const;
-  void ParseFromString(const std::string &str);
+  bool ParseFromString(const std::string &str);
+
+  void SerializeToFile(const std::string& filename) const;
+  bool ParseFromFile(const std::string& filename);
 };
 
 

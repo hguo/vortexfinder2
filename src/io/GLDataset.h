@@ -26,7 +26,11 @@ public: // mesh info
   virtual int Dimensions() const = 0;
   virtual int NrFacesPerCell() const = 0;
   virtual int NrNodesPerFace() const = 0;
-  
+
+  bool LoadMeshGraph(const std::string& filename);
+  bool LoadDefaultMeshGraph();
+  void SaveMeshGraph(const std::string& filename);
+  void SaveDefaultMeshGraph();
   virtual void BuildMeshGraph() = 0;
 
   const MeshGraph& MeshGraph() const {return _mg;}
