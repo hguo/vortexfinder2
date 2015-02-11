@@ -26,6 +26,12 @@ struct CEdge {
   std::vector<FaceIdType> contained_faces;
   std::vector<int> contained_faces_chirality;
   std::vector<int> contained_faces_eid; // the edge id in the corresponding face
+
+  CEdge() {
+    contained_faces.reserve(12);
+    contained_faces_chirality.reserve(12);
+    contained_faces_eid.reserve(12);
+  }
 };
 
 struct CFace {
@@ -42,6 +48,11 @@ struct CFace {
 
   // utils
   // bool on_boundary() const {return contained_cell0 == NULL || contained_cell1 == NULL;}
+  CFace() {
+    nodes.reserve(3);
+    edges.reserve(6);
+    edges_chirality.reserve(6);
+  }
 };
 
 struct CCell {
@@ -54,6 +65,13 @@ struct CCell {
 
   // neighbor cells (ordered)
   std::vector<CellIdType> neighbor_cells;
+
+  CCell() {
+    nodes.reserve(4);
+    faces.reserve(4);
+    faces_chirality.reserve(4);
+    neighbor_cells.reserve(4);
+  }
 };
 
 struct MeshGraph {

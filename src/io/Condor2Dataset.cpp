@@ -61,6 +61,7 @@ bool Condor2Dataset::OpenDataFile(const std::string& filename)
   _mesh->allow_renumbering(false); 
   _mesh->prepare_for_use();
 
+  /// mesh graph
   BuildMeshGraph();
 
   /// equation systems
@@ -139,8 +140,8 @@ void Condor2Dataset::BuildMeshGraph()
   fprintf(stderr, "#node=%u, #edge=%lu, #face=%lu, #cell=%lu\n", 
       _mesh->n_nodes(), _mg.edges.size(), _mg.faces.size(), _mg.cells.size());
 
-  // SaveDefaultMeshGraph();
-  // fprintf(stderr, "mesh graph saved.\n");
+  SaveDefaultMeshGraph();
+  fprintf(stderr, "mesh graph saved.\n");
 }
 
 void Condor2Dataset::ProbeBoundingBox()

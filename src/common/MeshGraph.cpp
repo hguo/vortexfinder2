@@ -158,6 +158,8 @@ bool MeshGraph::ParseFromString(const std::string& str)
     face.contained_cell0_fid = pface.contained_cell0_fid();
     face.contained_cell1 = pface.contained_cell1();
     face.contained_cell1_fid = pface.contained_cell1_fid();
+
+    faces.push_back(face);
   }
 
   for (int i=0; i<pmg.cells_size(); i++) {
@@ -174,6 +176,8 @@ bool MeshGraph::ParseFromString(const std::string& str)
 
     for (int j=0; j<pcell.neighbor_cells_size(); j++)
       cell.neighbor_cells.push_back( pcell.neighbor_cells(j) );
+
+    cells.push_back(cell);
   }
 
   return true;
