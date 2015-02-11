@@ -92,6 +92,7 @@ void MeshGraph::SerializeToString(std::string &str) const
 
     for (int j=0; j<faces[i].edges.size(); j++) {
       pface->add_edges(faces[i].edges[j]);
+      pface->add_edges_chirality(faces[i].edges_chirality[j]);
     }
 
     pface->set_contained_cell0(faces[i].contained_cell0);
@@ -151,8 +152,10 @@ bool MeshGraph::ParseFromString(const std::string& str)
     for (int j=0; j<pface.nodes_size(); j++)
       face.nodes.push_back( pface.nodes(j) );
 
-    for (int j=0; j<pface.edges_size(); j++) 
+    for (int j=0; j<pface.edges_size(); j++) {
       face.edges.push_back( pface.edges(j) );
+      face.edges_chirality.push_back( pface.edges_chirality(j) );
+    }
 
     face.contained_cell0 = pface.contained_cell0();
     face.contained_cell0_fid = pface.contained_cell0_fid();
