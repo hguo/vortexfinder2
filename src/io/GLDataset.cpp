@@ -8,7 +8,6 @@
 GLDataset::GLDataset() : 
   _Kex(0), _Kex_dot(0), _fluctuation_amp(0), 
   _V(0), _Jxext(0),
-  _timestep(-1), _timestep1(-1), 
   _valid(false)
 {
   memset(_origins, 0, sizeof(double)*3); 
@@ -35,17 +34,6 @@ void GLDataset::LoadCurrentTimeStep()
   LoadTimeStep(_timestep);
 }
 
-void GLDataset::SetTimeStep(int t)
-{
-  _timestep = t;
-}
-
-void GLDataset::SetTimeSteps(int t0, int t1)
-{
-  _timestep = t0;
-  _timestep1 = t1;
-}
-
 void GLDataset::LoadTimeStep(int)
 {
   // no impl
@@ -59,26 +47,6 @@ void GLDataset::LoadNextTimeStep(int)
 void GLDataset::CloseDataFile()
 {
   // no impl
-}
-
-bool GLDataset::LoadDefaultMeshGraph()
-{
-  return LoadMeshGraph(_data_name + ".mg");
-}
-
-bool GLDataset::LoadMeshGraph(const std::string& filename)
-{
-  return _mg.ParseFromFile(filename);
-}
-
-void GLDataset::SaveDefaultMeshGraph()
-{
-  SaveMeshGraph(_data_name + ".mg");
-}
-
-void GLDataset::SaveMeshGraph(const std::string& filename)
-{
-  _mg.SerializeToFile(filename);
 }
 
 double GLDataset::GaugeTransformation(const double X0[], const double X1[], const double A0[], const double A1[]) const

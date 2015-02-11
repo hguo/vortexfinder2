@@ -62,8 +62,8 @@ void Condor2VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
   };
 
   if (_gauge) {
-    delta[0] += _dataset->GaugeTransformation(X[0], X[1], A[0], A[1]);
-    delta[2] += _dataset->GaugeTransformation(X[1], X[0], A[2], A[3]);
+    delta[0] += ds->GaugeTransformation(X[0], X[1], A[0], A[1]);
+    delta[2] += ds->GaugeTransformation(X[1], X[0], A[2], A[3]);
   }
 
   for (int i=0; i<4; i++) 
@@ -121,10 +121,10 @@ void Condor2VortexExtractor::ExtractFace(FaceIdType id, int time)
     int j = (i+1) % nnodes;
     delta[i] = phi[j] - phi[i]; 
     if (_gauge) 
-      delta[i] += _dataset->GaugeTransformation(X[i], X[j], A[i], A[j]) + _dataset->QP(X[i], X[j]); 
+      delta[i] += ds->GaugeTransformation(X[i], X[j], A[i], A[j]) + ds->QP(X[i], X[j]); 
     delta[i] = mod2pi(delta[i] + M_PI) - M_PI;
     phase_shift -= delta[i];
-    phase_shift -= _dataset->LineIntegral(X[i], X[j], A[i], A[j]);
+    phase_shift -= ds->LineIntegral(X[i], X[j], A[i], A[j]);
   }
 
   // check if punctured

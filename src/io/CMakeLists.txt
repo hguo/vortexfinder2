@@ -2,6 +2,7 @@ set (io_sources
   BDATReader.cpp
   GLGPUDataset.cpp
   GLDataset.cpp
+  GLDatasetBase.cpp
 )
   
 if (WITH_LIBMESH)

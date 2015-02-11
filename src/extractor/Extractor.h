@@ -7,16 +7,19 @@
 #include <map>
 
 class GLDataset;
+class GLDatasetBase;
 
 class VortexExtractor {
 public: 
   VortexExtractor(); 
   ~VortexExtractor(); 
 
-  virtual void SetDataset(const GLDataset* ds);
   void SetGaugeTransformation(bool); 
+  
+  virtual void SetDataset(const GLDatasetBase* ds);
+  const GLDataset* Dataset() const {return (GLDataset*)_dataset;}
 
-  virtual void Extract() = 0; 
+  virtual void Extract() {}; 
   void Trace();
 
   void WriteVortexObjects(const std::string& filename); 
@@ -33,7 +36,7 @@ protected:
   void AddPuncturedFace(FaceIdType, int time, int chirality, const double pos[3]);
   void AddPuncturedEdge(EdgeIdType, int chirality, double t);
 
-  virtual bool FindFaceZero(const double X[][3], const double re[], const double im[], double pos[3]) const = 0;
+  virtual bool FindFaceZero(const double X[][3], const double re[], const double im[], double pos[3]) const {return false;}
   bool FindSpaceTimeEdgeZero(const double re[], const double im[], double &t) const;
 
 protected:
@@ -45,7 +48,7 @@ protected:
   bool _gauge; 
 
 protected:
-  const GLDataset *_dataset;
+  const GLDatasetBase *_dataset;
 }; 
 
 #endif

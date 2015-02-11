@@ -1,12 +1,9 @@
 #ifndef _GLDATASET_H
 #define _GLDATASET_H
 
-#include <string>
-#include <vector>
-#include "def.h"
-#include "common/MeshGraph.h"
+#include "GLDatasetBase.h"
 
-class GLDataset 
+class GLDataset : public GLDatasetBase
 {
 public: 
   GLDataset(); 
@@ -20,12 +17,8 @@ public: // data I/O
   virtual bool OpenDataFile(const std::string& filename); 
   virtual void CloseDataFile();
  
-  void SetTimeStep(int);
-  void SetTimeSteps(int, int);
   virtual void LoadCurrentTimeStep();
   virtual void LoadNextTimeStep(int span=1);
-
-  std::string DataName() const {return _data_name;}
   
 private:
   virtual void LoadTimeStep(int timestep);
@@ -35,13 +28,7 @@ public: // mesh info
   virtual int NrFacesPerCell() const = 0;
   virtual int NrNodesPerFace() const = 0;
 
-  bool LoadMeshGraph(const std::string& filename);
-  bool LoadDefaultMeshGraph();
-  void SaveMeshGraph(const std::string& filename);
-  void SaveDefaultMeshGraph();
   virtual void BuildMeshGraph() = 0;
-
-  const MeshGraph& MeshGraph() const {return _mg;}
 
 public: // mesh utils
   virtual void GetFaceValues(const CFace&, int time, double X[][3], double A[][3], double re[], double im[]) const = 0;
@@ -59,9 +46,6 @@ public: // transformations and utils
   virtual double QP(const double X0[], const double X1[]) const;
 
 public: // properties
-  int TimeStep() const {return _timestep;}
-  int TimeStep1() const {return _timestep1;}
-
   // Voltage
   double V() const {return _V;}
 
@@ -85,14 +69,8 @@ public: // properties
   // Supercurrent field
   virtual bool Supercurrent(const double X[3], double J[3]) const = 0;
 
-protected: // mesh graph
-  struct MeshGraph _mg;
-
 protected:
-  int _timestep, _timestep1; 
   std::vector<double> _time_stamps; 
-
-  std::string _data_name;
 
   double _origins[3]; 
   double _lengths[3];

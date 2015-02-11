@@ -17,7 +17,7 @@ VortexExtractor::~VortexExtractor()
 
 }
 
-void VortexExtractor::SetDataset(const GLDataset* ds)
+void VortexExtractor::SetDataset(const GLDatasetBase* ds)
 {
   _dataset = ds;
 }
@@ -41,7 +41,7 @@ void VortexExtractor::ClearPuncturedObjects()
 
 bool VortexExtractor::SavePuncturedEdges() const
 {
-  const GLDataset *ds = _dataset;
+  const GLDatasetBase *ds = _dataset;
   std::ostringstream os; 
   os << ds->DataName() << ".pe." << ds->TimeStep() << "." << ds->TimeStep1();
   return ::SavePuncturedEdges(_punctured_edges, os.str());
@@ -49,7 +49,7 @@ bool VortexExtractor::SavePuncturedEdges() const
 
 bool VortexExtractor::SavePuncturedFaces() const
 {
-  const GLDataset *ds = _dataset;
+  const GLDatasetBase *ds = _dataset;
   std::ostringstream os; 
   os << ds->DataName() << ".pf." << ds->TimeStep();
   fprintf(stderr, "pf_filename=%s\n", os.str().c_str());
@@ -58,7 +58,7 @@ bool VortexExtractor::SavePuncturedFaces() const
 
 bool VortexExtractor::SavePuncturedFaces1() const
 {
-  const GLDataset *ds = _dataset;
+  const GLDatasetBase *ds = _dataset;
   std::ostringstream os; 
   os << ds->DataName() << ".pf." << ds->TimeStep1();
   return ::SavePuncturedFaces(_punctured_faces1, os.str());
@@ -66,7 +66,7 @@ bool VortexExtractor::SavePuncturedFaces1() const
 
 bool VortexExtractor::LoadPuncturedEdges()
 {
-  const GLDataset *ds = _dataset;
+  const GLDatasetBase *ds = _dataset;
   std::ostringstream os; 
   os << ds->DataName() << ".pe." << ds->TimeStep() << "." << ds->TimeStep1();
   return ::LoadPuncturedEdges(_punctured_edges, os.str());
@@ -74,19 +74,17 @@ bool VortexExtractor::LoadPuncturedEdges()
 
 bool VortexExtractor::LoadPuncturedFaces()
 {
-  const GLDataset *ds = _dataset;
+  const GLDatasetBase *ds = _dataset;
   std::ostringstream os; 
   os << ds->DataName() << ".pf." << ds->TimeStep();
-  fprintf(stderr, "loading punctured faces %s\n", os.str().c_str());
   return ::LoadPuncturedFaces(_punctured_faces, os.str());
 }
 
 bool VortexExtractor::LoadPuncturedFaces1()
 {
-  const GLDataset *ds = _dataset;
+  const GLDatasetBase *ds = _dataset;
   std::ostringstream os; 
   os << ds->DataName() << ".pf." << ds->TimeStep1();
-  fprintf(stderr, "loading punctured faces %s\n", os.str().c_str());
   return ::LoadPuncturedFaces(_punctured_faces1, os.str());
 }
 
