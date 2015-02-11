@@ -75,13 +75,11 @@ To show help information, run the command without arguments:
 $ ./extractor_condor2
 FATAL: input filename not given.
 USAGE:
-./extractor_condor2 -i <input_filename> [-o output_filename] [--nogauge] [-t=<t>] [-T=<T>] [-Kx=<Kx>] [-Bx=<Bx>] [-By=<By>] [-Bz=<Bz>]
+./extractor_condor2 -i <input_filename> [-o output_filename] [--nogauge] [-t=<t>] [-T=<T>]
 
   --verbose   verbose output
   --benchmark Enable benchmark
   --nogauge   Disable gauge transformation
-  --Kx        Kx
-  --B*        Magnetic field
   -t          Starting time step for the analysis
   -T          Number of time step for the analysis
 ```

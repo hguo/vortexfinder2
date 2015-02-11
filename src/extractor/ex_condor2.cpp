@@ -17,7 +17,6 @@ static struct option longopts[] = {
   {"benchmark", no_argument, &benchmark, 1}, 
   {"input", required_argument, 0, 'i'},
   {"output", required_argument, 0, 'o'},
-  {"Kx", required_argument, 0, 'k'}, 
   {"t", required_argument, 0, 't'}, 
   {"T", required_argument, 0, 'T'}, 
   {0, 0, 0, 0} 
@@ -72,12 +71,11 @@ static bool parse_arg(int argc, char **argv)
 static void print_help(int argc, char **argv)
 {
   fprintf(stderr, "USAGE:\n");
-  fprintf(stderr, "%s -i <input_filename> [-o output_filename] [--nogauge] [-t=<t>] [-T=<T>] [-Kx=<Kx>] [-Bx=<Bx>] [-By=<By>] [-Bz=<Bz>]\n", argv[0]);
+  fprintf(stderr, "%s -i <input_filename> [-o output_filename] [--nogauge] [-t=<t>] [-T=<T>]\n", argv[0]);
   fprintf(stderr, "\n");
   fprintf(stderr, "\t--verbose   verbose output\n"); 
   fprintf(stderr, "\t--benchmark Enable benchmark\n"); 
   fprintf(stderr, "\t--nogauge   Disable gauge transformation\n"); 
-  fprintf(stderr, "\t--Kx        Kx\n");
   fprintf(stderr, "\t-t          Starting time step for the analysis\n"); 
   fprintf(stderr, "\t-T          Number of time step for the analysis\n"); 
   fprintf(stderr, "\n");
@@ -94,7 +92,7 @@ int main(int argc, char **argv)
   libMesh::LibMeshInit init(1, argv); // set argc to 1 to supress PETSc warnings. 
  
   Condor2Dataset ds(init.comm()); 
-  ds.SetKex(Kex);
+  ds.SetKex(0);
   ds.PrintInfo();
   
   ds.OpenDataFile(filename_in);
