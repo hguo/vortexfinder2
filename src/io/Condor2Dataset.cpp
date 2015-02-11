@@ -136,7 +136,8 @@ void Condor2Dataset::LoadTimeStep(int timestep)
 
   _tsolution = _tsys->solution->clone();
   _asolution = _asys->solution->clone();
-  
+ 
+#if 0
   // next time step
   fprintf(stderr, "copying nodal solution, timestep=%d\n", timestep+1);
   
@@ -148,6 +149,7 @@ void Condor2Dataset::LoadTimeStep(int timestep)
 
   _tsolution1 = _tsys->solution->clone();
   _asolution1 = _asys->solution->clone();
+#endif
   
   fprintf(stderr, "solutions copied.\n");
 }
