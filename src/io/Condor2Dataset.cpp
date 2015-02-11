@@ -184,16 +184,6 @@ void Condor2Dataset::LoadTimeStep(int timestep)
   _as = _asys->solution->clone();
 }
 
-void Condor2Dataset::SetTimeStep(int t)
-{
-  _timestep = t;
-}
-
-void Condor2Dataset::LoadCurrentTimeStep()
-{
-  LoadTimeStep(_timestep);
-}
-
 void Condor2Dataset::LoadNextTimeStep(int span)
 {
   _timestep1 = _timestep + span;

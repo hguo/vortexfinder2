@@ -138,44 +138,49 @@ void VortexExtractor::Trace()
 
     std::vector<FaceIdType> related;
     
-    std::list<FaceIdType> to_visit;
-    std::list<int> to_visit_chirality; // face chirality
-    std::list<double >to_visit_time;
-    std::set<FaceIdType> visited;
+    std::list<FaceIdType> faces_to_visit;
+    std::list<int> faces_to_visit_chirality; // face chirality
+    std::list<double> faces_to_visit_time;
+    std::set<FaceIdType> faces_visited;
+    std::set<EdgeIdType> edges_visited;
 
-    to_visit.push_back(it->first);
-    to_visit_chirality.push_back(it->second.chirality);
-    to_visit_time.push_back(0);
+    faces_to_visit.push_back(it->first);
+    faces_to_visit_chirality.push_back(it->second.chirality);
+    faces_to_visit_time.push_back(0);
 
-    while (!to_visit.empty()) {
-      FaceIdType current = to_visit.front();
-      int current_chirality = to_visit_chirality.front();
-      double current_time = to_visit_time.front();
+    while (!faces_to_visit.empty()) {
+      FaceIdType current = faces_to_visit.front();
+      int current_chirality = faces_to_visit_chirality.front();
+      double current_time = faces_to_visit_time.front();
 
-      to_visit.pop_front();
-      to_visit_chirality.pop_front();
-      to_visit_time.pop_front();
+      faces_to_visit.pop_front();
+      faces_to_visit_chirality.pop_front();
+      faces_to_visit_time.pop_front();
 
-      visited.insert(current);
+      faces_visited.insert(current);
 
       const CFace &face = mg.faces[current];
       for (int i=0; i<face.edges.size(); i++) {
         // find punctured edges
         EdgeIdType e = face.edges[i];
-        if (_punctured_edges.find(e) != _punctured_edges.end()) {
+        if (_punctured_edges.find(e) != _punctured_edges.end() && 
+            edges_visited.find(e) == edges_visited.end())
+        {
+          edges_visited.insert(e);
+          
           const CEdge &edge = mg.edges[e];
           const PuncturedEdge& pe = _punctured_edges[e];
-          if (current_time >= pe.t) continue; // time ascending order
+          // if (current_time >= pe.t) continue; // time ascending order
           
           int echirality = face.edges_chirality[i] * pe.chirality;
           if (current_chirality == echirality) {
             /// find neighbor faces who chontain this edge
-            // fprintf(stderr, "--fid=%u, found edge eid=%u, t=%f\n", current, e, pe.t);
+            fprintf(stderr, "--fid=%u, found edge eid=%u, t=%f\n", current, e, pe.t);
             for (int j=0; j<edge.contained_faces.size(); j++) {
-              if (visited.find(edge.contained_faces[j]) == visited.end()) { // not found in visited faces
-                to_visit.push_back(edge.contained_faces[j]);
-                to_visit_chirality.push_back(edge.contained_faces_chirality[j] * current_chirality);
-                to_visit_time.push_back(pe.t);
+              if (faces_visited.find(edge.contained_faces[j]) == faces_visited.end()) { // not found in visited faces
+                faces_to_visit.push_back(edge.contained_faces[j]);
+                faces_to_visit_chirality.push_back(edge.contained_faces_chirality[j] * current_chirality);
+                faces_to_visit_time.push_back(pe.t);
               }
             }
           }
@@ -185,16 +190,18 @@ void VortexExtractor::Trace()
       if (_punctured_faces1.find(current) != _punctured_faces1.end() && 
           _punctured_faces1[current].chirality == current_chirality) 
       {
-        std::list<FaceIdType>::iterator it0 = to_visit.begin(); 
-        std::list<int>::iterator it1 = to_visit_chirality.begin();
-        std::list<double>::iterator it2 = to_visit_time.begin();
+#if 1
+        std::list<FaceIdType>::iterator it0 = faces_to_visit.begin(); 
+        std::list<int>::iterator it1 = faces_to_visit_chirality.begin();
+        std::list<double>::iterator it2 = faces_to_visit_time.begin();
 
         fprintf(stderr,"  {%u, %.2f}->", it->first, 0.0);
-        for (int i=0; i<to_visit.size(); i++) {
+        for (int i=0; i<faces_to_visit.size(); i++) {
           fprintf(stderr, "{%u, %.2f}->", *it0, *it2);
           it0++; it1++; it2++;
         }
         fprintf(stderr, "{%u, %.2f}\n", current, 1.0);
+#endif
         
         related.push_back(current);
       }

@@ -112,9 +112,9 @@ int main(int argc, char **argv)
     fprintf(stderr, "Analyzing timestep %d...\n", t); 
     
     double t0 = (double)clock() / CLOCKS_PER_SEC; 
-    ds.SetTimeStep(t);
-    ds.LoadCurrentTimeStep();
-    ds.LoadNextTimeStep();
+    ds.SetTimeSteps(t, t+1);
+    // ds.LoadCurrentTimeStep();
+    // ds.LoadNextTimeStep();
     double t1 = (double)clock() / CLOCKS_PER_SEC; 
     extractor.Extract();
     double t2 = (double)clock() / CLOCKS_PER_SEC; 

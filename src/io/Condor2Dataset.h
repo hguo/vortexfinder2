@@ -23,8 +23,6 @@ public:
 
 public: 
   bool OpenDataFile(const std::string& filename);
-  void SetTimeStep(int);
-  void LoadCurrentTimeStep();
   void LoadNextTimeStep(int span=1);
   void CloseDataFile();
 

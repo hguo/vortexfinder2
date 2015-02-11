@@ -30,6 +30,22 @@ bool GLDataset::OpenDataFile(const std::string& filename)
   return false;
 }
 
+void GLDataset::LoadCurrentTimeStep()
+{
+  LoadTimeStep(_timestep);
+}
+
+void GLDataset::SetTimeStep(int t)
+{
+  _timestep = t;
+}
+
+void GLDataset::SetTimeSteps(int t0, int t1)
+{
+  _timestep = t0;
+  _timestep1 = t1;
+}
+
 void GLDataset::LoadTimeStep(int)
 {
   // no impl
