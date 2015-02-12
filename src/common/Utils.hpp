@@ -11,6 +11,12 @@ inline static T mod2pi(T x)
   return y; 
 }
 
+template <typename T>
+inline static T mod2pi1(T x)
+{
+  return mod2pi(x + M_PI) - M_PI;
+}
+
 template <typename T> int sgn(T x) {
   return (T(0) < x) - (x < T(0));
 }
