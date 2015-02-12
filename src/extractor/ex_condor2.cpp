@@ -113,8 +113,8 @@ int main(int argc, char **argv)
     
     double t0 = (double)clock() / CLOCKS_PER_SEC; 
     ds.SetTimeSteps(t, t+1);
-    // ds.LoadCurrentTimeStep();
-    // ds.LoadNextTimeStep();
+    ds.LoadCurrentTimeStep();
+    ds.LoadNextTimeStep();
     double t1 = (double)clock() / CLOCKS_PER_SEC; 
     extractor.Extract();
     double t2 = (double)clock() / CLOCKS_PER_SEC; 

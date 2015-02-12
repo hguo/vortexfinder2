@@ -132,7 +132,7 @@ void VortexExtractor::Trace()
   for (std::map<FaceIdType, PuncturedFace>::iterator it = _punctured_faces.begin(); 
        it != _punctured_faces.end(); it ++) 
   {
-    fprintf(stderr, "fid=%u:\n", it->first);
+    // fprintf(stderr, "fid=%u\n", it->first);
 
     std::vector<FaceIdType> related;
     
@@ -141,12 +141,16 @@ void VortexExtractor::Trace()
     std::list<double> faces_to_visit_time;
     std::set<FaceIdType> faces_visited;
     std::set<EdgeIdType> edges_visited;
-
+    
     faces_to_visit.push_back(it->first);
     faces_to_visit_chirality.push_back(it->second.chirality);
     faces_to_visit_time.push_back(0);
+      
+    std::map<FaceIdType, FaceIdType> parent_map;
+    std::map<FaceIdType, std::tuple<EdgeIdType, double> > parent_edge_map;
 
     while (!faces_to_visit.empty()) {
+
       FaceIdType current = faces_to_visit.front();
       int current_chirality = faces_to_visit_chirality.front();
       double current_time = faces_to_visit_time.front();
@@ -157,6 +161,40 @@ void VortexExtractor::Trace()
 
       faces_visited.insert(current);
 
+      if (_punctured_faces1.find(current) != _punctured_faces1.end() && 
+          _punctured_faces1[current].chirality == current_chirality) 
+      {
+        related.push_back(current);
+
+        std::list<FaceIdType> history_faces;
+        std::list<std::tuple<EdgeIdType, double> > history_edges;
+
+        history_faces.push_back(current);
+        std::map<FaceIdType, FaceIdType>::iterator it = parent_map.find(current);
+        while (it != parent_map.end()) {
+          history_edges.push_front(parent_edge_map[it->first]);
+          history_faces.push_front(it->second);
+          it = parent_map.find(it->second);
+        }
+
+        if (history_faces.size() > 1) {
+          int i=0;
+          std::list<std::tuple<EdgeIdType, double> >::iterator it1 = history_edges.begin();
+          for (std::list<FaceIdType>::iterator it = history_faces.begin(); 
+               it != history_faces.end(); it ++) 
+          {
+            if (i<history_faces.size()-1) 
+              fprintf(stderr, "%u->(%u, %.2f)->", *it, std::get<0>(*it1), std::get<1>(*it1));
+            else 
+              fprintf(stderr, "%u\n", *it);
+            i++;
+            it1++;
+          }
+        }
+      }
+
+
+      // add neighbors
       const CFace &face = mg.faces[current];
       for (int i=0; i<face.edges.size(); i++) {
         // find punctured edges
@@ -168,51 +206,37 @@ void VortexExtractor::Trace()
           
           const CEdge &edge = mg.edges[e];
           const PuncturedEdge& pe = _punctured_edges[e];
-          // if (current_time >= pe.t) continue; // time ascending order
+          if (current_time > pe.t) continue; // time ascending order
           
           int echirality = face.edges_chirality[i] * pe.chirality;
           if (current_chirality == echirality) {
             /// find neighbor faces who chontain this edge
-            fprintf(stderr, "--fid=%u, found edge eid=%u, t=%f\n", current, e, pe.t);
+            // fprintf(stderr, "--fid=%u, found edge eid=%u, t=%f\n", current, e, pe.t);
             for (int j=0; j<edge.contained_faces.size(); j++) {
               if (faces_visited.find(edge.contained_faces[j]) == faces_visited.end()) { // not found in visited faces
-                faces_to_visit.push_back(edge.contained_faces[j]);
-                faces_to_visit_chirality.push_back(edge.contained_faces_chirality[j] * current_chirality);
-                faces_to_visit_time.push_back(pe.t);
+                faces_to_visit.push_front(edge.contained_faces[j]);
+                faces_to_visit_chirality.push_front(edge.contained_faces_chirality[j] * current_chirality);
+                faces_to_visit_time.push_front(pe.t);
+                parent_map[edge.contained_faces[j]] = current;
+                parent_edge_map[edge.contained_faces[j]] = std::make_tuple(e, pe.t);
               }
             }
           }
         }
       }
-
-      if (_punctured_faces1.find(current) != _punctured_faces1.end() && 
-          _punctured_faces1[current].chirality == current_chirality) 
-      {
-#if 1
-        std::list<FaceIdType>::iterator it0 = faces_to_visit.begin(); 
-        std::list<int>::iterator it1 = faces_to_visit_chirality.begin();
-        std::list<double>::iterator it2 = faces_to_visit_time.begin();
-
-        fprintf(stderr,"  {%u, %.2f}->", it->first, 0.0);
-        for (int i=0; i<faces_to_visit.size(); i++) {
-          fprintf(stderr, "{%u, %.2f}->", *it0, *it2);
-          it0++; it1++; it2++;
-        }
-        fprintf(stderr, "{%u, %.2f}\n", current, 1.0);
-#endif
-        
-        related.push_back(current);
-      }
     }
 
-#if 0
-    fprintf(stderr, "fid=%u, related={", it->first);
-    for (int i=0; i<related.size(); i++)
-      if (i<related.size()-1)
-        fprintf(stderr, "%u, ", related[i]);
-      else 
-        fprintf(stderr, "%u", related[i]);
-    fprintf(stderr, "}\n");
+#if 1
+    // non-ordinary
+    if (!(related.size() == 1 && it->first == related[0])) {
+      fprintf(stderr, "fid=%u, related={", it->first);
+      for (int i=0; i<related.size(); i++)
+        if (i<related.size()-1)
+          fprintf(stderr, "%u, ", related[i]);
+        else 
+          fprintf(stderr, "%u", related[i]);
+      fprintf(stderr, "}\n");
+    }
 #endif
   }
 }
