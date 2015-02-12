@@ -25,11 +25,9 @@ public:
   void WriteVortexObjects(const std::string& filename); 
 
   bool SavePuncturedEdges() const;
-  bool SavePuncturedFaces() const; 
-  bool SavePuncturedFaces1() const; 
   bool LoadPuncturedEdges();
-  bool LoadPuncturedFaces();
-  bool LoadPuncturedFaces1();
+  bool SavePuncturedFaces(int time) const; 
+  bool LoadPuncturedFaces(int time);
   void ClearPuncturedObjects();
 
 protected:
@@ -42,6 +40,7 @@ protected:
 protected:
   std::map<FaceIdType, PuncturedFace> _punctured_faces, _punctured_faces1; 
   std::map<EdgeIdType, PuncturedEdge> _punctured_edges;
+  std::map<FaceIdType, PuncturedCell> _punctured_cells, _punctured_vcells;
 
   std::vector<VortexObject> _vortex_objects;
   

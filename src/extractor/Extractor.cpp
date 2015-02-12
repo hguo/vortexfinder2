@@ -47,21 +47,13 @@ bool VortexExtractor::SavePuncturedEdges() const
   return ::SavePuncturedEdges(_punctured_edges, os.str());
 }
 
-bool VortexExtractor::SavePuncturedFaces() const
+bool VortexExtractor::SavePuncturedFaces(int time) const
 {
   const GLDatasetBase *ds = _dataset;
   std::ostringstream os; 
-  os << ds->DataName() << ".pf." << ds->TimeStep();
-  fprintf(stderr, "pf_filename=%s\n", os.str().c_str());
+  os << ds->DataName() << ".pf." << 
+    (time == 0 ? ds->TimeStep() : ds->TimeStep1());
   return ::SavePuncturedFaces(_punctured_faces, os.str());
-}
-
-bool VortexExtractor::SavePuncturedFaces1() const
-{
-  const GLDatasetBase *ds = _dataset;
-  std::ostringstream os; 
-  os << ds->DataName() << ".pf." << ds->TimeStep1();
-  return ::SavePuncturedFaces(_punctured_faces1, os.str());
 }
 
 bool VortexExtractor::LoadPuncturedEdges()
@@ -69,23 +61,43 @@ bool VortexExtractor::LoadPuncturedEdges()
   const GLDatasetBase *ds = _dataset;
   std::ostringstream os; 
   os << ds->DataName() << ".pe." << ds->TimeStep() << "." << ds->TimeStep1();
-  return ::LoadPuncturedEdges(_punctured_edges, os.str());
+  
+  if (!::LoadPuncturedEdges(_punctured_edges, os.str())) return false;
+
+  const MeshGraph &mg = _dataset->MeshGraph();
+  for (std::map<EdgeIdType, PuncturedEdge>::iterator it = _punctured_edges.begin(); it != _punctured_edges.end(); it ++) {
+    CEdge edge = mg.edges[it->first];
+    for (int i=0; i<edge.contained_faces.size(); i++) {
+      int echirality = edge.contained_faces_chirality[i];
+      PuncturedCell vc = _punctured_vcells[edge.contained_faces[i]];
+      vc.chiralities[i+2] = it->second.chirality * echirality;
+      _punctured_vcells[edge.contained_faces[i]] = vc;
+    }
+  }
+
+  return true;
 }
 
-bool VortexExtractor::LoadPuncturedFaces()
+bool VortexExtractor::LoadPuncturedFaces(int time)
 {
   const GLDatasetBase *ds = _dataset;
   std::ostringstream os; 
-  os << ds->DataName() << ".pf." << ds->TimeStep();
-  return ::LoadPuncturedFaces(_punctured_faces, os.str());
-}
+  os << ds->DataName() << ".pf." << 
+    (time == 0 ? ds->TimeStep() : ds->TimeStep1());
+  std::map<FaceIdType, PuncturedFace> &m = time == 0 ? _punctured_faces : _punctured_faces1;
 
-bool VortexExtractor::LoadPuncturedFaces1()
-{
-  const GLDatasetBase *ds = _dataset;
-  std::ostringstream os; 
-  os << ds->DataName() << ".pf." << ds->TimeStep1();
-  return ::LoadPuncturedFaces(_punctured_faces1, os.str());
+  if (!::LoadPuncturedFaces(m, os.str())) return false;
+
+  for (std::map<FaceIdType, PuncturedFace>::iterator it = m.begin(); it != m.end(); it ++) {
+    PuncturedCell vc = _punctured_vcells[it->first];
+    if (time == 0) 
+      vc.chiralities[0] = -it->second.chirality;
+    else 
+      vc.chiralities[1] = it->second.chirality;
+    _punctured_vcells[it->first] = vc;
+  }
+
+  return true;
 }
 
 void VortexExtractor::AddPuncturedFace(FaceIdType id, int time, int chirality, const double pos[])
@@ -100,6 +112,14 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int time, int chirality, c
     _punctured_faces[id] = pf;
   else 
     _punctured_faces1[id] = pf;
+
+  // vface
+  PuncturedCell vc = _punctured_vcells[id];
+  if (time == 0)
+    vc.chiralities[0] = -chirality;
+  else 
+    vc.chiralities[1] = chirality;
+  _punctured_vcells[id] = vc;
 }
 
 void VortexExtractor::AddPuncturedEdge(EdgeIdType id, int chirality, double t)
@@ -111,6 +131,16 @@ void VortexExtractor::AddPuncturedEdge(EdgeIdType id, int chirality, double t)
   pe.t = t;
 
   _punctured_edges[id] = pe;
+
+  // vface
+  const MeshGraph &mg = _dataset->MeshGraph();
+  CEdge edge = mg.edges[id];
+  for (int i=0; i<edge.contained_faces.size(); i++) {
+    int echirality = edge.contained_faces_chirality[i];
+    PuncturedCell vc = _punctured_vcells[edge.contained_faces[i]];
+    vc.chiralities[i+2] = chirality * echirality;
+    _punctured_vcells[edge.contained_faces[i]] = vc;
+  }
 }
   
 bool VortexExtractor::FindSpaceTimeEdgeZero(const double re[], const double im[], double &t) const
@@ -125,6 +155,19 @@ bool VortexExtractor::FindSpaceTimeEdgeZero(const double re[], const double im[]
 
 void VortexExtractor::Trace()
 {
+#if 0
+  for (std::map<FaceIdType, PuncturedCell>::iterator it = _punctured_vcells.begin(); it != _punctured_vcells.end(); it ++) 
+  {
+    fprintf(stderr, "%d\t%d\t%d\t%d\t%d\n", 
+        it->second.chiralities[0],
+        it->second.chiralities[1],
+        it->second.chiralities[2],
+        it->second.chiralities[3],
+        it->second.chiralities[4]);
+  }
+  return;
+#endif
+
   fprintf(stderr, "Tracing over time, #pf0=%ld, #pf1=%ld, #pe=%ld\n", 
       _punctured_faces.size(), _punctured_faces1.size(), _punctured_edges.size());
   const MeshGraph &mg = _dataset->MeshGraph();
@@ -150,7 +193,6 @@ void VortexExtractor::Trace()
     std::map<FaceIdType, std::tuple<EdgeIdType, double> > parent_edge_map;
 
     while (!faces_to_visit.empty()) {
-
       FaceIdType current = faces_to_visit.front();
       int current_chirality = faces_to_visit_chirality.front();
       double current_time = faces_to_visit_time.front();
@@ -206,7 +248,7 @@ void VortexExtractor::Trace()
           
           const CEdge &edge = mg.edges[e];
           const PuncturedEdge& pe = _punctured_edges[e];
-          if (current_time > pe.t) continue; // time ascending order
+          if (current_time >= pe.t) continue; // time ascending order
           
           int echirality = face.edges_chirality[i] * pe.chirality;
           if (current_chirality == echirality) {

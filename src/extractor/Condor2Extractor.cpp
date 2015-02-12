@@ -21,16 +21,16 @@ void Condor2VortexExtractor::Extract()
 {
   const MeshGraph& mg = _dataset->MeshGraph();
 
-  if (!LoadPuncturedFaces()) {
+  if (!LoadPuncturedFaces(0)) {
     for (FaceIdType i=0; i<mg.faces.size(); i++) 
       ExtractFace(i, 0);
-    SavePuncturedFaces();
+    SavePuncturedFaces(0);
   }
  
-  if (!LoadPuncturedFaces1()) {
+  if (!LoadPuncturedFaces(1)) {
     for (FaceIdType i=0; i<mg.faces.size(); i++) 
       ExtractFace(i, 1);
-    SavePuncturedFaces1();
+    SavePuncturedFaces(1);
   }
  
   if (!LoadPuncturedEdges()) {
