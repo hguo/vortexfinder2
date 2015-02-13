@@ -26,7 +26,7 @@ void Condor2VortexExtractor::Extract()
       ExtractFace(i, 0);
     SavePuncturedFaces(0);
   }
- 
+
   if (!LoadPuncturedFaces(1)) {
     for (FaceIdType i=0; i<mg.faces.size(); i++) 
       ExtractFace(i, 1);
@@ -54,23 +54,20 @@ void Condor2VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
     phi[i] = atan2(im[i], re[i]);
   }
 
+  double li[4] = {
+    ds->LineIntegral(X[0], X[1], A[0], A[1]), 0, 
+    ds->LineIntegral(X[1], X[0], A[2], A[3]), 0};
   double delta[4] = {
     phi[1] - phi[0],
-    phi[2] - phi[1], // no gauge transformation along the time axis
+    phi[2] - phi[1],
     phi[3] - phi[2],
     phi[0] - phi[3]
   };
 
-  if (_gauge) {
-    delta[0] -= ds->LineIntegral(X[0], X[1], A[0], A[1]);
-    delta[2] -= ds->LineIntegral(X[1], X[0], A[2], A[3]);
-  }
-
   for (int i=0; i<4; i++) 
-    delta[i] = mod2pi(delta[i] + M_PI) - M_PI;
+    if (_gauge) delta[i] = mod2pi1(delta[i] - li[i]);
+    else delta[i] = mod2pi1(delta[i]);
 
-  // TODO: is it necessary to do line integral? 
-  
   double phase_shift = -(delta[0] + delta[1] + delta[2] + delta[3]);
   double critera = phase_shift / (2*M_PI);
 
@@ -102,7 +99,8 @@ void Condor2VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
 void Condor2VortexExtractor::ExtractFace(FaceIdType id, int time)
 {
   const Condor2Dataset *ds = (const Condor2Dataset*)_dataset;
-  const int nnodes = ds->NrNodesPerFace();
+  // const int nnodes = ds->NrNodesPerFace();
+  const int nnodes = 3; 
   const CFace& f = _dataset->MeshGraph().faces[id];
   
   double X[3][3], A[3][3], re[3], im[3];
@@ -136,17 +134,31 @@ void Condor2VortexExtractor::ExtractFace(FaceIdType id, int time)
   int chirality = critera>0 ? 1 : -1;
 
   // gauge transformation
+  // fprintf(stderr, "re={%f, %f, %f}, im={%f, %f, %f}\n", 
+  //     re[0], re[1], re[2], im[0], im[1], im[2]);
+  double re1[nnodes], im1[nnodes];
+  memcpy(re1, re, sizeof(double)*nnodes);
+  memcpy(im1, im, sizeof(double)*nnodes);
+  double phi1[] = {phi[0], phi[0]+delta[0], phi[0]+delta[0]+delta[1]};
+
   if (_gauge) { 
-    for (int i=1; i<nnodes; i++) {
-      phi[i] = phi[i-1] + delta[i-1];
-      re[i] = rho[i] * cos(phi[i]); 
-      im[i] = rho[i] * sin(phi[i]);
+    for (int i=0; i<nnodes; i++) {
+      // phi[i] = phi[i-1] + delta[i-1];
+      re1[i] = rho[i] * cos(phi1[i]); 
+      im1[i] = rho[i] * sin(phi1[i]);
     }
   }
+#if 0
+  fprintf(stderr, "phi={%f, %f, %f}, phi1={%f, %f, %f}\n",
+      phi[0], phi[1], phi[2], phi1[0], phi1[1], phi1[2]);
+  fprintf(stderr, "re={%f, %f, %f}, im={%f, %f, %f}, re0={%f, %f, %f}, im1={%f, %f, %f}\n",
+      re[0], re[1], re[2], im[0], im[1], im[2],
+      re1[0], re1[1], re1[2], im1[0], im1[1], im1[2]);
+#endif
 
   // find zero
   double pos[3];
-  if (FindFaceZero(X, re, im, pos)) {
+  if (FindFaceZero(X, re1, im1, pos)) {
     AddPuncturedFace(id, time, chirality, pos);
     fprintf(stderr, "fid=%u, t=%d, p={%f, %f, %f}\n", id, time, pos[0], pos[1], pos[2]);
   } else {

@@ -23,6 +23,7 @@ int main(int argc, char **argv)
 
   fprintf(stderr, "tracing..\n");
   extractor->Trace();
+  extractor->TraceVirtualCells();
 
   delete extractor;
   delete ds; 

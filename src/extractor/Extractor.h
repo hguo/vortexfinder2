@@ -30,6 +30,8 @@ public:
   bool LoadPuncturedFaces(int time);
   void ClearPuncturedObjects();
 
+  void TraceVirtualCells();
+
 protected:
   void AddPuncturedFace(FaceIdType, int time, int chirality, const double pos[3]);
   void AddPuncturedEdge(EdgeIdType, int chirality, double t);

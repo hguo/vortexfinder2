@@ -119,6 +119,7 @@ int main(int argc, char **argv)
     extractor.Extract();
     double t2 = (double)clock() / CLOCKS_PER_SEC; 
     extractor.Trace(); 
+    // extractor.TraceVirtualCells(); 
     double t3 = (double)clock() / CLOCKS_PER_SEC; 
     extractor.WriteVortexObjects(filename_out); 
 

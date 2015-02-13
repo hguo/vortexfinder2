@@ -113,13 +113,25 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int time, int chirality, c
   else 
     _punctured_faces1[id] = pf;
 
-  // vface
+  // vcell
   PuncturedCell vc = _punctured_vcells[id];
   if (time == 0)
     vc.chiralities[0] = -chirality;
   else 
     vc.chiralities[1] = chirality;
   _punctured_vcells[id] = vc;
+
+  // cell
+#if 0
+  const MeshGraph &mg = _dataset->MeshGraph();
+  CFace face = mg.faces[id];
+  for (int i=0; i<face.contained_cells.size(); i++) {
+    int fchirality = face.contained_cells_chirality[i];
+    PuncturedCell c = _punctured_cells[face.contained_cells[i]];
+    vc.chiralities[i] = chirality * fchirality;
+    _punctured_cells[face.contained_cells[i]] = c;
+  }
+#endif
 }
 
 void VortexExtractor::AddPuncturedEdge(EdgeIdType id, int chirality, double t)
@@ -138,7 +150,8 @@ void VortexExtractor::AddPuncturedEdge(EdgeIdType id, int chirality, double t)
   for (int i=0; i<edge.contained_faces.size(); i++) {
     int echirality = edge.contained_faces_chirality[i];
     PuncturedCell vc = _punctured_vcells[edge.contained_faces[i]];
-    vc.chiralities[i+2] = chirality * echirality;
+    int eid = edge.contained_faces_eid[i]; 
+    vc.chiralities[eid+2] = chirality * echirality; 
     _punctured_vcells[edge.contained_faces[i]] = vc;
   }
 }
@@ -155,19 +168,6 @@ bool VortexExtractor::FindSpaceTimeEdgeZero(const double re[], const double im[]
 
 void VortexExtractor::Trace()
 {
-#if 0
-  for (std::map<FaceIdType, PuncturedCell>::iterator it = _punctured_vcells.begin(); it != _punctured_vcells.end(); it ++) 
-  {
-    fprintf(stderr, "%d\t%d\t%d\t%d\t%d\n", 
-        it->second.chiralities[0],
-        it->second.chiralities[1],
-        it->second.chiralities[2],
-        it->second.chiralities[3],
-        it->second.chiralities[4]);
-  }
-  return;
-#endif
-
   fprintf(stderr, "Tracing over time, #pf0=%ld, #pf1=%ld, #pe=%ld\n", 
       _punctured_faces.size(), _punctured_faces1.size(), _punctured_edges.size());
   const MeshGraph &mg = _dataset->MeshGraph();
@@ -268,7 +268,7 @@ void VortexExtractor::Trace()
       }
     }
 
-#if 1
+#if 0
     // non-ordinary
     if (!(related.size() == 1 && it->first == related[0])) {
       fprintf(stderr, "fid=%u, related={", it->first);
@@ -281,6 +281,38 @@ void VortexExtractor::Trace()
     }
 #endif
   }
+}
+
+void VortexExtractor::TraceVirtualCells()
+{
+  int n_self = 0, n_pure = 0, n_cross = 0, n_invalid = 0;
+  for (std::map<FaceIdType, PuncturedCell>::iterator it = _punctured_vcells.begin(); it != _punctured_vcells.end(); it ++) 
+  {
+    int c[5]; 
+    memcpy(c, it->second.chiralities, sizeof(int)*5);
+    
+    bool punctured = c[0] || c[1] || c[2] || c[3] || c[4];
+    bool pure = punctured && !c[0] && !c[1];
+    bool self = c[0] && c[1];
+    bool cross = (c[0] || c[1]) && (c[2] || c[3] || c[4]);
+    int sum = c[0] + c[1] + c[2] + c[3] + c[4];
+
+    if (sum != 0) n_invalid ++;
+    if (pure) n_pure ++;
+    if (self) n_self ++;
+    if (cross) n_cross ++;
+
+    if (sum != 0) 
+      fprintf(stderr, "--SPECIAL:\n");
+    fprintf(stderr, "%d\t%d\t%d\t%d\t%d\n", 
+        it->second.chiralities[0],
+        it->second.chiralities[1],
+        it->second.chiralities[2],
+        it->second.chiralities[3],
+        it->second.chiralities[4]);
+  }
+  fprintf(stderr, "n_self=%d, n_pure=%d, n_cross=%d, n_invalid=%d\n", 
+      n_self, n_pure, n_cross, n_invalid);
 }
 
 #if 0

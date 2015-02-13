@@ -43,8 +43,11 @@ struct CFace {
   std::vector<int> edges_chirality;
 
   // neighbor cells, only two, chirality(cell0)=-1, chirality(cell1)=1
-  CellIdType contained_cell0, contained_cell1;
-  int contained_cell0_fid, contained_cell1_fid;
+  // CellIdType contained_cell0, contained_cell1;
+  // int contained_cell0_fid, contained_cell1_fid;
+  std::vector<FaceIdType> contained_cells;
+  std::vector<int> contained_cells_chirality;
+  std::vector<int> contained_cells_fid;
 
   // utils
   // bool on_boundary() const {return contained_cell0 == NULL || contained_cell1 == NULL;}
@@ -52,6 +55,8 @@ struct CFace {
     nodes.reserve(3);
     edges.reserve(6);
     edges_chirality.reserve(6);
+    contained_cells.reserve(2);
+    contained_cells_chirality.reserve(2);
   }
 };
 

@@ -95,10 +95,11 @@ void MeshGraph::SerializeToString(std::string &str) const
       pface->add_edges_chirality(faces[i].edges_chirality[j]);
     }
 
-    pface->set_contained_cell0(faces[i].contained_cell0);
-    pface->set_contained_cell0_fid(faces[i].contained_cell0_fid);
-    pface->set_contained_cell1(faces[i].contained_cell1);
-    pface->set_contained_cell1_fid(faces[i].contained_cell1_fid);
+    for (int j=0; j<faces[i].contained_cells.size(); j++) {
+      pface->add_contained_cells(faces[i].contained_cells[j]);
+      pface->add_contained_cells_chirality(faces[i].contained_cells_chirality[j]);
+      pface->add_contained_cells_fid(faces[i].contained_cells_fid[j]);
+    }
   }
 
   for (int i=0; i<cells.size(); i++) {
@@ -157,10 +158,11 @@ bool MeshGraph::ParseFromString(const std::string& str)
       face.edges_chirality.push_back( pface.edges_chirality(j) );
     }
 
-    face.contained_cell0 = pface.contained_cell0();
-    face.contained_cell0_fid = pface.contained_cell0_fid();
-    face.contained_cell1 = pface.contained_cell1();
-    face.contained_cell1_fid = pface.contained_cell1_fid();
+    for (int j=0; j<pface.contained_cells_size(); j++) {
+      face.contained_cells.push_back( pface.contained_cells(j) );
+      face.contained_cells_chirality.push_back( pface.contained_cells_chirality(j) );
+      face.contained_cells_fid.push_back( pface.contained_cells_fid(j) );
+    }
 
     faces.push_back(face);
   }
@@ -295,13 +297,9 @@ FaceIdType MeshGraphBuilder_Tet::AddFace(FaceIdType3 f3, int &chirality, CellIdT
   
   CFace &face = _mg.faces[f];
 
-  if (chirality == 1) {
-    face.contained_cell1 = c;
-    face.contained_cell1_fid = fid;
-  } else if (chirality == -1) {
-    face.contained_cell0 = c;
-    face.contained_cell0_fid = fid;
-  }
+  face.contained_cells.push_back(c);
+  face.contained_cells_chirality.push_back(chirality);
+  face.contained_cells_fid.push_back(fid);
 
   return f;
 }
