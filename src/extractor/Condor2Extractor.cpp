@@ -71,7 +71,7 @@ void Condor2VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
   double phase_shift = -(delta[0] + delta[1] + delta[2] + delta[3]);
   double critera = phase_shift / (2*M_PI);
 
-  int chirality;
+  ChiralityType chirality;
   if (critera > 0.5) chirality = 1; 
   else if (critera < -0.5) chirality = -1;
   else return;
@@ -131,7 +131,7 @@ void Condor2VortexExtractor::ExtractFace(FaceIdType id, int time)
   if (fabs(critera)<0.5) return; // not punctured
 
   // chirality
-  int chirality = critera>0 ? 1 : -1;
+  ChiralityType chirality = critera>0 ? 1 : -1;
 
   // gauge transformation
   // fprintf(stderr, "re={%f, %f, %f}, im={%f, %f, %f}\n", 

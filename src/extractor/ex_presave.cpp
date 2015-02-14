@@ -22,8 +22,9 @@ int main(int argc, char **argv)
   if (!extractor->LoadPuncturedEdges()) return EXIT_FAILURE;
 
   fprintf(stderr, "tracing..\n");
-  extractor->Trace();
-  extractor->TraceVirtualCells();
+  // extractor->TraceOverTime();
+  extractor->TraceOverSpace();
+  // extractor->TraceVirtualCells();
 
   delete extractor;
   delete ds; 

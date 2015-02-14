@@ -3,7 +3,7 @@
 #include <google/protobuf/io/coded_stream.h> // for parsing large message
 #include <cassert>
 
-EdgeIdType2 AlternateEdge(EdgeIdType2 e, int chirality)
+EdgeIdType2 AlternateEdge(EdgeIdType2 e, ChiralityType chirality)
 {
   if (chirality>0)
     return e;
@@ -11,7 +11,7 @@ EdgeIdType2 AlternateEdge(EdgeIdType2 e, int chirality)
     return std::make_tuple(std::get<1>(e), std::get<0>(e));
 }
 
-FaceIdType3 AlternateFace(FaceIdType3 f, int rotation, int chirality)
+FaceIdType3 AlternateFace(FaceIdType3 f, int rotation, ChiralityType chirality)
 {
   using namespace std;
 
@@ -32,7 +32,7 @@ FaceIdType3 AlternateFace(FaceIdType3 f, int rotation, int chirality)
   }
 }
 
-FaceIdType4 AlternateFace(FaceIdType4 f, int rotation, int chirality)
+FaceIdType4 AlternateFace(FaceIdType4 f, int rotation, ChiralityType chirality)
 {
   using namespace std;
 
@@ -221,7 +221,14 @@ MeshGraphBuilder::MeshGraphBuilder(MeshGraph& mg)
 {
 }
 
-EdgeIdType MeshGraphBuilder_Tet::GetEdge(EdgeIdType2 e2, int &chirality)
+////////////////
+MeshGraphBuilder_Tet::MeshGraphBuilder_Tet(int ncells, MeshGraph& mg) : 
+  MeshGraphBuilder(mg) 
+{
+  mg.cells.resize(ncells);
+}
+
+EdgeIdType MeshGraphBuilder_Tet::GetEdge(EdgeIdType2 e2, ChiralityType &chirality)
 {
   for (chirality=-1; chirality<2; chirality+=2) {
     std::map<EdgeIdType2, EdgeIdType>::iterator it = _edge_map.find(AlternateEdge(e2, chirality)); 
@@ -231,7 +238,7 @@ EdgeIdType MeshGraphBuilder_Tet::GetEdge(EdgeIdType2 e2, int &chirality)
   return UINT_MAX;
 }
 
-FaceIdType MeshGraphBuilder_Tet::GetFace(FaceIdType3 f3, int &chirality)
+FaceIdType MeshGraphBuilder_Tet::GetFace(FaceIdType3 f3, ChiralityType &chirality)
 {
   for (chirality=-1; chirality<2; chirality+=2) 
     for (int rotation=0; rotation<3; rotation++) {
@@ -242,7 +249,7 @@ FaceIdType MeshGraphBuilder_Tet::GetFace(FaceIdType3 f3, int &chirality)
   return UINT_MAX;
 }
 
-EdgeIdType MeshGraphBuilder_Tet::AddEdge(EdgeIdType2 e2, int &chirality, FaceIdType f, int eid)
+EdgeIdType MeshGraphBuilder_Tet::AddEdge(EdgeIdType2 e2, ChiralityType &chirality, FaceIdType f, int eid)
 {
   EdgeIdType e = GetEdge(e2, chirality);
 
@@ -267,7 +274,7 @@ EdgeIdType MeshGraphBuilder_Tet::AddEdge(EdgeIdType2 e2, int &chirality, FaceIdT
   return e;
 }
 
-FaceIdType MeshGraphBuilder_Tet::AddFace(FaceIdType3 f3, int &chirality, CellIdType c, int fid)
+FaceIdType MeshGraphBuilder_Tet::AddFace(FaceIdType3 f3, ChiralityType &chirality, CellIdType c, int fid)
 {
   FaceIdType f = GetFace(f3, chirality);
 
@@ -304,13 +311,13 @@ FaceIdType MeshGraphBuilder_Tet::AddFace(FaceIdType3 f3, int &chirality, CellIdT
   return f;
 }
 
-CellIdType MeshGraphBuilder_Tet::AddCell(
+void MeshGraphBuilder_Tet::AddCell(
+    CellIdType c,
     const std::vector<NodeIdType> &nodes, 
     const std::vector<CellIdType> &neighbors, 
     const std::vector<FaceIdType3> &faces)
 {
-  CellIdType c = _mg.cells.size();
-  CCell cell;
+  CCell &cell = _mg.cells[c];
 
   // nodes
   cell.nodes = nodes;
@@ -320,14 +327,11 @@ CellIdType MeshGraphBuilder_Tet::AddCell(
 
   // faces and edges
   for (int i=0; i<faces.size(); i++) {
-    int chirality; 
+    ChiralityType chirality; 
     FaceIdType3 f3 = faces[i];
 
     FaceIdType f = AddFace(f3, chirality, c, i);
     cell.faces.push_back(f);
     cell.faces_chirality.push_back(chirality);
   }
-
-  _mg.cells.push_back(cell);
-  return c;
 }

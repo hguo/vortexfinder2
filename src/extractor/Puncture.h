@@ -2,24 +2,40 @@
 #define _PUNCTURE_H
 
 #include <map>
-#include <string>
+#include <bitset>
 #include "def.h"
 
 struct PuncturedFace
 {
-  int chirality;
+  ChiralityType chirality;
   double pos[3];
 };
 
 struct PuncturedEdge
 {
-  int chirality; 
+  ChiralityType chirality; 
   double t; // punctured time
 };
 
 struct PuncturedCell
 {
-  int chiralities[6]; // chiralities on faces
+  ChiralityType Chirality(int face) const {
+    if (!p[face]) return 0; 
+    else return c[face] ? 1 : -1;
+  }
+
+  void SetChirality(int face, ChiralityType chirality) {
+    p[face] = 1;
+    if (chirality>0) c[face] = 1;
+  }
+
+  bool IsSpecial() const {return Degree()>2;}
+  int Degree() const {return p.count();}
+
+private:
+  std::bitset<8> p, c;
+  // std::bitset<16> bits;
+  // int chiralities[6]; // chiralities on faces
 };
 
 //////// I/O for faces

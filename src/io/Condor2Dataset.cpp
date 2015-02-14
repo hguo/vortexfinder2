@@ -107,7 +107,7 @@ void Condor2Dataset::BuildMeshGraph()
     return;
   }
 
-  MeshGraphBuilder_Tet *builder = new MeshGraphBuilder_Tet(_mg);
+  MeshGraphBuilder_Tet *builder = new MeshGraphBuilder_Tet(mesh()->n_elem(), _mg);
   
   MeshBase::const_element_iterator it = mesh()->local_elements_begin(); 
   const MeshBase::const_element_iterator end = mesh()->local_elements_end(); 
@@ -115,7 +115,7 @@ void Condor2Dataset::BuildMeshGraph()
   for (; it!=end; it++) {
     const Elem *e = *it;
     std::vector<NodeIdType> nodes;
-    std::vector<ElemIdType> neighbors;
+    std::vector<CellIdType> neighbors;
     std::vector<FaceIdType3> faces;
 
     for (int i=0; i<e->n_nodes(); i++)
@@ -131,7 +131,7 @@ void Condor2Dataset::BuildMeshGraph()
       faces.push_back(std::make_tuple(f->node(0), f->node(1), f->node(2)));
     }
 
-    builder->AddCell(nodes, neighbors, faces);
+    builder->AddCell(e->id(), nodes, neighbors, faces);
   }
 
   delete builder;

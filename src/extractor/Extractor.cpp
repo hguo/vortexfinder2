@@ -61,20 +61,13 @@ bool VortexExtractor::LoadPuncturedEdges()
   const GLDatasetBase *ds = _dataset;
   std::ostringstream os; 
   os << ds->DataName() << ".pe." << ds->TimeStep() << "." << ds->TimeStep1();
+ 
+  std::map<EdgeIdType, PuncturedEdge> m;
+  if (!::LoadPuncturedEdges(m, os.str())) return false;
   
-  if (!::LoadPuncturedEdges(_punctured_edges, os.str())) return false;
-
-  const MeshGraph &mg = _dataset->MeshGraph();
-  for (std::map<EdgeIdType, PuncturedEdge>::iterator it = _punctured_edges.begin(); it != _punctured_edges.end(); it ++) {
-    CEdge edge = mg.edges[it->first];
-    for (int i=0; i<edge.contained_faces.size(); i++) {
-      int echirality = edge.contained_faces_chirality[i];
-      PuncturedCell vc = _punctured_vcells[edge.contained_faces[i]];
-      vc.chiralities[i+2] = it->second.chirality * echirality;
-      _punctured_vcells[edge.contained_faces[i]] = vc;
-    }
-  }
-
+  for (std::map<EdgeIdType, PuncturedEdge>::iterator it = m.begin(); it != m.end(); it ++) 
+    AddPuncturedEdge(it->first, it->second.chirality, it->second.t);
+  
   return true;
 }
 
@@ -84,23 +77,19 @@ bool VortexExtractor::LoadPuncturedFaces(int time)
   std::ostringstream os; 
   os << ds->DataName() << ".pf." << 
     (time == 0 ? ds->TimeStep() : ds->TimeStep1());
-  std::map<FaceIdType, PuncturedFace> &m = time == 0 ? _punctured_faces : _punctured_faces1;
+  
+  std::map<FaceIdType, PuncturedFace> m; 
 
   if (!::LoadPuncturedFaces(m, os.str())) return false;
 
   for (std::map<FaceIdType, PuncturedFace>::iterator it = m.begin(); it != m.end(); it ++) {
-    PuncturedCell vc = _punctured_vcells[it->first];
-    if (time == 0) 
-      vc.chiralities[0] = -it->second.chirality;
-    else 
-      vc.chiralities[1] = it->second.chirality;
-    _punctured_vcells[it->first] = vc;
+    AddPuncturedFace(it->first, time, it->second.chirality, it->second.pos);
   }
 
   return true;
 }
 
-void VortexExtractor::AddPuncturedFace(FaceIdType id, int time, int chirality, const double pos[])
+void VortexExtractor::AddPuncturedFace(FaceIdType id, int time, ChiralityType chirality, const double pos[])
 {
   // face
   PuncturedFace pf;
@@ -114,27 +103,29 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int time, int chirality, c
     _punctured_faces1[id] = pf;
 
   // vcell
-  PuncturedCell vc = _punctured_vcells[id];
+  PuncturedCell &vc = _punctured_vcells[id];
   if (time == 0)
-    vc.chiralities[0] = -chirality;
+    vc.SetChirality(0, -chirality);
   else 
-    vc.chiralities[1] = chirality;
-  _punctured_vcells[id] = vc;
+    vc.SetChirality(1, chirality);
 
   // cell
-#if 0
   const MeshGraph &mg = _dataset->MeshGraph();
   CFace face = mg.faces[id];
   for (int i=0; i<face.contained_cells.size(); i++) {
+    CellIdType cid = face.contained_cells[i]; 
     int fchirality = face.contained_cells_chirality[i];
-    PuncturedCell c = _punctured_cells[face.contained_cells[i]];
-    vc.chiralities[i] = chirality * fchirality;
-    _punctured_cells[face.contained_cells[i]] = c;
-  }
+    int fid = face.contained_cells_fid[i];
+    PuncturedCell &c = _punctured_cells[cid]; 
+    c.SetChirality(fid, chirality * fchirality);
+#if 0
+    fprintf(stderr, "face=%u, cid=%u, fid=%d, chi=%d, fchi=%d\n", 
+        id, cid, fid, chirality, fchirality);
 #endif
+  }
 }
 
-void VortexExtractor::AddPuncturedEdge(EdgeIdType id, int chirality, double t)
+void VortexExtractor::AddPuncturedEdge(EdgeIdType id, ChiralityType chirality, double t)
 {
   // edge
   PuncturedEdge pe;
@@ -149,10 +140,9 @@ void VortexExtractor::AddPuncturedEdge(EdgeIdType id, int chirality, double t)
   CEdge edge = mg.edges[id];
   for (int i=0; i<edge.contained_faces.size(); i++) {
     int echirality = edge.contained_faces_chirality[i];
-    PuncturedCell vc = _punctured_vcells[edge.contained_faces[i]];
     int eid = edge.contained_faces_eid[i]; 
-    vc.chiralities[eid+2] = chirality * echirality; 
-    _punctured_vcells[edge.contained_faces[i]] = vc;
+    PuncturedCell &vc = _punctured_vcells[edge.contained_faces[i]];
+    vc.SetChirality(eid+2, chirality * echirality);
   }
 }
   
@@ -166,7 +156,7 @@ bool VortexExtractor::FindSpaceTimeEdgeZero(const double re[], const double im[]
   return true;
 }
 
-void VortexExtractor::Trace()
+void VortexExtractor::TraceOverTime()
 {
   fprintf(stderr, "Tracing over time, #pf0=%ld, #pf1=%ld, #pe=%ld\n", 
       _punctured_faces.size(), _punctured_faces1.size(), _punctured_edges.size());
@@ -288,8 +278,9 @@ void VortexExtractor::TraceVirtualCells()
   int n_self = 0, n_pure = 0, n_cross = 0, n_invalid = 0;
   for (std::map<FaceIdType, PuncturedCell>::iterator it = _punctured_vcells.begin(); it != _punctured_vcells.end(); it ++) 
   {
-    int c[5]; 
-    memcpy(c, it->second.chiralities, sizeof(int)*5);
+    int c[5];
+    for (int i=0; i<5; i++) 
+      c[i] = it->second.Chirality(i);
     
     bool punctured = c[0] || c[1] || c[2] || c[3] || c[4];
     bool pure = punctured && !c[0] && !c[1];
@@ -304,62 +295,63 @@ void VortexExtractor::TraceVirtualCells()
 
     if (sum != 0) 
       fprintf(stderr, "--SPECIAL:\n");
-    fprintf(stderr, "%d\t%d\t%d\t%d\t%d\n", 
-        it->second.chiralities[0],
-        it->second.chiralities[1],
-        it->second.chiralities[2],
-        it->second.chiralities[3],
-        it->second.chiralities[4]);
+    fprintf(stderr, "%d\t%d\t%d\t%d\t%d\n", c[0], c[1], c[2], c[3], c[4]);
   }
   fprintf(stderr, "n_self=%d, n_pure=%d, n_cross=%d, n_invalid=%d\n", 
       n_self, n_pure, n_cross, n_invalid);
 }
 
-#if 0
-void VortexExtractor::Trace()
+void VortexExtractor::TraceOverSpace()
 {
-  fprintf(stderr, "tracing, #punctured_elems=%ld.\n", _punctured_elems.size());
+  fprintf(stderr, "tracing over space, #punctured_cells=%ld.\n", _punctured_cells.size());
   _vortex_objects.clear();
 
-  PuncturedElemMap punctured_elems1 = _punctured_elems; // for final memory cleanup
+  std::map<CellIdType, PuncturedCell> pcs = _punctured_cells;
+  const MeshGraph &mg = _dataset->MeshGraph();
 
-  while (!_punctured_elems.empty()) {
-    /// 1. sort punctured elems into connected ordinary/special ones
-    std::list<PuncturedElemMap::iterator> to_erase, to_visit;
-    to_visit.push_back(_punctured_elems.begin()); 
+  while (!pcs.empty()) {
+    /// 1. sort punctured cells into connected ordinary/special ones
+    std::list<CellIdType> to_visit;
+    std::set<CellIdType> visited;
+    
+    to_visit.push_back(pcs.begin()->first); 
+    std::map<CellIdType, PuncturedCell> ordinary_pcells, special_pcells;
 
-    PuncturedElemMap ordinary_pelems, special_pelems; 
     while (!to_visit.empty()) { // depth-first search
-      PuncturedElemMap::iterator it = to_visit.front();
+      CellIdType c = to_visit.front();
       to_visit.pop_front();
-      
-      if (it->second->visited) continue;
-      if (it->second->IsSpecial()) 
-        special_pelems[it->first] = it->second;
-      else 
-        ordinary_pelems[it->first] = it->second; 
-      it->second->visited = true; 
-      to_erase.push_back(it);
+    
+      const PuncturedCell &pcell = pcs[c];
+      const CCell &cell = mg.cells[c];
 
-      std::vector<ElemIdType> neighbors = _dataset->GetNeighborIds(it->first); 
-      for (int i=0; i<neighbors.size(); i++) {
-        ElemIdType id = neighbors[i]; 
-        if (id != UINT_MAX && it->second->IsPunctured(i)) {
-          PuncturedElemMap::iterator it1 = _punctured_elems.find(id); 
-          if (it1 == _punctured_elems.end()) continue; 
-          // assert(it1 != _punctured_elems.end()); 
-          if (!it1->second->visited)
-            to_visit.push_back(it1); 
+      if (pcell.IsSpecial())
+        special_pcells[c] = pcell;
+      else 
+        ordinary_pcells[c] = pcell;
+      visited.insert(c);
+
+      // fprintf(stderr, "deg(%u)=%d\n", c, pcell.Degree());
+      for (int i=0; i<cell.neighbor_cells.size(); i++) {
+        CellIdType c1 = cell.neighbor_cells[i];
+        // fprintf(stderr, "c=%u, c1=%u, chi=%d, found=%d, not_visited=%d\n", 
+        //     c, c1, pcell.Chirality(i), pcs.find(c1) != pcs.end(), visited.find(c1) == visited.end());
+        if (c1 != UINT_MAX                            // valid neighbor cell
+            && pcell.Chirality(i) != 0                // corresponding face punctured
+            && pcs.find(c1) != pcs.end()              // neighbor cell punctured
+            && visited.find(c1) == visited.end())     // not visited
+        {
+          to_visit.push_back(c1);
         }
       }
     }
-   
-    for (std::list<PuncturedElemMap::iterator>::iterator it = to_erase.begin(); it != to_erase.end(); it ++)
-      _punctured_elems.erase(*it);
-    to_erase.clear(); 
+  
+    for (std::set<CellIdType>::iterator it = visited.begin(); it != visited.end(); it ++)
+      pcs.erase(*it);
+    visited.clear();
 
-    // fprintf(stderr, "#ordinary=%ld, #special=%ld\n", ordinary_pelems.size(), special_pelems.size());
+    fprintf(stderr, "#ordinary=%ld, #special=%ld\n", ordinary_pcells.size(), special_pcells.size());
 
+#if 0
     /// 2. trace vortex lines
     VortexObject vortex_object; 
     /// 2.1 clear visited tags
@@ -430,15 +422,18 @@ void VortexExtractor::Trace()
       vortex_object.AddVortexLine(line);
     }
     _vortex_objects.push_back(vortex_object);
+#endif 
   }
  
   // release memory
   // for (PuncturedElemMap::iterator it = punctured_elems1.begin(); it != punctured_elems1.end(); it ++)
   //   delete it->second;
-  
   fprintf(stderr, "#vortex_objects=%ld\n", _vortex_objects.size());
 }
 
+
+
+#if 0
 bool VortexExtractor::ExtractElem(ElemIdType id)
 {
   const int nfaces = _dataset->NrFacesPerElem(); 

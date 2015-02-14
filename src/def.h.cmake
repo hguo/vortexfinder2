@@ -9,18 +9,20 @@
 // define ElemIdType
 #if WITH_LIBMESH
 #include <libmesh/id_types.h>
-typedef libMesh::dof_id_type ElemIdType;
-typedef libMesh::dof_id_type CellIdType;
-typedef libMesh::dof_id_type FaceIdType;
-typedef libMesh::dof_id_type EdgeIdType;
 typedef libMesh::dof_id_type NodeIdType;
+typedef libMesh::dof_id_type EdgeIdType;
+typedef libMesh::dof_id_type FaceIdType;
+typedef libMesh::dof_id_type CellIdType;
+typedef libMesh::dof_id_type ElemIdType;
 #else
-typedef unsigned int ElemIdType;
-typedef unsigned int CellIdType;
-typedef unsigned int FaceIdType;
-typedef unsigned int EdgeIdType;
 typedef unsigned int NodeIdType;
+typedef unsigned int EdgeIdType;
+typedef unsigned int FaceIdType;
+typedef unsigned int CellIdType;
+typedef unsigned int ElemIdType;
 #endif
+
+typedef signed char ChiralityType;
 
 // NetCDF error handling
 #define NC_SAFE_CALL(call) {\

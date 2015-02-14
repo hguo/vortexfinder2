@@ -14,9 +14,9 @@ typedef std::tuple<NodeIdType, NodeIdType> EdgeIdType2;
 typedef std::tuple<NodeIdType, NodeIdType, NodeIdType> FaceIdType3;
 typedef std::tuple<NodeIdType, NodeIdType, NodeIdType, NodeIdType> FaceIdType4;
 
-EdgeIdType2 AlternateEdge(EdgeIdType2 e2, int chirality);
-FaceIdType3 AlternateFace(FaceIdType3 f3, int rotation, int chirality);
-FaceIdType4 AlternateFace(FaceIdType4 f4, int rotation, int chirality);
+EdgeIdType2 AlternateEdge(EdgeIdType2 e2, ChiralityType chirality);
+FaceIdType3 AlternateFace(FaceIdType3 f3, int rotation, ChiralityType chirality);
+FaceIdType4 AlternateFace(FaceIdType4 f4, int rotation, ChiralityType chirality);
 
 struct CEdge {
   // nodes
@@ -24,7 +24,7 @@ struct CEdge {
 
   // neighbor faces (unordered)
   std::vector<FaceIdType> contained_faces;
-  std::vector<int> contained_faces_chirality;
+  std::vector<ChiralityType> contained_faces_chirality;
   std::vector<int> contained_faces_eid; // the edge id in the corresponding face
 
   CEdge() {
@@ -40,13 +40,13 @@ struct CFace {
 
   // edges (ordered)
   std::vector<EdgeIdType> edges;
-  std::vector<int> edges_chirality;
+  std::vector<ChiralityType> edges_chirality;
 
   // neighbor cells, only two, chirality(cell0)=-1, chirality(cell1)=1
   // CellIdType contained_cell0, contained_cell1;
   // int contained_cell0_fid, contained_cell1_fid;
   std::vector<FaceIdType> contained_cells;
-  std::vector<int> contained_cells_chirality;
+  std::vector<ChiralityType> contained_cells_chirality;
   std::vector<int> contained_cells_fid;
 
   // utils
@@ -66,7 +66,7 @@ struct CCell {
 
   // faces (ordered)
   std::vector<FaceIdType> faces;
-  std::vector<int> faces_chirality;
+  std::vector<ChiralityType> faces_chirality;
 
   // neighbor cells (ordered)
   std::vector<CellIdType> neighbor_cells;
@@ -108,10 +108,11 @@ protected:
 
 class MeshGraphBuilder_Tet : public MeshGraphBuilder {
 public:
-  explicit MeshGraphBuilder_Tet(MeshGraph& mg) : MeshGraphBuilder(mg) {}
+  explicit MeshGraphBuilder_Tet(int ncells, MeshGraph& mg);
   ~MeshGraphBuilder_Tet() {}
 
-  CellIdType AddCell(
+  void AddCell(
+      CellIdType c, 
       const std::vector<NodeIdType> &nodes, 
       const std::vector<CellIdType> &neighbors, 
       const std::vector<FaceIdType3> &faces);
@@ -119,10 +120,10 @@ public:
   // void Build();
 
 private:
-  EdgeIdType AddEdge(EdgeIdType2 e2, int &chirality, FaceIdType f, int eid);
-  FaceIdType AddFace(FaceIdType3 f3, int &chirality, CellIdType c, int fid);
-  EdgeIdType GetEdge(EdgeIdType2 e2, int &chirality);
-  FaceIdType GetFace(FaceIdType3 f3, int &chirality);
+  EdgeIdType AddEdge(EdgeIdType2 e2, ChiralityType &chirality, FaceIdType f, int eid);
+  FaceIdType AddFace(FaceIdType3 f3, ChiralityType &chirality, CellIdType c, int fid);
+  EdgeIdType GetEdge(EdgeIdType2 e2, ChiralityType &chirality);
+  FaceIdType GetFace(FaceIdType3 f3, ChiralityType &chirality);
 
 private:
   std::map<EdgeIdType2, EdgeIdType> _edge_map;
