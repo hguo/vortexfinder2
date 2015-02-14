@@ -27,9 +27,9 @@ void VortexExtractor::SetGaugeTransformation(bool g)
   _gauge = g; 
 }
 
-void VortexExtractor::WriteVortexObjects(const std::string& filename)
+void VortexExtractor::SaveVortexLines(const std::string& filename)
 {
-  ::WriteVortexObjects(filename, _vortex_objects); 
+  ::SaveVortexLines(_vortex_lines, filename); 
 }
 
 void VortexExtractor::ClearPuncturedObjects()
@@ -304,7 +304,7 @@ void VortexExtractor::TraceVirtualCells()
 void VortexExtractor::TraceOverSpace()
 {
   fprintf(stderr, "tracing over space, #punctured_cells=%ld.\n", _punctured_cells.size());
-  _vortex_objects.clear();
+  _vortex_lines.clear();
 
   std::map<CellIdType, PuncturedCell> pcs = _punctured_cells;
   const MeshGraph &mg = _dataset->MeshGraph();
@@ -330,11 +330,8 @@ void VortexExtractor::TraceOverSpace()
         ordinary_pcells[c] = pcell;
       visited.insert(c);
 
-      // fprintf(stderr, "deg(%u)=%d\n", c, pcell.Degree());
       for (int i=0; i<cell.neighbor_cells.size(); i++) {
         CellIdType c1 = cell.neighbor_cells[i];
-        // fprintf(stderr, "c=%u, c1=%u, chi=%d, found=%d, not_visited=%d\n", 
-        //     c, c1, pcell.Chirality(i), pcs.find(c1) != pcs.end(), visited.find(c1) == visited.end());
         if (c1 != UINT_MAX                            // valid neighbor cell
             && pcell.Chirality(i) != 0                // corresponding face punctured
             && pcs.find(c1) != pcs.end()              // neighbor cell punctured
@@ -353,7 +350,7 @@ void VortexExtractor::TraceOverSpace()
 
 #if 0
     /// 2. trace vortex lines
-    VortexObject vortex_object; 
+    VortexLine vortex_line; 
     /// 2.1 clear visited tags
     for (PuncturedElemMap::iterator it = ordinary_pelems.begin(); it != ordinary_pelems.end(); it ++) 
       it->second->visited = false;
@@ -419,16 +416,15 @@ void VortexExtractor::TraceOverSpace()
         ordinary_pelems.erase(*it);
       to_erase.clear();
 
-      vortex_object.AddVortexLine(line);
+      _vortex_lines.push_back(vortex_line);
     }
-    _vortex_objects.push_back(vortex_object);
 #endif 
   }
  
   // release memory
   // for (PuncturedElemMap::iterator it = punctured_elems1.begin(); it != punctured_elems1.end(); it ++)
   //   delete it->second;
-  fprintf(stderr, "#vortex_objects=%ld\n", _vortex_objects.size());
+  fprintf(stderr, "#vortex_lines=%ld\n", _vortex_lines.size());
 }
 
 

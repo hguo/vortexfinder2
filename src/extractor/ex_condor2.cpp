@@ -121,7 +121,7 @@ int main(int argc, char **argv)
     extractor.TraceOverTime(); 
     // extractor.TraceVirtualCells(); 
     double t3 = (double)clock() / CLOCKS_PER_SEC; 
-    extractor.WriteVortexObjects(filename_out); 
+    extractor.SaveVortexLines(filename_out); 
 
     if (benchmark) {
       fprintf(stderr, "------- timings -------\n");

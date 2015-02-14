@@ -27,8 +27,8 @@ public:
   CGLWidget(const QGLFormat& fmt=QGLFormat::defaultFormat(), QWidget *parent=NULL, QGLWidget *sharedWidget=NULL); 
   ~CGLWidget(); 
 
-  void LoadVortexObjects(const std::string& filename); 
-  void LoadVortexOjbectsFromTextFile(const std::string& filename);
+  void LoadVortexLines(const std::string& filename); 
+  void LoadVortexLinesFromTextFile(const std::string& filename);
   
   void LoadFieldLines(const std::string& filename);
 
@@ -52,7 +52,7 @@ private:
   CGLTrackball _trackball;
 
 private: //data
-  // std::vector<VortexObject> _vortex_objects;
+  // std::vector<VortexLine> _vortex_liness;
   // std::vector<FieldLine> _fieldlines;
   PBDataInfo *_data_info;
 

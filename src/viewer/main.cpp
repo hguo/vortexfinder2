@@ -25,7 +25,7 @@ int main(int argc, char **argv)
 
   CGLWidget *widget = new CGLWidget;
   widget->show(); 
-  widget->LoadVortexObjects(filename_vortex); 
+  widget->LoadVortexLines(filename_vortex); 
   // widget->LoadVortexOjbectsFromTextFile(filename_vortex); 
   widget->LoadFieldLines(filename_trace);
 

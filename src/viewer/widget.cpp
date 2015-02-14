@@ -7,7 +7,7 @@
 #include <iostream>
 #include "widget.h"
 #include "common/DataInfo.pb.h"
-#include "common/VortexObject.h"
+#include "common/VortexLine.h"
 #include "common/FieldLine.h"
 
 using namespace std; 
@@ -211,15 +211,16 @@ void CGLWidget::LoadFieldLines(const std::string& filename)
   }
 }
 
-void CGLWidget::LoadVortexObjects(const std::string& filename)
+void CGLWidget::LoadVortexLines(const std::string& filename)
 {
-  std::vector<VortexObject> vortex_objects;
-  ReadVortexOjbects(filename, vortex_objects); 
+  std::vector<VortexLine> vortex_liness;
+  ::LoadVortexLines(vortex_liness, filename); 
 
-  for (int j=0; j<vortex_objects.size(); j++) { // iterate over v_objs
-    float c[4] = {1, 0, 0, 1}; // color;
+  float c[4] = {1, 0, 0, 1}; // color;
+  for (int k=0; k<vortex_liness.size(); k++) { //iterator over lines
+    int vertCount = vortex_liness[k].size()/3;  
 #if 1
-    switch (j%6) {
+    switch (vortex_liness[k].id % 6) {
     case 0: c[0]=0; c[1]=0; c[2]=1; c[3]=1; break;
     case 1: c[0]=0; c[1]=1; c[2]=0; c[3]=1; break;
     case 2: c[0]=0; c[1]=1; c[2]=1; c[3]=1; break;
@@ -229,21 +230,18 @@ void CGLWidget::LoadVortexObjects(const std::string& filename)
     default: break; 
    }
 #endif
-    for (int k=0; k<vortex_objects[j].size(); k++) { //iterator over lines
-      int vertCount = vortex_objects[j][k].size()/3;  
-      
-      for (std::vector<double>::iterator it = vortex_objects[j][k].begin(); 
-          it != vortex_objects[j][k].end(); it ++) {
-        v_line_vertices.push_back(*it); 
-      }
-      
-      for (int l=0; l<vertCount; l++)  
-        for (int m=0; m<4; m++) 
-          v_line_colors.push_back(c[m]); 
-
-      v_line_vert_count.push_back(vertCount); 
-      // fprintf(stderr, "vert_count=%d\n", vertCount);
+    
+    for (std::vector<double>::iterator it = vortex_liness[k].begin(); 
+        it != vortex_liness[k].end(); it ++) {
+      v_line_vertices.push_back(*it); 
     }
+    
+    for (int l=0; l<vertCount; l++)  
+      for (int m=0; m<4; m++) 
+        v_line_colors.push_back(c[m]); 
+
+    v_line_vert_count.push_back(vertCount); 
+    // fprintf(stderr, "vert_count=%d\n", vertCount);
   }
   
   int cnt = 0; 
@@ -256,7 +254,7 @@ void CGLWidget::LoadVortexObjects(const std::string& filename)
   updateVortexTubes(20, 0.5); 
 }
 
-void CGLWidget::LoadVortexOjbectsFromTextFile(const std::string& filename)
+void CGLWidget::LoadVortexLinesFromTextFile(const std::string& filename)
 {
   std::ifstream ifs(filename);
   if (!ifs.is_open()) return;

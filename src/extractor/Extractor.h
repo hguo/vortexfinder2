@@ -1,7 +1,7 @@
 #ifndef _EXTRACTOR_H
 #define _EXTRACTOR_H
 
-#include "common/VortexObject.h"
+#include "common/VortexLine.h"
 #include "InverseInterpolation.h"
 #include "Puncture.h"
 #include <map>
@@ -21,7 +21,7 @@ public:
 
   virtual void Extract() {}; 
 
-  void WriteVortexObjects(const std::string& filename); 
+  void SaveVortexLines(const std::string& filename); 
 
   bool SavePuncturedEdges() const;
   bool LoadPuncturedEdges();
@@ -46,7 +46,7 @@ protected:
   std::map<FaceIdType, PuncturedCell> _punctured_vcells;
   std::map<CellIdType, PuncturedCell> _punctured_cells;
 
-  std::vector<VortexObject> _vortex_objects;
+  std::vector<VortexLine> _vortex_lines;
   
   bool _gauge; 
 

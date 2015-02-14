@@ -1,0 +1,9 @@
+message PBVortexLine {
+  repeated double vertices = 1 [ packed = true ];
+  optional uint32 id = 2;
+  optional uint32 timestep = 3;
+};
+
+message PBVortexLines {
+  repeated PBVortexLine lines = 1;
+};
