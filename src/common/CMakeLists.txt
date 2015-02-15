@@ -2,12 +2,14 @@ set (common_sources
   MeshGraph.cpp
   VortexLine.cpp
   FieldLine.cpp
+  Puncture.cpp
 )
 
 set (common_protos
   MeshGraph.proto
   DataInfo.proto
   VortexLine.proto
+  VortexObject.proto
   FieldLine.proto
   Puncture.proto
 )

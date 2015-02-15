@@ -1,5 +1,4 @@
 set (extractor_sources
-  Puncture.cpp
   Extractor.cpp
   # GLGPUExtractor.cpp
 )

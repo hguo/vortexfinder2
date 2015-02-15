@@ -1,0 +1,6 @@
+import "Puncture.proto";
+
+// a set of punctured faces, or a special cell
+message PBVortexObject {
+  repeated uint32 cells = 1;
+};

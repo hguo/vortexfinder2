@@ -2,8 +2,9 @@
 #define _EXTRACTOR_H
 
 #include "common/VortexLine.h"
+#include "common/VortexObject.h"
+#include "common/Puncture.h"
 #include "InverseInterpolation.h"
-#include "Puncture.h"
 #include <map>
 
 class GLDataset;
@@ -34,6 +35,10 @@ public:
   void TraceOverSpace();
 
 protected:
+  void VortexObjectsToVortexLines(const std::map<FaceIdType, PuncturedFace>& pfs, const std::vector<VortexObject>& vobjs, std::vector<VortexLine>& vlines);
+  int NewVortexId();
+
+protected:
   void AddPuncturedFace(FaceIdType, int time, ChiralityType chirality, const double pos[3]);
   void AddPuncturedEdge(EdgeIdType, ChiralityType chirality, double t);
 
@@ -46,12 +51,14 @@ protected:
   std::map<FaceIdType, PuncturedCell> _punctured_vcells;
   std::map<CellIdType, PuncturedCell> _punctured_cells;
 
+  std::vector<VortexObject> _vortex_objects, _vortex_objects1;
   std::vector<VortexLine> _vortex_lines;
-  
-  bool _gauge; 
+ 
+  int _num_vortices;
 
 protected:
   const GLDatasetBase *_dataset;
+  bool _gauge; 
 }; 
 
 #endif

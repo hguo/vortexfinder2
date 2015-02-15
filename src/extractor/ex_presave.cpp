@@ -24,6 +24,7 @@ int main(int argc, char **argv)
   fprintf(stderr, "tracing..\n");
   // extractor->TraceOverTime();
   extractor->TraceOverSpace();
+  extractor->SaveVortexLines(dataname + ".vortex");
   // extractor->TraceVirtualCells();
 
   delete extractor;
