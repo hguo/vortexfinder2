@@ -22,10 +22,11 @@ int main(int argc, char **argv)
   if (!extractor->LoadPuncturedEdges()) return EXIT_FAILURE;
 
   fprintf(stderr, "tracing..\n");
-  // extractor->TraceOverTime();
-  extractor->TraceOverSpace();
-  extractor->SaveVortexLines(dataname + ".vortex");
-  // extractor->TraceVirtualCells();
+  extractor->TraceOverSpace(0);
+  extractor->TraceOverSpace(1);
+  extractor->RelateOverTime();
+  extractor->TraceOverTime();
+  // extractor->SaveVortexLines(dataname + ".vortex");
 
   delete extractor;
   delete ds; 

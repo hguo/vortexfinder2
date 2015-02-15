@@ -103,17 +103,13 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int time, ChiralityType ch
   pf.chirality = chirality;
   memcpy(pf.pos, pos, sizeof(double)*3);
 
-  if (time == 0)
-    _punctured_faces[id] = pf;
-  else 
-    _punctured_faces1[id] = pf;
+  if (time == 0) _punctured_faces[id] = pf;
+  else _punctured_faces1[id] = pf;
 
   // vcell
   PuncturedCell &vc = _punctured_vcells[id];
-  if (time == 0)
-    vc.SetChirality(0, -chirality);
-  else 
-    vc.SetChirality(1, chirality);
+  if (time == 0) vc.SetChirality(0, -chirality);
+  else vc.SetChirality(1, chirality);
 
   // cell
   const MeshGraph &mg = _dataset->MeshGraph();
@@ -122,12 +118,8 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int time, ChiralityType ch
     CellIdType cid = face.contained_cells[i]; 
     int fchirality = face.contained_cells_chirality[i];
     int fid = face.contained_cells_fid[i];
-    PuncturedCell &c = _punctured_cells[cid]; 
+    PuncturedCell &c = time == 0 ? _punctured_cells[cid] : _punctured_cells1[cid];
     c.SetChirality(fid, chirality * fchirality);
-#if 0
-    fprintf(stderr, "face=%u, cid=%u, fid=%d, chi=%d, fchi=%d\n", 
-        id, cid, fid, chirality, fchirality);
-#endif
   }
 }
 
@@ -162,11 +154,13 @@ bool VortexExtractor::FindSpaceTimeEdgeZero(const double re[], const double im[]
   return true;
 }
 
-void VortexExtractor::TraceOverTime()
+void VortexExtractor::RelateOverTime()
 {
-  fprintf(stderr, "Tracing over time, #pf0=%ld, #pf1=%ld, #pe=%ld\n", 
+  fprintf(stderr, "Relating over time, #pf0=%ld, #pf1=%ld, #pe=%ld\n", 
       _punctured_faces.size(), _punctured_faces1.size(), _punctured_edges.size());
   const MeshGraph &mg = _dataset->MeshGraph();
+
+  _related_faces.clear();
 
   for (std::map<FaceIdType, PuncturedFace>::iterator it = _punctured_faces.begin(); 
        it != _punctured_faces.end(); it ++) 
@@ -203,7 +197,7 @@ void VortexExtractor::TraceOverTime()
           _punctured_faces1[current].chirality == current_chirality) 
       {
         related.push_back(current);
-
+#if 0 // for debug purposes, print traverse history
         std::list<FaceIdType> history_faces;
         std::list<std::tuple<EdgeIdType, double> > history_edges;
 
@@ -229,8 +223,8 @@ void VortexExtractor::TraceOverTime()
             it1++;
           }
         }
+#endif
       }
-
 
       // add neighbors
       const CFace &face = mg.faces[current];
@@ -263,6 +257,8 @@ void VortexExtractor::TraceOverTime()
         }
       }
     }
+
+    _related_faces[it->first] = related;
 
 #if 0
     // non-ordinary
@@ -307,14 +303,17 @@ void VortexExtractor::TraceVirtualCells()
       n_self, n_pure, n_cross, n_invalid);
 }
 
-void VortexExtractor::TraceOverSpace()
+void VortexExtractor::TraceOverSpace(int time)
 {
   fprintf(stderr, "tracing over space, #punctured_cells=%ld.\n", _punctured_cells.size());
-  _vortex_objects.clear();
 
-  std::map<CellIdType, PuncturedCell> &pcs = _punctured_cells;
+  std::vector<VortexObject> &vortex_objects = 
+    time == 0 ? _vortex_objects : _vortex_objects1;
+  std::map<CellIdType, PuncturedCell> &pcs = 
+    time == 0 ? _punctured_cells : _punctured_cells1;
   const MeshGraph &mg = _dataset->MeshGraph();
-
+  
+  vortex_objects.clear();
   while (!pcs.empty()) {
     /// 1. sort punctured cells into connected ordinary/special ones
     std::list<CellIdType> to_visit;
@@ -354,7 +353,6 @@ void VortexExtractor::TraceOverSpace()
 
     // fprintf(stderr, "#ordinary=%ld, #special=%ld\n", ordinary_pcells.size(), special_pcells.size());
 
-#if 1
     /// 2. trace vortex lines
     VortexObject vobj; 
     
@@ -433,12 +431,10 @@ void VortexExtractor::TraceOverSpace()
     }
 
     vobj.id = NewVortexId();
-    _vortex_objects.push_back(vobj);
-#endif 
+    vortex_objects.push_back(vobj);
   }
 
-  VortexObjectsToVortexLines(_punctured_faces, _vortex_objects, _vortex_lines);
-
+  // VortexObjectsToVortexLines(_punctured_faces, _vortex_objects, _vortex_lines);
   fprintf(stderr, "#vortex_objs=%ld\n", _vortex_objects.size());
 }
 
@@ -469,6 +465,38 @@ void VortexExtractor::VortexObjectsToVortexLines(
   }
 }
 
+// only relate ids
+void VortexExtractor::TraceOverTime()
+{
+  const int n0 = _vortex_objects.size(), 
+            n1 = _vortex_objects1.size();
+  bool *match = (bool*)malloc(sizeof(bool)*n0*n1);
+  memset(match, 0, sizeof(bool)*n0*n1);
+
+  for (int i=0; i<n0; i++) {
+    for (int j=0; j<n1; j++) {
+      for (std::set<FaceIdType>::iterator it = _vortex_objects[i].faces.begin(); 
+          it != _vortex_objects[i].faces.end(); it ++) 
+      {
+        const std::vector<FaceIdType> &related = _related_faces[*it];
+        for (int k=0; k<related.size(); k++) {
+          if (_vortex_objects1[j].faces.find(related[k]) != _vortex_objects1[j].faces.end()) {
+            match[i*n1+j] = true;
+            goto next;
+          }
+        }
+      }
+next: 
+      continue;
+    }
+  }
+
+  for (int i=0; i<n0; i++) 
+    for (int j=0; j<n1; j++) {
+      if (j<n1-1) fprintf(stderr, "%d, ", match[i*n1+j]);
+      else fprintf(stderr, "%d\n", match[i*n1+j]);
+    }
+}
 
 #if 0
 bool VortexExtractor::ExtractElem(ElemIdType id)
