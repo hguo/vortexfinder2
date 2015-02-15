@@ -16,7 +16,7 @@ bool SerializeVortexLines(const std::vector<VortexLine>& lines, std::string& buf
   PBVortexLines plines;
   for (int i=0; i<lines.size(); i++) {
     PBVortexLine *pline = plines.add_lines();
-    for (int j=0; j<lines.size(); j++) 
+    for (int j=0; j<lines[i].size(); j++) 
       pline->add_vertices( lines[i][j] );
     pline->set_id( lines[i].id );
     pline->set_timestep( lines[i].timestep );

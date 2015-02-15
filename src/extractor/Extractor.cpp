@@ -416,7 +416,7 @@ void VortexExtractor::TraceOverSpace()
             {
               FaceIdType f = cell.faces[i];
               vobj.faces.insert(f);
-              trace.push_back(f);
+              trace.push_front(f);
               c = cell.neighbor_cells[i]; 
               traced = true;
             }
