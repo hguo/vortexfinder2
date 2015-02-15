@@ -87,8 +87,8 @@ void Condor2VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
   // find zero
   double t = 0;
   if (FindSpaceTimeEdgeZero(re, im, t)) {
-    fprintf(stderr, "punctured edge: eid=%u, chirality=%d, t=%f\n", 
-        id, chirality, t);
+    // fprintf(stderr, "punctured edge: eid=%u, chirality=%d, t=%f\n", 
+    //     id, chirality, t);
     AddPuncturedEdge(id, chirality, t);
   } else {
     fprintf(stderr, "WARNING: zero time not found.\n");
@@ -159,7 +159,7 @@ void Condor2VortexExtractor::ExtractFace(FaceIdType id, int time)
   double pos[3];
   if (FindFaceZero(X, re1, im1, pos)) {
     AddPuncturedFace(id, time, chirality, pos);
-    fprintf(stderr, "fid=%u, t=%d, p={%f, %f, %f}\n", id, time, pos[0], pos[1], pos[2]);
+    // fprintf(stderr, "fid=%u, t=%d, p={%f, %f, %f}\n", id, time, pos[0], pos[1], pos[2]);
   } else {
     fprintf(stderr, "WARNING: punctured but singularity not found.\n");
   }

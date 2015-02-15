@@ -59,7 +59,8 @@ bool VortexExtractor::SavePuncturedFaces(int time) const
   std::ostringstream os; 
   os << ds->DataName() << ".pf." << 
     (time == 0 ? ds->TimeStep() : ds->TimeStep1());
-  return ::SavePuncturedFaces(_punctured_faces, os.str());
+  return ::SavePuncturedFaces(
+      time == 0 ? _punctured_faces : _punctured_faces1, os.str());
 }
 
 bool VortexExtractor::LoadPuncturedEdges()
