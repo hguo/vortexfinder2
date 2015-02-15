@@ -17,7 +17,8 @@ public:
   Condor2VortexExtractor(); 
   ~Condor2VortexExtractor();
 
-  void Extract();
+  void ExtractFaces(int time);
+  void ExtractEdges();
 
 protected:
   void ExtractFace(FaceIdType, int time); // time=0 or 1

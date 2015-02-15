@@ -17,21 +17,20 @@ Condor2VortexExtractor::~Condor2VortexExtractor()
 {
 }
 
-void Condor2VortexExtractor::Extract()
+void Condor2VortexExtractor::ExtractFaces(int time)
 {
   const MeshGraph& mg = _dataset->MeshGraph();
 
-  if (!LoadPuncturedFaces(0)) {
+  if (!LoadPuncturedFaces(time)) {
     for (FaceIdType i=0; i<mg.faces.size(); i++) 
-      ExtractFace(i, 0);
-    SavePuncturedFaces(0);
+      ExtractFace(i, time);
+    SavePuncturedFaces(time);
   }
+}
 
-  if (!LoadPuncturedFaces(1)) {
-    for (FaceIdType i=0; i<mg.faces.size(); i++) 
-      ExtractFace(i, 1);
-    SavePuncturedFaces(1);
-  }
+void Condor2VortexExtractor::ExtractEdges()
+{
+  const MeshGraph& mg = _dataset->MeshGraph();
  
   if (!LoadPuncturedEdges()) {
     for (EdgeIdType i=0; i<mg.edges.size(); i++) 

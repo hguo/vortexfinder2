@@ -21,6 +21,8 @@ public:
   const GLDataset* Dataset() const {return (GLDataset*)_dataset;}
 
   virtual void Extract() {}; 
+  virtual void ExtractFaces(int time) {}
+  virtual void ExtractEdges() {}
 
   void SaveVortexLines(const std::string& filename); 
 
