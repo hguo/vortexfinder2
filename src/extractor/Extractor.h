@@ -36,6 +36,8 @@ public:
 
   void RelateOverTime();
 
+  void PrepareForNextStep();
+
 protected:
   void VortexObjectsToVortexLines(const std::map<FaceIdType, PuncturedFace>& pfs, const std::vector<VortexObject>& vobjs, std::vector<VortexLine>& vlines);
   int NewVortexId();

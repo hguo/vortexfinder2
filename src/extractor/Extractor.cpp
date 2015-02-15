@@ -498,6 +498,20 @@ next:
     }
 }
 
+void VortexExtractor::PrepareForNextStep()
+{
+  _punctured_faces1.clear();
+  _punctured_cells1.clear();
+  _vortex_objects1.clear();
+
+  _punctured_edges.clear();
+  _punctured_vcells.clear();
+
+  _punctured_faces.swap( _punctured_faces1 );
+  _punctured_cells.swap( _punctured_cells1 );
+  _vortex_objects.swap( _vortex_objects1 );
+}
+
 #if 0
 bool VortexExtractor::ExtractElem(ElemIdType id)
 {
