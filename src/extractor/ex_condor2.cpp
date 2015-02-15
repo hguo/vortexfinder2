@@ -16,8 +16,8 @@ static struct option longopts[] = {
   {"benchmark", no_argument, &benchmark, 1}, 
   {"input", required_argument, 0, 'i'},
   {"output", required_argument, 0, 'o'},
-  {"t", required_argument, 0, 't'}, 
-  {"T", required_argument, 0, 'T'}, 
+  {"time", required_argument, 0, 't'}, 
+  {"length", required_argument, 0, 'l'}, 
   {0, 0, 0, 0} 
 };
 
@@ -27,14 +27,14 @@ static bool parse_arg(int argc, char **argv)
 
   while (1) {
     int option_index = 0;
-    c = getopt_long(argc, argv, "i:o:k:x:y:z:t:T", longopts, &option_index); 
+    c = getopt_long(argc, argv, "i:o:t:l", longopts, &option_index); 
     if (c == -1) break;
 
     switch (c) {
     case 'i': filename_in = optarg; break;
     case 'o': filename_out = optarg; break;
     case 't': T0 = atoi(optarg); break;
-    case 'T': T = atoi(optarg); break;
+    case 'l': T = atoi(optarg); break;
     default: break; 
     }
   }
