@@ -23,7 +23,8 @@ public:
 
 public: 
   bool OpenDataFile(const std::string& filename);
-  void LoadNextTimeStep(int span=1);
+  void LoadTimeStep(int timestep);
+  void LoadTimeStep1(int timestep);
   void CloseDataFile();
 
   void BuildMeshGraph();
@@ -66,7 +67,7 @@ public:
 
 private: 
   void ProbeBoundingBox();
-  void LoadTimeStep(int timestep);
+  void LoadTimeStep_(int timestep);
 
 private:
   const libMesh::Elem* LocateElemCoherently(const double X[3]) const; // not thread-safe

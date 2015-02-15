@@ -169,7 +169,7 @@ void Condor2Dataset::ProbeBoundingBox()
   _lengths[2] = U[2] - L[2];
 }
 
-void Condor2Dataset::LoadTimeStep(int timestep)
+void Condor2Dataset::LoadTimeStep_(int timestep)
 {
   assert(_exio != NULL); 
 
@@ -180,25 +180,29 @@ void Condor2Dataset::LoadTimeStep(int timestep)
   _exio->copy_nodal_solution(*_asys, "Ax", "A_x", timestep);
   _exio->copy_nodal_solution(*_asys, "Ay", "A_y", timestep);
   _exio->copy_nodal_solution(*_asys, "Az", "A_z", timestep);
+}
+
+void Condor2Dataset::LoadTimeStep(int timestep)
+{
+  SetTimeStep(timestep);
+  LoadTimeStep_(timestep);
 
   _ts = _tsys->solution->clone();
   _as = _asys->solution->clone();
 }
 
-void Condor2Dataset::LoadNextTimeStep(int span)
+void Condor2Dataset::LoadTimeStep1(int timestep)
 {
-  _timestep1 = _timestep + span;
+  SetTimeStep1(timestep);
+  LoadTimeStep_(timestep);
 
-  AutoPtr<NumericVector<Number> > ts = _ts;
-  AutoPtr<NumericVector<Number> > as = _as;
+  if (_ts1.get() != NULL) {
+    _ts = _ts1;
+    _as = _as1;
+  }
 
-  LoadTimeStep(_timestep1);
-
-  _ts1 = _ts;
-  _as1 = _as;
-
-  _ts = ts;
-  _as = as;
+  _ts1 = _tsys->solution->clone();
+  _as1 = _asys->solution->clone();
 }
 
 #if 0

@@ -498,7 +498,7 @@ next:
     }
 }
 
-void VortexExtractor::PrepareForNextStep()
+void VortexExtractor::RotateTimeStep()
 {
   _punctured_faces1.clear();
   _punctured_cells1.clear();

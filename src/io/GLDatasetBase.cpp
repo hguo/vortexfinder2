@@ -15,10 +15,9 @@ void GLDatasetBase::SetTimeStep(int t)
   _timestep = t;
 }
 
-void GLDatasetBase::SetTimeSteps(int t0, int t1)
+void GLDatasetBase::SetTimeStep1(int t)
 {
-  _timestep = t0;
-  _timestep1 = t1;
+  _timestep1 = t;
 }
 
 bool GLDatasetBase::LoadDefaultMeshGraph()

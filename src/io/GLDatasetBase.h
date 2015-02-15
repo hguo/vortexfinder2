@@ -14,9 +14,9 @@ public:
 public:
   void SetDataName(const std::string& dn);
   std::string DataName() const {return _data_name;}
-  
+ 
   void SetTimeStep(int);
-  void SetTimeSteps(int, int);
+  void SetTimeStep1(int);
   int TimeStep() const {return _timestep;}
   int TimeStep1() const {return _timestep1;}
 
