@@ -172,7 +172,7 @@ void CGLWidget::renderVortexLines()
   glEnableClientState(GL_VERTEX_ARRAY); 
   glEnableClientState(GL_COLOR_ARRAY); 
   glVertexPointer(3, GL_FLOAT, 0, v_line_vertices.data()); 
-  glColorPointer(4, GL_FLOAT, 4*sizeof(GLfloat), v_line_colors.data());
+  glColorPointer(3, GL_UNSIGNED_BYTE, 3*sizeof(GLubyte), v_line_colors.data());
   
   glMultiDrawArrays(GL_LINE_STRIP, v_line_indices.data(), v_line_vert_count.data(), v_line_vert_count.size());
   // glMultiDrawArrays(GL_POINTS, v_line_indices.data(), v_line_vert_count.data(), v_line_vert_count.size());
@@ -196,7 +196,7 @@ void CGLWidget::renderVortexTubes()
 
   glVertexPointer(3, GL_FLOAT, 0, vortex_tube_vertices.data()); 
   glNormalPointer(GL_FLOAT, 0, vortex_tube_normals.data()); 
-  glColorPointer(3, GL_FLOAT, 0, vortex_tube_colors.data()); 
+  glColorPointer(3, GL_UNSIGNED_BYTE, 0, vortex_tube_colors.data()); 
   glDrawElements(GL_TRIANGLES, vortex_tube_indices_vertices.size(), GL_UNSIGNED_INT, vortex_tube_indices_vertices.data()); 
 
   glPopClientAttrib(); 
@@ -297,7 +297,34 @@ void CGLWidget::LoadVortexLines(const std::string& filename)
   std::vector<VortexLine> vortex_liness;
   ::LoadVortexLines(vortex_liness, filename); 
 
-  float c[4] = {1, 0, 0, 1}; // color;
+#if 1
+  const int nc = 6;
+  const GLubyte c[nc][3] = {
+    {0, 0, 255},
+    {0, 255, 0},
+    {0, 255, 255},
+    {255, 0, 0},
+    {255, 0, 255},
+    {255, 255, 0}};
+#else
+  const int nc = 15;
+  const GLubyte c[nc][3] = {
+    {230, 13, 13},
+    {10, 184, 10},
+    {40, 146, 146},
+    {8, 138, 138},
+    {0, 90, 90}, 
+    {230, 111, 13},
+    {53, 195, 53},
+    {243, 66, 66},
+    {0, 121, 0},
+    {151, 68, 0},
+    {0, 86, 0}, 
+    {108, 49, 0},
+    {151, 0, 0},
+    {108, 0, 0},
+    {243, 146, 66}};
+#endif
   for (int k=0; k<vortex_liness.size(); k++) { //iterator over lines
     if (vortex_liness[k].size()>3) {
       _vids.push_back(vortex_liness[k].id);
@@ -307,27 +334,19 @@ void CGLWidget::LoadVortexLines(const std::string& filename)
                     *(vortex_liness[k].begin()+2)));
     }
 
-    int vertCount = vortex_liness[k].size()/3;  
-#if 1
-    switch (vortex_liness[k].id % 6) {
-    case 0: c[0]=0; c[1]=0; c[2]=1; c[3]=1; break;
-    case 1: c[0]=0; c[1]=1; c[2]=0; c[3]=1; break;
-    case 2: c[0]=0; c[1]=1; c[2]=1; c[3]=1; break;
-    case 3: c[0]=1; c[1]=0; c[2]=0; c[3]=1; break;
-    case 4: c[0]=1; c[1]=0; c[2]=1; c[3]=1; break;
-    case 5: c[0]=1; c[1]=1; c[2]=0; c[3]=1; break;
-    default: break; 
-   }
-#endif
+    int vertCount = vortex_liness[k].size()/3;
+    int ci = vortex_liness[k].id % nc; // color index
     
     for (std::vector<double>::iterator it = vortex_liness[k].begin(); 
         it != vortex_liness[k].end(); it ++) {
       v_line_vertices.push_back(*it); 
     }
     
-    for (int l=0; l<vertCount; l++)  
-      for (int m=0; m<4; m++) 
-        v_line_colors.push_back(c[m]); 
+    for (int l=0; l<vertCount; l++) {
+      v_line_colors.push_back(c[ci][0]); 
+      v_line_colors.push_back(c[ci][1]); 
+      v_line_colors.push_back(c[ci][2]); 
+    }
 
     v_line_vert_count.push_back(vertCount); 
     // fprintf(stderr, "vert_count=%d\n", vertCount);
@@ -348,7 +367,7 @@ void CGLWidget::LoadVortexLinesFromTextFile(const std::string& filename)
   std::ifstream ifs(filename);
   if (!ifs.is_open()) return;
 
-  const float c[4] = {1, 0, 0, 1}; 
+  const float c[3] = {1, 0, 0};
 
   std::string line;
   int vertCount = 0;
@@ -368,7 +387,7 @@ void CGLWidget::LoadVortexLinesFromTextFile(const std::string& filename)
     v_line_vertices.push_back(x); 
     v_line_vertices.push_back(y); 
     v_line_vertices.push_back(z);
-    for (int m=0; m<4; m++) 
+    for (int m=0; m<3; m++) 
       v_line_colors.push_back(c[m]); 
 
     if (vertCount > 1) {
@@ -415,8 +434,8 @@ void CGLWidget::updateVortexTubes(int nPatches, float radius)
     QVector3D N0; 
     for (int j=1; j<v_line_vert_count[i]; j++) {
       QVector3D P0 = QVector3D(v_line_vertices[(first+j-1)*3], v_line_vertices[(first+j-1)*3+1], v_line_vertices[(first+j-1)*3+2]); 
-      QVector3D P  = QVector3D(v_line_vertices[(first+j)*3], v_line_vertices[(first+j)*3+1], v_line_vertices[(first+j)*3+2]); 
-      QVector3D color = QVector3D(v_line_colors[(first+j)*4], v_line_colors[(first+j)*4+1], v_line_colors[(first+j)*4+2]); 
+      QVector3D P  = QVector3D(v_line_vertices[(first+j)*3], v_line_vertices[(first+j)*3+1], v_line_vertices[(first+j)*3+2]);
+      GLubyte color[3] = {v_line_colors[(first+j)*3], v_line_colors[(first+j)*3+1], v_line_colors[(first+j)*3+2]}; 
 
       QVector3D T = (P - P0).normalized(); 
       QVector3D N = QVector3D(-T.y(), T.x(), 0.0).normalized(); 
@@ -451,9 +470,9 @@ void CGLWidget::updateVortexTubes(int nPatches, float radius)
           vortex_tube_normals.push_back(normal.x()); 
           vortex_tube_normals.push_back(normal.y()); 
           vortex_tube_normals.push_back(normal.z()); 
-          vortex_tube_colors.push_back(color.x()); 
-          vortex_tube_colors.push_back(color.y()); 
-          vortex_tube_colors.push_back(color.z());
+          vortex_tube_colors.push_back(color[0]); 
+          vortex_tube_colors.push_back(color[1]); 
+          vortex_tube_colors.push_back(color[2]);
           vortex_tube_indices_lines.push_back(j); 
         }
       }

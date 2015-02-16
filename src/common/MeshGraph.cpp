@@ -225,6 +225,23 @@ MeshGraphBuilder::MeshGraphBuilder(MeshGraph& mg)
 {
 }
 
+
+////////////////////////
+#if 0
+MeshGraphRegular3D::MeshGraphRegular3D(int d_[3], int pbc_[3])
+{
+  memcpy(d, d_, sizeof(int)*3);
+  memcpy(pbc, pbc_, sizeof(int)*3);
+}
+
+CCell MeshGraphRegular3D::Cell(CellIdType i) const
+{
+  CCell cell;
+  // TODO
+  return cell;
+}
+#endif
+
 ////////////////
 MeshGraphBuilder_Tet::MeshGraphBuilder_Tet(int ncells, MeshGraph& mg) : 
   MeshGraphBuilder(mg) 
