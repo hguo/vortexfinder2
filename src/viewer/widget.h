@@ -69,6 +69,8 @@ private: // camera
   const float _fovy, _znear, _zfar; 
   const QVector3D _eye, _center, _up;
 
+  int _vortex_render_mode;
+
 private: // vortex line rendering
   std::vector<GLfloat> v_line_vertices, v_line_colors; 
   std::vector<GLsizei> v_line_vert_count; 

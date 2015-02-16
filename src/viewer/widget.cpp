@@ -15,7 +15,8 @@ using namespace std;
 CGLWidget::CGLWidget(const QGLFormat& fmt, QWidget *parent, QGLWidget *sharedWidget)
   : QGLWidget(fmt, parent, sharedWidget), 
     _fovy(30.f), _znear(0.1f), _zfar(10.f), 
-    _eye(0, 0, 2.5), _center(0, 0, 0), _up(0, 1, 0)
+    _eye(0, 0, 2.5), _center(0, 0, 0), _up(0, 1, 0), 
+    _vortex_render_mode(0)
 {
 }
 
@@ -60,6 +61,16 @@ void CGLWidget::keyPressEvent(QKeyEvent* e)
 
   case Qt::Key_Period: 
     LoadTimeStep(_timestep + 1);
+    updateGL();
+    break;
+
+  case Qt::Key_T:
+    _vortex_render_mode = 0;
+    updateGL();
+    break;
+
+  case Qt::Key_L:
+    _vortex_render_mode = 1;
     updateGL();
     break;
 
@@ -172,6 +183,8 @@ void CGLWidget::renderVortexLines()
 
 void CGLWidget::renderVortexTubes()
 {
+  glPushAttrib(GL_ENABLE_BIT);
+
   glEnable(GL_DEPTH_TEST); 
   glEnable(GL_LIGHTING); 
   glEnable(GL_LIGHT0); 
@@ -187,7 +200,8 @@ void CGLWidget::renderVortexTubes()
   glDrawElements(GL_TRIANGLES, vortex_tube_indices_vertices.size(), GL_UNSIGNED_INT, vortex_tube_indices_vertices.data()); 
 
   glPopClientAttrib(); 
-  glDisable(GL_LIGHTING);
+
+  glPopAttrib();
 }
 
 void CGLWidget::paintGL()
@@ -219,15 +233,14 @@ void CGLWidget::paintGL()
   glPopMatrix();
 #endif
 
-#if 1
-  renderVortexTubes();
-#else 
-  renderVortexLines();
-#endif
-
-  renderFieldLines();
+  if (_vortex_render_mode == 0)
+    renderVortexTubes();
+  else 
+    renderVortexLines();
   
   renderVortexIds();
+
+  renderFieldLines();
 
   CHECK_GLERROR(); 
 }
@@ -286,11 +299,13 @@ void CGLWidget::LoadVortexLines(const std::string& filename)
 
   float c[4] = {1, 0, 0, 1}; // color;
   for (int k=0; k<vortex_liness.size(); k++) { //iterator over lines
-    _vids.push_back(vortex_liness[k].id);
-    _vids_coord.push_back(
-        QVector3D(*(vortex_liness[k].begin()), 
-                  *(vortex_liness[k].begin()+1),
-                  *(vortex_liness[k].begin()+2)));
+    if (vortex_liness[k].size()>3) {
+      _vids.push_back(vortex_liness[k].id);
+      _vids_coord.push_back(
+          QVector3D(*(vortex_liness[k].begin()), 
+                    *(vortex_liness[k].begin()+1),
+                    *(vortex_liness[k].begin()+2)));
+    }
 
     int vertCount = vortex_liness[k].size()/3;  
 #if 1
@@ -398,7 +413,7 @@ void CGLWidget::updateVortexTubes(int nPatches, float radius)
      
     int first = v_line_indices[i]; 
     QVector3D N0; 
-    for (int j=1; j<v_line_vert_count[i]-1; j++) {
+    for (int j=1; j<v_line_vert_count[i]; j++) {
       QVector3D P0 = QVector3D(v_line_vertices[(first+j-1)*3], v_line_vertices[(first+j-1)*3+1], v_line_vertices[(first+j-1)*3+2]); 
       QVector3D P  = QVector3D(v_line_vertices[(first+j)*3], v_line_vertices[(first+j)*3+1], v_line_vertices[(first+j)*3+2]); 
       QVector3D color = QVector3D(v_line_colors[(first+j)*4], v_line_colors[(first+j)*4+1], v_line_colors[(first+j)*4+2]); 
@@ -407,20 +422,22 @@ void CGLWidget::updateVortexTubes(int nPatches, float radius)
       QVector3D N = QVector3D(-T.y(), T.x(), 0.0).normalized(); 
       QVector3D B = QVector3D::crossProduct(N, T); 
 
+      if (N.length() == 0) continue;
+
       if (j>1) {
         float n0 = QVector3D::dotProduct(N0, N); 
-        float b0 = QVector3D::dotProduct(N0, B); 
-        QVector3D N1 = n0 * N + b0 * B; 
+        float b0 = QVector3D::dotProduct(N0, B);
+        QVector3D N1 = n0 * N + b0 * B;
         N = N1.normalized(); 
         B = QVector3D::crossProduct(N, T).normalized(); 
       }
-      N0 = N; 
+      N0 = N;
 
       const int nIteration = (j==1)?2:1; 
       for (int k=0; k<nIteration; k++) {
         for (int p=0; p<nPatches; p++) {
           float angle = p * 2.f * M_PI / nPatches; 
-          QVector3D normal = (N*cos(angle) + B*sin(angle)).normalized();  
+          QVector3D normal = (N*cos(angle) + B*sin(angle)).normalized(); 
           QVector3D offset = normal * radius; 
           QVector3D coord; 
 
@@ -436,14 +453,14 @@ void CGLWidget::updateVortexTubes(int nPatches, float radius)
           vortex_tube_normals.push_back(normal.z()); 
           vortex_tube_colors.push_back(color.x()); 
           vortex_tube_colors.push_back(color.y()); 
-          vortex_tube_colors.push_back(color.z()); 
+          vortex_tube_colors.push_back(color.z());
           vortex_tube_indices_lines.push_back(j); 
         }
       }
 
       for (int p=0; p<nPatches; p++) {
-        int n = vortex_tube_vertices.size()/3; 
-        int pn = (p+1)%nPatches; 
+        const int n = vortex_tube_vertices.size()/3; 
+        const int pn = (p+1)%nPatches; 
         vortex_tube_indices_vertices.push_back(n-nPatches+p); 
         vortex_tube_indices_vertices.push_back(n-nPatches-nPatches+pn); 
         vortex_tube_indices_vertices.push_back(n-nPatches-nPatches+p); 
