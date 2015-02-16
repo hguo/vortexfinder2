@@ -522,6 +522,8 @@ next:
     }
     if (sum == 1) { // link the two
       _vortex_objects1[j1].id = _vortex_objects[i].id;
+    } else {
+      fprintf(stderr, "special event detected, vid0=%d\n", i);
     }
   }
 

@@ -109,6 +109,7 @@ int main(int argc, char **argv)
     ds.LoadTimeStep1(t);
     extractor.ExtractEdges();
     extractor.ExtractFaces(1);
+    extractor.RotateTimeStep();
     // extractor.TraceOverTime(); 
     // extractor.TraceVirtualCells(); 
     // extractor.SaveVortexLines(filename_out); 

@@ -26,14 +26,18 @@ int main(int argc, char **argv)
   fprintf(stderr, "tracing..\n");
 
   ds->SetTimeStep(T0);
+  extractor->LoadPuncturedFaces(0);
   extractor->TraceOverSpace(0);
   extractor->SaveVortexLines(0);
   for (int t=T0+1; t<T0+T; t++) {
     ds->SetTimeStep1(t);
+    extractor->LoadPuncturedFaces(1);
     extractor->TraceOverSpace(1);
+    extractor->LoadPuncturedEdges();
     extractor->RelateOverTime();
     extractor->TraceOverTime();
     extractor->SaveVortexLines(1);
+    extractor->RotateTimeStep();
   }
 
   // extractor->SaveVortexLines(dataname + ".vortex");
