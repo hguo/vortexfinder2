@@ -162,6 +162,8 @@ void Condor2VortexExtractor::ExtractFace(FaceIdType id, int time)
     // fprintf(stderr, "fid=%u, t=%d, p={%f, %f, %f}\n", id, time, pos[0], pos[1], pos[2]);
   } else {
     fprintf(stderr, "WARNING: punctured but singularity not found.\n");
+    pos[0] = pos[1] = pos[2] = NAN;
+    AddPuncturedFace(id, time, chirality, pos);
   }
 }
 
