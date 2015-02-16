@@ -84,7 +84,7 @@ class MeshGraphBuilder_Tet;
 class MeshGraphBuilder_Hex;
 
 class MeshGraph {
-private:
+protected:
   friend class MeshGraphBuilder;
   friend class MeshGraphBuilder_Tet;
   friend class MeshGraphBuilder_Hex;
@@ -133,6 +133,13 @@ public:
 class MeshGraphRegular3D : public MeshGraph {
 private:
   int d[3], pbc[3];
+
+private:
+  bool id2idx(unsigned int id, unsigned int idx[3]) const;
+  unsigned int idx2id(const unsigned int idx[3]) const;
+  unsigned int idx2id(unsigned int i, unsigned int j, unsigned int k) const;
+  bool validIdx(const unsigned int idx[3]) const;
+  void modIdx(unsigned int idx[3]) const;
 
 public:
   MeshGraphRegular3D(int d[3], int pbc[3]);

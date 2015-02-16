@@ -227,7 +227,6 @@ MeshGraphBuilder::MeshGraphBuilder(MeshGraph& mg)
 
 
 ////////////////////////
-#if 0
 MeshGraphRegular3D::MeshGraphRegular3D(int d_[3], int pbc_[3])
 {
   memcpy(d, d_, sizeof(int)*3);
@@ -237,10 +236,79 @@ MeshGraphRegular3D::MeshGraphRegular3D(int d_[3], int pbc_[3])
 CCell MeshGraphRegular3D::Cell(CellIdType i) const
 {
   CCell cell;
+  unsigned int idx[3];
+  if (!id2idx(i, idx)) return cell;
   // TODO
   return cell;
 }
-#endif
+
+CFace MeshGraphRegular3D::Face(FaceIdType i) const
+{
+  CFace face;
+  // TODO
+  return face;
+}
+
+CEdge MeshGraphRegular3D::Edge(EdgeIdType i) const
+{
+  CEdge edge;
+  return edge;
+}
+
+EdgeIdType MeshGraphRegular3D::NEdges() const
+{
+  // TODO
+  return 0;
+}
+
+EdgeIdType MeshGraphRegular3D::NFaces() const
+{
+  // TODO
+  return 0;
+}
+
+EdgeIdType MeshGraphRegular3D::NCells() const
+{
+  // TODO
+  return 0;
+}
+
+bool MeshGraphRegular3D::id2idx(unsigned int id, unsigned int idx[3]) const
+{
+  unsigned int s = d[0] * d[1]; 
+  unsigned int k = id / s; 
+  unsigned int j = (id - k*s) / d[0]; 
+  unsigned int i = id - k*s - j*d[0]; 
+
+  idx[0] = i; idx[1] = j; idx[2] = k;
+  return validIdx(idx);
+}
+
+unsigned int MeshGraphRegular3D::idx2id(const unsigned int idx[3]) const
+{
+  if (!validIdx(idx)) return UINT_MAX;
+  return idx[0] + d[0] * (idx[1] + d[1] * idx[2]); 
+}
+
+unsigned int MeshGraphRegular3D::idx2id(unsigned int i, unsigned int j, unsigned int k) const
+{
+  const unsigned int idx[3] = {i, j, k};
+  return idx2id(idx);
+}
+
+void MeshGraphRegular3D::modIdx(unsigned int idx[3]) const
+{
+  for (int i=0; i<3; i++)
+    idx[i] = idx[i] % d[i];
+}
+
+bool MeshGraphRegular3D::validIdx(const unsigned int idx[3]) const
+{
+  for (int i=0; i<3; i++)
+    if (idx[i] >= d[i]) 
+      return false;
+  return true;
+}
 
 ////////////////
 MeshGraphBuilder_Tet::MeshGraphBuilder_Tet(int ncells, MeshGraph& mg) : 
