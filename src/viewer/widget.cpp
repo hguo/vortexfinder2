@@ -422,7 +422,7 @@ void CGLWidget::updateVortexTubes(int nPatches, float radius)
       QVector3D N = QVector3D(-T.y(), T.x(), 0.0).normalized(); 
       QVector3D B = QVector3D::crossProduct(N, T); 
 
-      if (N.length() == 0) continue;
+      if (N.length() == 0 || isnan(N.length())) continue;
 
       if (j>1) {
         float n0 = QVector3D::dotProduct(N0, N); 
