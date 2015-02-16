@@ -23,6 +23,22 @@ CGLWidget::~CGLWidget()
 {
 }
 
+void CGLWidget::SetDataName(const std::string& dataname)
+{
+  _dataname = dataname;
+}
+
+void CGLWidget::LoadTimeStep(int t)
+{
+  _timestep = t;
+  
+  stringstream ss;
+  ss << _dataname << ".vlines." << t;
+
+  Clear();
+  LoadVortexLines(ss.str());
+}
+
 void CGLWidget::mousePressEvent(QMouseEvent* e)
 {
   _trackball.mouse_rotate(e->x(), e->y()); 
@@ -37,6 +53,16 @@ void CGLWidget::mouseMoveEvent(QMouseEvent* e)
 void CGLWidget::keyPressEvent(QKeyEvent* e)
 {
   switch (e->key()) {
+  case Qt::Key_Comma: 
+    LoadTimeStep(_timestep - 1); 
+    updateGL();
+    break;
+
+  case Qt::Key_Period: 
+    LoadTimeStep(_timestep + 1);
+    updateGL();
+    break;
+
   default: break; 
   }
 }
@@ -111,6 +137,25 @@ void CGLWidget::renderFieldLines()
   glDisableClientState(GL_VERTEX_ARRAY); 
 }
 
+void CGLWidget::renderVortexIds()
+{
+  QFont ft;
+  ft.setPointSize(40);
+
+  QString s0 = QString("timestep=%1").arg(_timestep);
+  renderText(20, 60, s0, ft);
+
+  ft.setPointSize(32);
+  glColor3f(0, 0, 0);
+  for (int i=0; i<_vids.size(); i++) {
+    int id = _vids[i];
+    QVector3D v = _vids_coord[i];
+    QString s = QString("%1").arg(id);
+   
+    renderText(v.x(), v.y(), v.z(), s, ft);
+  }
+}
+
 void CGLWidget::renderVortexLines()
 {
   glEnableClientState(GL_VERTEX_ARRAY); 
@@ -181,6 +226,8 @@ void CGLWidget::paintGL()
 #endif
 
   renderFieldLines();
+  
+  renderVortexIds();
 
   CHECK_GLERROR(); 
 }
@@ -211,6 +258,27 @@ void CGLWidget::LoadFieldLines(const std::string& filename)
   }
 }
 
+void CGLWidget::Clear()
+{
+  v_line_vertices.clear();
+  v_line_colors.clear();
+  v_line_vert_count.clear();
+  v_line_indices.clear();
+  vortex_tube_vertices.clear();
+  vortex_tube_normals.clear();
+  vortex_tube_colors.clear();
+  vortex_tube_indices_lines.clear();
+  vortex_tube_indices_vertices.clear();
+
+  f_line_vertices.clear();
+  f_line_colors.clear();
+  f_line_vert_count.clear();
+  f_line_indices.clear();
+
+  _vids.clear();
+  _vids_coord.clear();
+}
+
 void CGLWidget::LoadVortexLines(const std::string& filename)
 {
   std::vector<VortexLine> vortex_liness;
@@ -218,6 +286,12 @@ void CGLWidget::LoadVortexLines(const std::string& filename)
 
   float c[4] = {1, 0, 0, 1}; // color;
   for (int k=0; k<vortex_liness.size(); k++) { //iterator over lines
+    _vids.push_back(vortex_liness[k].id);
+    _vids_coord.push_back(
+        QVector3D(*(vortex_liness[k].begin()), 
+                  *(vortex_liness[k].begin()+1),
+                  *(vortex_liness[k].begin()+2)));
+
     int vertCount = vortex_liness[k].size()/3;  
 #if 1
     switch (vortex_liness[k].id % 6) {

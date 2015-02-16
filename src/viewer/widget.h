@@ -3,6 +3,8 @@
 
 #include <QGLWidget>
 #include <QList>
+#include <QVector>
+#include <QVector3D>
 #include <cmath>
 #include "def.h"
 #include "trackball.h"
@@ -31,6 +33,10 @@ public:
   void LoadVortexLinesFromTextFile(const std::string& filename);
   
   void LoadFieldLines(const std::string& filename);
+  
+  void SetDataName(const std::string& dataname);
+  void LoadTimeStep(int t);
+  void Clear();
 
 protected:
   void initializeGL(); 
@@ -42,6 +48,7 @@ protected:
   void keyPressEvent(QKeyEvent*); 
   void wheelEvent(QWheelEvent*); 
 
+  void renderVortexIds();
   void renderVortexLines(); 
   void renderVortexTubes(); 
   void updateVortexTubes(int nPatches, float radius); 
@@ -55,6 +62,8 @@ private: //data
   // std::vector<VortexLine> _vortex_liness;
   // std::vector<FieldLine> _fieldlines;
   PBDataInfo *_data_info;
+  std::string _dataname;
+  int _timestep;
 
 private: // camera
   const float _fovy, _znear, _zfar; 
@@ -72,6 +81,10 @@ private: // fieldline rendering
   std::vector<GLfloat> f_line_vertices, f_line_colors; 
   std::vector<GLsizei> f_line_vert_count; 
   std::vector<GLint> f_line_indices; 
+
+private: // id rendering
+  QVector<int> _vids;
+  QVector<QVector3D> _vids_coord;
 }; 
 
 #endif
