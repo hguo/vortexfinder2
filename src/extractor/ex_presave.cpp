@@ -7,14 +7,15 @@ int main(int argc, char **argv)
   if (argc<4) return EXIT_FAILURE;
 
   const std::string dataname = argv[1];
-  const int timestep0 = atoi(argv[2]), 
-            ntimesteps = atoi(argv[3]);
+  const int T0 = atoi(argv[2]), 
+            T = atoi(argv[3]);
 
   GLDatasetBase *ds = new GLDatasetBase;
   ds->SetDataName(dataname);
-  ds->SetTimeStep(timestep0);
-  ds->SetTimeStep1(timestep0+1);
   if (!ds->LoadDefaultMeshGraph()) return EXIT_FAILURE;
+  
+  ds->SetTimeStep(T0);
+  ds->SetTimeStep1(T0+1);
 
   VortexExtractor *extractor = new VortexExtractor;
   extractor->SetDataset(ds);
@@ -23,10 +24,18 @@ int main(int argc, char **argv)
   if (!extractor->LoadPuncturedEdges()) return EXIT_FAILURE;
 
   fprintf(stderr, "tracing..\n");
+
+  ds->SetTimeStep(T0);
   extractor->TraceOverSpace(0);
-  extractor->TraceOverSpace(1);
-  extractor->RelateOverTime();
-  extractor->TraceOverTime();
+  extractor->SaveVortexLines(0);
+  for (int t=T0+1; t<T0+T; t++) {
+    ds->SetTimeStep1(t);
+    extractor->TraceOverSpace(1);
+    extractor->RelateOverTime();
+    extractor->TraceOverTime();
+    extractor->SaveVortexLines(1);
+  }
+
   // extractor->SaveVortexLines(dataname + ".vortex");
 
   delete extractor;

@@ -17,6 +17,8 @@ void GLDatasetBase::SetTimeStep(int t)
 
 void GLDatasetBase::SetTimeStep1(int t)
 {
+  if (_timestep1 != -1) 
+    _timestep = _timestep1;
   _timestep1 = t;
 }
 

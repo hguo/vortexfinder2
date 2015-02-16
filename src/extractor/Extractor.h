@@ -24,13 +24,12 @@ public:
   virtual void ExtractFaces(int time) {}
   virtual void ExtractEdges() {}
 
-  void SaveVortexLines(const std::string& filename); 
-
   bool SavePuncturedEdges() const;
   bool LoadPuncturedEdges();
   bool SavePuncturedFaces(int time) const; 
   bool LoadPuncturedFaces(int time);
   void ClearPuncturedObjects();
+  void SaveVortexLines(int time);
 
   void TraceVirtualCells();
   void TraceOverSpace(int time);
@@ -59,7 +58,7 @@ protected:
   std::map<FaceIdType, std::vector<FaceIdType> > _related_faces;
 
   std::vector<VortexObject> _vortex_objects, _vortex_objects1;
-  std::vector<VortexLine> _vortex_lines;
+  std::vector<VortexLine> _vortex_lines, _vortex_lines1;
  
   int _num_vortices;
 

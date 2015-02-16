@@ -33,9 +33,23 @@ void VortexExtractor::SetGaugeTransformation(bool g)
   _gauge = g; 
 }
 
-void VortexExtractor::SaveVortexLines(const std::string& filename)
+void VortexExtractor::SaveVortexLines(int time)
 {
-  ::SaveVortexLines(_vortex_lines, filename); 
+  const GLDatasetBase *ds = _dataset;
+  std::ostringstream os; 
+  os << ds->DataName() << ".vlines." << 
+    (time == 0 ? ds->TimeStep() : ds->TimeStep1());
+  
+  std::vector<VortexObject> &vobjs = 
+    time == 0 ? _vortex_objects : _vortex_objects1;
+  std::vector<VortexLine> &vlines = 
+    time == 0 ? _vortex_lines : _vortex_lines1;
+  std::map<FaceIdType, PuncturedFace> &pfs =
+    time == 0 ? _punctured_faces : _punctured_faces1;
+
+  VortexObjectsToVortexLines(pfs, vobjs, vlines);
+
+  ::SaveVortexLines(vlines, os.str());
 }
 
 void VortexExtractor::ClearPuncturedObjects()
@@ -310,8 +324,12 @@ void VortexExtractor::TraceOverSpace(int time)
 
   std::vector<VortexObject> &vortex_objects = 
     time == 0 ? _vortex_objects : _vortex_objects1;
+  std::vector<VortexLine> &vortex_lines = 
+    time == 0 ? _vortex_lines : _vortex_lines1;
   std::map<CellIdType, PuncturedCell> &pcs = 
     time == 0 ? _punctured_cells : _punctured_cells1;
+  std::map<FaceIdType, PuncturedFace> &pfs =
+    time == 0 ? _punctured_faces : _punctured_faces1;
   const MeshGraph &mg = _dataset->MeshGraph();
   
   vortex_objects.clear();
@@ -435,7 +453,6 @@ void VortexExtractor::TraceOverSpace(int time)
     vortex_objects.push_back(vobj);
   }
 
-  // VortexObjectsToVortexLines(_punctured_faces, _vortex_objects, _vortex_lines);
   fprintf(stderr, "#vortex_objs=%ld\n", _vortex_objects.size());
 }
 
@@ -474,6 +491,8 @@ void VortexExtractor::TraceOverTime()
   bool *match = (bool*)malloc(sizeof(bool)*n0*n1);
   memset(match, 0, sizeof(bool)*n0*n1);
 
+  RelateOverTime();
+
   for (int i=0; i<n0; i++) {
     for (int j=0; j<n1; j++) {
       for (std::set<FaceIdType>::iterator it = _vortex_objects[i].faces.begin(); 
@@ -492,25 +511,44 @@ next:
     }
   }
 
+  for (int i=0; i<n0; i++) {
+    int sum = 0;
+    int j1;
+    for (int j=0; j<n1; j++) {
+      if (match[i*n1+j]) {
+        sum ++;
+        j1 = j;
+      }
+    }
+    if (sum == 1) { // link the two
+      _vortex_objects1[j1].id = _vortex_objects[i].id;
+    }
+  }
+
+#if 0 // debug output
   for (int i=0; i<n0; i++) 
     for (int j=0; j<n1; j++) {
       if (j<n1-1) fprintf(stderr, "%d, ", match[i*n1+j]);
       else fprintf(stderr, "%d\n", match[i*n1+j]);
     }
+#endif
 }
 
 void VortexExtractor::RotateTimeStep()
 {
-  _punctured_faces1.clear();
-  _punctured_cells1.clear();
-  _vortex_objects1.clear();
+  _punctured_faces.clear();
+  _punctured_cells.clear();
+  _vortex_objects.clear();
+  _vortex_lines.clear();
 
   _punctured_edges.clear();
   _punctured_vcells.clear();
+  _related_faces.clear();
 
   _punctured_faces.swap( _punctured_faces1 );
   _punctured_cells.swap( _punctured_cells1 );
   _vortex_objects.swap( _vortex_objects1 );
+  _vortex_lines.swap( _vortex_lines1 );
 }
 
 #if 0
