@@ -30,6 +30,8 @@ FaceIdType3 AlternateFace(FaceIdType3 f, int rotation, ChiralityType chirality)
     default: assert(false);
     }
   }
+
+  return make_tuple(UINT_MAX, UINT_MAX, UINT_MAX); // make compiler happy
 }
 
 FaceIdType4 AlternateFace(FaceIdType4 f, int rotation, ChiralityType chirality)
@@ -53,6 +55,8 @@ FaceIdType4 AlternateFace(FaceIdType4 f, int rotation, ChiralityType chirality)
     default: assert(false);
     }
   }
+
+  return make_tuple(UINT_MAX, UINT_MAX, UINT_MAX, UINT_MAX); // make compiler happy
 }
 
 ////////////////////////

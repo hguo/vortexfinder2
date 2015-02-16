@@ -128,7 +128,7 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int time, ChiralityType ch
 
   // cell
   const MeshGraph &mg = _dataset->MeshGraph();
-  CFace face = mg.faces[id];
+  const CFace &face = mg.Face(id);
   for (int i=0; i<face.contained_cells.size(); i++) {
     CellIdType cid = face.contained_cells[i]; 
     int fchirality = face.contained_cells_chirality[i];
@@ -150,7 +150,7 @@ void VortexExtractor::AddPuncturedEdge(EdgeIdType id, ChiralityType chirality, d
 
   // vface
   const MeshGraph &mg = _dataset->MeshGraph();
-  CEdge edge = mg.edges[id];
+  const CEdge &edge = mg.Edge(id);
   for (int i=0; i<edge.contained_faces.size(); i++) {
     int echirality = edge.contained_faces_chirality[i];
     int eid = edge.contained_faces_eid[i]; 
@@ -242,7 +242,7 @@ void VortexExtractor::RelateOverTime()
       }
 
       // add neighbors
-      const CFace &face = mg.faces[current];
+      const CFace &face = mg.Face(current);
       for (int i=0; i<face.edges.size(); i++) {
         // find punctured edges
         EdgeIdType e = face.edges[i];
@@ -251,7 +251,7 @@ void VortexExtractor::RelateOverTime()
         {
           edges_visited.insert(e);
           
-          const CEdge &edge = mg.edges[e];
+          const CEdge &edge = mg.Edge(e);
           const PuncturedEdge& pe = _punctured_edges[e];
           if (current_time >= pe.t) continue; // time ascending order
           
@@ -346,7 +346,7 @@ void VortexExtractor::TraceOverSpace(int time)
       to_visit.pop_front();
     
       const PuncturedCell &pcell = pcs[c];
-      const CCell &cell = mg.cells[c];
+      const CCell &cell = mg.Cell(c);
 
       if (pcell.IsSpecial())
         special_pcells[c] = pcell;
@@ -392,7 +392,7 @@ void VortexExtractor::TraceOverSpace(int time)
           break;
 
         const PuncturedCell &pcell = ordinary_pcells[c];
-        const CCell &cell = mg.cells[c];
+        const CCell &cell = mg.Cell(c);
 
         // std::vector<ElemIdType> neighbors = _dataset->GetNeighborIds(it->first); 
         for (int i=0; i<cell.neighbor_cells.size(); i++) {
@@ -422,7 +422,7 @@ void VortexExtractor::TraceOverSpace(int time)
           break;
 
         const PuncturedCell &pcell = ordinary_pcells[c];
-        const CCell &cell = mg.cells[c];
+        const CCell &cell = mg.Cell(c);
 
         // std::vector<ElemIdType> neighbors = _dataset->GetNeighborIds(it->first); 
         for (int i=0; i<cell.neighbor_cells.size(); i++) {

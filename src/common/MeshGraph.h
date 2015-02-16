@@ -79,14 +79,33 @@ struct CCell {
   }
 };
 
-struct MeshGraph {
+class MeshGraphBuilder;
+class MeshGraphBuilder_Tet;
+class MeshGraphBuilder_Hex;
+
+class MeshGraph {
+private:
+  friend class MeshGraphBuilder;
+  friend class MeshGraphBuilder_Tet;
+  friend class MeshGraphBuilder_Hex;
+  
   std::vector<CEdge> edges;
   std::vector<CFace> faces;
   std::vector<CCell> cells;
 
+public:
   ~MeshGraph();
-
+  
   void Clear();
+
+  virtual EdgeIdType NEdges() const {return edges.size();}
+  virtual FaceIdType NFaces() const {return faces.size();}
+  virtual CellIdType NCells() const {return cells.size();}
+
+  virtual CEdge Edge(EdgeIdType i) const {return edges[i];}
+  virtual CFace Face(FaceIdType i) const {return faces[i];}
+  virtual CCell Cell(CellIdType i) const {return cells[i];}
+
   void SerializeToString(std::string &str) const;
   bool ParseFromString(const std::string &str);
 
@@ -94,6 +113,38 @@ struct MeshGraph {
   bool ParseFromFile(const std::string& filename);
 };
 
+
+class MeshGraphRegular2D : public MeshGraph {
+private:
+  int d[2], pbc[2];
+
+public:
+  MeshGraphRegular2D(int d[2], int pbc[2]);
+
+  EdgeIdType NEdges() const;
+  FaceIdType NFaces() const;
+  CellIdType NCells() const;
+
+  CEdge Edge(EdgeIdType i) const;
+  CFace Face(FaceIdType i) const;
+  CCell Cell(CellIdType i) const;
+};
+
+class MeshGraphRegular3D : public MeshGraph {
+private:
+  int d[3], pbc[3];
+
+public:
+  MeshGraphRegular3D(int d[3], int pbc[3]);
+  
+  EdgeIdType NEdges() const;
+  FaceIdType NFaces() const;
+  CellIdType NCells() const;
+
+  CEdge Edge(EdgeIdType i) const;
+  CFace Face(FaceIdType i) const;
+  CCell Cell(CellIdType i) const;
+};
 
 class MeshGraphBuilder {
 public:
@@ -128,10 +179,6 @@ private:
 private:
   std::map<EdgeIdType2, EdgeIdType> _edge_map;
   std::map<FaceIdType3, FaceIdType> _face_map;
-};
-
-class MeshGraphBuilder_Hex : public MeshGraphBuilder {
-public:
 };
 
 #endif
