@@ -1,15 +1,15 @@
-#ifndef _GLGPU_DATASET_H
-#define _GLGPU_DATASET_H
+#ifndef _GLGPU3D_DATASET_H
+#define _GLGPU3D_DATASET_H
 
 #include <cmath>
 #include "GLDataset.h"
 #include "common/Texel.hpp"
 
-class GLGPUDataset : public GLDataset
+class GLGPU3DDataset : public GLDataset
 {
 public: 
-  GLGPUDataset(); 
-  ~GLGPUDataset();
+  GLGPU3DDataset(); 
+  ~GLGPU3DDataset();
   
   void PrintInfo() const; 
   void SerializeDataInfoToString(std::string& buf) const;
@@ -25,7 +25,7 @@ public: // data I/O
 
 public: // mesh info
   int Dimensions() const {return 3;}
-  int NrFacesPerElem() const {return 6;}
+  int NrFacesPerCell() const {return 6;}
   int NrNodesPerFace() const {return 4;}
   
 public: // mesh utils

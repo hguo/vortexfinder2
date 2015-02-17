@@ -6,7 +6,7 @@
 #include "common/Utils.hpp"
 #include "common/Lerp.hpp"
 #include "common/DataInfo.pb.h"
-#include "GLGPUDataset.h"
+#include "GLGPU3DDataset.h"
 #include "BDATReader.h"
 
 #ifdef WITH_LIBMESH // suppose libmesh is built with netcdf
@@ -26,21 +26,21 @@ enum {
   GLGPU_TYPE_DOUBLE = 1
 };
 
-GLGPUDataset::GLGPUDataset() : 
+GLGPU3DDataset::GLGPU3DDataset() : 
   _re(NULL), _im(NULL), 
   _Jx(NULL), _Jy(NULL), _Jz(NULL)
 {
   Reset();
 }
 
-GLGPUDataset::~GLGPUDataset()
+GLGPU3DDataset::~GLGPU3DDataset()
 {
   if (_re) free(_re);
   if (_im) free(_im);
   if (_Jx) free(_Jx);
 }
 
-void GLGPUDataset::Reset()
+void GLGPU3DDataset::Reset()
 {
   for (int i=0; i<3; i++) {
     _dims[i] = 1; 
@@ -49,7 +49,7 @@ void GLGPUDataset::Reset()
   // TODO
 }
 
-void GLGPUDataset::PrintInfo() const
+void GLGPU3DDataset::PrintInfo() const
 {
   fprintf(stderr, "dims={%d, %d, %d}\n", _dims[0], _dims[1], _dims[2]); 
   fprintf(stderr, "pbc={%d, %d, %d}\n", _pbc[0], _pbc[1], _pbc[2]); 
@@ -64,12 +64,12 @@ void GLGPUDataset::PrintInfo() const
   fprintf(stderr, "fluctuation_amp=%f\n", _fluctuation_amp); 
 }
 
-void GLGPUDataset::BuildMeshGraph()
+void GLGPU3DDataset::BuildMeshGraph()
 {
   _mg = new class MeshGraphRegular3D(_dims, _pbc);
 }
 
-void GLGPUDataset::ElemId2Idx(ElemIdType id, int *idx) const
+void GLGPU3DDataset::ElemId2Idx(ElemIdType id, int *idx) const
 {
   int s = dims()[0] * dims()[1]; 
   int k = id / s; 
@@ -79,7 +79,7 @@ void GLGPUDataset::ElemId2Idx(ElemIdType id, int *idx) const
   idx[0] = i; idx[1] = j; idx[2] = k;
 }
 
-ElemIdType GLGPUDataset::Idx2ElemId(int *idx) const
+ElemIdType GLGPU3DDataset::Idx2ElemId(int *idx) const
 {
   for (int i=0; i<3; i++) 
     if (idx[i]<0 || idx[i]>=dims()[i])
@@ -88,27 +88,27 @@ ElemIdType GLGPUDataset::Idx2ElemId(int *idx) const
   return idx[0] + dims()[0] * (idx[1] + dims()[1] * idx[2]); 
 }
 
-void GLGPUDataset::Idx2Pos(const int idx[], double pos[]) const
+void GLGPU3DDataset::Idx2Pos(const int idx[], double pos[]) const
 {
   for (int i=0; i<3; i++) 
     pos[i] = idx[i] * CellLengths()[i] + Origins()[i];
 }
 
-void GLGPUDataset::Pos2Idx(const double pos[], int idx[]) const
+void GLGPU3DDataset::Pos2Idx(const double pos[], int idx[]) const
 {
   for (int i=0; i<3; i++)
     idx[i] = (pos[i] - Origins()[i]) / CellLengths()[i]; 
   // TODO: perodic boundary conditions
 }
 
-void GLGPUDataset::Pos2Grid(const double pos[], double gpos[]) const
+void GLGPU3DDataset::Pos2Grid(const double pos[], double gpos[]) const
 {
   for (int i=0; i<3; i++)
     gpos[i] = (pos[i] - Origins()[i]) / CellLengths()[i]; 
 }
 
 #if 0
-double GLGPUDataset::Flux(int face) const
+double GLGPU3DDataset::Flux(int face) const
 {
   // TODO: pre-compute the flux
   switch (face) {
@@ -124,7 +124,7 @@ double GLGPUDataset::Flux(int face) const
 }
 #endif
 
-double GLGPUDataset::GaugeTransformation(const double X0[], const double X1[]) const
+double GLGPU3DDataset::GaugeTransformation(const double X0[], const double X1[]) const
 {
   double gx, gy, gz; 
   double dx = X1[0] - X0[0], 
@@ -148,7 +148,7 @@ double GLGPUDataset::GaugeTransformation(const double X0[], const double X1[]) c
 }
 
 #if 0
-std::vector<ElemIdType> GLGPUDataset::GetNeighborIds(ElemIdType elem_id) const
+std::vector<ElemIdType> GLGPU3DDataset::GetNeighborIds(ElemIdType elem_id) const
 {
   std::vector<ElemIdType> neighbors; 
 
@@ -181,7 +181,7 @@ std::vector<ElemIdType> GLGPUDataset::GetNeighborIds(ElemIdType elem_id) const
 }
 #endif
   
-void GLGPUDataset::SerializeDataInfoToString(std::string& buf) const
+void GLGPU3DDataset::SerializeDataInfoToString(std::string& buf) const
 {
   PBDataInfo pb;
 
@@ -214,7 +214,7 @@ void GLGPUDataset::SerializeDataInfoToString(std::string& buf) const
   pb.SerializeToString(&buf);
 }
 
-bool GLGPUDataset::OpenDataFile(const std::string &filename)
+bool GLGPU3DDataset::OpenDataFile(const std::string &filename)
 {
   bool succ = false;
 
@@ -227,7 +227,7 @@ bool GLGPUDataset::OpenDataFile(const std::string &filename)
   return succ;
 }
 
-bool GLGPUDataset::OpenLegacyDataFile(const std::string &filename)
+bool GLGPU3DDataset::OpenLegacyDataFile(const std::string &filename)
 {
   FILE *fp = fopen(filename.c_str(), "rb");
   if (!fp) return false;
@@ -405,7 +405,7 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string &filename)
   return true; 
 }
 
-bool GLGPUDataset::OpenBDATDataFile(const std::string& filename)
+bool GLGPU3DDataset::OpenBDATDataFile(const std::string& filename)
 {
   BDATReader *reader = new BDATReader(filename); 
   if (!reader->Valid()) {
@@ -533,7 +533,7 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename)
   return true;
 }
 
-void GLGPUDataset::ComputeSupercurrentField()
+void GLGPU3DDataset::ComputeSupercurrentField()
 {
   const int nvoxels = dims()[0]*dims()[1]*dims()[2];
 
@@ -592,7 +592,7 @@ void GLGPUDataset::ComputeSupercurrentField()
   }
 }
 
-bool GLGPUDataset::WriteNetCDFFile(const std::string& filename)
+bool GLGPU3DDataset::WriteNetCDFFile(const std::string& filename)
 {
 #ifdef WITH_LIBMESH
   int ncid; 
@@ -644,13 +644,13 @@ bool GLGPUDataset::WriteNetCDFFile(const std::string& filename)
 #endif
 }
 
-bool GLGPUDataset::Psi(const double X[3], double &re, double &im) const
+bool GLGPU3DDataset::Psi(const double X[3], double &re, double &im) const
 {
   // TODO
   return false;
 }
 
-bool GLGPUDataset::Supercurrent(const double X[3], double J[3]) const
+bool GLGPU3DDataset::Supercurrent(const double X[3], double J[3]) const
 {
   static const int st[3] = {0};
   double gpt[3];
@@ -667,7 +667,7 @@ bool GLGPUDataset::Supercurrent(const double X[3], double J[3]) const
 }
  
 #if 0
-bool GLGPUDataset::OnBoundary(ElemIdType id) const
+bool GLGPU3DDataset::OnBoundary(ElemIdType id) const
 {
   int idx[3];
   ElemId2Idx(id, idx);
@@ -679,7 +679,7 @@ bool GLGPUDataset::OnBoundary(ElemIdType id) const
 }
 #endif
 
-double GLGPUDataset::QP(const double X0[], const double X1[]) const 
+double GLGPU3DDataset::QP(const double X0[], const double X1[]) const 
 {
   const double *L = Lengths();
   double d[3] = {X1[0] - X0[0], X1[1] - X0[1], X1[2] - X0[2]};
@@ -699,7 +699,7 @@ double GLGPUDataset::QP(const double X0[], const double X1[]) const
 }
 
 #if 0
-bool GLGPUDataset::GetFace(ElemIdType id, int face, double X[][3], double A[][3], double re[], double im[]) const
+bool GLGPU3DDataset::GetFace(ElemIdType id, int face, double X[][3], double A[][3], double re[], double im[]) const
 {
   int idx0[3]; 
   ElemId2Idx(id, idx0);
@@ -757,20 +757,20 @@ bool GLGPUDataset::GetFace(ElemIdType id, int face, double X[][3], double A[][3]
     Idx2Pos(V[i], X[i]); 
     re[i] = Re(V[i][0], V[i][1], V[i][2]);
     im[i] = Im(V[i][0], V[i][1], V[i][2]);
-    GLGPUDataset::A(X[i], A[i]);
+    GLGPU3DDataset::A(X[i], A[i]);
   }
 
   return true;
 }
 
-bool GLGPUDataset::GetSpaceTimeEdgeValues(const Edge* e, double X[][3], double A[][3], double re[], double im[]) const
+bool GLGPU3DDataset::GetSpaceTimeEdgeValues(const Edge* e, double X[][3], double A[][3], double re[], double im[]) const
 {
   // TODO
   return false;
 }
 #endif
 
-bool GLGPUDataset::A(const double X[3], double A[3]) const
+bool GLGPU3DDataset::A(const double X[3], double A[3]) const
 {
   A[0] = Ax(X);
   A[1] = Ay(X);

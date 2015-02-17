@@ -1,8 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <getopt.h>
-#include "io/GLGPUDataset.h"
-#include "extractor/GLGPUExtractor.h"
+#include "io/GLGPU3DDataset.h"
+#include "extractor/GLGPU3DExtractor.h"
 
 static std::string filename_in, filename_out;
 static int nogauge = 0,  
@@ -77,7 +77,7 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }
 
-  GLGPUDataset ds;
+  GLGPU3DDataset ds;
   ds.OpenDataFile(filename_in);
   if (!ds.Valid()) {
     fprintf(stderr, "Invalid input data.\n");
@@ -85,14 +85,14 @@ int main(int argc, char **argv)
   }
   ds.PrintInfo();
   
-  GLGPUVortexExtractor extractor;
+  GLGPU3DVortexExtractor extractor;
   extractor.SetDataset(&ds);
   // extractor.SetVerbose(verbose);
   extractor.SetGaugeTransformation(!nogauge);
   
   extractor.Extract();
-  extractor.Trace(); 
-  extractor.WriteVortexObjects(filename_out); 
+  // extractor.Trace(); 
+  // extractor.WriteVortexObjects(filename_out); 
 
   return EXIT_SUCCESS; 
 }

@@ -1,6 +1,6 @@
 set (io_sources
   BDATReader.cpp
-  GLGPUDataset.cpp
+  GLGPU3DDataset.cpp
   GLDataset.cpp
   GLDatasetBase.cpp
 )
