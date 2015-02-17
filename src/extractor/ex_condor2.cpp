@@ -9,6 +9,7 @@ static int nogauge = 0,
            verbose = 0, 
            benchmark = 0; 
 static int T0=1, T=1; // start and length of timesteps
+static int span=1;
 
 static struct option longopts[] = {
   {"verbose", no_argument, &verbose, 1},  
@@ -17,7 +18,8 @@ static struct option longopts[] = {
   {"input", required_argument, 0, 'i'},
   {"output", required_argument, 0, 'o'},
   {"time", required_argument, 0, 't'}, 
-  {"length", required_argument, 0, 'l'}, 
+  {"length", required_argument, 0, 'l'},
+  {"span", required_argument, 0, 's'},
   {0, 0, 0, 0} 
 };
 
@@ -27,7 +29,7 @@ static bool parse_arg(int argc, char **argv)
 
   while (1) {
     int option_index = 0;
-    c = getopt_long(argc, argv, "i:o:t:l", longopts, &option_index); 
+    c = getopt_long(argc, argv, "i:o:t:l:s", longopts, &option_index); 
     if (c == -1) break;
 
     switch (c) {
@@ -35,6 +37,7 @@ static bool parse_arg(int argc, char **argv)
     case 'o': filename_out = optarg; break;
     case 't': T0 = atoi(optarg); break;
     case 'l': T = atoi(optarg); break;
+    case 's': span = atoi(optarg); break;
     default: break; 
     }
   }
@@ -59,6 +62,7 @@ static bool parse_arg(int argc, char **argv)
     fprintf(stderr, "nogauge=%d\n", nogauge);
     fprintf(stderr, "t=%d\n", T0);
     fprintf(stderr, "T=%d\n", T);
+    fprintf(stderr, "span=%d\n", span);
     fprintf(stderr, "--------------------------\n"); 
   }
 
@@ -68,12 +72,11 @@ static bool parse_arg(int argc, char **argv)
 static void print_help(int argc, char **argv)
 {
   fprintf(stderr, "USAGE:\n");
-  fprintf(stderr, "%s -i <input_filename> [-o output_filename] [--nogauge] [-t=<t>] [-T=<T>] [-Kx=<Kx>] [-Bx=<Bx>] [-By=<By>] [-Bz=<Bz>]\n", argv[0]);
+  fprintf(stderr, "%s -i <input_filename> [-o output_filename] [--nogauge] [-t=<t>]\n", argv[0]);
   fprintf(stderr, "\n");
   fprintf(stderr, "\t--verbose   verbose output\n"); 
   fprintf(stderr, "\t--benchmark Enable benchmark\n"); 
   fprintf(stderr, "\t--nogauge   Disable gauge transformation\n"); 
-  fprintf(stderr, "\t--Kx        Kx\n");
   fprintf(stderr, "\t-t          Starting time step for the analysis\n"); 
   fprintf(stderr, "\t-T          Number of time step for the analysis\n"); 
   fprintf(stderr, "\n");
@@ -105,7 +108,7 @@ int main(int argc, char **argv)
 
   ds.LoadTimeStep(T0);
   extractor.ExtractFaces(0);
-  for (int t=T0+1; t<T0+T; t++) {
+  for (int t=T0+span; t<T0+T; t+=span) {
     ds.LoadTimeStep1(t);
     extractor.ExtractEdges();
     extractor.ExtractFaces(1);

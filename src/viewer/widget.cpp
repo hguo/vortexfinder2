@@ -151,12 +151,12 @@ void CGLWidget::renderFieldLines()
 void CGLWidget::renderVortexIds()
 {
   QFont ft;
-  ft.setPointSize(40);
+  ft.setPointSize(36);
 
   QString s0 = QString("timestep=%1").arg(_timestep);
   renderText(20, 60, s0, ft);
 
-  ft.setPointSize(32);
+  ft.setPointSize(24);
   glColor3f(0, 0, 0);
   for (int i=0; i<_vids.size(); i++) {
     int id = _vids[i];

@@ -132,17 +132,28 @@ public:
 
 class MeshGraphRegular3D : public MeshGraph {
 private:
-  int d[3], pbc[3];
+  unsigned int d[3], pbc[3];
 
 private:
-  bool id2idx(unsigned int id, unsigned int idx[3]) const;
-  unsigned int idx2id(const unsigned int idx[3]) const;
-  unsigned int idx2id(unsigned int i, unsigned int j, unsigned int k) const;
-  bool validIdx(const unsigned int idx[3]) const;
-  void modIdx(unsigned int idx[3]) const;
+  void nid2nidx(NodeIdType id, int nidx[3]) const;
+  NodeIdType nidx2nid(const int nidx[3]) const; // modIdx'ed
+
+  void eid2eidx(EdgeIdType id, int eidx[4]) const;
+  EdgeIdType eidx2eid(const int eidx[4]) const;
+  
+  void fid2fidx(FaceIdType id, int fidx[4]) const;
+  FaceIdType fidx2fid(const int fidx[4]) const;
+
+  void cid2cidx(CellIdType id, int cidx[4]) const;
+  CellIdType cidx2cid(const int cidx[4]) const;
+  
+  bool valid_nidx(const int nidx[3]) const;
+  bool valid_eidx(const int eidx[4]) const;
+  bool valid_fidx(const int fidx[4]) const;
+  bool valid_cidx(const int cidx[3]) const;
 
 public:
-  MeshGraphRegular3D(int d[3], int pbc[3]);
+  MeshGraphRegular3D(unsigned int d[3], unsigned int pbc[3]);
   
   EdgeIdType NEdges() const;
   FaceIdType NFaces() const;

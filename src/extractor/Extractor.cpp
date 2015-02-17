@@ -527,12 +527,14 @@ next:
     }
   }
 
-#if 0 // debug output
-  for (int i=0; i<n0; i++) 
+#if 1 // debug output
+  for (int i=0; i<n0; i++) {
+    fprintf(stderr, "vid=%d\n", _vortex_objects[i].id);
     for (int j=0; j<n1; j++) {
       if (j<n1-1) fprintf(stderr, "%d, ", match[i*n1+j]);
       else fprintf(stderr, "%d\n", match[i*n1+j]);
     }
+  }
 #endif
 }
 
