@@ -1,8 +1,15 @@
 #include "GLDatasetBase.h"
 
 GLDatasetBase::GLDatasetBase() :
-  _timestep(-1), _timestep1(-1)
+  _timestep(-1), _timestep1(-1), 
+  _mg(NULL)
 {
+}
+
+GLDatasetBase::~GLDatasetBase()
+{
+  if (_mg != NULL)
+    delete _mg;
 }
 
 void GLDatasetBase::SetDataName(const std::string& dn)
@@ -29,7 +36,7 @@ bool GLDatasetBase::LoadDefaultMeshGraph()
 
 bool GLDatasetBase::LoadMeshGraph(const std::string& filename)
 {
-  return _mg.ParseFromFile(filename);
+  return _mg->ParseFromFile(filename);
 }
 
 void GLDatasetBase::SaveDefaultMeshGraph()
@@ -39,6 +46,6 @@ void GLDatasetBase::SaveDefaultMeshGraph()
 
 void GLDatasetBase::SaveMeshGraph(const std::string& filename)
 {
-  _mg.SerializeToFile(filename);
+  _mg->SerializeToFile(filename);
 }
 

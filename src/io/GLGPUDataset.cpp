@@ -66,13 +66,7 @@ void GLGPUDataset::PrintInfo() const
 
 void GLGPUDataset::BuildMeshGraph()
 {
-
-}
-
-ElemIdType GLGPUDataset::Pos2ElemId(const double X[]) const
-{
-  // TODO
-  return UINT_MAX;
+  _mg = new class MeshGraphRegular3D(_dims, _pbc);
 }
 
 void GLGPUDataset::ElemId2Idx(ElemIdType id, int *idx) const
@@ -671,7 +665,8 @@ bool GLGPUDataset::Supercurrent(const double X[3], double J[3]) const
     return false;
   else return true;
 }
-  
+ 
+#if 0
 bool GLGPUDataset::OnBoundary(ElemIdType id) const
 {
   int idx[3];
@@ -682,6 +677,7 @@ bool GLGPUDataset::OnBoundary(ElemIdType id) const
 
   return false;
 }
+#endif
 
 double GLGPUDataset::QP(const double X0[], const double X1[]) const 
 {

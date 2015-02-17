@@ -103,11 +103,12 @@ void Condor2Dataset::BuildMeshGraph()
   if (LoadDefaultMeshGraph()) {
     fprintf(stderr, "loaded default mesh graph:\n");
     fprintf(stderr, "#node=%u, #edge=%u, #face=%u, #cell=%u\n", 
-        _mesh->n_nodes(), _mg.NEdges(), _mg.NFaces(), _mg.NCells());
+        _mesh->n_nodes(), _mg->NEdges(), _mg->NFaces(), _mg->NCells());
     return;
   }
 
-  MeshGraphBuilder_Tet *builder = new MeshGraphBuilder_Tet(mesh()->n_elem(), _mg);
+  _mg = new class MeshGraph;
+  MeshGraphBuilder_Tet *builder = new MeshGraphBuilder_Tet(mesh()->n_elem(), *_mg);
   
   MeshBase::const_element_iterator it = mesh()->local_elements_begin(); 
   const MeshBase::const_element_iterator end = mesh()->local_elements_end(); 
@@ -138,7 +139,7 @@ void Condor2Dataset::BuildMeshGraph()
   
   fprintf(stderr, "mesh graph built..\n");
   fprintf(stderr, "#node=%u, #edge=%u, #face=%u, #cell=%u\n", 
-      _mesh->n_nodes(), _mg.NEdges(), _mg.NFaces(), _mg.NCells());
+      _mesh->n_nodes(), _mg->NEdges(), _mg->NFaces(), _mg->NCells());
 
   SaveDefaultMeshGraph();
   fprintf(stderr, "mesh graph saved.\n");

@@ -10,6 +10,7 @@ class GLDatasetBase
 {
 public:
   GLDatasetBase(); 
+  virtual ~GLDatasetBase();
 
 public:
   void SetDataName(const std::string& dn);
@@ -25,10 +26,10 @@ public:
   void SaveMeshGraph(const std::string& filename);
   void SaveDefaultMeshGraph();
 
-  const MeshGraph& MeshGraph() const {return _mg;}
+  const MeshGraph* MeshGraph() const {return _mg;}
 
 protected: 
-  struct MeshGraph _mg;
+  class MeshGraph *_mg;
   int _timestep, _timestep1; 
   std::string _data_name;
 };

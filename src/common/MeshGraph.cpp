@@ -227,10 +227,10 @@ MeshGraphBuilder::MeshGraphBuilder(MeshGraph& mg)
 
 
 ////////////////////////
-MeshGraphRegular3D::MeshGraphRegular3D(unsigned int d_[3], unsigned int pbc_[3])
+MeshGraphRegular3D::MeshGraphRegular3D(int d_[3], bool pbc_[3])
 {
-  memcpy(d, d_, sizeof(unsigned int)*3);
-  memcpy(pbc, pbc_, sizeof(unsigned int)*3);
+  memcpy(d, d_, sizeof(int)*3);
+  memcpy(pbc, pbc_, sizeof(bool)*3);
 }
 
 CCell MeshGraphRegular3D::Cell(CellIdType id) const
@@ -364,20 +364,17 @@ CEdge MeshGraphRegular3D::Edge(EdgeIdType id) const
 
 EdgeIdType MeshGraphRegular3D::NEdges() const
 {
-  // TODO
-  return 0;
+  return NCells()*3;
 }
 
 EdgeIdType MeshGraphRegular3D::NFaces() const
 {
-  // TODO
-  return 0;
+  return NCells()*3;
 }
 
 EdgeIdType MeshGraphRegular3D::NCells() const
 {
-  // TODO
-  return 0;
+  return d[0]*d[1]*d[2];
 }
 
 void MeshGraphRegular3D::nid2nidx(unsigned int id, int idx[3]) const

@@ -21,6 +21,7 @@ void GLGPUVortexExtractor::SetInterpolationMode(int mode)
 
 void GLGPUVortexExtractor::Extract()
 {
+#if 0
   int idx[3], idx1[3];
   const GLGPUDataset *ds = (const GLGPUDataset*)_dataset; 
 
@@ -33,25 +34,10 @@ void GLGPUVortexExtractor::Extract()
         ElemIdType id = ds->Idx2ElemId(idx);
         ExtractElem(id);
       }
+#endif
 }
 
-PuncturedElem* GLGPUVortexExtractor::NewPuncturedElem(ElemIdType id) const
-{
-  PuncturedElem *p = new PuncturedElemHex;
-  p->Init();
-  p->SetElemId(id);
-  return p;
-}
-  
-PuncturedElem* GLGPUVortexExtractor::NewPuncturedVirtualElem(FaceIdType id) const
-{
-  PuncturedElem *p = new PuncturedPrismQuad;
-  p->Init();
-  p->SetElemId(id);
-  return p;
-}
-  
-bool GLGPUVortexExtractor::FindZero(const double X[][3], const double re[], const double im[], double pos[3]) const
+bool GLGPUVortexExtractor::FindFaceZero(const double X[][3], const double re[], const double im[], double pos[3]) const
 {
   const double epsilon = 0.01;
 

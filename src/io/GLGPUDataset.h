@@ -36,8 +36,8 @@ public: // mesh utils
   bool GetSpaceTimeEdgeValues(const Edge*, double X[][3], double A[][3], double re[], double im[]) const;
 #endif
 
-  ElemIdType Pos2ElemId(const double X[]) const; 
-  bool OnBoundary(ElemIdType id) const;
+  CellIdType Pos2CellId(const double X[]) const; 
+  // bool OnBoundary(ElemIdType id) const;
 
   // ElemId is encoded by the id of left-bottom corner node in the cell
   void ElemId2Idx(ElemIdType id, int *idx) const; 

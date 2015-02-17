@@ -132,7 +132,8 @@ public:
 
 class MeshGraphRegular3D : public MeshGraph {
 private:
-  unsigned int d[3], pbc[3];
+  int d[3];
+  bool pbc[3];
 
 private:
   void nid2nidx(NodeIdType id, int nidx[3]) const;
@@ -153,7 +154,7 @@ private:
   bool valid_cidx(const int cidx[3]) const;
 
 public:
-  MeshGraphRegular3D(unsigned int d[3], unsigned int pbc[3]);
+  MeshGraphRegular3D(int d[3], bool pbc[3]);
   
   EdgeIdType NEdges() const;
   FaceIdType NFaces() const;

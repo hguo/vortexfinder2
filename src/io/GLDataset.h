@@ -32,7 +32,7 @@ public: // mesh utils
   virtual void GetSpaceTimeEdgeValues(const CEdge&, double X[][3], double A[][3], double re[], double im[]) const = 0;
   
   virtual CellIdType Pos2CellId(const double X[]) const = 0; //!< returns the elemId for a given position
-  virtual bool OnBoundary(ElemIdType id) const = 0;
+  // virtual bool OnBoundary(ElemIdType id) const = 0;
 
 public: // transformations and utils
   virtual double GaugeTransformation(const double X0[], const double X1[], const double A0[], const double A1[]) const;

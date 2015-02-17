@@ -127,8 +127,8 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int time, ChiralityType ch
   else vc.SetChirality(1, chirality);
 
   // cell
-  const MeshGraph &mg = _dataset->MeshGraph();
-  const CFace &face = mg.Face(id);
+  const MeshGraph *mg = _dataset->MeshGraph();
+  const CFace &face = mg->Face(id);
   for (int i=0; i<face.contained_cells.size(); i++) {
     CellIdType cid = face.contained_cells[i]; 
     int fchirality = face.contained_cells_chirality[i];
@@ -149,8 +149,8 @@ void VortexExtractor::AddPuncturedEdge(EdgeIdType id, ChiralityType chirality, d
   _punctured_edges[id] = pe;
 
   // vface
-  const MeshGraph &mg = _dataset->MeshGraph();
-  const CEdge &edge = mg.Edge(id);
+  const MeshGraph *mg = _dataset->MeshGraph();
+  const CEdge &edge = mg->Edge(id);
   for (int i=0; i<edge.contained_faces.size(); i++) {
     int echirality = edge.contained_faces_chirality[i];
     int eid = edge.contained_faces_eid[i]; 
@@ -173,7 +173,7 @@ void VortexExtractor::RelateOverTime()
 {
   fprintf(stderr, "Relating over time, #pf0=%ld, #pf1=%ld, #pe=%ld\n", 
       _punctured_faces.size(), _punctured_faces1.size(), _punctured_edges.size());
-  const MeshGraph &mg = _dataset->MeshGraph();
+  const MeshGraph *mg = _dataset->MeshGraph();
 
   _related_faces.clear();
 
@@ -242,7 +242,7 @@ void VortexExtractor::RelateOverTime()
       }
 
       // add neighbors
-      const CFace &face = mg.Face(current);
+      const CFace &face = mg->Face(current);
       for (int i=0; i<face.edges.size(); i++) {
         // find punctured edges
         EdgeIdType e = face.edges[i];
@@ -251,7 +251,7 @@ void VortexExtractor::RelateOverTime()
         {
           edges_visited.insert(e);
           
-          const CEdge &edge = mg.Edge(e);
+          const CEdge &edge = mg->Edge(e);
           const PuncturedEdge& pe = _punctured_edges[e];
           if (current_time >= pe.t) continue; // time ascending order
           
@@ -330,7 +330,7 @@ void VortexExtractor::TraceOverSpace(int time)
     time == 0 ? _punctured_cells : _punctured_cells1;
   std::map<FaceIdType, PuncturedFace> &pfs =
     time == 0 ? _punctured_faces : _punctured_faces1;
-  const MeshGraph &mg = _dataset->MeshGraph();
+  const MeshGraph *mg = _dataset->MeshGraph();
   
   vortex_objects.clear();
   while (!pcs.empty()) {
@@ -346,7 +346,7 @@ void VortexExtractor::TraceOverSpace(int time)
       to_visit.pop_front();
     
       const PuncturedCell &pcell = pcs[c];
-      const CCell &cell = mg.Cell(c);
+      const CCell &cell = mg->Cell(c);
 
       if (pcell.IsSpecial())
         special_pcells[c] = pcell;
@@ -392,7 +392,7 @@ void VortexExtractor::TraceOverSpace(int time)
           break;
 
         const PuncturedCell &pcell = ordinary_pcells[c];
-        const CCell &cell = mg.Cell(c);
+        const CCell &cell = mg->Cell(c);
 
         // std::vector<ElemIdType> neighbors = _dataset->GetNeighborIds(it->first); 
         for (int i=0; i<cell.neighbor_cells.size(); i++) {
@@ -422,7 +422,7 @@ void VortexExtractor::TraceOverSpace(int time)
           break;
 
         const PuncturedCell &pcell = ordinary_pcells[c];
-        const CCell &cell = mg.Cell(c);
+        const CCell &cell = mg->Cell(c);
 
         // std::vector<ElemIdType> neighbors = _dataset->GetNeighborIds(it->first); 
         for (int i=0; i<cell.neighbor_cells.size(); i++) {

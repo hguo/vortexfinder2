@@ -19,10 +19,10 @@ Condor2VortexExtractor::~Condor2VortexExtractor()
 
 void Condor2VortexExtractor::ExtractFaces(int time)
 {
-  const MeshGraph& mg = _dataset->MeshGraph();
+  const MeshGraph *mg = _dataset->MeshGraph();
 
   if (!LoadPuncturedFaces(time)) {
-    for (FaceIdType i=0; i<mg.NFaces(); i++) 
+    for (FaceIdType i=0; i<mg->NFaces(); i++) 
       ExtractFace(i, time);
     SavePuncturedFaces(time);
   }
@@ -30,10 +30,10 @@ void Condor2VortexExtractor::ExtractFaces(int time)
 
 void Condor2VortexExtractor::ExtractEdges()
 {
-  const MeshGraph& mg = _dataset->MeshGraph();
+  const MeshGraph *mg = _dataset->MeshGraph();
  
   if (!LoadPuncturedEdges()) {
-    for (EdgeIdType i=0; i<mg.NEdges(); i++) 
+    for (EdgeIdType i=0; i<mg->NEdges(); i++) 
       ExtractSpaceTimeEdge(i);
     SavePuncturedEdges();
   }
@@ -42,7 +42,7 @@ void Condor2VortexExtractor::ExtractEdges()
 void Condor2VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
 {
   const Condor2Dataset *ds = (const Condor2Dataset*)_dataset;
-  const CEdge& e = _dataset->MeshGraph().Edge(id);
+  const CEdge& e = _dataset->MeshGraph()->Edge(id);
 
   double X[4][3], A[4][3], re[3], im[3];
   ds->GetSpaceTimeEdgeValues(e, X, A, re, im);
@@ -100,7 +100,7 @@ void Condor2VortexExtractor::ExtractFace(FaceIdType id, int time)
   const Condor2Dataset *ds = (const Condor2Dataset*)_dataset;
   // const int nnodes = ds->NrNodesPerFace();
   const int nnodes = 3; 
-  const CFace& f = _dataset->MeshGraph().Face(id);
+  const CFace& f = _dataset->MeshGraph()->Face(id);
   
   double X[3][3], A[3][3], re[3], im[3];
   ds->GetFaceValues(f, time, X, A, re, im);

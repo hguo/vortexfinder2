@@ -1,6 +1,6 @@
 set (extractor_sources
   Extractor.cpp
-  # GLGPUExtractor.cpp
+  GLGPUExtractor.cpp
 )
 
 if (WITH_LIBMESH)
