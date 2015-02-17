@@ -1,5 +1,7 @@
 set (common_sources
   MeshGraph.cpp
+  MeshGraphRegular2D.cpp
+  MeshGraphRegular3D.cpp
   VortexLine.cpp
   FieldLine.cpp
   Puncture.cpp

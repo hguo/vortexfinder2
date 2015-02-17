@@ -6,6 +6,7 @@
 #include "common/Utils.hpp"
 #include "common/Lerp.hpp"
 #include "common/DataInfo.pb.h"
+#include "common/MeshGraphRegular3D.h"
 #include "GLGPU3DDataset.h"
 #include "BDATReader.h"
 

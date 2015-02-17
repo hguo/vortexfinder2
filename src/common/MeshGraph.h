@@ -83,6 +83,9 @@ class MeshGraphBuilder;
 class MeshGraphBuilder_Tet;
 class MeshGraphBuilder_Hex;
 
+class MeshGraphRegular2D;
+class MeshGraphRegular3D;
+
 class MeshGraph {
 protected:
   friend class MeshGraphBuilder;
@@ -111,58 +114,6 @@ public:
 
   void SerializeToFile(const std::string& filename) const;
   bool ParseFromFile(const std::string& filename);
-};
-
-
-class MeshGraphRegular2D : public MeshGraph {
-private:
-  int d[2], pbc[2];
-
-public:
-  MeshGraphRegular2D(int d[2], int pbc[2]);
-
-  EdgeIdType NEdges() const;
-  FaceIdType NFaces() const;
-  CellIdType NCells() const;
-
-  CEdge Edge(EdgeIdType i) const;
-  CFace Face(FaceIdType i) const;
-  CCell Cell(CellIdType i) const;
-};
-
-class MeshGraphRegular3D : public MeshGraph {
-private:
-  int d[3];
-  bool pbc[3];
-
-private:
-  void nid2nidx(NodeIdType id, int nidx[3]) const;
-  NodeIdType nidx2nid(const int nidx[3]) const; // modIdx'ed
-
-  void eid2eidx(EdgeIdType id, int eidx[4]) const;
-  EdgeIdType eidx2eid(const int eidx[4]) const;
-  
-  void fid2fidx(FaceIdType id, int fidx[4]) const;
-  FaceIdType fidx2fid(const int fidx[4]) const;
-
-  void cid2cidx(CellIdType id, int cidx[4]) const;
-  CellIdType cidx2cid(const int cidx[4]) const;
-  
-  bool valid_nidx(const int nidx[3]) const;
-  bool valid_eidx(const int eidx[4]) const;
-  bool valid_fidx(const int fidx[4]) const;
-  bool valid_cidx(const int cidx[3]) const;
-
-public:
-  MeshGraphRegular3D(int d[3], bool pbc[3]);
-  
-  EdgeIdType NEdges() const;
-  FaceIdType NFaces() const;
-  CellIdType NCells() const;
-
-  CEdge Edge(EdgeIdType i) const;
-  CFace Face(FaceIdType i) const;
-  CCell Cell(CellIdType i) const;
 };
 
 class MeshGraphBuilder {
