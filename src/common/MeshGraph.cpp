@@ -390,19 +390,23 @@ void MeshGraphRegular3D::nid2nidx(unsigned int id, int idx[3]) const
   idx[0] = i; idx[1] = j; idx[2] = k;
 }
 
-void MeshGraphRegular3D::eid2eidx(unsigned int id, int idx[3]) const
+void MeshGraphRegular3D::eid2eidx(unsigned int id, int idx[4]) const
 {
-  // TODO
+  unsigned int nid = id / 3;
+  nid2nidx(id, idx);
+  idx[3] = id % 3;
 }
 
 void MeshGraphRegular3D::fid2fidx(unsigned int id, int idx[3]) const
 {
-  // TODO
+  unsigned int nid = id / 3;
+  nid2nidx(id, idx);
+  idx[3] = id % 3;
 }
 
 void MeshGraphRegular3D::cid2cidx(unsigned int id, int idx[3]) const
 {
-  // TODO
+  nid2nidx(id, idx);
 }
 
 unsigned int MeshGraphRegular3D::nidx2nid(const int idx_[3]) const
@@ -418,38 +422,37 @@ unsigned int MeshGraphRegular3D::nidx2nid(const int idx_[3]) const
 
 unsigned int MeshGraphRegular3D::eidx2eid(const int idx[4]) const
 {
-  // TODO
-  return 0;
+  return nidx2nid(idx)*3 + idx[3];
 }
 
 unsigned int MeshGraphRegular3D::fidx2fid(const int idx[4]) const
 {
-  // TODO
-  return 0;
+  return nidx2nid(idx)*3 + idx[3];
 }
 
-unsigned int MeshGraphRegular3D::cidx2cid(const int idx[4]) const
+unsigned int MeshGraphRegular3D::cidx2cid(const int idx[3]) const
 {
-  // TODO
-  return 0;
+  return nidx2nid(idx);
 }
 
 bool MeshGraphRegular3D::valid_nidx(const int idx[3]) const
 {
-  // TODO
-  return false;
+  for (int i=0; i<3; i++) 
+    if (idx[i]<0 || idx[i]>=d[i]) 
+      return false;
+  return true;
 }
 
 bool MeshGraphRegular3D::valid_eidx(const int eidx[4]) const
 {
-  // TODO
-  return false;
+  if (eidx[3]<0 || eidx[3]>=3) return false;
+  else return valid_cidx(eidx);
 }
 
 bool MeshGraphRegular3D::valid_fidx(const int fidx[4]) const
 {
-  // TODO
-  return false;
+  if (fidx[3]<0 || fidx[3]>=3) return false;
+  else return valid_cidx(fidx);
 }
 
 bool MeshGraphRegular3D::valid_cidx(const int idx[3]) const
