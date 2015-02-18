@@ -1,8 +1,10 @@
 set (io_sources
   BDATReader.cpp
-  GLGPU3DDataset.cpp
-  GLDataset.cpp
   GLDatasetBase.cpp
+  GLDataset.cpp
+  GLGPUDataset.cpp
+  GLGPU2DDataset.cpp
+  GLGPU3DDataset.cpp
 )
   
 if (WITH_LIBMESH)

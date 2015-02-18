@@ -2,10 +2,10 @@
 #define _GLGPU3D_DATASET_H
 
 #include <cmath>
-#include "GLDataset.h"
+#include "GLGPUDataset.h"
 #include "common/Texel.hpp"
 
-class GLGPU3DDataset : public GLDataset
+class GLGPU3DDataset : public GLGPUDataset
 {
 public: 
   GLGPU3DDataset(); 
