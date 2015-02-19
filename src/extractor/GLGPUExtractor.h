@@ -1,5 +1,5 @@
-#ifndef _GLGPU3DEXTRACTOR_H
-#define _GLGPU3DEXTRACTOR_H
+#ifndef _GLGPUEXTRACTOR_H
+#define _GLGPUEXTRACTOR_H
 
 #include <map>
 #include <list>
@@ -12,10 +12,10 @@ enum {
   INTERPOLATION_LINECROSS
 }; 
 
-class GLGPU3DVortexExtractor : public VortexExtractor {
+class GLGPUVortexExtractor : public VortexExtractor {
 public:
-  GLGPU3DVortexExtractor(); 
-  ~GLGPU3DVortexExtractor();
+  GLGPUVortexExtractor(); 
+  ~GLGPUVortexExtractor();
 
   void SetInterpolationMode(int);
 

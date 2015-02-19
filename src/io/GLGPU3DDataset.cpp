@@ -30,21 +30,6 @@ void GLGPU3DDataset::Reset()
   // TODO
 }
 
-void GLGPU3DDataset::PrintInfo() const
-{
-  fprintf(stderr, "dims={%d, %d, %d}\n", _dims[0], _dims[1], _dims[2]); 
-  fprintf(stderr, "pbc={%d, %d, %d}\n", _pbc[0], _pbc[1], _pbc[2]); 
-  fprintf(stderr, "origins={%f, %f, %f}\n", _origins[0], _origins[1], _origins[2]);
-  fprintf(stderr, "lengths={%f, %f, %f}\n", _lengths[0], _lengths[1], _lengths[2]);
-  fprintf(stderr, "cell_lengths={%f, %f, %f}\n", _cell_lengths[0], _cell_lengths[1], _cell_lengths[2]); 
-  fprintf(stderr, "B={%f, %f, %f}\n", _B[0], _B[1], _B[2]);
-  fprintf(stderr, "Kex=%f, Kex_dot=%f\n", _Kex, _Kex_dot); 
-  fprintf(stderr, "Jxext=%f\n", _Jxext);
-  fprintf(stderr, "V=%f\n", _V);
-  // fprintf(stderr, "time=%f\n", time); 
-  fprintf(stderr, "fluctuation_amp=%f\n", _fluctuation_amp); 
-}
-
 void GLGPU3DDataset::BuildMeshGraph()
 {
   _mg = new class MeshGraphRegular3D(_dims, _pbc);

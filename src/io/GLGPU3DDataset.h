@@ -11,7 +11,6 @@ public:
   GLGPU3DDataset(); 
   ~GLGPU3DDataset();
   
-  void PrintInfo() const; 
   void SerializeDataInfoToString(std::string& buf) const;
 
 public: // data I/O

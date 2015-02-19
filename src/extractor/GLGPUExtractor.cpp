@@ -1,29 +1,29 @@
 #include <cmath>
 #include <cassert>
 #include "common/Utils.hpp"
-#include "io/GLGPU3DDataset.h"
-#include "GLGPU3DExtractor.h"
+#include "io/GLGPUDataset.h"
+#include "GLGPUExtractor.h"
 #include "InverseInterpolation.h"
 
-GLGPU3DVortexExtractor::GLGPU3DVortexExtractor() :
+GLGPUVortexExtractor::GLGPUVortexExtractor() :
   _interpolation_mode(INTERPOLATION_BILINEAR)
 {
 }
 
-GLGPU3DVortexExtractor::~GLGPU3DVortexExtractor()
+GLGPUVortexExtractor::~GLGPUVortexExtractor()
 {
 }
 
-void GLGPU3DVortexExtractor::SetInterpolationMode(int mode)
+void GLGPUVortexExtractor::SetInterpolationMode(int mode)
 {
   _interpolation_mode = mode;
 }
 
-void GLGPU3DVortexExtractor::Extract()
+void GLGPUVortexExtractor::Extract()
 {
 #if 0
   int idx[3], idx1[3];
-  const GLGPU3DDataset *ds = (const GLGPU3DDataset*)_dataset; 
+  const GLGPUDataset *ds = (const GLGPUDataset*)_dataset; 
 
   for (int i=0; i<3; i++) 
     idx1[i] = ds->pbc()[i] ? ds->dims()[i] : ds->dims()[i]-1;
@@ -37,7 +37,7 @@ void GLGPU3DVortexExtractor::Extract()
 #endif
 }
 
-bool GLGPU3DVortexExtractor::FindFaceZero(const double X[][3], const double re[], const double im[], double pos[3]) const
+bool GLGPUVortexExtractor::FindFaceZero(const double X[][3], const double re[], const double im[], double pos[3]) const
 {
   const double epsilon = 0.01;
 

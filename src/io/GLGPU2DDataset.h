@@ -9,7 +9,6 @@ public:
   GLGPU2DDataset();
   ~GLGPU2DDataset();
 
-  void PrintInfo() const;
   void SerializeDataInfoToString(std::string& buf) const;
 
   void BuildMeshGraph();

@@ -1,14 +1,11 @@
 #include "GLGPU2DDataset.h"
+#include "common/MeshGraphRegular2D.h"
 
 GLGPU2DDataset::GLGPU2DDataset()
 {
 }
 
 GLGPU2DDataset::~GLGPU2DDataset()
-{
-}
-
-void GLGPU2DDataset::PrintInfo() const
 {
 }
   
@@ -18,7 +15,8 @@ void GLGPU2DDataset::SerializeDataInfoToString(std::string& buf) const
 
 void GLGPU2DDataset::BuildMeshGraph()
 {
-  // TODO
+  if (_mg != NULL) delete _mg;
+  _mg = new MeshGraphRegular2D(_dims, _pbc);
 }
   
 void GLGPU2DDataset::GetFaceValues(const CFace&, int time, double X[][3], double A[][3], double re[], double im[]) const

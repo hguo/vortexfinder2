@@ -2,7 +2,7 @@
 #include <vector>
 #include <getopt.h>
 #include "io/GLGPU2DDataset.h"
-#include "extractor/GLGPU3DExtractor.h"
+#include "extractor/GLGPUExtractor.h"
 
 static std::string filename_in, filename_out;
 static int nogauge = 0,  
@@ -79,18 +79,16 @@ int main(int argc, char **argv)
 
   GLGPU2DDataset ds;
   ds.OpenDataFile(filename_in);
-  ds.PrintInfo();
+  ds.LoadTimeStep(0);
+  ds.BuildMeshGraph();
  
-#if 0
-  GLGPU3DVortexExtractor extractor;
+  GLGPUVortexExtractor extractor;
   extractor.SetDataset(&ds);
-  // extractor.SetVerbose(verbose);
   extractor.SetGaugeTransformation(!nogauge);
   
   extractor.Extract();
   // extractor.Trace(); 
   // extractor.WriteVortexObjects(filename_out); 
-#endif
 
   return EXIT_SUCCESS; 
 }
