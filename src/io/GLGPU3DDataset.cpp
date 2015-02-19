@@ -379,11 +379,3 @@ bool GLGPU3DDataset::GetSpaceTimeEdgeValues(const Edge* e, double X[][3], double
   return false;
 }
 #endif
-
-bool GLGPU3DDataset::A(const double X[3], double A[3]) const
-{
-  A[0] = Ax(X);
-  A[1] = Ay(X);
-  A[2] = Az(X);
-  return true;
-}

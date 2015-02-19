@@ -14,6 +14,29 @@ public:
   bool OpenBDATDataFile(const std::string& filename);
   bool OpenLegacyDataFile(const std::string& filename);
 
+public: // rectilinear grid
+  const int* dims() const {return _dims;}
+  const bool* pbc() const {return _pbc;}
+  const double* CellLengths() const {return _cell_lengths;}
+
+  double dx() const {return _cell_lengths[0];}
+  double dy() const {return _cell_lengths[1];}
+  double dz() const {return _cell_lengths[2];}
+  
+  // Magnetic potential
+  bool A(const double X[3], double A[3]) const {//!< compute the vector potential at given position
+    A[0] = Ax(X); A[1] = Ay(X); A[2] = Az(X); return true;}
+  double Ax(const double X[3]) const {if (By()>0) return -Kex(); else return -X[1]*Bz()-Kex();}
+  double Ay(const double X[3]) const {if (By()>0) return X[0]*Bz(); else return 0;}
+  double Az(const double X[3]) const {if (By()>0) return -X[0]*By(); else return X[1]*Bx();}
+  
+  // Magnetic field
+  void SetMagneticField(const double B[3]) {_B[0]=B[0]; _B[1]=B[1]; _B[2]=B[2];}
+  const double* B() const {return _B;}
+  double Bx() const {return _B[0];} 
+  double By() const {return _B[1];} 
+  double Bz() const {return _B[2];}
+
 protected:
   int _dims[3]; 
   bool _pbc[3]; 
