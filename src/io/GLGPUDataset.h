@@ -10,9 +10,15 @@ public:
   ~GLGPUDataset();
   
 public:
-  bool OpenDataFile(const std::string& filename); 
-  bool OpenBDATDataFile(const std::string& filename);
-  bool OpenLegacyDataFile(const std::string& filename);
+  bool OpenDataFile(const std::string& pattern); 
+  void LoadTimeStep(int timestep, int slot=0);
+  void CloseDataFile();
+
+  int NTimeSteps() const {return _filenames.size();}
+
+private:
+  bool OpenBDATDataFile(const std::string& filename, int slot=0);
+  bool OpenLegacyDataFile(const std::string& filename, int slot=0);
 
 public: // rectilinear grid
   const int* dims() const {return _dims;}
@@ -47,6 +53,8 @@ protected:
   double *_re, *_im, 
          *_re1, *_im1;
   double *_Jx, *_Jy, *_Jz; // only for timestep 0
+
+  std::vector<std::string> _filenames; // filenames for different timesteps
 };
 
 #endif

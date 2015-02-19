@@ -183,27 +183,23 @@ void Condor2Dataset::LoadTimeStep_(int timestep)
   _exio->copy_nodal_solution(*_asys, "Az", "A_z", timestep);
 }
 
-void Condor2Dataset::LoadTimeStep(int timestep)
+void Condor2Dataset::LoadTimeStep(int timestep, int slot)
 {
-  SetTimeStep(timestep);
+  SetTimeStep(timestep, slot);
   LoadTimeStep_(timestep);
 
-  _ts = _tsys->solution->clone();
-  _as = _asys->solution->clone();
-}
+  if (slot == 0) {
+    _ts = _tsys->solution->clone();
+    _as = _asys->solution->clone();
+  } else {
+    if (_ts1.get() != NULL) {
+      _ts = _ts1;
+      _as = _as1;
+    }
 
-void Condor2Dataset::LoadTimeStep1(int timestep)
-{
-  SetTimeStep1(timestep);
-  LoadTimeStep_(timestep);
-
-  if (_ts1.get() != NULL) {
-    _ts = _ts1;
-    _as = _as1;
+    _ts1 = _tsys->solution->clone();
+    _as1 = _asys->solution->clone();
   }
-
-  _ts1 = _tsys->solution->clone();
-  _as1 = _asys->solution->clone();
 }
 
 #if 0

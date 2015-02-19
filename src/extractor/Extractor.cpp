@@ -33,19 +33,18 @@ void VortexExtractor::SetGaugeTransformation(bool g)
   _gauge = g; 
 }
 
-void VortexExtractor::SaveVortexLines(int time)
+void VortexExtractor::SaveVortexLines(int slot)
 {
   const GLDatasetBase *ds = _dataset;
   std::ostringstream os; 
-  os << ds->DataName() << ".vlines." << 
-    (time == 0 ? ds->TimeStep() : ds->TimeStep1());
+  os << ds->DataName() << ".vlines." << ds->TimeStep(slot);
   
   std::vector<VortexObject> &vobjs = 
-    time == 0 ? _vortex_objects : _vortex_objects1;
+    slot == 0 ? _vortex_objects : _vortex_objects1;
   std::vector<VortexLine> &vlines = 
-    time == 0 ? _vortex_lines : _vortex_lines1;
+    slot == 0 ? _vortex_lines : _vortex_lines1;
   std::map<FaceIdType, PuncturedFace> &pfs =
-    time == 0 ? _punctured_faces : _punctured_faces1;
+    slot == 0 ? _punctured_faces : _punctured_faces1;
 
   VortexObjectsToVortexLines(pfs, vobjs, vlines);
 
@@ -63,25 +62,24 @@ bool VortexExtractor::SavePuncturedEdges() const
 {
   const GLDatasetBase *ds = _dataset;
   std::ostringstream os; 
-  os << ds->DataName() << ".pe." << ds->TimeStep() << "." << ds->TimeStep1();
+  os << ds->DataName() << ".pe." << ds->TimeStep(0) << "." << ds->TimeStep(1);
   return ::SavePuncturedEdges(_punctured_edges, os.str());
 }
 
-bool VortexExtractor::SavePuncturedFaces(int time) const
+bool VortexExtractor::SavePuncturedFaces(int slot) const
 {
   const GLDatasetBase *ds = _dataset;
   std::ostringstream os; 
-  os << ds->DataName() << ".pf." << 
-    (time == 0 ? ds->TimeStep() : ds->TimeStep1());
+  os << ds->DataName() << ".pf." << ds->TimeStep(slot);
   return ::SavePuncturedFaces(
-      time == 0 ? _punctured_faces : _punctured_faces1, os.str());
+      slot == 0 ? _punctured_faces : _punctured_faces1, os.str());
 }
 
 bool VortexExtractor::LoadPuncturedEdges()
 {
   const GLDatasetBase *ds = _dataset;
   std::ostringstream os; 
-  os << ds->DataName() << ".pe." << ds->TimeStep() << "." << ds->TimeStep1();
+  os << ds->DataName() << ".pe." << ds->TimeStep(0) << "." << ds->TimeStep(1);
  
   std::map<EdgeIdType, PuncturedEdge> m;
   if (!::LoadPuncturedEdges(m, os.str())) return false;
@@ -92,25 +90,24 @@ bool VortexExtractor::LoadPuncturedEdges()
   return true;
 }
 
-bool VortexExtractor::LoadPuncturedFaces(int time)
+bool VortexExtractor::LoadPuncturedFaces(int slot)
 {
   const GLDatasetBase *ds = _dataset;
   std::ostringstream os; 
-  os << ds->DataName() << ".pf." << 
-    (time == 0 ? ds->TimeStep() : ds->TimeStep1());
+  os << ds->DataName() << ".pf." << ds->TimeStep(slot);
   
   std::map<FaceIdType, PuncturedFace> m; 
 
   if (!::LoadPuncturedFaces(m, os.str())) return false;
 
   for (std::map<FaceIdType, PuncturedFace>::iterator it = m.begin(); it != m.end(); it ++) {
-    AddPuncturedFace(it->first, time, it->second.chirality, it->second.pos);
+    AddPuncturedFace(it->first, slot, it->second.chirality, it->second.pos);
   }
 
   return true;
 }
 
-void VortexExtractor::AddPuncturedFace(FaceIdType id, int time, ChiralityType chirality, const double pos[])
+void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType chirality, const double pos[])
 {
   // face
   PuncturedFace pf;
@@ -118,12 +115,12 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int time, ChiralityType ch
   pf.chirality = chirality;
   memcpy(pf.pos, pos, sizeof(double)*3);
 
-  if (time == 0) _punctured_faces[id] = pf;
+  if (slot == 0) _punctured_faces[id] = pf;
   else _punctured_faces1[id] = pf;
 
   // vcell
   PuncturedCell &vc = _punctured_vcells[id];
-  if (time == 0) vc.SetChirality(0, -chirality);
+  if (slot == 0) vc.SetChirality(0, -chirality);
   else vc.SetChirality(1, chirality);
 
   // cell
@@ -133,7 +130,7 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int time, ChiralityType ch
     CellIdType cid = face.contained_cells[i]; 
     int fchirality = face.contained_cells_chirality[i];
     int fid = face.contained_cells_fid[i];
-    PuncturedCell &c = time == 0 ? _punctured_cells[cid] : _punctured_cells1[cid];
+    PuncturedCell &c = slot == 0 ? _punctured_cells[cid] : _punctured_cells1[cid];
     c.SetChirality(fid, chirality * fchirality);
   }
 }
@@ -318,18 +315,18 @@ void VortexExtractor::TraceVirtualCells()
       n_self, n_pure, n_cross, n_invalid);
 }
 
-void VortexExtractor::TraceOverSpace(int time)
+void VortexExtractor::TraceOverSpace(int slot)
 {
   fprintf(stderr, "tracing over space, #punctured_cells=%ld.\n", _punctured_cells.size());
 
   std::vector<VortexObject> &vortex_objects = 
-    time == 0 ? _vortex_objects : _vortex_objects1;
+    slot == 0 ? _vortex_objects : _vortex_objects1;
   std::vector<VortexLine> &vortex_lines = 
-    time == 0 ? _vortex_lines : _vortex_lines1;
+    slot == 0 ? _vortex_lines : _vortex_lines1;
   std::map<CellIdType, PuncturedCell> &pcs = 
-    time == 0 ? _punctured_cells : _punctured_cells1;
+    slot == 0 ? _punctured_cells : _punctured_cells1;
   std::map<FaceIdType, PuncturedFace> &pfs =
-    time == 0 ? _punctured_faces : _punctured_faces1;
+    slot == 0 ? _punctured_faces : _punctured_faces1;
   const MeshGraph *mg = _dataset->MeshGraph();
   
   vortex_objects.clear();

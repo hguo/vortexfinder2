@@ -15,11 +15,10 @@ public:
 public:
   void SetDataName(const std::string& dn);
   std::string DataName() const {return _data_name;}
- 
-  void SetTimeStep(int);
-  void SetTimeStep1(int);
-  int TimeStep() const {return _timestep;}
-  int TimeStep1() const {return _timestep1;}
+
+  void SetTimeStep(int timestep, int slot=0);
+  int TimeStep(int slot=0) const;
+  virtual int NTimeSteps() const {return 0;}
 
   bool LoadMeshGraph(const std::string& filename);
   bool LoadDefaultMeshGraph();

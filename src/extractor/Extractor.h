@@ -21,18 +21,18 @@ public:
   const GLDataset* Dataset() const {return (GLDataset*)_dataset;}
 
   virtual void Extract() {}; 
-  virtual void ExtractFaces(int time) {}
+  virtual void ExtractFaces(int slot) {}
   virtual void ExtractEdges() {}
 
   bool SavePuncturedEdges() const;
   bool LoadPuncturedEdges();
-  bool SavePuncturedFaces(int time) const; 
-  bool LoadPuncturedFaces(int time);
+  bool SavePuncturedFaces(int slot) const; 
+  bool LoadPuncturedFaces(int slot);
   void ClearPuncturedObjects();
-  void SaveVortexLines(int time);
+  void SaveVortexLines(int slot);
 
   void TraceVirtualCells();
-  void TraceOverSpace(int time);
+  void TraceOverSpace(int slot);
   void TraceOverTime();
 
   void RelateOverTime();
@@ -44,7 +44,7 @@ protected:
   int NewVortexId();
 
 protected:
-  void AddPuncturedFace(FaceIdType, int time, ChiralityType chirality, const double pos[3]);
+  void AddPuncturedFace(FaceIdType, int slot, ChiralityType chirality, const double pos[3]);
   void AddPuncturedEdge(EdgeIdType, ChiralityType chirality, double t);
 
   virtual bool FindFaceZero(const double X[][3], const double re[], const double im[], double pos[3]) const {return false;}

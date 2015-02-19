@@ -14,8 +14,8 @@ int main(int argc, char **argv)
   ds->SetDataName(dataname);
   if (!ds->LoadDefaultMeshGraph()) return EXIT_FAILURE;
   
-  ds->SetTimeStep(T0);
-  ds->SetTimeStep1(T0+1);
+  ds->SetTimeStep(T0, 0);
+  ds->SetTimeStep(T0+1, 1);
 
   VortexExtractor *extractor = new VortexExtractor;
   extractor->SetDataset(ds);
@@ -30,7 +30,7 @@ int main(int argc, char **argv)
   extractor->TraceOverSpace(0);
   extractor->SaveVortexLines(0);
   for (int t=T0+1; t<T0+T; t++) {
-    ds->SetTimeStep1(t);
+    ds->SetTimeStep(t, 1);
     extractor->LoadPuncturedFaces(1);
     extractor->TraceOverSpace(1);
     extractor->LoadPuncturedEdges();

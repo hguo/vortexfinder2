@@ -9,7 +9,11 @@ int main(int argc, char **argv)
   dataset->OpenDataFile(filename);
   // dataset->WriteNetCDFFile(filename + ".nc");
 
-  delete dataset; 
+  dataset->LoadTimeStep(0, 0);
+  for (int i=1; i<dataset->NTimeSteps(); i++) {
+    dataset->LoadTimeStep(i, 1);
+  }
 
+  delete dataset; 
   return 0; 
 }

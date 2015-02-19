@@ -29,14 +29,9 @@ bool GLDataset::OpenDataFile(const std::string& filename)
   return false;
 }
 
-void GLDataset::LoadTimeStep(int timestep)
+void GLDataset::LoadTimeStep(int timestep, int slot)
 {
-  SetTimeStep(timestep);
-}
-
-void GLDataset::LoadTimeStep1(int timestep)
-{
-  SetTimeStep1(timestep);
+  SetTimeStep(timestep, slot);
 }
 
 void GLDataset::CloseDataFile()

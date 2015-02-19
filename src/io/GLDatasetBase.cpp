@@ -17,20 +17,26 @@ void GLDatasetBase::SetDataName(const std::string& dn)
   _data_name = dn;
 }
 
-void GLDatasetBase::SetTimeStep(int t)
+void GLDatasetBase::SetTimeStep(int t, int slot)
 {
-  _timestep = t;
+  if (slot == 0)
+    _timestep = t;
+  else { // rotate
+    if (_timestep1 != -1) 
+      _timestep = _timestep1;
+    _timestep1 = t;
+  }
 }
 
-void GLDatasetBase::SetTimeStep1(int t)
+int GLDatasetBase::TimeStep(int slot) const
 {
-  if (_timestep1 != -1) 
-    _timestep = _timestep1;
-  _timestep1 = t;
+  return slot == 0 ? _timestep : _timestep1;
 }
 
 bool GLDatasetBase::LoadDefaultMeshGraph()
 {
+  if (_mg == NULL)
+    _mg = new class MeshGraph;
   return LoadMeshGraph(_data_name + ".mg");
 }
 

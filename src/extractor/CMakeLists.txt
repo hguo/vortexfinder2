@@ -19,5 +19,8 @@ endif ()
 # add_executable (extractor_glgpu ex_glgpu.cpp)
 # target_link_libraries (extractor_glgpu glextractor)
 
+add_executable (extractor_glgpu2D ex_glgpu2D.cpp)
+target_link_libraries (extractor_glgpu2D glextractor)
+
 add_executable (extractor_presave ex_presave.cpp)
 target_link_libraries (extractor_presave glextractor)

@@ -17,8 +17,7 @@ public: // data I/O
   virtual bool OpenDataFile(const std::string& filename); 
   virtual void CloseDataFile();
 
-  virtual void LoadTimeStep(int timestep);
-  virtual void LoadTimeStep1(int timestep);
+  virtual void LoadTimeStep(int timestep, int slot);
 
 public: // mesh info
   virtual int Dimensions() const = 0;
@@ -28,7 +27,7 @@ public: // mesh info
   virtual void BuildMeshGraph() = 0;
 
 public: // mesh utils
-  virtual void GetFaceValues(const CFace&, int time, double X[][3], double A[][3], double re[], double im[]) const = 0;
+  virtual void GetFaceValues(const CFace&, int timeslot, double X[][3], double A[][3], double re[], double im[]) const = 0;
   virtual void GetSpaceTimeEdgeValues(const CEdge&, double X[][3], double A[][3], double re[], double im[]) const = 0;
   
   virtual CellIdType Pos2CellId(const double X[]) const = 0; //!< returns the elemId for a given position
