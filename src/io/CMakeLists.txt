@@ -5,6 +5,7 @@ set (io_sources
   GLGPUDataset.cpp
   GLGPU2DDataset.cpp
   GLGPU3DDataset.cpp
+  GLGPU_IO_Helper.cpp
 )
   
 if (WITH_LIBMESH)

@@ -15,12 +15,6 @@ public:
   void SerializeDataInfoToString(std::string& buf) const;
 
 public: // data I/O
-  bool OpenDataFile(const std::string& filename); 
-  bool OpenLegacyDataFile(const std::string& filename);
-  bool OpenBDATDataFile(const std::string& filename);
-  bool OpenNetCDFFile(const std::string& filename);
-  bool WriteNetCDFFile(const std::string& filename);
-  
   void BuildMeshGraph();
 
 public: // mesh info
@@ -90,16 +84,6 @@ public: // data access
 protected:
   void Reset();
   void ComputeSupercurrentField();
-
-private:
-  int _dims[3]; 
-  bool _pbc[3]; 
-  double _cell_lengths[3]; 
-
-  double _B[3];
-
-  double *_re, *_im;
-  double *_Jx, *_Jy, *_Jz;
 }; 
 
 #endif
