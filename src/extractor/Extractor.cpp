@@ -179,7 +179,7 @@ void VortexExtractor::RelateOverTime()
   for (std::map<FaceIdType, PuncturedFace>::iterator it = _punctured_faces.begin(); 
        it != _punctured_faces.end(); it ++) 
   {
-    fprintf(stderr, "fid=%u\n", it->first);
+    // fprintf(stderr, "fid=%u\n", it->first);
 
     std::vector<FaceIdType> related;
     
@@ -245,7 +245,6 @@ void VortexExtractor::RelateOverTime()
       for (int i=0; i<face.edges.size(); i++) {
         // find punctured edges
         EdgeIdType e = face.edges[i];
-        fprintf(stderr, "edge=%u, is_pe=%d\n", e, _punctured_edges.find(e) != _punctured_edges.end());
         if (_punctured_edges.find(e) != _punctured_edges.end() && 
             edges_visited.find(e) == edges_visited.end())
         {
@@ -276,8 +275,7 @@ void VortexExtractor::RelateOverTime()
     _related_faces[it->first] = related;
 
 #if 0
-    // if (1) {
-    if (related.size() == 0 || it->first != related[0]) { // non-ordinary
+    if (1) {
     // if (!(related.size() == 1 && it->first == related[0])) { // non-ordinary
       fprintf(stderr, "fid=%u, related={", it->first);
       for (int i=0; i<related.size(); i++)

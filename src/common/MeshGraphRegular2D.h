@@ -15,11 +15,11 @@ private:
   void eid2eidx(EdgeIdType id, int eidx[3]) const;
   EdgeIdType eidx2eid(const int eidx[3]) const;
   
-  void fid2fidx(FaceIdType id, int fidx[3]) const;
-  FaceIdType fidx2fid(const int fidx[3]) const;
+  void fid2fidx(FaceIdType id, int fidx[2]) const;
+  FaceIdType fidx2fid(const int fidx[2]) const;
 
-  void cid2cidx(CellIdType id, int cidx[3]) const;
-  CellIdType cidx2cid(const int cidx[3]) const;
+  void cid2cidx(CellIdType id, int cidx[2]) const;
+  CellIdType cidx2cid(const int cidx[2]) const;
   
   bool valid_nidx(const int nidx[2]) const;
   bool valid_eidx(const int eidx[3]) const;

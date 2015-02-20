@@ -109,7 +109,7 @@ EdgeIdType MeshGraphRegular2D::NEdges() const
 
 EdgeIdType MeshGraphRegular2D::NFaces() const
 {
-  return NCells()*2;
+  return NCells();
 }
 
 EdgeIdType MeshGraphRegular2D::NCells() const
@@ -127,16 +127,15 @@ void MeshGraphRegular2D::nid2nidx(unsigned int id, int idx[2]) const
 
 void MeshGraphRegular2D::eid2eidx(unsigned int id, int idx[3]) const
 {
-  unsigned int nid = id / 2;
-  nid2nidx(id, idx);
+  const unsigned int nid = id / 2;
+  nid2nidx(nid, idx);
   idx[2] = id % 2;
 }
 
-void MeshGraphRegular2D::fid2fidx(unsigned int id, int idx[3]) const
+void MeshGraphRegular2D::fid2fidx(unsigned int id, int idx[2]) const
 {
   unsigned int nid = id;
   nid2nidx(id, idx);
-  idx[2] = id % 2;
 }
 
 void MeshGraphRegular2D::cid2cidx(unsigned int id, int idx[2]) const
@@ -162,7 +161,7 @@ unsigned int MeshGraphRegular2D::eidx2eid(const int idx[3]) const
 
 unsigned int MeshGraphRegular2D::fidx2fid(const int idx[3]) const
 {
-  return nidx2nid(idx)*2 + idx[2];
+  return nidx2nid(idx);
 }
 
 unsigned int MeshGraphRegular2D::cidx2cid(const int idx[2]) const
@@ -186,8 +185,7 @@ bool MeshGraphRegular2D::valid_eidx(const int eidx[3]) const
 
 bool MeshGraphRegular2D::valid_fidx(const int fidx[3]) const
 {
-  if (fidx[2]<0 || fidx[2]>=2) return false;
-  else return valid_cidx(fidx);
+  return valid_cidx(fidx);
 }
 
 bool MeshGraphRegular2D::valid_cidx(const int idx[2]) const
