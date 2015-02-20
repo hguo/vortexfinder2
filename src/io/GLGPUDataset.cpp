@@ -42,6 +42,7 @@ bool GLGPUDataset::OpenDataFile(const std::string &pattern)
   for (int i=0; i<results.gl_pathc; i++) 
     _filenames.push_back(results.gl_pathv[i]);
 
+  fprintf(stderr, "found %lu files\n", _filenames.size());
   return _filenames.size()>0;
 }
 
@@ -56,18 +57,22 @@ void GLGPUDataset::LoadTimeStep(int timestep, int slot)
   bool succ = false;
   const std::string &filename = _filenames[timestep];
 
-  // rotate
-  if (slot>0) {
-    double *r = _re, *i = _im;
-    _re = _re1; _im = _im1;
-    _re1 = r; _im1 = i;
-  }
+  fprintf(stderr, "loading time step %d, %s\n", timestep, _filenames[timestep].c_str());
 
   // load
   if (OpenBDATDataFile(filename, slot)) succ = true; 
   else if (OpenLegacyDataFile(filename, slot)) succ = true;
 
   SetTimeStep(timestep, slot);
+}
+
+void GLGPUDataset::RotateTimeSteps()
+{
+  double *r = _re, *i = _im;
+  _re = _re1; _im = _im1;
+  _re1 = r; _im1 = i;
+
+  GLDatasetBase::RotateTimeSteps();
 }
 
 bool GLGPUDataset::OpenLegacyDataFile(const std::string& filename, int time)
@@ -82,8 +87,8 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
   if (!::GLGPU_IO_Helper_ReadBDAT(
       filename, ndims, _dims, _lengths, _pbc, _B, 
       _Jxext, _Kex, _V, 
-      slot == 0? &_re : &_re1, 
-      slot == 0? &_im : &_im1)) 
+      slot == 0 ? &_re : &_re1, 
+      slot == 0 ? &_im : &_im1)) 
     return false;
   
   for (int i=0; i<ndims; i++) {

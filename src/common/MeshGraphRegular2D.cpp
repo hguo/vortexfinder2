@@ -50,7 +50,7 @@ CFace MeshGraphRegular2D::Face(FaceIdType id) const
     face.nodes.push_back(nidx2nid(nodes_idx[i]));
 
   // edges
-  const int edges_idx[4][3] = {{i, j, 0}, {i+1, j, 1}, {i, j+1, 1}, {i, j, 1}};
+  const int edges_idx[4][3] = {{i, j, 0}, {i+1, j, 1}, {i, j+1, 0}, {i, j, 1}};
   const ChiralityType edges_chi[4] = {1, 1, -1, -1};
   for (int i=0; i<4; i++) {
     face.edges.push_back(eidx2eid(edges_idx[i]));
@@ -134,7 +134,7 @@ void MeshGraphRegular2D::eid2eidx(unsigned int id, int idx[3]) const
 
 void MeshGraphRegular2D::fid2fidx(unsigned int id, int idx[3]) const
 {
-  unsigned int nid = id / 2;
+  unsigned int nid = id;
   nid2nidx(id, idx);
   idx[2] = id % 2;
 }

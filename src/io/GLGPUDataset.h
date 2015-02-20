@@ -12,6 +12,7 @@ public:
 public:
   bool OpenDataFile(const std::string& pattern); 
   void LoadTimeStep(int timestep, int slot=0);
+  void RotateTimeSteps();
   void CloseDataFile();
 
   int NTimeSteps() const {return _filenames.size();}

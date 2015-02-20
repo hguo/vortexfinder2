@@ -15,9 +15,8 @@ public:
 
 public: // data I/O
   virtual bool OpenDataFile(const std::string& filename); 
+  virtual void LoadTimeStep(int timestep, int slot) = 0;
   virtual void CloseDataFile();
-
-  virtual void LoadTimeStep(int timestep, int slot);
 
 public: // mesh info
   virtual int Dimensions() const = 0;

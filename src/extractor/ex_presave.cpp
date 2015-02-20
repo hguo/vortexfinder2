@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     extractor->RelateOverTime();
     extractor->TraceOverTime();
     extractor->SaveVortexLines(1);
-    extractor->RotateTimeStep();
+    extractor->RotateTimeSteps();
   }
 
   // extractor->SaveVortexLines(dataname + ".vortex");

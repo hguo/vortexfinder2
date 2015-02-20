@@ -20,13 +20,15 @@ void GLDatasetBase::SetDataName(const std::string& dn)
 
 void GLDatasetBase::SetTimeStep(int t, int slot)
 {
-  if (slot == 0)
-    _timestep = t;
-  else { // rotate
-    if (_timestep1 != -1) 
-      _timestep = _timestep1;
-    _timestep1 = t;
-  }
+  if (slot == 0) _timestep = t;
+  else _timestep1 = t;
+}
+
+void GLDatasetBase::RotateTimeSteps()
+{
+  int t = _timestep1;
+  _timestep1 = _timestep;
+  _timestep = t;
 }
 
 int GLDatasetBase::TimeStep(int slot) const

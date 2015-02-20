@@ -33,6 +33,8 @@ struct CEdge {
     contained_faces_chirality.reserve(12);
     contained_faces_eid.reserve(12);
   }
+
+  bool Valid() const {return !contained_faces.empty();}
 };
 
 struct CFace {

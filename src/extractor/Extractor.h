@@ -36,7 +36,7 @@ public:
 
   void RelateOverTime();
 
-  void RotateTimeStep();
+  void RotateTimeSteps();
 
 protected:
   void ExtractFace(FaceIdType, int slot=0); // time=0 or 1

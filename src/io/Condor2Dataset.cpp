@@ -199,6 +199,8 @@ void Condor2Dataset::LoadTimeStep(int timestep, int slot)
 
     _ts1 = _tsys->solution->clone();
     _as1 = _asys->solution->clone();
+
+    GLDatasetBase::RotateTimeSteps();
   }
 }
 

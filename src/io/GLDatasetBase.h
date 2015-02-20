@@ -19,6 +19,7 @@ public:
   void SetTimeStep(int timestep, int slot=0);
   int TimeStep(int slot=0) const;
   virtual int NTimeSteps() const {return 0;}
+  virtual void RotateTimeSteps();
 
   bool LoadMeshGraph(const std::string& filename);
   bool LoadDefaultMeshGraph();

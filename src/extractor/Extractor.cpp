@@ -179,7 +179,7 @@ void VortexExtractor::RelateOverTime()
   for (std::map<FaceIdType, PuncturedFace>::iterator it = _punctured_faces.begin(); 
        it != _punctured_faces.end(); it ++) 
   {
-    // fprintf(stderr, "fid=%u\n", it->first);
+    fprintf(stderr, "fid=%u\n", it->first);
 
     std::vector<FaceIdType> related;
     
@@ -245,6 +245,7 @@ void VortexExtractor::RelateOverTime()
       for (int i=0; i<face.edges.size(); i++) {
         // find punctured edges
         EdgeIdType e = face.edges[i];
+        fprintf(stderr, "edge=%u, is_pe=%d\n", e, _punctured_edges.find(e) != _punctured_edges.end());
         if (_punctured_edges.find(e) != _punctured_edges.end() && 
             edges_visited.find(e) == edges_visited.end())
         {
@@ -253,7 +254,7 @@ void VortexExtractor::RelateOverTime()
           const CEdge &edge = mg->Edge(e);
           const PuncturedEdge& pe = _punctured_edges[e];
           if (current_time >= pe.t) continue; // time ascending order
-          
+            
           int echirality = face.edges_chirality[i] * pe.chirality;
           if (current_chirality == echirality) {
             /// find neighbor faces who chontain this edge
@@ -275,8 +276,9 @@ void VortexExtractor::RelateOverTime()
     _related_faces[it->first] = related;
 
 #if 0
-    // non-ordinary
-    if (!(related.size() == 1 && it->first == related[0])) {
+    // if (1) {
+    if (related.size() == 0 || it->first != related[0]) { // non-ordinary
+    // if (!(related.size() == 1 && it->first == related[0])) { // non-ordinary
       fprintf(stderr, "fid=%u, related={", it->first);
       for (int i=0; i<related.size(); i++)
         if (i<related.size()-1)
@@ -319,11 +321,9 @@ void VortexExtractor::TraceVirtualCells()
 
 void VortexExtractor::TraceOverSpace(int slot)
 {
-  fprintf(stderr, "tracing over space, #punctured_cells=%ld.\n", _punctured_cells.size());
-
-  std::vector<VortexObject> &vortex_objects = 
+  std::vector<VortexObject> &vobjs = 
     slot == 0 ? _vortex_objects : _vortex_objects1;
-  std::vector<VortexLine> &vortex_lines = 
+  std::vector<VortexLine> &vlines = 
     slot == 0 ? _vortex_lines : _vortex_lines1;
   std::map<CellIdType, PuncturedCell> &pcs = 
     slot == 0 ? _punctured_cells : _punctured_cells1;
@@ -331,7 +331,9 @@ void VortexExtractor::TraceOverSpace(int slot)
     slot == 0 ? _punctured_faces : _punctured_faces1;
   const MeshGraph *mg = _dataset->MeshGraph();
   
-  vortex_objects.clear();
+  fprintf(stderr, "tracing over space, #pcs=%ld, #pfs=%ld.\n", pcs.size(), pfs.size());
+  
+  vobjs.clear();
   while (!pcs.empty()) {
     /// 1. sort punctured cells into connected ordinary/special ones
     std::list<CellIdType> to_visit;
@@ -449,10 +451,10 @@ void VortexExtractor::TraceOverSpace(int slot)
     }
 
     vobj.id = NewVortexId();
-    vortex_objects.push_back(vobj);
+    vobjs.push_back(vobj);
   }
 
-  fprintf(stderr, "#vortex_objs=%ld\n", _vortex_objects.size());
+  fprintf(stderr, "#vortex_objs=%ld\n", vobjs.size());
 }
 
 void VortexExtractor::VortexObjectsToVortexLines(
@@ -491,6 +493,7 @@ void VortexExtractor::TraceOverTime()
   memset(match, 0, sizeof(bool)*n0*n1);
 
   RelateOverTime();
+  return; // FIXME
 
   for (int i=0; i<n0; i++) {
     for (int j=0; j<n1; j++) {
@@ -526,7 +529,7 @@ next:
     }
   }
 
-#if 1 // debug output
+#if 0 // debug output
   for (int i=0; i<n0; i++) {
     fprintf(stderr, "vid=%d\n", _vortex_objects[i].id);
     for (int j=0; j<n1; j++) {
@@ -537,7 +540,7 @@ next:
 #endif
 }
 
-void VortexExtractor::RotateTimeStep()
+void VortexExtractor::RotateTimeSteps()
 {
   _punctured_faces.clear();
   _punctured_cells.clear();
@@ -638,7 +641,7 @@ void VortexExtractor::ExtractEdges()
   if (!LoadPuncturedEdges()) {
     for (EdgeIdType i=0; i<mg->NEdges(); i++) 
       ExtractSpaceTimeEdge(i);
-    SavePuncturedEdges();
+    // SavePuncturedEdges();
   }
 }
 
@@ -646,6 +649,11 @@ void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
 {
   const GLDataset *ds = (GLDataset*)_dataset;
   const CEdge& e = _dataset->MeshGraph()->Edge(id);
+
+  if (!e.Valid()) {
+    // fprintf(stderr, "invalid edge\n");
+    return;
+  }
 
   double X[4][3], A[4][3], re[3], im[3];
   ds->GetSpaceTimeEdgeValues(e, X, A, re, im);
@@ -690,8 +698,8 @@ void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
   // find zero
   double t = 0;
   if (FindSpaceTimeEdgeZero(re, im, t)) {
-    // fprintf(stderr, "punctured edge: eid=%u, chirality=%d, t=%f\n", 
-    //     id, chirality, t);
+    fprintf(stderr, "punctured edge: eid=%u, chirality=%d, t=%f\n", 
+        id, chirality, t);
     AddPuncturedEdge(id, chirality, t);
   } else {
     fprintf(stderr, "WARNING: zero time not found.\n");
