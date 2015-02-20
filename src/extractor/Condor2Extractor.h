@@ -17,13 +17,7 @@ public:
   Condor2VortexExtractor(); 
   ~Condor2VortexExtractor();
 
-  void ExtractFaces(int time);
-  void ExtractEdges();
-
 protected:
-  void ExtractFace(FaceIdType, int time); // time=0 or 1
-  void ExtractSpaceTimeEdge(EdgeIdType);
-
   ChiralityType CheckFace(const double X[3][3], const double A[3][3], const double re[3], const double im[3], double pos[3]) const; // returns chirality
   ChiralityType CheckSpaceTimeEdge(const double X[2][3], const double A[4][3], const double re[4], const double im[4], double &t) const; // return chirality
 

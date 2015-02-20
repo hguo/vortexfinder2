@@ -19,24 +19,6 @@ void GLGPUVortexExtractor::SetInterpolationMode(int mode)
   _interpolation_mode = mode;
 }
 
-void GLGPUVortexExtractor::Extract()
-{
-#if 0
-  int idx[3], idx1[3];
-  const GLGPUDataset *ds = (const GLGPUDataset*)_dataset; 
-
-  for (int i=0; i<3; i++) 
-    idx1[i] = ds->pbc()[i] ? ds->dims()[i] : ds->dims()[i]-1;
-
-  for (idx[0]=0; idx[0]<idx1[0]; idx[0]++) 
-    for (idx[1]=0; idx[1]<idx1[1]; idx[1]++) 
-      for (idx[2]=0; idx[2]<idx1[2]; idx[2]++) {
-        ElemIdType id = ds->Idx2ElemId(idx);
-        ExtractElem(id);
-      }
-#endif
-}
-
 bool GLGPUVortexExtractor::FindFaceZero(const double X[][3], const double re[], const double im[], double pos[3]) const
 {
   const double epsilon = 0.01;

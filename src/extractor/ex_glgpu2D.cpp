@@ -86,7 +86,7 @@ int main(int argc, char **argv)
   extractor.SetDataset(&ds);
   extractor.SetGaugeTransformation(!nogauge);
   
-  extractor.Extract();
+  extractor.ExtractFaces();
   // extractor.Trace(); 
   // extractor.WriteVortexObjects(filename_out); 
 

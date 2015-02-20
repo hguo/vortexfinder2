@@ -617,3 +617,146 @@ bool VortexExtractor::ExtractElem(ElemIdType id)
   }
 }
 #endif
+
+void VortexExtractor::ExtractFaces(int slot) 
+{
+  const MeshGraph *mg = _dataset->MeshGraph();
+
+  if (!LoadPuncturedFaces(slot)) {
+    for (FaceIdType i=0; i<mg->NFaces(); i++) 
+      ExtractFace(i, slot);
+    SavePuncturedFaces(slot);
+  }
+}
+
+void VortexExtractor::ExtractEdges() 
+{
+  const MeshGraph *mg = _dataset->MeshGraph();
+ 
+  if (!LoadPuncturedEdges()) {
+    for (EdgeIdType i=0; i<mg->NEdges(); i++) 
+      ExtractSpaceTimeEdge(i);
+    SavePuncturedEdges();
+  }
+}
+
+void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
+{
+  const GLDataset *ds = (GLDataset*)_dataset;
+  const CEdge& e = _dataset->MeshGraph()->Edge(id);
+
+  double X[4][3], A[4][3], re[3], im[3];
+  ds->GetSpaceTimeEdgeValues(e, X, A, re, im);
+
+  double rho[4], phi[4];
+  for (int i=0; i<4; i++) {
+    rho[i] = sqrt(re[i]*re[i] + im[i]*im[i]);
+    phi[i] = atan2(im[i], re[i]);
+  }
+
+  double li[4] = {
+    ds->LineIntegral(X[0], X[1], A[0], A[1]), 0, 
+    ds->LineIntegral(X[1], X[0], A[2], A[3]), 0};
+  double delta[4] = {
+    phi[1] - phi[0],
+    phi[2] - phi[1],
+    phi[3] - phi[2],
+    phi[0] - phi[3]
+  };
+
+  for (int i=0; i<4; i++) 
+    if (_gauge) delta[i] = mod2pi1(delta[i] - li[i]);
+    else delta[i] = mod2pi1(delta[i]);
+
+  double phase_shift = -(delta[0] + delta[1] + delta[2] + delta[3]);
+  double critera = phase_shift / (2*M_PI);
+
+  ChiralityType chirality;
+  if (critera > 0.5) chirality = 1; 
+  else if (critera < -0.5) chirality = -1;
+  else return;
+
+  // gauge transformation
+  if (_gauge) {
+    for (int i=1; i<4; i++) {
+      phi[i] = phi[i-1] + delta[i-1];
+      re[i] = rho[i] * cos(phi[i]); 
+      im[i] = rho[i] * sin(phi[i]);
+    }
+  }
+
+  // find zero
+  double t = 0;
+  if (FindSpaceTimeEdgeZero(re, im, t)) {
+    // fprintf(stderr, "punctured edge: eid=%u, chirality=%d, t=%f\n", 
+    //     id, chirality, t);
+    AddPuncturedEdge(id, chirality, t);
+  } else {
+    fprintf(stderr, "WARNING: zero time not found.\n");
+  }
+}
+
+void VortexExtractor::ExtractFace(FaceIdType id, int slot)
+{
+  const GLDataset *ds = (GLDataset*)_dataset;
+  const int nnodes = ds->NrNodesPerFace();
+  const CFace& f = ds->MeshGraph()->Face(id);
+
+  fprintf(stderr, "extracting face %u\n", id);
+  if (!f.Valid()) return;
+
+  double X[nnodes][3], A[nnodes][3], re[nnodes], im[nnodes];
+  ds->GetFaceValues(f, slot, X, A, re, im);
+    
+  // compute rho & phi
+  double rho[nnodes], phi[nnodes];
+  for (int i=0; i<nnodes; i++) {
+    rho[i] = sqrt(re[i]*re[i] + im[i]*im[i]);
+    phi[i] = atan2(im[i], re[i]);
+  }
+
+  // calculating phase shift
+  double delta[nnodes], phase_shift = 0;
+  for (int i=0; i<nnodes; i++) {
+    int j = (i+1) % nnodes;
+    delta[i] = phi[j] - phi[i]; 
+    double li = ds->LineIntegral(X[i], X[j], A[i], A[j]);
+    if (_gauge) 
+      delta[i] = mod2pi1(delta[i] - li);
+    delta[i] = mod2pi(delta[i] + M_PI) - M_PI;
+    phase_shift -= delta[i];
+    phase_shift -= li; // ds->LineIntegral(X[i], X[j], A[i], A[j]);
+  }
+
+  // check if punctured
+  double critera = phase_shift / (2*M_PI);
+  if (fabs(critera)<0.5) return; // not punctured
+
+  // chirality
+  ChiralityType chirality = critera>0 ? 1 : -1;
+
+  // gauge transformation
+  double re1[nnodes], im1[nnodes];
+  memcpy(re1, re, sizeof(double)*nnodes);
+  memcpy(im1, im, sizeof(double)*nnodes);
+  double phi1[] = {phi[0], phi[0]+delta[0], phi[0]+delta[0]+delta[1]};
+
+  if (_gauge) { 
+    for (int i=0; i<nnodes; i++) {
+      // phi[i] = phi[i-1] + delta[i-1];
+      re1[i] = rho[i] * cos(phi1[i]); 
+      im1[i] = rho[i] * sin(phi1[i]);
+    }
+  }
+
+  // find zero
+  double pos[3];
+  if (FindFaceZero(X, re1, im1, pos)) {
+    AddPuncturedFace(id, slot, chirality, pos);
+  } else {
+    fprintf(stderr, "WARNING: punctured but singularity not found.\n");
+    pos[0] = pos[1] = pos[2] = NAN;
+    AddPuncturedFace(id, slot, chirality, pos);
+  }
+}
+

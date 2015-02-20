@@ -20,24 +20,27 @@ public:
   virtual void SetDataset(const GLDatasetBase* ds);
   const GLDataset* Dataset() const {return (GLDataset*)_dataset;}
 
-  virtual void Extract() {}; 
-  virtual void ExtractFaces(int slot) {}
-  virtual void ExtractEdges() {}
+  void ExtractFaces(int slot=0);
+  void ExtractEdges();
 
   bool SavePuncturedEdges() const;
   bool LoadPuncturedEdges();
-  bool SavePuncturedFaces(int slot) const; 
-  bool LoadPuncturedFaces(int slot);
+  bool SavePuncturedFaces(int slot=0) const; 
+  bool LoadPuncturedFaces(int slot=0);
   void ClearPuncturedObjects();
-  void SaveVortexLines(int slot);
+  void SaveVortexLines(int slot=0);
 
   void TraceVirtualCells();
-  void TraceOverSpace(int slot);
+  void TraceOverSpace(int slot=0);
   void TraceOverTime();
 
   void RelateOverTime();
 
   void RotateTimeStep();
+
+protected:
+  void ExtractFace(FaceIdType, int slot=0); // time=0 or 1
+  void ExtractSpaceTimeEdge(EdgeIdType);
 
 protected:
   void VortexObjectsToVortexLines(const std::map<FaceIdType, PuncturedFace>& pfs, const std::vector<VortexObject>& vobjs, std::vector<VortexLine>& vlines);

@@ -19,8 +19,6 @@ public:
 
   void SetInterpolationMode(int);
 
-  void Extract();
-
 protected:
   bool FindFaceZero(const double X[][3], const double re[], const double im[], double pos[3]) const;
 

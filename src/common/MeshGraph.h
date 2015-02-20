@@ -58,6 +58,8 @@ struct CFace {
     contained_cells.reserve(2);
     contained_cells_chirality.reserve(2);
   }
+
+  bool Valid() const {return nodes.size()>0;}
 };
 
 struct CCell {
@@ -77,6 +79,8 @@ struct CCell {
     faces_chirality.reserve(4);
     neighbor_cells.reserve(4);
   }
+
+  bool Valid() const {return faces.size()>0;}
 };
 
 class MeshGraphBuilder;
