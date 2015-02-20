@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cassert>
 #include <cmath>
+#include <climits>
 #include <iostream>
 #include "common/Utils.hpp"
 #include "common/Lerp.hpp"

@@ -1,14 +1,20 @@
 #include <QMouseEvent>
 #include <QMatrix4x4>
 #include <QDebug>
-#include <OpenGL/glu.h>
-#include <GLUT/glut.h>
 #include <fstream>
 #include <iostream>
 #include "widget.h"
 #include "common/DataInfo.pb.h"
 #include "common/VortexLine.h"
 #include "common/FieldLine.h"
+
+#ifdef __APPLE__
+#include <OpenGL/glu.h>
+#include <GLUT/glut.h>
+#else
+#include <GL/glu.h>
+#include <GL/glut.h>
+#endif
 
 using namespace std; 
 

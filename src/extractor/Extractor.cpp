@@ -2,8 +2,10 @@
 #include "common/Utils.hpp"
 #include "io/GLDataset.h"
 #include <set>
+#include <climits>
 #include <cstdlib>
 #include <cassert>
+#include <cstring>
 
 VortexExtractor::VortexExtractor() :
   _dataset(NULL), 

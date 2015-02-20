@@ -1,4 +1,6 @@
 #include "MeshGraphRegular3D.h"
+#include <cstring>
+#include <climits>
 
 MeshGraphRegular3D::MeshGraphRegular3D(int d_[3], bool pbc_[3])
 {

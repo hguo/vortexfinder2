@@ -2,7 +2,8 @@
 #include <cstdio>
 #include <cassert>
 #include <cmath>
-#include "gldataset.h"
+#include <cstring>
+#include "GLDataset.h"
 #include "common/Utils.hpp"
 
 GLDataset::GLDataset() : 

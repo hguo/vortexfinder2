@@ -25,10 +25,10 @@ public:
   void SaveMeshGraph(const std::string& filename);
   void SaveDefaultMeshGraph();
 
-  const MeshGraph* MeshGraph() const {return _mg;}
+  const struct MeshGraph* MeshGraph() const {return _mg;}
 
 protected: 
-  class MeshGraph *_mg;
+  struct MeshGraph *_mg;
   int _timestep, _timestep1; 
   std::string _data_name;
 };

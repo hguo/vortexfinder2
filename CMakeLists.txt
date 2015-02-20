@@ -23,10 +23,15 @@ if (WITH_LIBMESH)
   set (LIBMESH_DIR "/usr" CACHE PATH "The installed path for libMesh")
   set (LIBMESH_INCLUDE_DIR "${LIBMESH_DIR}/include")
   set (LIBMESH_LIBRARY_DIR "${LIBMESH_DIR}/lib")
-  set (LIBMESH_LIBRARY "${LIBMESH_LIBRARY_DIR}/libmesh_opt.dylib")
 
-  # suppose libmesh is built with netcdf, thus we can directly use netcdf
-  set (NETCDF_LIBRARY "${LIBMESH_DIR}/lib/libnetcdf.dylib")
+  if (APPLE)
+    set (LIBMESH_LIBRARY "${LIBMESH_LIBRARY_DIR}/libmesh_opt.dylib")
+    # suppose libmesh is built with netcdf, thus we can directly use netcdf
+    set (NETCDF_LIBRARY "${LIBMESH_DIR}/lib/libnetcdf.dylib")
+  else ()
+    set (NETCDF_LIBRARY "${LIBMESH_DIR}/lib/libnetcdf.so")
+    set (LIBMESH_LIBRARY "${LIBMESH_LIBRARY_DIR}/libmesh_opt.so")
+  endif ()
   
   set (PETSC_DIR "/usr" CACHE PATH "The installed path for PETSc")
   set (PETSC_INCLUDE_DIR "${PETSC_DIR}/include")
@@ -50,6 +55,6 @@ if (WITH_QT)
 endif ()
 
 # enable c++11
-list(APPEND CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+list(APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 
 subdirs (src)

@@ -4,6 +4,7 @@
 #include <vector>
 #include <bitset>
 #include <map>
+#include <tuple>
 #include "def.h"
 
 struct CEdge;

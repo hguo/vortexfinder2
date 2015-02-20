@@ -1,4 +1,5 @@
 #include "GLDatasetBase.h"
+#include "common/MeshGraph.h"
 
 GLDatasetBase::GLDatasetBase() :
   _timestep(-1), _timestep1(-1), 

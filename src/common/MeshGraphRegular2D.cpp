@@ -1,4 +1,6 @@
 #include "MeshGraphRegular2D.h"
+#include <cstring>
+#include <climits>
 
 MeshGraphRegular2D::MeshGraphRegular2D(int d_[2], bool pbc_[2])
 {

@@ -1,6 +1,7 @@
 #include "GLGPU_IO_Helper.h"
 #include <cmath>
 #include <cassert>
+#include <cstring>
 
 #ifdef WITH_LIBMESH // suppose libmesh is built with netcdf
 #include <netcdf.h>
