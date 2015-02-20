@@ -32,8 +32,8 @@ public: // rectilinear grid
   double dz() const {return _cell_lengths[2];}
   
   // Magnetic potential
-  bool A(const double X[3], double A[3]) const {//!< compute the vector potential at given position
-    A[0] = Ax(X); A[1] = Ay(X); A[2] = Az(X); return true;}
+  bool A(const double X[3], double A[3], int slot) const;
+  bool A(NodeIdType n, double A[3], int slot) const;
   double Ax(const double X[3]) const {if (By()>0) return -Kex(); else return -X[1]*Bz()-Kex();}
   double Ay(const double X[3]) const {if (By()>0) return X[0]*Bz(); else return 0;}
   double Az(const double X[3]) const {if (By()>0) return -X[0]*By(); else return X[1]*Bx();}

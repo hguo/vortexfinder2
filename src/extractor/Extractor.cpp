@@ -627,7 +627,7 @@ void VortexExtractor::ExtractFaces(int slot)
   if (!LoadPuncturedFaces(slot)) {
     for (FaceIdType i=0; i<mg->NFaces(); i++) 
       ExtractFace(i, slot);
-    SavePuncturedFaces(slot);
+    // SavePuncturedFaces(slot);
   }
 }
 

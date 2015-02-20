@@ -54,16 +54,22 @@ public: // properties
   double Kex() const {return _Kex;} 
   double Kex_dot() const {return _Kex_dot;}
 
+  // Positions 
+  virtual bool Pos(NodeIdType, double X[3]) const = 0;
+
   // Order parameters (direct access/linear interpolation)
-  virtual bool Psi(const double X[3], double &re, double &im) const = 0;
-  bool Rho(const double X[3], double &rho) const;
-  bool Phi(const double X[3], double &phi) const;
+  virtual bool Psi(const double X[3], double &re, double &im, int slot=0) const = 0;
+  virtual bool Psi(NodeIdType, double &re, double &im, int slot=0) const = 0;
+  bool Rho(const double X[3], double &rho, int slot=0) const;
+  bool Phi(const double X[3], double &phi, int slot=0) const;
   
   // Magnetic potential
-  virtual bool A(const double X[3], double A[3]) const = 0; //!< the vector potential at given position
+  virtual bool A(const double X[3], double A[3], int slot=0) const = 0; //!< the vector potential at given position
+  virtual bool A(NodeIdType, double A[3], int slot=0) const = 0;
 
   // Supercurrent field
-  virtual bool Supercurrent(const double X[3], double J[3]) const = 0;
+  virtual bool Supercurrent(const double X[3], double J[3], int slot=0) const = 0;
+  virtual bool Supercurrent(NodeIdType, double J[3], int slot) const = 0;
 
 protected:
   std::vector<double> _time_stamps; 

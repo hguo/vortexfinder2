@@ -229,7 +229,7 @@ CellIdType Condor2Dataset::Pos2CellId(const double X[]) const
   else return e->id();
 }
 
-bool Condor2Dataset::A(const double X[3], double A[3]) const
+bool Condor2Dataset::A(const double X[3], double A[3], int slot) const
 {
   Point p(X[0], X[1], X[2]);
 
@@ -243,7 +243,19 @@ bool Condor2Dataset::A(const double X[3], double A[3]) const
   return true;
 }
 
-bool Condor2Dataset::Psi(const double X[3], double &re, double &im) const
+bool Condor2Dataset::A(NodeIdType, double A[3], int slot) const
+{
+  // TODO
+  return false;
+}
+
+bool Condor2Dataset::Pos(NodeIdType, double X[3]) const
+{
+  // TODO
+  return false;
+}
+
+bool Condor2Dataset::Psi(const double X[3], double &re, double &im, int slot) const
 {
   if (X[0] < Origins()[0] || X[0] > Origins()[0] + Lengths()[0] ||
       X[1] < Origins()[1] || X[1] > Origins()[1] + Lengths()[1] || 
@@ -260,7 +272,19 @@ bool Condor2Dataset::Psi(const double X[3], double &re, double &im) const
   return true;
 }
 
-bool Condor2Dataset::Supercurrent(const double X[3], double J[3]) const
+bool Condor2Dataset::Psi(NodeIdType, double &re, double &im, int slot) const 
+{
+  // TODO
+  return false;
+}
+
+bool Condor2Dataset::Supercurrent(NodeIdType, double J[3], int slot) const
+{
+  // TODO
+  return false;
+}
+
+bool Condor2Dataset::Supercurrent(const double X[3], double J[3], int slot) const
 {
   Point p(X[0], X[1], X[2]);
 

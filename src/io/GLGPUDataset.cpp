@@ -95,3 +95,17 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
   return true;
 }
 
+bool GLGPUDataset::A(const double X[3], double A[3], int slot) const
+{
+  A[0] = Ax(X); 
+  A[1] = Ay(X); 
+  A[2] = Az(X); 
+  return true;
+}
+
+bool GLGPUDataset::A(NodeIdType n, double A_[3], int slot) const
+{
+  double X[3];
+  Pos(n, X);
+  return A(X, A_, slot);
+}

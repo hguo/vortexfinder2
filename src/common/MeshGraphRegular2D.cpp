@@ -37,7 +37,7 @@ CCell MeshGraphRegular2D::Cell(CellIdType id) const
 CFace MeshGraphRegular2D::Face(FaceIdType id) const
 {
   CFace face;
-  int fidx[2];
+  int fidx[3];
 
   fid2fidx(id, fidx);
   if (!valid_fidx(fidx)) return face;
@@ -64,7 +64,6 @@ CFace MeshGraphRegular2D::Face(FaceIdType id) const
   face.contained_cells_chirality.push_back(contained_cells_chi);
   face.contained_cells_fid.push_back(contained_cells_fid);
 
-  fprintf(stderr, "fuck, id=%u, %lu, %lu, %lu\n", id, face.nodes.size(), face.edges.size(), face.contained_cells.size());
   return face;
 }
 

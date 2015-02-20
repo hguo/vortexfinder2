@@ -105,10 +105,10 @@ void GLDataset::A(const double X[3], double A[3]) const
 }
 #endif 
 
-bool GLDataset::Rho(const double X[3], double &rho) const
+bool GLDataset::Rho(const double X[3], double &rho, int slot) const
 {
   double re, im;
-  bool succ = Psi(X, re, im); 
+  bool succ = Psi(X, re, im, slot); 
   if (!succ) return false; 
   else {
     rho = sqrt(re*re + im*im); 
@@ -116,10 +116,10 @@ bool GLDataset::Rho(const double X[3], double &rho) const
   }
 }
 
-bool GLDataset::Phi(const double X[3], double &phi) const
+bool GLDataset::Phi(const double X[3], double &phi, int slot) const
 {
   double re, im;
-  bool succ = Psi(X, re, im); 
+  bool succ = Psi(X, re, im, slot); 
   if (!succ) return false; 
   else {
     phi = atan2(im, re);

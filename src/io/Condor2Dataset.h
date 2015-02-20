@@ -55,14 +55,13 @@ public:
   unsigned int Az_var() const {return _Az_var;}
 
 public:
-  // Order parameters (direct access/linear interpolation)
-  bool Psi(const double X[3], double &re, double &im) const;
-
-  // magnetic potential
-  bool A(const double X[3], double A[3]) const;
-
-  // Supercurrent field
-  bool Supercurrent(const double X[3], double J[3]) const;
+  bool Pos(NodeIdType, double X[3]) const;
+  bool Psi(const double X[3], double &re, double &im, int slot) const;
+  bool Psi(NodeIdType, double &re, double &im, int slot) const;
+  bool A(const double X[3], double A[3], int slot) const;
+  bool A(NodeIdType, double A[3], int slot) const;
+  bool Supercurrent(const double X[3], double J[3], int slot) const;
+  bool Supercurrent(NodeIdType, double J[3], int slot) const;
 
 private: 
   void ProbeBoundingBox();
