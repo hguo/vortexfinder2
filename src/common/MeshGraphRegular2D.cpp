@@ -82,7 +82,7 @@ CEdge MeshGraphRegular2D::Edge(EdgeIdType id) const
     {{i, j}, {i+1, j}}, 
     {{i, j}, {i, j+1}}};
 
-  edge.node0 = id; // nidx2nid(node_idx[t][0]);
+  edge.node0 = nidx2nid(nodes_idx[t][0]); // id; // nidx2nid(node_idx[t][0]);
   edge.node1 = nidx2nid(nodes_idx[t][1]);
 
   // contained faces

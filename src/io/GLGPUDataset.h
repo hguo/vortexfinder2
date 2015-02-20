@@ -10,7 +10,8 @@ public:
   ~GLGPUDataset();
   
 public:
-  bool OpenDataFile(const std::string& pattern); 
+  bool OpenDataFile(const std::string& filename); // file list
+  bool OpenDataFileByPattern(const std::string& pattern); 
   void LoadTimeStep(int timestep, int slot=0);
   void RotateTimeSteps();
   void CloseDataFile();

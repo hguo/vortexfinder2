@@ -1,6 +1,8 @@
 #include "GLGPUDataset.h"
 #include "GLGPU_IO_Helper.h"
 #include <cassert>
+#include <iostream>
+#include <fstream>
 #include <glob.h>
 
 GLGPUDataset::GLGPUDataset() :
@@ -33,7 +35,27 @@ void GLGPUDataset::PrintInfo() const
   fprintf(stderr, "fluctuation_amp=%f\n", _fluctuation_amp); 
 }
 
-bool GLGPUDataset::OpenDataFile(const std::string &pattern)
+bool GLGPUDataset::OpenDataFile(const std::string &filename)
+{
+  std::ifstream ifs;
+  ifs.open(filename, std::ifstream::in);
+  if (!ifs.is_open()) return false;
+
+  char fname[1024];
+
+  _filenames.clear();
+  while (ifs.getline(fname, 1024)) {
+    // std::cout << fname << std::endl;
+    _filenames.push_back(fname);
+  }
+
+  ifs.close();
+
+  _data_name = filename;
+  return true;
+}
+
+bool GLGPUDataset::OpenDataFileByPattern(const std::string &pattern)
 {
   glob_t results;
 
