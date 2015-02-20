@@ -36,44 +36,6 @@ void GLGPU3DDataset::BuildMeshGraph()
   _mg = new class MeshGraphRegular3D(_dims, _pbc);
 }
 
-void GLGPU3DDataset::ElemId2Idx(ElemIdType id, int *idx) const
-{
-  int s = dims()[0] * dims()[1]; 
-  int k = id / s; 
-  int j = (id - k*s) / dims()[0]; 
-  int i = id - k*s - j*dims()[0]; 
-
-  idx[0] = i; idx[1] = j; idx[2] = k;
-}
-
-ElemIdType GLGPU3DDataset::Idx2ElemId(int *idx) const
-{
-  for (int i=0; i<3; i++) 
-    if (idx[i]<0 || idx[i]>=dims()[i])
-      return UINT_MAX;
-  
-  return idx[0] + dims()[0] * (idx[1] + dims()[1] * idx[2]); 
-}
-
-void GLGPU3DDataset::Idx2Pos(const int idx[], double pos[]) const
-{
-  for (int i=0; i<3; i++) 
-    pos[i] = idx[i] * CellLengths()[i] + Origins()[i];
-}
-
-void GLGPU3DDataset::Pos2Idx(const double pos[], int idx[]) const
-{
-  for (int i=0; i<3; i++)
-    idx[i] = (pos[i] - Origins()[i]) / CellLengths()[i]; 
-  // TODO: perodic boundary conditions
-}
-
-void GLGPU3DDataset::Pos2Grid(const double pos[], double gpos[]) const
-{
-  for (int i=0; i<3; i++)
-    gpos[i] = (pos[i] - Origins()[i]) / CellLengths()[i]; 
-}
-
 #if 0
 double GLGPU3DDataset::Flux(int face) const
 {

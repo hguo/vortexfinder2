@@ -704,7 +704,6 @@ void VortexExtractor::ExtractFace(FaceIdType id, int slot)
   const int nnodes = ds->NrNodesPerFace();
   const CFace& f = ds->MeshGraph()->Face(id);
 
-  fprintf(stderr, "extracting face %u\n", id);
   if (!f.Valid()) return;
 
   double X[nnodes][3], A[nnodes][3], re[nnodes], im[nnodes];
@@ -725,7 +724,8 @@ void VortexExtractor::ExtractFace(FaceIdType id, int slot)
     double li = ds->LineIntegral(X[i], X[j], A[i], A[j]);
     if (_gauge) 
       delta[i] = mod2pi1(delta[i] - li);
-    delta[i] = mod2pi(delta[i] + M_PI) - M_PI;
+    else 
+      delta[i] = mod2pi1(delta[i]);
     phase_shift -= delta[i];
     phase_shift -= li; // ds->LineIntegral(X[i], X[j], A[i], A[j]);
   }
@@ -738,27 +738,22 @@ void VortexExtractor::ExtractFace(FaceIdType id, int slot)
   ChiralityType chirality = critera>0 ? 1 : -1;
 
   // gauge transformation
-  double re1[nnodes], im1[nnodes];
-  memcpy(re1, re, sizeof(double)*nnodes);
-  memcpy(im1, im, sizeof(double)*nnodes);
-  double phi1[] = {phi[0], phi[0]+delta[0], phi[0]+delta[0]+delta[1]};
-
   if (_gauge) { 
-    for (int i=0; i<nnodes; i++) {
-      // phi[i] = phi[i-1] + delta[i-1];
-      re1[i] = rho[i] * cos(phi1[i]); 
-      im1[i] = rho[i] * sin(phi1[i]);
+    for (int i=1; i<nnodes; i++) {
+      phi[i] = phi[i-1] + delta[i-1];
+      re[i] = rho[i] * cos(phi[i]); 
+      im[i] = rho[i] * sin(phi[i]);
     }
   }
 
   // find zero
   double pos[3];
-  if (FindFaceZero(X, re1, im1, pos)) {
+  if (FindFaceZero(X, re, im, pos)) {
     AddPuncturedFace(id, slot, chirality, pos);
+    // fprintf(stderr, "pos={%f, %f, %f}, chi=%d\n", pos[0], pos[1], pos[2], chirality);
   } else {
     fprintf(stderr, "WARNING: punctured but singularity not found.\n");
     pos[0] = pos[1] = pos[2] = NAN;
     AddPuncturedFace(id, slot, chirality, pos);
   }
 }
-

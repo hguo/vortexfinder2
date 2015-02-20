@@ -5,7 +5,8 @@
 MeshGraphRegular2D::MeshGraphRegular2D(int d_[2], bool pbc_[2])
 {
   memcpy(d, d_, sizeof(int)*2);
-  memcpy(pbc, pbc_, sizeof(bool)*2);
+  // memcpy(pbc, pbc_, sizeof(bool)*2);
+  pbc[0] = pbc[1] = 0; // disable pbc in the test
 }
 
 CCell MeshGraphRegular2D::Cell(CellIdType id) const

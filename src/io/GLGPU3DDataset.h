@@ -33,13 +33,6 @@ public: // mesh utils
   // bool OnBoundary(ElemIdType id) const;
 
   // ElemId is encoded by the id of left-bottom corner node in the cell
-  void ElemId2Idx(ElemIdType id, int *idx) const; 
-  ElemIdType Idx2ElemId(int *idx) const;
- 
-  void Idx2Pos(const int idx[3], double pos[3]) const;
-  void Pos2Idx(const double pos[3], int idx[3]) const;
-  void Pos2Grid(const double pos[3], double gpos[3]) const; //!< to grid coordinates
-
 public: // transformations and utils
   double GaugeTransformation(const double X0[], const double X1[]) const;
 

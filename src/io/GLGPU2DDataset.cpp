@@ -19,10 +19,13 @@ void GLGPU2DDataset::BuildMeshGraph()
   _mg = new MeshGraphRegular2D(_dims, _pbc);
 }
   
-void GLGPU2DDataset::GetFaceValues(const CFace& f, int slot, double X[][3], double A[][3], double re[], double im[]) const
+void GLGPU2DDataset::GetFaceValues(const CFace& f, int slot, double X[][3], double A_[][3], double re[], double im[]) const
 {
   for (int i=0; i<f.nodes.size(); i++) {
-
+    Pos(f.nodes[i], X[i]);
+    // A(X[i], A_[i], slot);
+    A(f.nodes[i], A_[i], slot);
+    Psi(f.nodes[i], re[i], im[i], slot);
   }
 }
 
@@ -31,22 +34,31 @@ void GLGPU2DDataset::GetSpaceTimeEdgeValues(const CEdge&, double X[][3], double 
   // TODO
 }
 
-bool GLGPU2DDataset::Pos(NodeIdType, double X[2]) const
+bool GLGPU2DDataset::Pos(NodeIdType id, double X[3]) const
+{
+  int idx[3];
+
+  Nid2Idx(id, idx);
+  Idx2Pos(idx, X);
+
+  return true;
+}
+
+bool GLGPU2DDataset::Psi(const double X[3], double &re, double &im, int slot) const
 {
   // TODO
   return false;
 }
 
-bool GLGPU2DDataset::Psi(const double X[2], double &re, double &im, int slot) const
+bool GLGPU2DDataset::Psi(NodeIdType id, double &re, double &im, int slot) const
 {
-  // TODO
-  return false;
-}
+  double *r = slot == 0 ? _re : _re1;
+  double *i = slot == 0 ? _im : _im1;
 
-bool GLGPU2DDataset::Psi(NodeIdType, double &re, double &im, int slot) const
-{
-  // TODO
-  return false;
+  re = r[id]; 
+  im = i[id];
+
+  return true;
 }
 
 bool GLGPU2DDataset::Supercurrent(const double X[2], double J[3], int slot) const

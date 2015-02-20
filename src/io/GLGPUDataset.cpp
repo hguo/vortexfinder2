@@ -92,6 +92,9 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
     else _cell_lengths[i] = _lengths[i] / (_dims[i]-1); 
   }
 
+  if (ndims == 2)
+    _dims[2] = 1;
+
   return true;
 }
 
@@ -108,4 +111,42 @@ bool GLGPUDataset::A(NodeIdType n, double A_[3], int slot) const
   double X[3];
   Pos(n, X);
   return A(X, A_, slot);
+}
+
+void GLGPUDataset::Nid2Idx(NodeIdType id, int *idx) const
+{
+  int s = dims()[0] * dims()[1]; 
+  int k = id / s; 
+  int j = (id - k*s) / dims()[0]; 
+  int i = id - k*s - j*dims()[0]; 
+
+  idx[0] = i; idx[1] = j; idx[2] = k;
+}
+
+NodeIdType GLGPUDataset::Idx2Nid(int *idx) const
+{
+  for (int i=0; i<3; i++) 
+    if (idx[i]<0 || idx[i]>=dims()[i])
+      return UINT_MAX;
+  
+  return idx[0] + dims()[0] * (idx[1] + dims()[1] * idx[2]); 
+}
+
+void GLGPUDataset::Idx2Pos(const int idx[], double pos[]) const
+{
+  for (int i=0; i<3; i++) 
+    pos[i] = idx[i] * CellLengths()[i] + Origins()[i];
+}
+
+void GLGPUDataset::Pos2Idx(const double pos[], int idx[]) const
+{
+  for (int i=0; i<3; i++)
+    idx[i] = (pos[i] - Origins()[i]) / CellLengths()[i]; 
+  // TODO: perodic boundary conditions
+}
+
+void GLGPUDataset::Pos2Grid(const double pos[], double gpos[]) const
+{
+  for (int i=0; i<3; i++)
+    gpos[i] = (pos[i] - Origins()[i]) / CellLengths()[i]; 
 }

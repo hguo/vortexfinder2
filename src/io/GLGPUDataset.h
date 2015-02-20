@@ -21,6 +21,14 @@ public:
 private:
   bool OpenBDATDataFile(const std::string& filename, int slot=0);
   bool OpenLegacyDataFile(const std::string& filename, int slot=0);
+  
+protected:
+  void Nid2Idx(NodeIdType id, int *idx) const; 
+  NodeIdType Idx2Nid(int *idx) const;
+ 
+  void Idx2Pos(const int idx[3], double X[3]) const;
+  void Pos2Idx(const double X[3], int idx[3]) const;
+  void Pos2Grid(const double pos[3], double gpos[3]) const; //!< to grid coordinates
 
 public: // rectilinear grid
   const int* dims() const {return _dims;}
