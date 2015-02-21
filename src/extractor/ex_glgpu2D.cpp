@@ -97,12 +97,14 @@ int main(int argc, char **argv)
   
   extractor.ExtractFaces(0);
   extractor.TraceOverSpace(0);
+  extractor.SaveVortexLines(0);
   for (int t=T0+span; t<T0+T; t+=span){
     ds.LoadTimeStep(t, 1);
     extractor.ExtractFaces(1);
     extractor.TraceOverSpace(1);
     extractor.ExtractEdges();
     extractor.TraceOverTime();
+    extractor.SaveVortexLines(1);
     extractor.RotateTimeSteps();
     ds.RotateTimeSteps();
   }

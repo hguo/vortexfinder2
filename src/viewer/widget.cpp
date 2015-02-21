@@ -168,7 +168,12 @@ void CGLWidget::renderVortexIds()
     int id = _vids[i];
     QVector3D v = _vids_coord[i];
     QString s = QString("%1").arg(id);
-   
+  
+    glPushMatrix();
+    glTranslatef(v.x(), v.y(), v.z());
+    glutSolidSphere(0.5, 20, 20);
+    glPopMatrix();
+
     renderText(v.x(), v.y(), v.z(), s, ft);
   }
 }
@@ -332,12 +337,13 @@ void CGLWidget::LoadVortexLines(const std::string& filename)
     {243, 146, 66}};
 #endif
   for (int k=0; k<vortex_liness.size(); k++) { //iterator over lines
-    if (vortex_liness[k].size()>3) {
+    // fprintf(stderr, "line %d: id=%d, len=%lu\n", k, vortex_liness[k].id, vortex_liness[k].size());
+    if (vortex_liness[k].size()>=3) {
       _vids.push_back(vortex_liness[k].id);
-      _vids_coord.push_back(
-          QVector3D(*(vortex_liness[k].begin()), 
-                    *(vortex_liness[k].begin()+1),
-                    *(vortex_liness[k].begin()+2)));
+      QVector3D pt(*(vortex_liness[k].begin()), 
+                   *(vortex_liness[k].begin()+1),
+                   *(vortex_liness[k].begin()+2));
+      _vids_coord.push_back(pt);
     }
 
     int vertCount = vortex_liness[k].size()/3;
