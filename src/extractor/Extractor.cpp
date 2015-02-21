@@ -450,6 +450,8 @@ void VortexExtractor::TraceOverSpace(int slot)
         if (!traced) break;
       }
       
+      visited.insert(seed);
+      
       for (std::set<CellIdType>::iterator it = visited.begin(); it != visited.end(); it ++)
         ordinary_pcells.erase(*it);
       visited.clear();
