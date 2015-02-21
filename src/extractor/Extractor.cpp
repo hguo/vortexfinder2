@@ -179,7 +179,7 @@ void VortexExtractor::RelateOverTime()
   for (std::map<FaceIdType, PuncturedFace>::iterator it = _punctured_faces.begin(); 
        it != _punctured_faces.end(); it ++) 
   {
-    fprintf(stderr, "fid=%u\n", it->first);
+    // fprintf(stderr, "fid=%u\n", it->first);
 
     std::vector<FaceIdType> related;
     
@@ -207,8 +207,8 @@ void VortexExtractor::RelateOverTime()
 
       faces_visited.insert(current);
            
-      if (_punctured_faces1[current].chirality != 0 && _punctured_faces1[current].chirality != current_chirality)
-        fprintf(stderr, "chi not match: current_chi=%d, face_chi=%d\n", current_chirality, _punctured_faces1[current].chirality);
+      // if (_punctured_faces1[current].chirality != 0 && _punctured_faces1[current].chirality != current_chirality)
+      //   fprintf(stderr, "chi not match: current_chi=%d, face_chi=%d\n", current_chirality, _punctured_faces1[current].chirality);
 
       if (_punctured_faces1.find(current) != _punctured_faces1.end() && 
           _punctured_faces1[current].chirality == current_chirality) 
@@ -262,9 +262,9 @@ void VortexExtractor::RelateOverTime()
             /// find neighbor faces who chontain this edge
             for (int j=0; j<edge.contained_faces.size(); j++) {
               if (faces_visited.find(edge.contained_faces[j]) == faces_visited.end()) { // not found in visited faces
-                fprintf(stderr, "fid0=%u, chi=%d, found edge eid=%u, face_edge_chi=%d, edge_chi=%d, edge_contained_face=%u, edge_contained_face_chi=%d\n", 
-                    current, current_chirality, e, face.edges_chirality[i], pe.chirality,  
-                    edge.contained_faces[j], edge.contained_faces_chirality[j]);
+                // fprintf(stderr, "fid0=%u, chi=%d, found edge eid=%u, face_edge_chi=%d, edge_chi=%d, edge_contained_face=%u, edge_contained_face_chi=%d\n", 
+                //     current, current_chirality, e, face.edges_chirality[i], pe.chirality,  
+                //     edge.contained_faces[j], edge.contained_faces_chirality[j]);
                 faces_to_visit.push_front(edge.contained_faces[j]);
                 // faces_to_visit_chirality.push_front(-edge.contained_faces_chirality[j] * current_chirality);
                 faces_to_visit_chirality.push_front(-edge.contained_faces_chirality[j] * pe.chirality); 

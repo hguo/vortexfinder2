@@ -21,24 +21,33 @@ void GLGPUVortexExtractor::SetInterpolationMode(int mode)
 
 bool GLGPUVortexExtractor::FindFaceZero(const double X[][3], const double re[], const double im[], double pos[3]) const
 {
-  const double epsilon = 0.01;
+  const double epsilon = 0.05;
+  bool succ = false;
 
   switch (_interpolation_mode) {
   case INTERPOLATION_CENTER: 
-    return find_zero_quad_center(re, im, X, pos); 
+    succ = find_zero_quad_center(re, im, X, pos);
+    break;
 
   case INTERPOLATION_BARYCENTRIC: 
-    return find_zero_quad_barycentric(re, im, X, pos, epsilon); 
+    succ = find_zero_quad_barycentric(re, im, X, pos, epsilon); 
+    break;
 
   case INTERPOLATION_BILINEAR: 
-    return find_zero_quad_bilinear(re, im, X, pos, epsilon); 
+    succ = find_zero_quad_bilinear(re, im, X, pos, epsilon);
+    if (!succ)
+      succ = find_zero_quad_barycentric(re, im, X, pos, epsilon); 
+    break;
   
   case INTERPOLATION_LINECROSS: // TODO
     fprintf(stderr, "FATAL: line cross not yet implemented. exiting.\n"); 
     assert(false);
-    return find_zero_quad_line_cross(re, im, X, pos, epsilon);
+    break;
+    // return find_zero_quad_line_cross(re, im, X, pos, epsilon);
 
   default:
     return false;
   }
+ 
+  return succ;
 }
