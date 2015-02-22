@@ -93,7 +93,6 @@ int main(int argc, char **argv)
   libMesh::LibMeshInit init(1, argv); // set argc to 1 to supress PETSc warnings. 
  
   Condor2Dataset ds(init.comm()); 
-  ds.SetKex(0);
   ds.PrintInfo();
   
   ds.OpenDataFile(filename_in);

@@ -48,9 +48,11 @@ public: // properties
   const double* Origins() const {return _origins;}
   const double* Lengths() const {return _lengths;} 
 
+  // Time
+  double Time(int slot=0) const {return slot == 0 ? _time : _time1;}
+
   // Kx
-  void SetKex(double Kex);
-  double Kex() const {return _Kex;} 
+  double Kex(int slot=0) const {return slot == 0 ? _Kex : _Kex1;}
   double Kex_dot() const {return _Kex_dot;}
 
   // Positions 
@@ -76,10 +78,12 @@ protected:
   double _origins[3]; 
   double _lengths[3];
   double _B[3];
-  double _Kex, _Kex_dot;
+  double _Kex, _Kex1; 
+  double _Kex_dot;
   double _Jxext;
   double _V;
   double _fluctuation_amp; 
+  double _time, _time1;
 
   bool _valid;
 }; 

@@ -255,7 +255,7 @@ void VortexExtractor::RelateOverTime()
           
           const CEdge &edge = mg->Edge(e);
           const PuncturedEdge& pe = _punctured_edges[e];
-          if (current_time >= pe.t) continue; // time ascending order
+          // if (current_time >= pe.t) continue; // time ascending order
             
           int echirality = face.edges_chirality[i] * pe.chirality;
           if (current_chirality == echirality) { // this check is right
@@ -672,9 +672,12 @@ void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
     phi[i] = atan2(im[i], re[i]);
   }
 
+  const double dt = ds->Time(1) - ds->Time(0);
   double li[4] = {
-    ds->LineIntegral(X[0], X[1], A[0], A[1]), 0, 
-    ds->LineIntegral(X[1], X[0], A[2], A[3]), 0};
+    ds->LineIntegral(X[0], X[1], A[0], A[1]), 
+    0.5 * (ds->Kex(1) + ds->Kex(0)) * dt, 
+    ds->LineIntegral(X[1], X[0], A[2], A[3]), 
+    -0.5 * (ds->Kex(1) + ds->Kex(0)) * dt};
   double delta[4] = {
     phi[1] - phi[0],
     phi[2] - phi[1],
@@ -711,6 +714,7 @@ void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
     AddPuncturedEdge(id, chirality, t);
   } else {
     fprintf(stderr, "WARNING: zero time not found.\n");
+    AddPuncturedEdge(id, chirality, NAN);
   }
 }
 

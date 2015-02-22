@@ -26,6 +26,7 @@ bool GLGPU_IO_Helper_ReadBDAT(
     int *dims,
     double *lengths,
     bool *pbc,
+    double &time,
     double *B,
     double &Jxext, 
     double &Kex, 
@@ -87,6 +88,8 @@ bool GLGPU_IO_Helper_ReadBDAT(
       assert(type == BDAT_FLOAT);
     } else if (name == "t") {
       assert(type == BDAT_FLOAT);
+      memcpy(&f, p, sizeof(float));
+      time = f;
     } else if (name == "Tf") {
       assert(type == BDAT_FLOAT);
     } else if (name == "Bx") {

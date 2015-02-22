@@ -7,8 +7,9 @@
 #include "common/Utils.hpp"
 
 GLDataset::GLDataset() : 
-  _Kex(0), _Kex_dot(0), _fluctuation_amp(0), 
+  _Kex(0), _Kex1(0), _Kex_dot(0), _fluctuation_amp(0), 
   _V(0), _Jxext(0),
+  _time(0), _time1(0),
   _valid(false)
 {
   memset(_origins, 0, sizeof(double)*3); 
@@ -17,11 +18,6 @@ GLDataset::GLDataset() :
 
 GLDataset::~GLDataset()
 {
-}
-
-void GLDataset::SetKex(double Kex)
-{
-  _Kex = Kex; 
 }
 
 bool GLDataset::OpenDataFile(const std::string& filename)

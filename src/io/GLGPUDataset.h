@@ -42,13 +42,13 @@ public: // rectilinear grid
   double dz() const {return _cell_lengths[2];}
   
   // Magnetic potential
-  bool A(const double X[3], double A[3], int slot) const;
-  bool A(NodeIdType n, double A[3], int slot) const;
+  bool A(const double X[3], double A[3], int slot=0) const;
+  bool A(NodeIdType n, double A[3], int slot=0) const;
   // double Ax(const double X[3]) const {if (By()>0) return Kex(); else return -X[1]*Bz()+Kex();}
-  double Ax(const double X[3]) const {if (By()>0) return -Kex(); else return -X[1]*Bz()-Kex();}
+  double Ax(const double X[3], int slot=0) const {if (By()>0) return -Kex(slot); else return -X[1]*Bz()-Kex(slot);}
   // double Ax(const double X[3]) const {if (By()>0) return 0; else return -X[1]*Bz();}
-  double Ay(const double X[3]) const {if (By()>0) return X[0]*Bz(); else return 0;}
-  double Az(const double X[3]) const {if (By()>0) return -X[0]*By(); else return X[1]*Bx();}
+  double Ay(const double X[3], int slot=0) const {if (By()>0) return X[0]*Bz(); else return 0;}
+  double Az(const double X[3], int slot=0) const {if (By()>0) return -X[0]*By(); else return X[1]*Bx();}
   
   // Magnetic field
   void SetMagneticField(const double B[3]) {_B[0]=B[0]; _B[1]=B[1]; _B[2]=B[2];}

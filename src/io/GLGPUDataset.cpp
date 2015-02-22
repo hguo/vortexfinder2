@@ -31,7 +31,7 @@ void GLGPUDataset::PrintInfo() const
   fprintf(stderr, "Kex=%f, Kex_dot=%f\n", _Kex, _Kex_dot); 
   fprintf(stderr, "Jxext=%f\n", _Jxext);
   fprintf(stderr, "V=%f\n", _V);
-  // fprintf(stderr, "time=%f\n", time); 
+  fprintf(stderr, "time=%f\n", _time); 
   fprintf(stderr, "fluctuation_amp=%f\n", _fluctuation_amp); 
 }
 
@@ -94,6 +94,12 @@ void GLGPUDataset::RotateTimeSteps()
   _re = _re1; _im = _im1;
   _re1 = r; _im1 = i;
 
+  double k = _Kex;
+  _Kex = _Kex1; _Kex1 = k;
+
+  double t = _time;
+  _time = _time1; _time1 = t;
+
   GLDatasetBase::RotateTimeSteps();
 }
 
@@ -107,8 +113,12 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
 {
   int ndims;
   if (!::GLGPU_IO_Helper_ReadBDAT(
-      filename, ndims, _dims, _lengths, _pbc, _B, 
-      _Jxext, _Kex, _V, 
+      filename, ndims, _dims, _lengths, _pbc, 
+      slot == 0 ? _time : _time1, 
+      _B, 
+      _Jxext, 
+      slot == 0 ? _Kex : _Kex1,
+      _V, 
       slot == 0 ? &_re : &_re1, 
       slot == 0 ? &_im : &_im1)) 
     return false;
@@ -127,9 +137,9 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
 
 bool GLGPUDataset::A(const double X[3], double A[3], int slot) const
 {
-  A[0] = Ax(X); 
-  A[1] = Ay(X); 
-  A[2] = Az(X); 
+  A[0] = Ax(X, slot); 
+  A[1] = Ay(X, slot); 
+  A[2] = Az(X, slot); 
   return true;
 }
 
