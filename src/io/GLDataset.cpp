@@ -40,10 +40,10 @@ double GLDataset::GaugeTransformation(const double X0[], const double X1[], cons
   // \int dl * (Kx^hat - A(l))
 
   double dX[3] = {X1[0] - X0[0], X1[1] - X0[1], X1[2] - X0[2]};
-  double A[3] = {0.5*(A0[0]+A1[0]), 0.5*(A0[1]+A1[1]), 0.5*(A0[2]+A1[2])};
+  double A[3] = {A0[0]+A1[0], A0[1]+A1[1], A0[2]+A1[2]};
 
   double gl = Kex() * dX[0];
-  double ga = -inner_product(A, dX);
+  double ga = -0.5 * inner_product(A, dX);
 
   return gl + ga;
 }

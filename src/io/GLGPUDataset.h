@@ -44,8 +44,8 @@ public: // rectilinear grid
   // Magnetic potential
   bool A(const double X[3], double A[3], int slot) const;
   bool A(NodeIdType n, double A[3], int slot) const;
-  double Ax(const double X[3]) const {if (By()>0) return Kex(); else return -X[1]*Bz()+Kex();}
-  // double Ax(const double X[3]) const {if (By()>0) return -Kex(); else return -X[1]*Bz()-Kex();}
+  // double Ax(const double X[3]) const {if (By()>0) return Kex(); else return -X[1]*Bz()+Kex();}
+  double Ax(const double X[3]) const {if (By()>0) return -Kex(); else return -X[1]*Bz()-Kex();}
   // double Ax(const double X[3]) const {if (By()>0) return 0; else return -X[1]*Bz();}
   double Ay(const double X[3]) const {if (By()>0) return X[0]*Bz(); else return 0;}
   double Az(const double X[3]) const {if (By()>0) return -X[0]*By(); else return X[1]*Bx();}
