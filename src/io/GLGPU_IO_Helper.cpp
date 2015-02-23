@@ -157,6 +157,7 @@ bool GLGPU_IO_Helper_ReadLegacy(
     int *dims,
     double *lengths,
     bool *pbc,
+    double &time,
     double *B,
     double &Jxext, 
     double &Kex, 
@@ -164,11 +165,8 @@ bool GLGPU_IO_Helper_ReadLegacy(
     double **re, 
     double **im)
 {
-#if 0
   FILE *fp = fopen(filename.c_str(), "rb");
   if (!fp) return false;
-
-  _data_name = filename;
 
   // tag check
   char tag[GLGPU_LEGACY_TAG_SIZE+1] = {0};  
@@ -180,8 +178,7 @@ bool GLGPU_IO_Helper_ReadLegacy(
   fread(&endian, sizeof(int), 1, fp); 
 
   // num_dims
-  int num_dims; 
-  fread(&num_dims, sizeof(int), 1, fp);
+  fread(&ndims, sizeof(int), 1, fp);
 
   // data type
   int size_real, datatype; 
@@ -191,16 +188,15 @@ bool GLGPU_IO_Helper_ReadLegacy(
   else assert(false); 
 
   // dimensions 
-  for (int i=0; i<num_dims; i++) {
-    fread(&_dims[i], sizeof(int), 1, fp);
+  for (int i=0; i<ndims; i++) {
+    fread(&dims[i], sizeof(int), 1, fp);
     if (datatype == GLGPU_TYPE_FLOAT) {
       float length; 
       fread(&length, sizeof(float), 1, fp);
-      _lengths[i] = length; 
+      lengths[i] = length; 
     } else if (datatype == GLGPU_TYPE_DOUBLE) {
-      fread(&_lengths[i], sizeof(double), 1, fp); 
+      fread(&lengths[i], sizeof(double), 1, fp); 
     }
-    _origins[i] = -0.5*_lengths[i];
   }
 
   // dummy
@@ -209,57 +205,56 @@ bool GLGPU_IO_Helper_ReadLegacy(
 
   // time, fluctuation_amp, Bx, By, Bz, Jx
   if (datatype == GLGPU_TYPE_FLOAT) {
-    float time, fluctuation_amp, B[3], Jx; 
-    fread(&time, sizeof(float), 1, fp);
-    fread(&fluctuation_amp, sizeof(float), 1, fp); 
-    fread(&B, sizeof(float), 3, fp);
-    fread(&Jx, sizeof(float), 1, fp); 
-    // _time = time; 
-    _fluctuation_amp = fluctuation_amp;
-    _B[0] = B[0]; _B[1] = B[1]; _B[2] = B[2];
-    // _Jx = Jx; 
+    float time_, fluctuation_amp_, B_[3], Jx_; 
+    fread(&time_, sizeof(float), 1, fp);
+    fread(&fluctuation_amp_, sizeof(float), 1, fp); 
+    fread(&B_, sizeof(float), 3, fp);
+    fread(&Jx_, sizeof(float), 1, fp); 
+    time = time_; 
+    // _fluctuation_amp = fluctuation_amp;
+    B[0] = B_[0]; 
+    B[1] = B_[1]; 
+    B[2] = B_[2];
+    Jxext = Jx_;
   } else if (datatype == GLGPU_TYPE_DOUBLE) {
-    double time, Jx;  
+    double fluctuation_amp;
     fread(&time, sizeof(double), 1, fp); 
-    fread(&_fluctuation_amp, sizeof(double), 1, fp);
-    fread(_B, sizeof(double), 3, fp);
-    fread(&Jx, sizeof(double), GLGPU_TYPE_FLOAT, fp); 
+    fread(&fluctuation_amp, sizeof(double), 1, fp);
+    fread(B, sizeof(double), 3, fp);
+    fread(&Jxext, sizeof(double), 1, fp); 
   }
 
   // btype
   int btype; 
   fread(&btype, sizeof(int), 1, fp); 
-  _pbc[0] = btype & 0x0000ff;
-  _pbc[1] = btype & 0x00ff00;
-  _pbc[2] = btype & 0xff0000; 
-  // update cell lengths 
-  for (int i=0; i<num_dims; i++) 
-    if (_pbc[i]) _cell_lengths[i] = _lengths[i] / _dims[i];  
-    else _cell_lengths[i] = _lengths[i] / (_dims[i]-1); 
+  pbc[0] = btype & 0x0000ff;
+  pbc[1] = btype & 0x00ff00;
+  pbc[2] = btype & 0xff0000; 
 
   // optype
   int optype; 
   fread(&optype, sizeof(int), 1, fp);
   if (datatype == GLGPU_TYPE_FLOAT) {
-    float Kex, Kex_dot; 
-    fread(&Kex, sizeof(float), 1, fp);
-    fread(&Kex_dot, sizeof(float), 1, fp); 
-    _Kex = Kex; 
-    _Kex_dot = Kex_dot; 
+    float Kex_, Kex_dot_; 
+    fread(&Kex_, sizeof(float), 1, fp);
+    fread(&Kex_dot_, sizeof(float), 1, fp); 
+    Kex = Kex_;
+    // Kex_dot = Kex_dot_;
   } else if (datatype == GLGPU_TYPE_DOUBLE) {
-    fread(&_Kex, sizeof(double), 1, fp);
-    fread(&_Kex_dot, sizeof(double), 1, fp); 
+    double Kex_dot;
+    fread(&Kex, sizeof(double), 1, fp);
+    fread(&Kex_dot, sizeof(double), 1, fp); 
   }
 
   int count = 1; 
-  for (int i=0; i<num_dims; i++) 
-    count *= _dims[i]; 
+  for (int i=0; i<ndims; i++) 
+    count *= dims[i]; 
 
   int offset = ftell(fp);
   
   // mem allocation 
-  _re = (double*)malloc(sizeof(double)*count);  
-  _im = (double*)malloc(sizeof(double)*count);
+  *re = (double*)realloc(*re, sizeof(double)*count);
+  *im = (double*)realloc(*im, sizeof(double)*count);
 
   if (datatype == GLGPU_TYPE_FLOAT) {
     // raw data
@@ -277,14 +272,13 @@ bool GLGPU_IO_Helper_ReadLegacy(
 
     if (optype == 0) { // order parameter type
       for (int i=0; i<count; i++) {
-        _re[i] = ch1[i]; 
-        _im[i] = ch2[i]; 
-        // fprintf(stderr, "rho=%f, phi=%f, re=%f, im=%f\n", _rho[i], _phi[i], _re[i], _im[i]); 
+        (*re)[i] = ch1[i]; 
+        (*im)[i] = ch2[i]; 
       }
     } else if (optype == 1) {
       for (int i=0; i<count; i++) {
-        _re[i] = ch1[i] * cos(ch2[i]); 
-        _im[i] = ch1[i] * sin(ch2[i]);
+        (*re)[i] = ch1[i] * cos(ch2[i]); 
+        (*im)[i] = ch1[i] * sin(ch2[i]);
       }
     } else assert(false); 
   } else if (datatype == GLGPU_TYPE_DOUBLE) {
@@ -336,7 +330,6 @@ bool GLGPU_IO_Helper_ReadLegacy(
     } else assert(false);
 #endif
   }
-#endif 
   return true;
 }
 

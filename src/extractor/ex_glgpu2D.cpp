@@ -8,7 +8,7 @@ static std::string filename_in, filename_out;
 static int nogauge = 0,  
            verbose = 0, 
            benchmark = 0; 
-static int T0=1, T=1; // start and length of timesteps
+static int T0=0, T=1; // start and length of timesteps
 static int span=1;
 
 static struct option longopts[] = {

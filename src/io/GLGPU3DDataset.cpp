@@ -225,3 +225,9 @@ bool GLGPU3DDataset::Supercurrent(const double X[3], double J[3]) const
     return false;
   else return true;
 }
+
+CellIdType GLGPU3DDataset::Pos2CellId(const double X[]) const
+{
+  // TODO
+  return false;
+}

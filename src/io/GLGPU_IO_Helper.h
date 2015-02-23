@@ -23,6 +23,7 @@ bool GLGPU_IO_Helper_ReadLegacy(
     int *dims,
     double *lengths,
     bool *pbc,
+    double &time,
     double *B,
     double &Jxext, 
     double &Kx, 

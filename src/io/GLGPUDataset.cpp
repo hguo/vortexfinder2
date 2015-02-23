@@ -86,6 +86,12 @@ void GLGPUDataset::LoadTimeStep(int timestep, int slot)
   // load
   if (OpenBDATDataFile(filename, slot)) succ = true; 
   else if (OpenLegacyDataFile(filename, slot)) succ = true;
+  
+  for (int i=0; i<Dimensions(); i++) {
+    _origins[i] = -0.5*_lengths[i];
+    if (_pbc[i]) _cell_lengths[i] = _lengths[i] / _dims[i];  
+    else _cell_lengths[i] = _lengths[i] / (_dims[i]-1); 
+  }
 
   SetTimeStep(timestep, slot);
 }
@@ -99,10 +105,24 @@ void GLGPUDataset::RotateTimeSteps()
   GLDataset::RotateTimeSteps();
 }
 
-bool GLGPUDataset::OpenLegacyDataFile(const std::string& filename, int time)
+bool GLGPUDataset::OpenLegacyDataFile(const std::string& filename, int slot)
 {
-  // TODO
-  return false;
+  int ndims;
+  if (!::GLGPU_IO_Helper_ReadLegacy(
+      filename, ndims, _dims, _lengths, _pbc, 
+      slot == 0 ? _time : _time1, 
+      _B, 
+      _Jxext, 
+      slot == 0 ? _Kex : _Kex1,
+      _V, 
+      slot == 0 ? &_re : &_re1, 
+      slot == 0 ? &_im : &_im1)) 
+    return false;
+
+  if (ndims == 2)
+    _dims[2] = 1;
+
+  return true;
 }
 
 bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
@@ -118,12 +138,6 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
       slot == 0 ? &_re : &_re1, 
       slot == 0 ? &_im : &_im1)) 
     return false;
-  
-  for (int i=0; i<ndims; i++) {
-    _origins[i] = -0.5*_lengths[i];
-    if (_pbc[i]) _cell_lengths[i] = _lengths[i] / _dims[i];  
-    else _cell_lengths[i] = _lengths[i] / (_dims[i]-1); 
-  }
 
   if (ndims == 2)
     _dims[2] = 1;
