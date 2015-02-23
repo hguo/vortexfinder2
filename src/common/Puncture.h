@@ -29,7 +29,8 @@ struct PuncturedCell
     if (chirality>0) c[face] = 1;
   }
 
-  bool IsSpecial() const {return Degree()>2;}
+  // bool IsSpecial() const {return Degree()>2;}
+  bool IsSpecial() const {return Degree() > 0 && Degree() != 2;}
   int Degree() const {return p.count();}
 
 private:

@@ -47,10 +47,13 @@ CCell MeshGraphRegular3D::Cell(CellIdType id) const
     {i, j+1, k},
     {i, j, k+1}};
   for (int p=0; p<6; p++)
+    cell.neighbor_cells.push_back(cidx2cid(neighbors_cidx[p]));
+#if 0
     if (valid_cidx(neighbors_cidx[p]))
       cell.neighbor_cells.push_back(cidx2cid(neighbors_cidx[p]));
     else
       cell.neighbor_cells.push_back(UINT_MAX);
+#endif
 
   return cell;
 }
@@ -92,6 +95,7 @@ CFace MeshGraphRegular3D::Face(FaceIdType id) const
   const int contained_cells_fid[3][2] = {
     {0, 3}, {1, 4}, {2, 5}};
   for (int p=0; p<2; p++) {
+    // if (!valid_cidx(contained_cells_cidx[t][p])) continue;
     face.contained_cells.push_back(cidx2cid(contained_cells_cidx[t][p]));
     face.contained_cells_chirality.push_back(contained_cells_chi[p]);
     face.contained_cells_fid.push_back(contained_cells_fid[t][p]);

@@ -130,6 +130,8 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType ch
   const CFace &face = mg->Face(id);
   for (int i=0; i<face.contained_cells.size(); i++) {
     CellIdType cid = face.contained_cells[i]; 
+    if (cid == UINT_MAX) continue;
+
     int fchirality = face.contained_cells_chirality[i];
     int fid = face.contained_cells_fid[i];
     
@@ -358,7 +360,7 @@ void VortexExtractor::TraceOverSpace(int slot)
       const PuncturedCell &pcell = pcs[c];
       const CCell &cell = mg->Cell(c);
 
-      if (pcell.IsSpecial())
+      if (pcell.IsSpecial()) 
         special_pcells[c] = pcell;
       else 
         ordinary_pcells[c] = pcell;
@@ -504,8 +506,8 @@ void VortexExtractor::TraceOverTime()
 {
   const int n0 = _vortex_objects.size(), 
             n1 = _vortex_objects1.size();
-  bool *match = (bool*)malloc(sizeof(bool)*n0*n1);
-  memset(match, 0, sizeof(bool)*n0*n1);
+  int *match = (int*)malloc(sizeof(int)*n0*n1);
+  memset(match, 0, sizeof(int)*n0*n1);
 
   RelateOverTime();
 
@@ -517,7 +519,9 @@ void VortexExtractor::TraceOverTime()
         const std::vector<FaceIdType> &related = _related_faces[*it];
         for (int k=0; k<related.size(); k++) {
           if (_vortex_objects1[j].faces.find(related[k]) != _vortex_objects1[j].faces.end()) {
-            match[i*n1+j] = true;
+            // if (i != j)
+            //   fprintf(stderr, "vid=%d --> vid=%d, fid0=%u, fid1=%u\n", i, j, *it, related[k]);
+            match[i*n1+j] ++;
             goto next;
           }
         }
@@ -552,6 +556,8 @@ next:
     }
   }
 #endif
+
+  free(match);
 }
 
 void VortexExtractor::RotateTimeSteps()
@@ -578,7 +584,7 @@ void VortexExtractor::ExtractFaces(int slot)
   if (!LoadPuncturedFaces(slot)) {
     for (FaceIdType i=0; i<mg->NFaces(); i++) 
       ExtractFace(i, slot);
-    // SavePuncturedFaces(slot);
+    SavePuncturedFaces(slot);
   }
 }
 
@@ -589,7 +595,7 @@ void VortexExtractor::ExtractEdges()
   if (!LoadPuncturedEdges()) {
     for (EdgeIdType i=0; i<mg->NEdges(); i++) 
       ExtractSpaceTimeEdge(i);
-    // SavePuncturedEdges();
+    SavePuncturedEdges();
   }
 }
 
