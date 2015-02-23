@@ -81,9 +81,9 @@ bool GLGPU_IO_Helper_ReadBDAT(
       assert(type == BDAT_INT32);
       int btype; 
       memcpy(&btype, p, sizeof(int));
-      pbc[0] = btype & 0x0000ff;
-      pbc[1] = btype & 0x00ff00;
-      pbc[2] = btype & 0xff0000; 
+      pbc[0] = ((btype & 0x0000ff) == 0x01);
+      pbc[1] = ((btype & 0x00ff00) == 0x0100);
+      pbc[2] = ((btype & 0xff0000) == 0x010000); 
     } else if (name == "zaniso") {
       assert(type == BDAT_FLOAT);
     } else if (name == "t") {

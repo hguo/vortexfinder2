@@ -37,7 +37,6 @@ public: // transformations and utils
   double GaugeTransformation(const double X0[], const double X1[]) const;
 
   double Flux(int faceType) const;
-  double QP(const double X0[], const double X1[]) const;
 
 public: // data access
   const double& Re(int x, int y, int z) const {return texel3D(_re, _dims, x, y, z);}

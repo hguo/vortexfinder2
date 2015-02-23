@@ -678,6 +678,9 @@ void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
     0.5 * (ds->Kex(1) + ds->Kex(0)) * dt, 
     ds->LineIntegral(X[1], X[0], A[2], A[3]), 
     -0.5 * (ds->Kex(1) + ds->Kex(0)) * dt};
+  double qp[4] = {
+    ds->QP(X[0], X[1]), 0, 
+    ds->QP(X[1], X[0]), 0};
   double delta[4] = {
     phi[1] - phi[0],
     phi[2] - phi[1],
@@ -686,8 +689,8 @@ void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
   };
 
   for (int i=0; i<4; i++) 
-    if (_gauge) delta[i] = mod2pi1(delta[i] - li[i]);
-    else delta[i] = mod2pi1(delta[i]);
+    if (_gauge) delta[i] = mod2pi1(delta[i] - li[i] + qp[i]);
+    else delta[i] = mod2pi1(delta[i] + qp[i]);
 
   double phase_shift = -(delta[0] + delta[1] + delta[2] + delta[3]);
   double critera = phase_shift / (2*M_PI);
@@ -741,13 +744,13 @@ void VortexExtractor::ExtractFace(FaceIdType id, int slot)
   for (int i=0; i<nnodes; i++) {
     int j = (i+1) % nnodes;
     delta[i] = phi[j] - phi[i]; 
-    double li = ds->LineIntegral(X[i], X[j], A[i], A[j]);
+    double li = ds->LineIntegral(X[i], X[j], A[i], A[j]), 
+           qp = ds->QP(X[i], X[j]);
     if (_gauge) 
-      delta[i] = mod2pi1(delta[i] - li);
+      delta[i] = mod2pi1(delta[i] - li + qp);
     else 
-      delta[i] = mod2pi1(delta[i]);
+      delta[i] = mod2pi1(delta[i] + qp);
     phase_shift -= delta[i];
-    phase_shift -= li; // ds->LineIntegral(X[i], X[j], A[i], A[j]);
   }
 
   // check if punctured
@@ -773,6 +776,9 @@ void VortexExtractor::ExtractFace(FaceIdType id, int slot)
     // fprintf(stderr, "pos={%f, %f, %f}, chi=%d\n", pos[0], pos[1], pos[2], chirality);
   } else {
     fprintf(stderr, "WARNING: punctured but singularity not found.\n");
+    fprintf(stderr, "re={%f, %f, %f, %f}, im={%f, %f, %f, %f}\n",
+        re[0], re[1], re[2], re[3],
+        im[0], im[1], im[2], im[3]);
     pos[0] = pos[1] = pos[2] = NAN;
     AddPuncturedFace(id, slot, chirality, pos);
   }

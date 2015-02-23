@@ -237,25 +237,6 @@ bool GLGPU3DDataset::OnBoundary(ElemIdType id) const
 }
 #endif
 
-double GLGPU3DDataset::QP(const double X0[], const double X1[]) const 
-{
-  const double *L = Lengths();
-  double d[3] = {X1[0] - X0[0], X1[1] - X0[1], X1[2] - X0[2]};
-  int p[3] = {0}; // 0: not crossed; 1: positive; -1: negative
-
-  for (int i=0; i<3; i++) {
-    d[i] = X1[i] - X0[i];
-    if (d[i]>L[i]/2) {d[i] -= L[i]; p[i] = 1;}
-    else if (d[i]<-L[i]/2) {d[i] += L[i]; p[i] = -1;}
-  }
-
-  if (pbc()[0] && p[0]!=0) { // By>0
-    return p[0] * (L[0]*Bz()*X0[1] - L[2]*By()*X0[2]); // FIXME: the cross point
-  } else if (pbc()[1] && p[1]!=0) {
-    return p[1] * (-L[2]*Bz()*X0[0] + L[2]*Bx()*X0[2]);
-  } else return 0.0;
-}
-
 #if 0
 bool GLGPU3DDataset::GetFace(ElemIdType id, int face, double X[][3], double A[][3], double re[], double im[]) const
 {

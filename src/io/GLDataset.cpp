@@ -49,6 +49,10 @@ double GLDataset::LineIntegral(const double X0[], const double X1[], const doubl
   double dX[3] = {X1[0] - X0[0], X1[1] - X0[1], X1[2] - X0[2]};
   double A[3] = {A0[0]+A1[0], A0[1]+A1[1], A0[2]+A1[2]};
 
+  for (int i=0; i<3; i++)
+    if (dX[i] > Lengths()[i]/2) dX[i] -= Lengths()[i];
+    else if (dX[i] < -Lengths()[i]/2) dX[i] += Lengths()[i];
+
   return 0.5 * inner_product(A, dX);
 }
 

@@ -1,6 +1,8 @@
 #include "GLGPUDataset.h"
 #include "GLGPU_IO_Helper.h"
+#include "common/Utils.hpp"
 #include <cassert>
+#include <cmath>
 #include <iostream>
 #include <fstream>
 #include <glob.h>
@@ -186,4 +188,70 @@ void GLGPUDataset::Pos2Grid(const double pos[], double gpos[]) const
 {
   for (int i=0; i<3; i++)
     gpos[i] = (pos[i] - Origins()[i]) / CellLengths()[i]; 
+}
+
+#if 0
+double GLGPUDataset::QP(const double X0[], const double X1[]) const 
+{
+  const double *L = Lengths(), 
+               *O = Origins();
+  double d[3] = {X1[0] - X0[0], X1[1] - X0[1], X1[2] - X0[2]};
+  int p[3] = {0}; // 0: not crossed; 1: positive; -1: negative
+
+  for (int i=0; i<3; i++) {
+    d[i] = X1[i] - X0[i];
+    if (d[i]>L[i]/2) {d[i] -= L[i]; p[i] = 1;}
+    else if (d[i]<-L[i]/2) {d[i] += L[i]; p[i] = -1;}
+  }
+
+  if (By()>0 && p[0]!=0) { // By>0
+    return p[0] * L[0] * (Bz()*X1[1] - By()*X1[2]); 
+  } else if (p[1]!=0) {
+    return p[1] * L[1] * (Bx()*X1[2] - Bz()*X1[0]);
+  } else return 0.0;
+}
+#endif
+
+double GLGPUDataset::QP(const double X0_[], const double X1_[]) const
+{
+  double X0[3], X1[3];
+  double N[3];
+  for (int i=0; i<3; i++) {
+    X0[i] = (X0_[i] - Origins()[i]) / CellLengths()[i];
+    X1[i] = (X1_[i] - Origins()[i]) / CellLengths()[i];
+    N[i] = dims()[i];
+  }
+
+  if (By()>0 && fabs(X1[0]-X0[0])>N[0]/2) { 
+    // TODO
+    return 0.0;
+  } else if (fabs(X1[1]-X0[1])>N[1]/2) {
+    // pbc j
+    double dj = X1[1] - X0[1];
+    if (dj > N[1]/2) dj = dj - N[1];
+    else if (dj < -N[1]/2) dj = dj + N[1];
+    
+    double dist = fabs(dj);
+    double dist1 = fabs(fmod1(X0[1] + N[1]/2, N[1]) - N[1]);
+    double f = dist1/dist;
+
+    // pbc k
+    double dk = X1[2] - X0[2];
+    if (dk > N[2]/2) dk = dk - N[2];
+    else if (dk < -N[2]/2) dk = dk + N[2];
+    double k = fmod1(X0[2] + f*dk, N[2]);
+
+    // pbc i
+    double di = X1[0] - X0[0];
+    if (di > N[0]/2) di = di - N[0];
+    else if (di < -N[0]/2) di = di + N[0];
+    double i = fmod1(X0[0] + f*dk, N[0]);
+
+    double sign = dj>0 ? 1 : -1;
+    double qp = sign * (k*CellLengths()[2]*Bx()*Lengths()[1] - i*CellLengths()[0]*Bz()*Lengths()[1]);
+
+    return qp;
+  } 
+  
+  return 0.0;
 }

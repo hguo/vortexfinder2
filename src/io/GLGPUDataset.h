@@ -57,6 +57,9 @@ public: // rectilinear grid
   double By() const {return _B[1];} 
   double Bz() const {return _B[2];}
 
+public:
+  double QP(const double X0[], const double X1[]) const;
+
 protected:
   int _dims[3]; 
   bool _pbc[3]; 
