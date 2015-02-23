@@ -79,6 +79,16 @@ bool GLDataset::Phi(const double X[3], double &phi, int slot) const
   }
 }
 
+static void AverageA(int n, double A[][3])
+{
+  double AA[3] = {0};
+  for (int i=0; i<3; i++) {
+    for (int j=0; j<n; j++) 
+      AA[i] += A[j][i];
+    AA[i] /= n;
+  }
+}
+
 void GLDataset::GetFaceValues(const CFace& f, int slot, double X[][3], double A_[][3], double re[], double im[]) const
 {
   for (int i=0; i<f.nodes.size(); i++) {
@@ -87,6 +97,8 @@ void GLDataset::GetFaceValues(const CFace& f, int slot, double X[][3], double A_
     A(f.nodes[i], A_[i], slot);
     Psi(f.nodes[i], re[i], im[i], slot);
   }
+    
+  AverageA(f.nodes.size(), A_);
 }
 
 void GLDataset::GetSpaceTimeEdgeValues(const CEdge& e, double X[][3], double A_[][3], double re[], double im[]) const

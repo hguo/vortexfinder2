@@ -571,72 +571,6 @@ void VortexExtractor::RotateTimeSteps()
   _vortex_lines.swap( _vortex_lines1 );
 }
 
-#if 0
-bool VortexExtractor::ExtractElem(ElemIdType id)
-{
-  const int nfaces = _dataset->NrFacesPerElem(); 
-  PuncturedElem *pelem = NewPuncturedElem(id);
- 
-  for (int face=0; face<nfaces; face++) {
-    const int nnodes = _dataset->NrNodesPerFace();
-    double X[nnodes][3], A[nnodes][3], re[nnodes], im[nnodes]; 
-
-    _dataset->GetFace(id, face, X, A, re, im);
-
-    // compute rho & phi
-    double rho[nnodes], phi[nnodes];
-    for (int i=0; i<nnodes; i++) {
-      rho[i] = sqrt(re[i]*re[i] + im[i]*im[i]);
-      phi[i] = atan2(im[i], re[i]);
-    }
-
-    // calculating phase shift
-    double delta[nnodes], phase_shift = 0;
-    for (int i=0; i<nnodes; i++) {
-      int j = (i+1) % nnodes;
-      delta[i] = phi[j] - phi[i]; 
-      if (_gauge) 
-        delta[i] += _dataset->GaugeTransformation(X[i], X[j], A[i], A[j]) + _dataset->QP(X[i], X[j]); 
-      delta[i] = mod2pi(delta[i] + M_PI) - M_PI;
-      phase_shift -= delta[i];
-      phase_shift -= _dataset->LineIntegral(X[i], X[j], A[i], A[j]);
-    }
-
-    // check if punctured
-    double critera = phase_shift / (2*M_PI);
-    if (fabs(critera)<0.5) continue; // not punctured
-
-    // chirality
-    int chirality = critera>0 ? 1 : -1;
-
-    // gauge transformation
-    if (_gauge) { 
-      for (int i=1; i<nnodes; i++) {
-        phi[i] = phi[i-1] + delta[i-1];
-        re[i] = rho[i] * cos(phi[i]); 
-        im[i] = rho[i] * sin(phi[i]);
-      }
-    }
-
-    // find zero
-    double pos[3];
-    if (FindZero(X, re, im, pos))
-      pelem->AddPuncturedFace(face, chirality, pos);
-    else fprintf(stderr, "WARNING: punctured but singularity not found.\n");
-  }
-
-  if (pelem->Punctured()) {
-    _punctured_elems[id] = pelem;
-    if (pelem->Degree() != 2 && !_dataset->OnBoundary(id))
-      fprintf(stderr, "degree=%d\n", pelem->Degree());
-    return true;
-  } else {
-    delete pelem;
-    return false;
-  }
-}
-#endif
-
 void VortexExtractor::ExtractFaces(int slot) 
 {
   const MeshGraph *mg = _dataset->MeshGraph();
@@ -753,6 +687,7 @@ void VortexExtractor::ExtractFace(FaceIdType id, int slot)
     double li = ds->LineIntegral(X[i], X[j], A[i], A[j]), 
            qp = ds->QP(X[i], X[j]);
     if (_gauge) 
+      // delta[i] = mod2pi1(delta[i] - li + qp);
       delta[i] = mod2pi1(delta[i] - li + qp);
     else 
       delta[i] = mod2pi1(delta[i] + qp);
