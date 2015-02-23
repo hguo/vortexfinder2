@@ -168,11 +168,12 @@ void CGLWidget::renderVortexIds()
     int id = _vids[i];
     QVector3D v = _vids_coord[i];
     QString s = QString("%1").arg(id);
-  
+#if 0 
     glPushMatrix();
     glTranslatef(v.x(), v.y(), v.z());
     glutSolidSphere(0.5, 20, 20);
     glPopMatrix();
+#endif
 
     renderText(v.x(), v.y(), v.z(), s, ft);
   }
@@ -306,7 +307,10 @@ void CGLWidget::Clear()
 void CGLWidget::LoadVortexLines(const std::string& filename)
 {
   std::vector<VortexLine> vortex_liness;
-  ::LoadVortexLines(vortex_liness, filename); 
+  if (!::LoadVortexLines(vortex_liness, filename))
+    return;
+
+  fprintf(stderr, "Loaded vortex line file from %s\n", filename.c_str());
 
 #if 1
   const int nc = 6;
@@ -336,6 +340,7 @@ void CGLWidget::LoadVortexLines(const std::string& filename)
     {108, 0, 0},
     {243, 146, 66}};
 #endif
+  int vertCount = 0; 
   for (int k=0; k<vortex_liness.size(); k++) { //iterator over lines
     // fprintf(stderr, "line %d: id=%d, len=%lu\n", k, vortex_liness[k].id, vortex_liness[k].size());
     if (vortex_liness[k].size()>=3) {
@@ -346,30 +351,43 @@ void CGLWidget::LoadVortexLines(const std::string& filename)
       _vids_coord.push_back(pt);
     }
 
-    int vertCount = vortex_liness[k].size()/3;
     int ci = vortex_liness[k].id % nc; // color index
     
-    for (std::vector<double>::iterator it = vortex_liness[k].begin(); 
-        it != vortex_liness[k].end(); it ++) {
-      v_line_vertices.push_back(*it); 
-    }
-    
-    for (int l=0; l<vertCount; l++) {
+    std::vector<double>::iterator it = vortex_liness[k].begin();
+    QVector3D p0;
+    for (int i=0; i<vortex_liness[k].size()/3; i++) {
+      QVector3D p(*it, *(++it), *(++it));
+      it ++;
+      
+      v_line_vertices.push_back(p.x()); 
+      v_line_vertices.push_back(p.y()); 
+      v_line_vertices.push_back(p.z()); 
       v_line_colors.push_back(c[ci][0]); 
       v_line_colors.push_back(c[ci][1]); 
       v_line_colors.push_back(c[ci][2]); 
+
+      if (i>0 && (p-p0).length()>5) {
+        v_line_vert_count.push_back(vertCount); 
+        vertCount = 0;
+      }
+      p0 = p;
+      
+      vertCount ++;
     }
 
-    v_line_vert_count.push_back(vertCount); 
-    // fprintf(stderr, "vert_count=%d\n", vertCount);
+    if (vertCount != 0) {
+      v_line_vert_count.push_back(vertCount); 
+      vertCount = 0;
+    }
   }
   
   int cnt = 0; 
   for (int i=0; i<v_line_vert_count.size(); i++) {
     v_line_indices.push_back(cnt); 
     cnt += v_line_vert_count[i]; 
+    // fprintf(stderr, "break, vertCount=%d, lineIndices=%d\n", v_line_vert_count[i], v_line_indices[i]);
   }
-  v_line_indices.push_back(cnt); 
+  // v_line_indices.push_back(cnt); 
 
   updateVortexTubes(20, 0.5); 
 }

@@ -20,7 +20,7 @@ CCell MeshGraphRegular2D::Cell(CellIdType id) const
 
   // nodes
   const int nodes_idx[4][2] = {{i, j}, {i+1, j}, {i+1, j+1}, {i, j+1}};
-  for (int i=0; i<4; i++) // don't worry about modIdx here. automatically done in idx2id()
+  for (int p=0; p<4; p++) // don't worry about modIdx here. automatically done in idx2id()
     cell.nodes.push_back(nidx2nid(nodes_idx[i]));
 
   // faces
@@ -46,15 +46,15 @@ CFace MeshGraphRegular2D::Face(FaceIdType id) const
 
   // nodes
   const int nodes_idx[4][2] = {{i, j}, {i+1, j}, {i+1, j+1}, {i, j+1}};
-  for (int i=0; i<4; i++) // don't worry about modIdx here. automatically done in idx2id()
-    face.nodes.push_back(nidx2nid(nodes_idx[i]));
+  for (int p=0; p<4; p++) // don't worry about modIdx here. automatically done in idx2id()
+    face.nodes.push_back(nidx2nid(nodes_idx[p]));
 
   // edges
   const int edges_idx[4][3] = {{i, j, 0}, {i+1, j, 1}, {i, j+1, 0}, {i, j, 1}};
   const ChiralityType edges_chi[4] = {1, 1, -1, -1};
-  for (int i=0; i<4; i++) {
-    face.edges.push_back(eidx2eid(edges_idx[i]));
-    face.edges_chirality.push_back(edges_chi[i]);
+  for (int p=0; p<4; p++) {
+    face.edges.push_back(eidx2eid(edges_idx[p]));
+    face.edges_chirality.push_back(edges_chi[p]);
   }
 
   // contained cells
@@ -93,10 +93,10 @@ CEdge MeshGraphRegular2D::Edge(EdgeIdType id) const
     {1, -1}, {-1, 1}};
   const int contained_faces_eid[2][2] = {
     {0, 2}, {3, 1}};
-  for (int i=0; i<2; i++) {
-    edge.contained_faces.push_back(fidx2fid(contained_faces_fidx[t][i]));
-    edge.contained_faces_chirality.push_back(contained_faces_chi[t][i]);
-    edge.contained_faces_eid.push_back(contained_faces_eid[t][i]);
+  for (int p=0; p<2; p++) {
+    edge.contained_faces.push_back(fidx2fid(contained_faces_fidx[t][p]));
+    edge.contained_faces_chirality.push_back(contained_faces_chi[t][p]);
+    edge.contained_faces_eid.push_back(contained_faces_eid[t][p]);
   }
 
   return edge;
@@ -198,4 +198,3 @@ bool MeshGraphRegular2D::valid_cidx(const int idx[2]) const
     }
   return true;
 }
-

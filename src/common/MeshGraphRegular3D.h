@@ -28,7 +28,7 @@ private:
 
 public:
   MeshGraphRegular3D(int d[3], bool pbc[3]);
-  
+
   EdgeIdType NEdges() const;
   FaceIdType NFaces() const;
   CellIdType NCells() const;

@@ -17,9 +17,6 @@ GLGPU3DDataset::GLGPU3DDataset()
 
 GLGPU3DDataset::~GLGPU3DDataset()
 {
-  if (_re) free(_re);
-  if (_im) free(_im);
-  if (_Jx) free(_Jx);
 }
 
 void GLGPU3DDataset::Reset()

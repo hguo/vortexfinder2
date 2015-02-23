@@ -21,8 +21,8 @@ CCell MeshGraphRegular3D::Cell(CellIdType id) const
   const int nodes_idx[8][3] = {
     {i, j, k}, {i+1, j, k}, {i+1, j+1, k}, {i, j+1, k},
     {i, j, k+1}, {i+1, j, k+1}, {i+1, j+1, k+1}, {i, j+1, k+1}};
-  for (int i=0; i<8; i++) // don't worry about modIdx here. automatically done in idx2id()
-    cell.nodes.push_back(nidx2nid(nodes_idx[i]));
+  for (int p=0; p<8; p++) // don't worry about modIdx here. automatically done in idx2id()
+    cell.nodes.push_back(nidx2nid(nodes_idx[p]));
 
   // faces
   const int faces_fidx[6][4] = {
@@ -33,9 +33,9 @@ CCell MeshGraphRegular3D::Cell(CellIdType id) const
     {i, j+1, k, 1}, // type1, zx
     {i, j, k+1, 2}};  // type2, xy
   const ChiralityType faces_chi[6] = {-1, -1, -1, 1, 1, 1};
-  for (int i=0; i<6; i++) {
-    cell.faces.push_back(fidx2fid(faces_fidx[i]));
-    cell.faces_chirality.push_back(faces_chi[i]);
+  for (int p=0; p<6; p++) {
+    cell.faces.push_back(fidx2fid(faces_fidx[p]));
+    cell.faces_chirality.push_back(faces_chi[p]);
   }
 
   // neighbor cells
@@ -46,9 +46,9 @@ CCell MeshGraphRegular3D::Cell(CellIdType id) const
     {i+1, j, k},
     {i, j+1, k},
     {i, j, k+1}};
-  for (int i=0; i<6; i++)
-    if (valid_cidx(neighbors_cidx[i]))
-      cell.neighbor_cells.push_back(cidx2cid(neighbors_cidx[i]));
+  for (int p=0; p<6; p++)
+    if (valid_cidx(neighbors_cidx[p]))
+      cell.neighbor_cells.push_back(cidx2cid(neighbors_cidx[p]));
     else
       cell.neighbor_cells.push_back(UINT_MAX);
 
@@ -69,8 +69,8 @@ CFace MeshGraphRegular3D::Face(FaceIdType id) const
     {{i, j, k}, {i, j+1, k}, {i, j+1, k+1}, {i, j, k+1}}, 
     {{i, j, k}, {i, j, k+1}, {i+1, j, k+1}, {i+1, j, k}},
     {{i, j, k}, {i+1, j, k}, {i+1, j+1, k}, {i, j+1, k}}};
-  for (int i=0; i<4; i++)
-    face.nodes.push_back(nidx2nid(nodes_idx[t][i]));
+  for (int p=0; p<4; p++)
+    face.nodes.push_back(nidx2nid(nodes_idx[t][p]));
 
   // edges
   const int edges_idx[3][4][4] = {
@@ -78,9 +78,9 @@ CFace MeshGraphRegular3D::Face(FaceIdType id) const
     {{i, j, k, 2}, {i, j, k+1, 0}, {i+1, j, k, 2}, {i, j, k, 0}},
     {{i, j, k, 0}, {i+1, j, k, 1}, {i, j+1, k, 0}, {i, j, k, 1}}};
   const ChiralityType edges_chi[4] = {1, 1, -1, -1};
-  for (int i=0; i<4; i++) {
-    face.edges.push_back(eidx2eid(edges_idx[t][i]));
-    face.edges_chirality.push_back(edges_chi[i]);
+  for (int p=0; p<4; p++) {
+    face.edges.push_back(eidx2eid(edges_idx[t][p]));
+    face.edges_chirality.push_back(edges_chi[p]);
   }
 
   // contained cells
@@ -91,11 +91,17 @@ CFace MeshGraphRegular3D::Face(FaceIdType id) const
   const ChiralityType contained_cells_chi[2] = {-1, 1};
   const int contained_cells_fid[3][2] = {
     {0, 3}, {1, 4}, {2, 5}};
-  for (int i=0; i<2; i++) {
-    face.contained_cells.push_back(cidx2cid(contained_cells_cidx[t][i]));
-    face.contained_cells_chirality.push_back(contained_cells_chi[i]);
-    face.contained_cells_fid.push_back(contained_cells_fid[t][i]);
+  for (int p=0; p<2; p++) {
+    face.contained_cells.push_back(cidx2cid(contained_cells_cidx[t][p]));
+    face.contained_cells_chirality.push_back(contained_cells_chi[p]);
+    face.contained_cells_fid.push_back(contained_cells_fid[t][p]);
   }
+ 
+#if 0
+  fprintf(stderr, "fid=%u, fidx={%d, %d, %d, %d}, contained_cell0=%u, contained_cell1=%u\n", 
+      id, i, j, k, t, 
+      face.contained_cells[0], face.contained_cells[1]);
+#endif
 
   return face;
 }
@@ -128,10 +134,10 @@ CEdge MeshGraphRegular3D::Edge(EdgeIdType id) const
   const int contained_faces_eid[3][4] = {
     {0, 3, 2, 1}, {3, 0, 1, 2}, {0, 3, 2, 1}};
 
-  for (int i=0; i<4; i++) {
-    edge.contained_faces.push_back(fidx2fid(contained_faces_fidx[t][i]));
-    edge.contained_faces_chirality.push_back(contained_faces_chi[t][i]);
-    edge.contained_faces_eid.push_back(contained_faces_eid[t][i]);
+  for (int p=0; p<4; p++) {
+    edge.contained_faces.push_back(fidx2fid(contained_faces_fidx[t][p]));
+    edge.contained_faces_chirality.push_back(contained_faces_chi[t][p]);
+    edge.contained_faces_eid.push_back(contained_faces_eid[t][p]);
   }
 
   return edge;
@@ -165,14 +171,14 @@ void MeshGraphRegular3D::nid2nidx(unsigned int id, int idx[3]) const
 void MeshGraphRegular3D::eid2eidx(unsigned int id, int idx[4]) const
 {
   unsigned int nid = id / 3;
-  nid2nidx(id, idx);
+  nid2nidx(nid, idx);
   idx[3] = id % 3;
 }
 
-void MeshGraphRegular3D::fid2fidx(unsigned int id, int idx[3]) const
+void MeshGraphRegular3D::fid2fidx(unsigned int id, int idx[4]) const
 {
   unsigned int nid = id / 3;
-  nid2nidx(id, idx);
+  nid2nidx(nid, idx);
   idx[3] = id % 3;
 }
 

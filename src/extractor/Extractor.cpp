@@ -132,6 +132,10 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType ch
     CellIdType cid = face.contained_cells[i]; 
     int fchirality = face.contained_cells_chirality[i];
     int fid = face.contained_cells_fid[i];
+    
+    // bool found = _punctured_cells.find(cid) != _punctured_cells.end();
+    // fprintf(stderr, "cid=%u, found=%d\n", cid, found);
+    
     PuncturedCell &c = slot == 0 ? _punctured_cells[cid] : _punctured_cells1[cid];
     c.SetChirality(fid, chirality * fchirality);
   }
@@ -482,10 +486,12 @@ void VortexExtractor::VortexObjectsToVortexLines(
       for (std::list<FaceIdType>::const_iterator it = trace.begin(); it != trace.end(); it ++) {
         const std::map<FaceIdType, PuncturedFace>::const_iterator it1 = pfs.find(*it);
         assert(it1 != pfs.end());
+        // if (it1 == pfs.end()) continue;
         const PuncturedFace& pf = it1->second;
         line.push_back(pf.pos[0]);
         line.push_back(pf.pos[1]);
         line.push_back(pf.pos[2]);
+        // fprintf(stderr, "{%f, %f, %f}\n", pf.pos[0], pf.pos[1], pf.pos[2]);
       }
     }
 
@@ -776,9 +782,6 @@ void VortexExtractor::ExtractFace(FaceIdType id, int slot)
     // fprintf(stderr, "pos={%f, %f, %f}, chi=%d\n", pos[0], pos[1], pos[2], chirality);
   } else {
     fprintf(stderr, "WARNING: punctured but singularity not found.\n");
-    fprintf(stderr, "re={%f, %f, %f, %f}, im={%f, %f, %f, %f}\n",
-        re[0], re[1], re[2], re[3],
-        im[0], im[1], im[2], im[3]);
     pos[0] = pos[1] = pos[2] = NAN;
     AddPuncturedFace(id, slot, chirality, pos);
   }
