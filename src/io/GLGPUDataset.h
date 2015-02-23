@@ -56,6 +56,12 @@ public: // rectilinear grid
   double Bx() const {return _B[0];} 
   double By() const {return _B[1];} 
   double Bz() const {return _B[2];}
+  
+  bool Pos(NodeIdType, double X[3]) const;
+  bool Psi(const double X[3], double &re, double &im, int slot=0) const;
+  bool Psi(NodeIdType, double &re, double &im, int slot=0) const;
+  bool Supercurrent(const double X[3], double J[3], int slot=0) const;
+  bool Supercurrent(NodeIdType, double J[3], int slot=0) const;
 
 public:
   double QP(const double X0[], const double X1[]) const;

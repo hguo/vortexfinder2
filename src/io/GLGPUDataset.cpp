@@ -96,13 +96,7 @@ void GLGPUDataset::RotateTimeSteps()
   _re = _re1; _im = _im1;
   _re1 = r; _im1 = i;
 
-  double k = _Kex;
-  _Kex = _Kex1; _Kex1 = k;
-
-  double t = _time;
-  _time = _time1; _time1 = t;
-
-  GLDatasetBase::RotateTimeSteps();
+  GLDataset::RotateTimeSteps();
 }
 
 bool GLGPUDataset::OpenLegacyDataFile(const std::string& filename, int time)
@@ -188,6 +182,45 @@ void GLGPUDataset::Pos2Grid(const double pos[], double gpos[]) const
 {
   for (int i=0; i<3; i++)
     gpos[i] = (pos[i] - Origins()[i]) / CellLengths()[i]; 
+}
+
+bool GLGPUDataset::Pos(NodeIdType id, double X[3]) const
+{
+  int idx[3];
+
+  Nid2Idx(id, idx);
+  Idx2Pos(idx, X);
+
+  return true;
+}
+
+bool GLGPUDataset::Psi(const double X[3], double &re, double &im, int slot) const
+{
+  // TODO
+  return false;
+}
+
+bool GLGPUDataset::Psi(NodeIdType id, double &re, double &im, int slot) const
+{
+  double *r = slot == 0 ? _re : _re1;
+  double *i = slot == 0 ? _im : _im1;
+
+  re = r[id]; 
+  im = i[id];
+
+  return true;
+}
+
+bool GLGPUDataset::Supercurrent(const double X[2], double J[3], int slot) const
+{
+  // TODO
+  return false;
+}
+
+bool GLGPUDataset::Supercurrent(NodeIdType, double J[3], int slot) const
+{
+  // TODO
+  return false;
 }
 
 #if 0

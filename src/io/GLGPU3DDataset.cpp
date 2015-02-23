@@ -51,7 +51,6 @@ double GLGPU3DDataset::Flux(int face) const
   }
   return 0.0;
 }
-#endif
 
 double GLGPU3DDataset::GaugeTransformation(const double X0[], const double X1[]) const
 {
@@ -75,6 +74,7 @@ double GLGPU3DDataset::GaugeTransformation(const double X0[], const double X1[])
 
   return gx + gy + gz; 
 }
+#endif
 
 #if 0
 std::vector<ElemIdType> GLGPU3DDataset::GetNeighborIds(ElemIdType elem_id) const
@@ -143,6 +143,7 @@ void GLGPU3DDataset::SerializeDataInfoToString(std::string& buf) const
   pb.SerializeToString(&buf);
 }
 
+#if 0
 void GLGPU3DDataset::ComputeSupercurrentField()
 {
   const int nvoxels = dims()[0]*dims()[1]*dims()[2];
@@ -201,6 +202,7 @@ void GLGPU3DDataset::ComputeSupercurrentField()
     }
   }
 }
+#endif
 
 bool GLGPU3DDataset::Psi(const double X[3], double &re, double &im) const
 {
@@ -223,88 +225,3 @@ bool GLGPU3DDataset::Supercurrent(const double X[3], double J[3]) const
     return false;
   else return true;
 }
- 
-#if 0
-bool GLGPU3DDataset::OnBoundary(ElemIdType id) const
-{
-  int idx[3];
-  ElemId2Idx(id, idx);
-
-  for (int i=0; i<3; i++) 
-    if (idx[i] == 0 || idx[i] == dims()[i]-1) return true;
-
-  return false;
-}
-#endif
-
-#if 0
-bool GLGPU3DDataset::GetFace(ElemIdType id, int face, double X[][3], double A[][3], double re[], double im[]) const
-{
-  int idx0[3]; 
-  ElemId2Idx(id, idx0);
-  int idx1[3] = {(idx0[0]+1)%dims()[0], (idx0[1]+1)%dims()[1], (idx0[2]+1)%dims()[2]}; 
-  
-  int V[4][3];
-
-  switch (face) {
-  case 0: // XY0
-    V[0][0] = idx0[0]; V[0][1] = idx0[1]; V[0][2] = idx0[2]; 
-    V[1][0] = idx0[0]; V[1][1] = idx1[1]; V[1][2] = idx0[2]; 
-    V[2][0] = idx1[0]; V[2][1] = idx1[1]; V[2][2] = idx0[2]; 
-    V[3][0] = idx1[0]; V[3][1] = idx0[1]; V[3][2] = idx0[2]; 
-    break; 
-  
-  case 1: // YZ0
-    V[0][0] = idx0[0]; V[0][1] = idx0[1]; V[0][2] = idx0[2]; 
-    V[1][0] = idx0[0]; V[1][1] = idx0[1]; V[1][2] = idx1[2]; 
-    V[2][0] = idx0[0]; V[2][1] = idx1[1]; V[2][2] = idx1[2]; 
-    V[3][0] = idx0[0]; V[3][1] = idx1[1]; V[3][2] = idx0[2]; 
-    break; 
-  
-  case 2: // ZX0
-    V[0][0] = idx0[0]; V[0][1] = idx0[1]; V[0][2] = idx0[2]; 
-    V[1][0] = idx1[0]; V[1][1] = idx0[1]; V[1][2] = idx0[2]; 
-    V[2][0] = idx1[0]; V[2][1] = idx0[1]; V[2][2] = idx1[2]; 
-    V[3][0] = idx0[0]; V[3][1] = idx0[1]; V[3][2] = idx1[2]; 
-    break; 
-  
-  case 3: // XY1
-    V[0][0] = idx0[0]; V[0][1] = idx0[1]; V[0][2] = idx1[2]; 
-    V[1][0] = idx1[0]; V[1][1] = idx0[1]; V[1][2] = idx1[2]; 
-    V[2][0] = idx1[0]; V[2][1] = idx1[1]; V[2][2] = idx1[2]; 
-    V[3][0] = idx0[0]; V[3][1] = idx1[1]; V[3][2] = idx1[2]; 
-    break; 
-
-  case 4: // YZ1
-    V[0][0] = idx1[0]; V[0][1] = idx0[1]; V[0][2] = idx0[2]; 
-    V[1][0] = idx1[0]; V[1][1] = idx1[1]; V[1][2] = idx0[2]; 
-    V[2][0] = idx1[0]; V[2][1] = idx1[1]; V[2][2] = idx1[2]; 
-    V[3][0] = idx1[0]; V[3][1] = idx0[1]; V[3][2] = idx1[2]; 
-    break; 
-
-  case 5: // ZX1
-    V[0][0] = idx0[0]; V[0][1] = idx1[1]; V[0][2] = idx0[2]; 
-    V[1][0] = idx0[0]; V[1][1] = idx1[1]; V[1][2] = idx1[2]; 
-    V[2][0] = idx1[0]; V[2][1] = idx1[1]; V[2][2] = idx1[2]; 
-    V[3][0] = idx1[0]; V[3][1] = idx1[1]; V[3][2] = idx0[2]; 
-    break; 
-
-  default: return false; 
-  }
-
-  for (int i=0; i<4; i++) {
-    Idx2Pos(V[i], X[i]); 
-    re[i] = Re(V[i][0], V[i][1], V[i][2]);
-    im[i] = Im(V[i][0], V[i][1], V[i][2]);
-    GLGPU3DDataset::A(X[i], A[i]);
-  }
-
-  return true;
-}
-
-bool GLGPU3DDataset::GetSpaceTimeEdgeValues(const Edge* e, double X[][3], double A[][3], double re[], double im[]) const
-{
-  // TODO
-  return false;
-}
-#endif
