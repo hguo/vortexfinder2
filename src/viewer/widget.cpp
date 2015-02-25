@@ -168,7 +168,7 @@ void CGLWidget::renderVortexIds()
     int id = _vids[i];
     QVector3D v = _vids_coord[i];
     QString s = QString("%1").arg(id);
-#if 0
+#if 1
     glPushMatrix();
     glTranslatef(v.x(), v.y(), v.z());
     glutSolidSphere(0.5, 20, 20);

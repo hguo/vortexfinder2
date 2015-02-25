@@ -23,10 +23,11 @@ public:
 private:
   bool OpenBDATDataFile(const std::string& filename, int slot=0);
   bool OpenLegacyDataFile(const std::string& filename, int slot=0);
-  
+  void ModulateKex(int slot=0);
+
 protected:
   void Nid2Idx(NodeIdType id, int *idx) const; 
-  NodeIdType Idx2Nid(int *idx) const;
+  NodeIdType Idx2Nid(const int *idx) const;
  
   void Idx2Pos(const int idx[3], double X[3]) const;
   void Pos2Idx(const double X[3], int idx[3]) const;
@@ -44,9 +45,8 @@ public: // rectilinear grid
   // Magnetic potential
   bool A(const double X[3], double A[3], int slot=0) const;
   bool A(NodeIdType n, double A[3], int slot=0) const;
-  // double Ax(const double X[3]) const {if (By()>0) return Kex(); else return -X[1]*Bz()+Kex();}
   double Ax(const double X[3], int slot=0) const {if (By()>0) return -Kex(slot); else return -X[1]*Bz()-Kex(slot);}
-  // double Ax(const double X[3]) const {if (By()>0) return 0; else return -X[1]*Bz();}
+  // double Ax(const double X[3], int slot=0) const {if (By()>0) return 0; else return -X[1]*Bz();}
   double Ay(const double X[3], int slot=0) const {if (By()>0) return X[0]*Bz(); else return 0;}
   double Az(const double X[3], int slot=0) const {if (By()>0) return -X[0]*By(); else return X[1]*Bx();}
   

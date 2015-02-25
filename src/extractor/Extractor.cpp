@@ -621,8 +621,10 @@ void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
   const double dt = ds->Time(1) - ds->Time(0);
   double li[4] = {
     ds->LineIntegral(X[0], X[1], A[0], A[1]), 
+    // 0, 
     0.5 * (ds->Kex(1) + ds->Kex(0)) * dt, 
     ds->LineIntegral(X[1], X[0], A[2], A[3]), 
+    // 0}; 
     -0.5 * (ds->Kex(1) + ds->Kex(0)) * dt};
   double qp[4] = {
     ds->QP(X[0], X[1]), 0, 

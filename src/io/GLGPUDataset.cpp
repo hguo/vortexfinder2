@@ -86,6 +86,8 @@ void GLGPUDataset::LoadTimeStep(int timestep, int slot)
   // load
   if (OpenBDATDataFile(filename, slot)) succ = true; 
   else if (OpenLegacyDataFile(filename, slot)) succ = true;
+
+  if (!succ) return;
   
   for (int i=0; i<Dimensions(); i++) {
     _origins[i] = -0.5*_lengths[i];
@@ -93,7 +95,31 @@ void GLGPUDataset::LoadTimeStep(int timestep, int slot)
     else _cell_lengths[i] = _lengths[i] / (_dims[i]-1); 
   }
 
+  // ModulateKex(slot);
+
   SetTimeStep(timestep, slot);
+}
+
+void GLGPUDataset::ModulateKex(int slot)
+{
+  double K = Kex(slot);
+  double *re = slot == 0 ? _re : _re1,
+         *im = slot == 0 ? _im : _im1;
+
+  for (int i=0; i<dims()[0]; i++) 
+    for (int j=0; j<dims()[1]; j++)
+      for (int k=0; k<dims()[2]; k++) {
+        const int idx[3] = {i, j, k};
+        NodeIdType nid = Idx2Nid(idx);
+        double x = i * CellLengths()[0] + Origins()[0];
+
+        double rho = sqrt(re[nid]*re[nid] + im[nid]*im[nid]), 
+               // phi = atan2(im[nid], re[nid]) - K*x;
+               phi = atan2(im[nid], re[nid]) + K*x;
+
+        re[nid] = rho * cos(phi);
+        im[nid] = rho * sin(phi);
+      }
 }
 
 void GLGPUDataset::RotateTimeSteps()
@@ -170,7 +196,7 @@ void GLGPUDataset::Nid2Idx(NodeIdType id, int *idx) const
   idx[0] = i; idx[1] = j; idx[2] = k;
 }
 
-NodeIdType GLGPUDataset::Idx2Nid(int *idx) const
+NodeIdType GLGPUDataset::Idx2Nid(const int *idx) const
 {
   for (int i=0; i<3; i++) 
     if (idx[i]<0 || idx[i]>=dims()[i])
