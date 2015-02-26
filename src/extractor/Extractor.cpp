@@ -168,7 +168,8 @@ bool VortexExtractor::FindSpaceTimeEdgeZero(const double re[], const double im[]
 {
   double p[2];
   if (!find_zero_unit_quad_bilinear(re, im, p))
-    return false;
+    if (!find_zero_unit_quad_barycentric(re, im, p))
+      return false;
 
   t = p[1];
   return true;

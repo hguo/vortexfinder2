@@ -32,7 +32,7 @@ public:
   void SetMesh(libMesh::Mesh*);
   void SetEquationSystems(libMesh::EquationSystems*);
 
-  void PrintInfo() const; 
+  void PrintInfo(int slot=0) const; 
   void SerializeDataInfoToString(std::string& buf) const;
 
 public:

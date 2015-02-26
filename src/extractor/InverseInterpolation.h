@@ -142,6 +142,29 @@ static inline bool find_zero_quad_barycentric(const T R[4], const T I[4], const 
 }
 
 template <typename T>
+static inline bool find_zero_unit_quad_barycentric(const T R[4], const T I[4], T pos[2], T epsilon=0)
+{
+  T X0[3][3] = {{0, 0, 0}, 
+                {1, 0, 0},
+                {0, 1, 0}};
+  T X1[3][3] = {{1, 0, 0}, 
+                {1, 1, 0},
+                {0, 1, 0}};
+  T R0[3] = {R[0], R[1], R[2]}, 
+    R1[3] = {R[0], R[2], R[3]}; 
+  T I0[3] = {I[0], I[1], I[2]}, 
+    I1[3] = {I[0], I[2], I[3]};
+  T p[3];
+
+  if (find_zero_triangle(R0, I0, X0, p)) {
+    pos[0] = p[0]; 
+    pos[1] = p[1];
+    return true;
+  } else 
+    return false;
+}
+
+template <typename T>
 static inline bool find_zero_quad_bilinear(const T re[4], const T im[4], const T X[4][3], T pos[3], T epsilon=0)
 {
   T p[2]; 

@@ -100,6 +100,7 @@ int main(int argc, char **argv)
   extractor.SaveVortexLines(0);
   for (int t=T0+span; t<T0+T; t+=span){
     ds.LoadTimeStep(t, 1);
+    ds.PrintInfo(1);
     extractor.ExtractFaces(1);
     extractor.TraceOverSpace(1);
     extractor.ExtractEdges();

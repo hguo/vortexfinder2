@@ -24,7 +24,7 @@ Condor2Dataset::~Condor2Dataset()
   if (_mesh) delete _mesh;
 }
 
-void Condor2Dataset::PrintInfo() const
+void Condor2Dataset::PrintInfo(int) const
 {
   // TODO
 }

@@ -18,7 +18,7 @@ public:
 
   int NTimeSteps() const {return _filenames.size();}
 
-  void PrintInfo() const;
+  void PrintInfo(int slot=0) const;
 
 private:
   bool OpenBDATDataFile(const std::string& filename, int slot=0);
