@@ -1,0 +1,11 @@
+message PBVortexEvent {
+  required int32 timestep = 1;
+  optional double time = 2;
+  required int32 type = 3;
+  repeated int32 vids = 4;
+  repeated int32 vids1 = 5;
+};
+
+message PBVortexEvents {
+  repeated PBVortexEvent events = 1;
+};

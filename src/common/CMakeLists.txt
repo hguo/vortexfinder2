@@ -3,6 +3,7 @@ set (common_sources
   MeshGraphRegular2D.cpp
   MeshGraphRegular3D.cpp
   VortexLine.cpp
+  VortexEvent.cpp
   FieldLine.cpp
   Puncture.cpp
 )
@@ -12,6 +13,7 @@ set (common_protos
   DataInfo.proto
   VortexLine.proto
   VortexObject.proto
+  VortexEvent.proto
   FieldLine.proto
   Puncture.proto
 )
