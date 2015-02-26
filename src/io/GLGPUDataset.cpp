@@ -277,14 +277,15 @@ double GLGPUDataset::QP(const double X0[], const double X1[]) const
     else if (d[i]<-L[i]/2) {d[i] += L[i]; p[i] = -1;}
   }
 
+  const double X[3] = {X0[0] - O[0], X0[1] - O[1], X0[2] - O[2]};
+
   if (By()>0 && p[0]!=0) { // By>0
-    return p[0] * L[0] * (Bz()*X1[1] - By()*X1[2]); 
+    return p[0] * L[0] * (Bz()*X[1] - By()*X[2]); 
   } else if (p[1]!=0) {
-    return p[1] * L[1] * (Bx()*X1[2] - Bz()*X1[0]);
+    return p[1] * L[1] * (Bx()*X[2] - Bz()*X[0]);
   } else return 0.0;
 }
-#endif
-
+#else
 double GLGPUDataset::QP(const double X0_[], const double X1_[]) const
 {
   double X0[3], X1[3];
@@ -295,8 +296,9 @@ double GLGPUDataset::QP(const double X0_[], const double X1_[]) const
     N[i] = dims()[i];
   }
 
-  if (By()>0 && fabs(X1[0]-X0[0])>N[0]/2) { 
+  if (By()>0 && fabs(X1[0]-X0[0])>N[0]/2) {
     // TODO
+    assert(false);
     return 0.0;
   } else if (fabs(X1[1]-X0[1])>N[1]/2) {
     // pbc j
@@ -328,3 +330,4 @@ double GLGPUDataset::QP(const double X0_[], const double X1_[]) const
   
   return 0.0;
 }
+#endif

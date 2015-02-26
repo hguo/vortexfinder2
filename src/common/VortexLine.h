@@ -17,9 +17,13 @@ struct VortexLine : public std::vector<double>
   VortexLine();
   ~VortexLine(); 
 
+  void RegularToBezier();
+  void BezierToRegular();
+
   int id;
   int timestep;
-}; 
+  bool is_bezier;
+};
 
 bool SerializeVortexLines(const std::vector<VortexLine>& lines, std::string& buf);
 bool UnserializeVortexLines(std::vector<VortexLine>& lines, const std::string& buf);
