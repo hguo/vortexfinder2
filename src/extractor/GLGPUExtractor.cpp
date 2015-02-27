@@ -52,6 +52,8 @@ bool GLGPUVortexExtractor::FindFaceZero(const double X_[][3], const double re[],
     succ = find_zero_quad_bilinear(re, im, X, pos, epsilon);
     if (!succ)
       succ = find_zero_quad_barycentric(re, im, X, pos, epsilon); 
+    if (!succ)
+      succ = find_zero_quad_center(re, im, X, pos);
     break;
   
   case INTERPOLATION_LINECROSS: // TODO

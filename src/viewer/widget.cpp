@@ -3,7 +3,6 @@
 #include <fstream>
 #include <iostream>
 #include "widget.h"
-#include "common/DataInfo.pb.h"
 #include "common/VortexLine.h"
 #include "common/FieldLine.h"
 
@@ -176,7 +175,7 @@ void CGLWidget::renderVortexIds()
     int id = _vids[i];
     QVector3D v = _vids_coord[i];
     QString s = QString("%1").arg(id);
-#if 1
+#if 0
     glPushMatrix();
     glTranslatef(v.x(), v.y(), v.z());
     glutSolidSphere(0.5, 20, 20);
@@ -384,13 +383,19 @@ void CGLWidget::Clear()
 
 void CGLWidget::LoadVortexLines(const std::string& filename)
 {
+  std::string info_bytes;
   std::vector<VortexLine> vortex_liness;
-  if (!::LoadVortexLines(vortex_liness, filename))
+  if (!::LoadVortexLines(vortex_liness, info_bytes, filename))
     return;
 
   fprintf(stderr, "Loaded vortex line file from %s\n", filename.c_str());
 
-#if 1
+  if (info_bytes.length()>0) 
+    _data_info.ParseFromString(info_bytes);
+
+  const double O[3] = {_data_info.ox(), _data_info.oy(), _data_info.oz()},
+               L[3] = {_data_info.lx(), _data_info.ly(), _data_info.lz()};
+
   const int nc = 6;
   const GLubyte c[nc][3] = {
     {0, 0, 255},
@@ -399,25 +404,7 @@ void CGLWidget::LoadVortexLines(const std::string& filename)
     {255, 0, 0},
     {255, 0, 255},
     {255, 255, 0}};
-#else
-  const int nc = 15;
-  const GLubyte c[nc][3] = {
-    {230, 13, 13},
-    {10, 184, 10},
-    {40, 146, 146},
-    {8, 138, 138},
-    {0, 90, 90}, 
-    {230, 111, 13},
-    {53, 195, 53},
-    {243, 66, 66},
-    {0, 121, 0},
-    {151, 68, 0},
-    {0, 86, 0}, 
-    {108, 49, 0},
-    {151, 0, 0},
-    {108, 0, 0},
-    {243, 146, 66}};
-#endif
+
   int vertCount = 0; 
   for (int k=0; k<vortex_liness.size(); k++) { //iterator over lines
     // fprintf(stderr, "line %d: id=%d, len=%lu\n", k, vortex_liness[k].id, vortex_liness[k].size());
@@ -427,6 +414,11 @@ void CGLWidget::LoadVortexLines(const std::string& filename)
                    *(vortex_liness[k].begin()+1),
                    *(vortex_liness[k].begin()+2));
       _vids_coord.push_back(pt);
+    }
+
+    if (vortex_liness[k].is_bezier) { // TODO: make it more graceful..
+      vortex_liness[k].ToRegular();
+      vortex_liness[k].Unflattern(O, L);
     }
 
     int ci = vortex_liness[k].id % nc; // color index
@@ -554,7 +546,7 @@ void CGLWidget::updateVortexTubes(int nPatches, float radius)
       QVector3D N = QVector3D(-T.y(), T.x(), 0.0).normalized(); 
       QVector3D B = QVector3D::crossProduct(N, T); 
 
-      if (N.length() == 0 || isnan(N.length())) continue;
+      // if (N.length() == 0 || isnan(N.length())) continue;
 
       if (j>1) {
         float n0 = QVector3D::dotProduct(N0, N); 

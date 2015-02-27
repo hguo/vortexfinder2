@@ -50,7 +50,10 @@ void VortexExtractor::SaveVortexLines(int slot)
 
   VortexObjectsToVortexLines(pfs, vobjs, vlines);
 
-  ::SaveVortexLines(vlines, os.str());
+  std::string info;
+  Dataset()->SerializeDataInfoToString(info);
+
+  ::SaveVortexLines(vlines, info, os.str());
 }
 
 void VortexExtractor::ClearPuncturedObjects()
@@ -497,6 +500,15 @@ void VortexExtractor::VortexObjectsToVortexLines(
         // fprintf(stderr, "{%f, %f, %f}\n", pf.pos[0], pf.pos[1], pf.pos[2]);
       }
     }
+
+#if 0
+    line.Flattern(Dataset()->Origins(), Dataset()->Lengths());
+    line.ToBezier();
+    line.ToRegular();
+    line.Unflattern(Dataset()->Origins(), Dataset()->Lengths());
+#endif
+    line.Flattern(Dataset()->Origins(), Dataset()->Lengths());
+    line.ToBezier();
 
     vlines.push_back(line);
   }

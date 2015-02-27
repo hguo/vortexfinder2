@@ -1,5 +1,6 @@
 #include "VortexLine.h"
 #include "VortexLine.pb.h"
+#include "common/Utils.hpp"
 #include "fitCurves/fitCurves.hpp"
 
 VortexLine::VortexLine() : 
@@ -11,11 +12,11 @@ VortexLine::~VortexLine()
 {
 }
 
-void VortexLine::RegularToBezier()
+void VortexLine::ToBezier()
 {
   using namespace FitCurves;
   typedef Point<3> Pt;
-  const double error_bound = 0.2;
+  const double error_bound = 0.001;
   double tot_error;
 
   if (is_bezier) return;
@@ -45,9 +46,8 @@ void VortexLine::RegularToBezier()
   is_bezier = true;
 }
 
-void VortexLine::BezierToRegular()
+void VortexLine::ToRegular()
 {
-#if 0
   using namespace FitCurves;
   typedef Point<3> Pt;
 
@@ -63,16 +63,73 @@ void VortexLine::BezierToRegular()
   }
 
   clear();
-
-  double t = 0;
-  while (1) {
-    bezier(3, pts, t);
+  
+  for (int i=0; i<npts; i+=4) {
+    const double tl = i<npts-5 ? 0.9999 : 1;
+    for (double t=0; t<tl; t+=0.1) {
+      Pt p = bezier(3, pts+i, t);
+      push_back(p[0]);
+      push_back(p[1]);
+      push_back(p[2]);
+      // fprintf(stderr, "t=%f, p={%f, %f, %f}\n", t, p[0], p[1], p[2]);
+    }
   }
-#endif
+}
+
+void VortexLine::Flattern(const double O[3], const double L[3])
+{
+  int cross[3] = {0};
+  const int n = size()/3;
+
+  double p0[3], p[3];
+  std::vector<double> line;
+
+  for (int i=0; i<n; i++) {
+    for (int j=0; j<3; j++) 
+      p[j] = at(i*3+j) + cross[j] * L[j];
+   
+    if (i>0) 
+      for (int j=0; j<3; j++) {
+        if (p[j] - p0[j] > L[j]/2) {
+          cross[j] --;
+          p[j] -= L[j];
+        } else if (p[j] - p0[j] < -L[j]/2) {
+          cross[j] ++; 
+          p[j] += L[j];
+        }
+      }
+
+    for (int j=0; j<3; j++)
+      line.push_back(p[j]);
+
+    for (int j=0; j<3; j++) 
+      p0[j] = p[j];
+  }
+
+  clear();
+  swap(line);
+}
+
+void VortexLine::Unflattern(const double O[3], const double L[3])
+{
+  const int n = size()/3;
+  double p[3];
+  std::vector<double> line;
+
+  for (int i=0; i<n; i++) {
+    for (int j=0; j<3; j++) {
+      p[j] = at(i*3+j);
+      p[j] = fmod1(p[j] - O[j], L[j]) + O[j];
+      line.push_back(p[j]);
+    }
+  }
+
+  clear();
+  swap(line);
 }
 
 ///////
-bool SerializeVortexLines(const std::vector<VortexLine>& lines, std::string& buf)
+bool SerializeVortexLines(const std::vector<VortexLine>& lines, const std::string& info, std::string& buf)
 {
   PBVortexLines plines;
   for (int i=0; i<lines.size(); i++) {
@@ -81,11 +138,15 @@ bool SerializeVortexLines(const std::vector<VortexLine>& lines, std::string& buf
       pline->add_vertices( lines[i][j] );
     pline->set_id( lines[i].id );
     pline->set_timestep( lines[i].timestep );
+    pline->set_bezier( lines[i].is_bezier );
+  }
+  if (info.length()>0) {
+    plines.set_info_bytes(info);
   }
   return plines.SerializeToString(&buf);
 }
 
-bool UnserializeVortexLines(std::vector<VortexLine>& lines, const std::string& buf)
+bool UnserializeVortexLines(std::vector<VortexLine>& lines, std::string& info, const std::string& buf)
 {
   PBVortexLines plines;
   if (!plines.ParseFromString(buf)) return false;
@@ -96,26 +157,30 @@ bool UnserializeVortexLines(std::vector<VortexLine>& lines, const std::string& b
       line.push_back(plines.lines(i).vertices(j));
     line.id = plines.lines(i).id();
     line.timestep = plines.lines(i).timestep();
+    line.is_bezier = plines.lines(i).bezier();
     lines.push_back(line);
   }
+
+  if (plines.has_info_bytes())
+    info = plines.info_bytes();
 
   return true;
 }
 
-bool SaveVortexLines(const std::vector<VortexLine>& lines, const std::string& filename)
+bool SaveVortexLines(const std::vector<VortexLine>& lines, const std::string& info, const std::string& filename)
 {
   FILE *fp = fopen(filename.c_str(), "wb");
   if (!fp) return false;
 
   std::string buf;
-  SerializeVortexLines(lines, buf);
+  SerializeVortexLines(lines, info, buf);
   fwrite(buf.data(), 1, buf.size(), fp);
 
   fclose(fp);
   return true;
 }
 
-bool LoadVortexLines(std::vector<VortexLine>& lines, const std::string& filename)
+bool LoadVortexLines(std::vector<VortexLine>& lines, std::string& info, const std::string& filename)
 {
   FILE *fp = fopen(filename.c_str(), "rb"); 
   if (!fp) return false;
@@ -129,6 +194,6 @@ bool LoadVortexLines(std::vector<VortexLine>& lines, const std::string& filename
   fread((char*)buf.data(), 1, sz, fp);
   fclose(fp);
 
-  return UnserializeVortexLines(lines, buf);
+  return UnserializeVortexLines(lines, info, buf);
 }
 

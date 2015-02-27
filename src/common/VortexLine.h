@@ -17,18 +17,21 @@ struct VortexLine : public std::vector<double>
   VortexLine();
   ~VortexLine(); 
 
-  void RegularToBezier();
-  void BezierToRegular();
+  void ToBezier();
+  void ToRegular();
+
+  void Flattern(const double O[3], const double L[3]);
+  void Unflattern(const double O[3], const double L[3]);
 
   int id;
   int timestep;
   bool is_bezier;
 };
 
-bool SerializeVortexLines(const std::vector<VortexLine>& lines, std::string& buf);
-bool UnserializeVortexLines(std::vector<VortexLine>& lines, const std::string& buf);
+bool SerializeVortexLines(const std::vector<VortexLine>& lines, const std::string& info, std::string& buf);
+bool UnserializeVortexLines(std::vector<VortexLine>& lines, std::string& info, const std::string& buf);
 
-bool SaveVortexLines(const std::vector<VortexLine>& lines, const std::string& filename);
-bool LoadVortexLines(std::vector<VortexLine>& lines, const std::string& filename); 
+bool SaveVortexLines(const std::vector<VortexLine>& lines, const std::string& info, const std::string& filename);
+bool LoadVortexLines(std::vector<VortexLine>& lines, std::string& info, const std::string& filename); 
 
 #endif

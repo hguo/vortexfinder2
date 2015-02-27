@@ -7,4 +7,6 @@ message PBVortexLine {
 
 message PBVortexLines {
   repeated PBVortexLine lines = 1;
+  // optional PBDataInfo info = 2;
+  optional bytes info_bytes = 2;
 };
