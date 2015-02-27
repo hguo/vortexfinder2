@@ -52,7 +52,7 @@ double GLDataset::LineIntegral(const double X0[], const double X1[], const doubl
   return 0.5 * inner_product(A, dX);
 }
 
-double GLDataset::QP(const double X0[], const double X1[]) const
+double GLDataset::QP(const double X0[], const double X1[], int slot) const
 {
   return 0.0;
 }

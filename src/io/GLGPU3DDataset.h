@@ -10,8 +10,6 @@ class GLGPU3DDataset : public GLGPUDataset
 public: 
   GLGPU3DDataset(); 
   ~GLGPU3DDataset();
-  
-  void SerializeDataInfoToString(std::string& buf) const;
 
 public: // data I/O
   void BuildMeshGraph();

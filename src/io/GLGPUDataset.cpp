@@ -1,6 +1,7 @@
 #include "GLGPUDataset.h"
 #include "GLGPU_IO_Helper.h"
 #include "common/Utils.hpp"
+#include "common/DataInfo.pb.h"
 #include <cassert>
 #include <cmath>
 #include <iostream>
@@ -12,6 +13,8 @@ GLGPUDataset::GLGPUDataset() :
   _re1(NULL), _im1(NULL),
   _Jx(NULL), _Jy(NULL), _Jz(NULL)
 {
+  memset(_B, 0, sizeof(double)*3);
+  memset(_B1, 0, sizeof(double)*3);
 }
 
 GLGPUDataset::~GLGPUDataset()
@@ -35,6 +38,39 @@ void GLGPUDataset::PrintInfo(int slot) const
   fprintf(stderr, "V=%f\n", _V);
   fprintf(stderr, "time=%f\n", slot == 0 ? _time : _time1); 
   fprintf(stderr, "fluctuation_amp=%f\n", _fluctuation_amp); 
+}
+  
+void GLGPUDataset::SerializeDataInfoToString(std::string& buf) const
+{
+  PBDataInfo pb;
+
+  pb.set_model(PBDataInfo::GLGPU);
+  pb.set_name(_data_name);
+
+  if (Lengths()[0]>0) {
+    pb.set_ox(Origins()[0]); 
+    pb.set_oy(Origins()[1]); 
+    pb.set_oz(Origins()[2]); 
+    pb.set_lx(Lengths()[0]); 
+    pb.set_ly(Lengths()[1]); 
+    pb.set_lz(Lengths()[2]); 
+  }
+
+  pb.set_bx(B()[0]);
+  pb.set_by(B()[1]);
+  pb.set_bz(B()[2]);
+
+  pb.set_kex(Kex());
+
+  pb.set_dx(dims()[0]);
+  pb.set_dy(dims()[1]);
+  pb.set_dz(dims()[2]);
+
+  pb.set_pbc_x(pbc()[0]);
+  pb.set_pbc_y(pbc()[0]);
+  pb.set_pbc_z(pbc()[0]);
+
+  pb.SerializeToString(&buf);
 }
 
 bool GLGPUDataset::OpenDataFile(const std::string &filename)
@@ -128,6 +164,11 @@ void GLGPUDataset::RotateTimeSteps()
   _re = _re1; _im = _im1;
   _re1 = r; _im1 = i;
 
+  double B[3];
+  memcpy(B, _B, sizeof(double)*3);
+  memcpy(_B, _B1, sizeof(double)*3);
+  memcpy(_B1, _B, sizeof(double)*3);
+
   GLDataset::RotateTimeSteps();
 }
 
@@ -137,7 +178,7 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string& filename, int slot)
   if (!::GLGPU_IO_Helper_ReadLegacy(
       filename, ndims, _dims, _lengths, _pbc, 
       slot == 0 ? _time : _time1, 
-      _B, 
+      slot == 0 ? _B : _B1, 
       _Jxext, 
       slot == 0 ? _Kex : _Kex1,
       _V, 
@@ -157,7 +198,7 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
   if (!::GLGPU_IO_Helper_ReadBDAT(
       filename, ndims, _dims, _lengths, _pbc, 
       slot == 0 ? _time : _time1, 
-      _B, 
+      slot == 0 ? _B : _B1, 
       _Jxext, 
       slot == 0 ? _Kex : _Kex1,
       _V, 
@@ -171,11 +212,25 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
   return true;
 }
 
+#if 0
+double Ax(const double X[3], int slot=0) const {if (By()>0) return -Kex(slot); else return -X[1]*Bz()-Kex(slot);}
+// double Ax(const double X[3], int slot=0) const {if (By()>0) return 0; else return -X[1]*Bz();}
+double Ay(const double X[3], int slot=0) const {if (By()>0) return X[0]*Bz(); else return 0;}
+double Az(const double X[3], int slot=0) const {if (By()>0) return -X[0]*By(); else return X[1]*Bx();}
+#endif
+
 bool GLGPUDataset::A(const double X[3], double A[3], int slot) const
 {
-  A[0] = Ax(X, slot); 
-  A[1] = Ay(X, slot); 
-  A[2] = Az(X, slot); 
+  if (B(slot)[1]>0) {
+    A[0] = -Kex(slot);
+    A[1] = X[0] * B(slot)[2];
+    A[2] = -X[0] * B(slot)[1];
+  } else {
+    A[0] = -X[1] * B(slot)[2] - Kex(slot);
+    A[1] = 0;
+    A[2] = X[1] * B(slot)[0];
+  }
+  
   return true;
 }
 
@@ -286,7 +341,7 @@ double GLGPUDataset::QP(const double X0[], const double X1[]) const
   } else return 0.0;
 }
 #else
-double GLGPUDataset::QP(const double X0_[], const double X1_[]) const
+double GLGPUDataset::QP(const double X0_[], const double X1_[], int slot) const
 {
   double X0[3], X1[3];
   double N[3];
@@ -296,7 +351,7 @@ double GLGPUDataset::QP(const double X0_[], const double X1_[]) const
     N[i] = dims()[i];
   }
 
-  if (By()>0 && fabs(X1[0]-X0[0])>N[0]/2) {
+  if (B(slot)[1]>0 && fabs(X1[0]-X0[0])>N[0]/2) {
     // TODO
     assert(false);
     return 0.0;
@@ -323,7 +378,7 @@ double GLGPUDataset::QP(const double X0_[], const double X1_[]) const
     double i = fmod1(X0[0] + f*dk, N[0]);
 
     double sign = dj>0 ? 1 : -1;
-    double qp = sign * (k*CellLengths()[2]*Bx()*Lengths()[1] - i*CellLengths()[0]*Bz()*Lengths()[1]);
+    double qp = sign * (k*CellLengths()[2]*B(slot)[0]*Lengths()[1] - i*CellLengths()[0]*B(slot)[2]*Lengths()[1]);
 
     return qp;
   } 

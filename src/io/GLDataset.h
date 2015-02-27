@@ -35,7 +35,7 @@ public: // mesh utils
 
 public: // transformations and utils
   double LineIntegral(const double X0[], const double X1[], const double A0[], const double A1[]) const;
-  virtual double QP(const double X0[], const double X1[]) const;
+  virtual double QP(const double X0[], const double X1[], int slot=0) const;
 
 public: // properties
   // Voltage
@@ -74,7 +74,6 @@ protected:
 
   double _origins[3]; 
   double _lengths[3];
-  double _B[3];
   double _Kex, _Kex1; 
   double _Kex_dot;
   double _Jxext;

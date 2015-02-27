@@ -9,6 +9,8 @@ public:
   GLGPUDataset();
   ~GLGPUDataset();
   
+  void SerializeDataInfoToString(std::string& buf) const;
+  
 public:
   bool OpenDataFile(const std::string& filename); // file list
   bool OpenDataFileByPattern(const std::string& pattern); 
@@ -45,17 +47,9 @@ public: // rectilinear grid
   // Magnetic potential
   bool A(const double X[3], double A[3], int slot=0) const;
   bool A(NodeIdType n, double A[3], int slot=0) const;
-  double Ax(const double X[3], int slot=0) const {if (By()>0) return -Kex(slot); else return -X[1]*Bz()-Kex(slot);}
-  // double Ax(const double X[3], int slot=0) const {if (By()>0) return 0; else return -X[1]*Bz();}
-  double Ay(const double X[3], int slot=0) const {if (By()>0) return X[0]*Bz(); else return 0;}
-  double Az(const double X[3], int slot=0) const {if (By()>0) return -X[0]*By(); else return X[1]*Bx();}
   
   // Magnetic field
-  void SetMagneticField(const double B[3]) {_B[0]=B[0]; _B[1]=B[1]; _B[2]=B[2];}
-  const double* B() const {return _B;}
-  double Bx() const {return _B[0];} 
-  double By() const {return _B[1];} 
-  double Bz() const {return _B[2];}
+  const double* B(int slot=0) const {return slot == 0 ? _B : _B1;}
   
   bool Pos(NodeIdType, double X[3]) const;
   bool Psi(const double X[3], double &re, double &im, int slot=0) const;
@@ -64,14 +58,14 @@ public: // rectilinear grid
   bool Supercurrent(NodeIdType, double J[3], int slot=0) const;
 
 public:
-  double QP(const double X0[], const double X1[]) const;
+  double QP(const double X0[], const double X1[], int slot=0) const;
 
 protected:
   int _dims[3]; 
   bool _pbc[3]; 
   double _cell_lengths[3]; 
 
-  double _B[3]; // magnetic field
+  double _B[3], _B1[3]; // magnetic field
 
   double *_re, *_im, 
          *_re1, *_im1;

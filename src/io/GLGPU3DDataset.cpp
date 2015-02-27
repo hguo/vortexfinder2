@@ -6,7 +6,6 @@
 #include <iostream>
 #include "common/Utils.hpp"
 #include "common/Lerp.hpp"
-#include "common/DataInfo.pb.h"
 #include "common/MeshGraphRegular3D.h"
 #include "GLGPU3DDataset.h"
 
@@ -106,39 +105,6 @@ std::vector<ElemIdType> GLGPU3DDataset::GetNeighborIds(ElemIdType elem_id) const
   return neighbors; 
 }
 #endif
-  
-void GLGPU3DDataset::SerializeDataInfoToString(std::string& buf) const
-{
-  PBDataInfo pb;
-
-  pb.set_model(PBDataInfo::GLGPU);
-  pb.set_name(_data_name);
-
-  if (Lengths()[0]>0) {
-    pb.set_ox(Origins()[0]); 
-    pb.set_oy(Origins()[1]); 
-    pb.set_oz(Origins()[2]); 
-    pb.set_lx(Lengths()[0]); 
-    pb.set_ly(Lengths()[1]); 
-    pb.set_lz(Lengths()[2]); 
-  }
-
-  pb.set_bx(Bx());
-  pb.set_by(By());
-  pb.set_bz(Bz());
-
-  pb.set_kex(Kex());
-
-  pb.set_dx(dims()[0]);
-  pb.set_dy(dims()[1]);
-  pb.set_dz(dims()[2]);
-
-  pb.set_pbc_x(pbc()[0]);
-  pb.set_pbc_y(pbc()[0]);
-  pb.set_pbc_z(pbc()[0]);
-
-  pb.SerializeToString(&buf);
-}
 
 #if 0
 void GLGPU3DDataset::ComputeSupercurrentField()
