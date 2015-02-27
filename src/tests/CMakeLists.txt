@@ -11,3 +11,6 @@ add_executable (test_meshgraph test_meshgraph.cpp)
 target_link_libraries (test_meshgraph glio)
 
 add_executable (test_curves test_curves.cpp)
+
+add_executable (test_inclusions test_inclusions.cpp)
+target_link_libraries (test_inclusions glcommon)
