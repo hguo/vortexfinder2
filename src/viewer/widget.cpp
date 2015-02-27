@@ -1,5 +1,4 @@
 #include <QMouseEvent>
-#include <QMatrix4x4>
 #include <QDebug>
 #include <fstream>
 #include <iostream>
@@ -22,7 +21,8 @@ CGLWidget::CGLWidget(const QGLFormat& fmt, QWidget *parent, QGLWidget *sharedWid
   : QGLWidget(fmt, parent, sharedWidget), 
     _fovy(30.f), _znear(0.1f), _zfar(10.f), 
     _eye(0, 0, 2.5), _center(0, 0, 0), _up(0, 1, 0), 
-    _vortex_render_mode(0)
+    _vortex_render_mode(0), 
+    _enable_inclusions(false)
 {
 }
 
@@ -77,6 +77,11 @@ void CGLWidget::keyPressEvent(QKeyEvent* e)
 
   case Qt::Key_L:
     _vortex_render_mode = 1;
+    updateGL();
+    break;
+
+  case Qt::Key_I:
+    _enable_inclusions = !_enable_inclusions;
     updateGL();
     break;
 
@@ -159,6 +164,9 @@ void CGLWidget::renderVortexIds()
   QFont ft;
   ft.setPointSize(36);
 
+  glColor3f(0, 0, 0);
+  glDisable(GL_DEPTH_TEST);
+
   QString s0 = QString("timestep=%1").arg(_timestep);
   renderText(20, 60, s0, ft);
 
@@ -177,6 +185,75 @@ void CGLWidget::renderVortexIds()
 
     renderText(v.x(), v.y(), v.z(), s, ft);
   }
+}
+
+typedef struct {
+  QVector3D p;
+  QColor c;
+  float depth;
+} inclusion_t;
+
+static bool compare_inclusions(const inclusion_t& i0, const inclusion_t& i1)
+{
+  return i0.depth < i1.depth;
+}
+
+void CGLWidget::renderInclusions()
+{
+  const int n = 10;
+  const float radius = 5.f;
+  const GLubyte alpha = 128;
+  const QVector3D p[n] = {
+    {56.156670, 51.160450, 3.819186},
+    {62.730570, 43.044800, 8.598517},
+    {47.607200, 53.324570, 11.099090},
+    {26.116400, 30.941740, 3.956855},
+    {86.089940, 50.946700, 6.626538},
+    {93.094290, 56.579140, 11.743990},
+    {83.132140, 25.316290, 9.010600},
+    {12.312030, 50.503210, 7.045643},
+    {38.015730, 12.054860, 11.574300},
+    {85.341200, 36.842770, 6.001254}};
+  const GLubyte c[n][3] = {
+    {230, 13, 13},
+    {8, 138, 138},
+    {230, 111, 13},
+    {53, 195, 53},
+    {0, 121, 0},
+    {151, 68, 0},
+    {0, 86, 0}, 
+    {108, 49, 0},
+    {151, 0, 0},
+    {243, 146, 66}};
+  inclusion_t inclusions[n];
+
+  for (int i=0; i<n; i++) {
+    inclusions[i].p = p[i];
+    QVector3D v = _mvmatrix * p[i];
+    inclusions[i].depth = v.z();
+    inclusions[i].c = QColor(c[i][0], c[i][1], c[i][2]);
+  }
+
+  qSort(inclusions, inclusions+n-1, compare_inclusions);
+  
+  glPushAttrib(GL_ENABLE_BIT);
+  glDisable(GL_DEPTH_TEST);
+  glEnable(GL_LIGHTING); 
+  glEnable(GL_LIGHT0); 
+  glEnable(GL_CULL_FACE);
+
+  glPushMatrix();
+  glTranslatef(-64, -32, -8);
+  for (int i=0; i<n; i++) {
+    glColor4ub(inclusions[i].c.red(), inclusions[i].c.green(), inclusions[i].c.blue(), 128);
+    glPushMatrix();
+    glTranslatef(inclusions[i].p.x(), inclusions[i].p.y(), inclusions[i].p.z());
+    glutSolidSphere(radius, 20, 20);
+    glPopMatrix();
+  }
+  glPopMatrix();
+
+  glPopAttrib();
 }
 
 void CGLWidget::renderVortexLines()
@@ -221,21 +298,20 @@ void CGLWidget::paintGL()
   glClearColor(1, 1, 1, 0); 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
 
-  QMatrix4x4 projmatrix, mvmatrix; 
-  projmatrix.setToIdentity(); 
-  projmatrix.perspective(_fovy, (float)width()/height(), _znear, _zfar); 
-  mvmatrix.setToIdentity();
-  mvmatrix.lookAt(_eye, _center, _up);
-  mvmatrix.rotate(_trackball.getRotation());
-  mvmatrix.scale(_trackball.getScale());
-  mvmatrix.scale(0.02);
+  _projmatrix.setToIdentity(); 
+  _projmatrix.perspective(_fovy, (float)width()/height(), _znear, _zfar); 
+  _mvmatrix.setToIdentity();
+  _mvmatrix.lookAt(_eye, _center, _up);
+  _mvmatrix.rotate(_trackball.getRotation());
+  _mvmatrix.scale(_trackball.getScale());
+  _mvmatrix.scale(0.02);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glLoadMatrixd(projmatrix.data()); 
+  glLoadMatrixd(_projmatrix.data()); 
   glMatrixMode(GL_MODELVIEW); 
   glLoadIdentity(); 
-  glLoadMatrixd(mvmatrix.data()); 
+  glLoadMatrixd(_mvmatrix.data()); 
 
 #if 0
   glColor3f(0.f, 0.f, 0.f);
@@ -249,9 +325,11 @@ void CGLWidget::paintGL()
     renderVortexTubes();
   else 
     renderVortexLines();
-  
-  renderVortexIds();
 
+  if (_enable_inclusions)
+    renderInclusions();
+
+  renderVortexIds();
   renderFieldLines();
 
   CHECK_GLERROR(); 
@@ -446,6 +524,11 @@ void CGLWidget::LoadVortexLinesFromTextFile(const std::string& filename)
   fprintf(stderr, "n=%ld\n", v_line_vertices.size()/3); 
   
   updateVortexTubes(20, 0.5); 
+}
+
+void CGLWidget::LoadInclusionsFromTextFile(const std::string& filename)
+{
+
 }
 
 ////////////////

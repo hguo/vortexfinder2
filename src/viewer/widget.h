@@ -5,9 +5,11 @@
 #include <QList>
 #include <QVector>
 #include <QVector3D>
+#include <QMatrix4x4>
 #include <cmath>
 #include "def.h"
 #include "trackball.h"
+#include "common/Inclusions.h"
 
 class QMConnector; 
 class QMouseEvent;
@@ -31,8 +33,10 @@ public:
 
   void LoadVortexLines(const std::string& filename); 
   void LoadVortexLinesFromTextFile(const std::string& filename);
-  
+ 
   void LoadFieldLines(const std::string& filename);
+  
+  void LoadInclusionsFromTextFile(const std::string& filename);
   
   void SetDataName(const std::string& dataname);
   void LoadTimeStep(int t);
@@ -52,11 +56,13 @@ protected:
   void renderVortexLines(); 
   void renderVortexTubes(); 
   void updateVortexTubes(int nPatches, float radius); 
+  void renderInclusions();
 
   void renderFieldLines();
 
 private:
   CGLTrackball _trackball;
+  QMatrix4x4 _projmatrix, _mvmatrix; 
 
 private: //data
   // std::vector<VortexLine> _vortex_liness;
@@ -70,6 +76,7 @@ private: // camera
   const QVector3D _eye, _center, _up;
 
   int _vortex_render_mode;
+  bool _enable_inclusions;
 
 private: // vortex line rendering
   std::vector<GLfloat> v_line_vertices;
