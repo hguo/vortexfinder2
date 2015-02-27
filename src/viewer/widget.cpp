@@ -5,6 +5,7 @@
 #include "widget.h"
 #include "common/VortexLine.h"
 #include "common/FieldLine.h"
+#include "common/Utils.hpp"
 
 #ifdef __APPLE__
 #include <OpenGL/glu.h>
@@ -242,7 +243,7 @@ void CGLWidget::renderInclusions()
   glEnable(GL_CULL_FACE);
 
   glPushMatrix();
-  glTranslatef(-64, -32, -8);
+  glTranslatef(-64, -32, -8); // FIXME: hard code
   for (int i=0; i<n; i++) {
     glColor4ub(inclusions[i].c.red(), inclusions[i].c.green(), inclusions[i].c.blue(), 128);
     glPushMatrix();
@@ -251,6 +252,32 @@ void CGLWidget::renderInclusions()
     glPopMatrix();
   }
   glPopMatrix();
+
+  glPopAttrib();
+}
+
+void CGLWidget::renderVortexArrows()
+{
+  glPushAttrib(GL_ENABLE_BIT);
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_LIGHTING); 
+  glEnable(GL_LIGHT0); 
+
+  for (int i=0; i<_cones_pos.size(); i++) {
+    QColor c = _cones_color[i];
+    QVector3D p = _cones_pos[i];
+    QVector3D d = _cones_dir[i];
+    QVector3D z(0, 0, 1);
+    QVector3D a = QVector3D::crossProduct(z, d);
+    float omega = acos(QVector3D::dotProduct(z, d)) * 180 / M_PI;
+
+    glColor3ub(c.red(), c.green(), c.blue());
+    glPushMatrix();
+    glTranslatef(p.x(), p.y(), p.z());
+    glRotatef(omega, a.x(), a.y(), a.z());
+    glutSolidCone(1, 3, 12, 4); 
+    glPopMatrix();
+  }
 
   glPopAttrib();
 }
@@ -328,7 +355,9 @@ void CGLWidget::paintGL()
   if (_enable_inclusions)
     renderInclusions();
 
+  renderVortexArrows();
   renderVortexIds();
+
   renderFieldLines();
 
   CHECK_GLERROR(); 
@@ -379,6 +408,10 @@ void CGLWidget::Clear()
 
   _vids.clear();
   _vids_coord.clear();
+
+  _cones_pos.clear();
+  _cones_dir.clear();
+  _cones_color.clear();
 }
 
 void CGLWidget::LoadVortexLines(const std::string& filename)
@@ -416,12 +449,30 @@ void CGLWidget::LoadVortexLines(const std::string& filename)
       _vids_coord.push_back(pt);
     }
 
-    if (vortex_liness[k].is_bezier) { // TODO: make it more graceful..
-      vortex_liness[k].ToRegular();
-      vortex_liness[k].Unflattern(O, L);
-    }
-
     int ci = vortex_liness[k].id % nc; // color index
+
+    if (vortex_liness[k].is_bezier) { // TODO: make it more graceful..
+      VortexLine& vl = vortex_liness[k];
+      const int span = 6;
+
+      for (int i=4*span; i<vl.size()/3; i+=4*span) {
+        QVector3D p(
+            fmod1(vl[i*3]-O[0], L[0]) + O[0], 
+            fmod1(vl[i*3+1]-O[1], L[1]) + O[1], 
+            fmod1(vl[i*3+2]-O[2], L[2]) + O[2]);
+        QVector3D p0(vl[i*3], vl[i*3+1], vl[i*3+2]), 
+                  p1(vl[i*3+3], vl[i*3+4], vl[i*3+5]);
+        QVector3D d = (p1 - p0).normalized();
+        QColor color(c[ci][0], c[ci][1], c[ci][2]);
+
+        _cones_pos.push_back(p);
+        _cones_dir.push_back(d);
+        _cones_color.push_back(color);
+      }
+
+      vl.ToRegular(0.02);
+      vl.Unflattern(O, L);
+    }
     
     std::vector<double>::iterator it = vortex_liness[k].begin();
     QVector3D p0;

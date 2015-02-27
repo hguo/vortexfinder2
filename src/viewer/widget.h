@@ -55,7 +55,8 @@ protected:
 
   void renderVortexIds();
   void renderVortexLines(); 
-  void renderVortexTubes(); 
+  void renderVortexTubes();
+  void renderVortexArrows();
   void updateVortexTubes(int nPatches, float radius); 
   void renderInclusions();
 
@@ -88,6 +89,10 @@ private: // vortex line rendering
   std::vector<GLfloat> vortex_tube_vertices, vortex_tube_normals;
   std::vector<GLubyte> vortex_tube_colors; 
   std::vector<GLuint> vortex_tube_indices_lines, vortex_tube_indices_vertices;
+
+private: // arros (cones)
+  QVector<QVector3D> _cones_pos, _cones_dir;
+  QVector<QColor> _cones_color;
 
 private: // fieldline rendering
   std::vector<GLfloat> f_line_vertices;

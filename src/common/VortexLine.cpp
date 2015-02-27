@@ -46,7 +46,7 @@ void VortexLine::ToBezier()
   is_bezier = true;
 }
 
-void VortexLine::ToRegular()
+void VortexLine::ToRegular(const double stepsize)
 {
   using namespace FitCurves;
   typedef Point<3> Pt;
@@ -66,7 +66,7 @@ void VortexLine::ToRegular()
   
   for (int i=0; i<npts; i+=4) {
     const double tl = i<npts-5 ? 0.9999 : 1;
-    for (double t=0; t<tl; t+=0.1) {
+    for (double t=0; t<tl; t+=stepsize) {
       Pt p = bezier(3, pts+i, t);
       push_back(p[0]);
       push_back(p[1]);

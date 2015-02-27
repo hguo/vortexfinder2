@@ -18,7 +18,7 @@ struct VortexLine : public std::vector<double>
   ~VortexLine(); 
 
   void ToBezier();
-  void ToRegular();
+  void ToRegular(const double d=0.1);
 
   void Flattern(const double O[3], const double L[3]);
   void Unflattern(const double O[3], const double L[3]);
