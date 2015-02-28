@@ -1,6 +1,7 @@
 set (viewer_sources
   trackball.cpp
   widget.cpp
+  storyLineWidget.cpp
   mainWindow.cpp
 )
 
