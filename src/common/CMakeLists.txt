@@ -4,6 +4,7 @@ set (common_sources
   MeshGraphRegular3D.cpp
   VortexLine.cpp
   VortexEvent.cpp
+  VortexTransition.cpp
   Inclusions.cpp
   FieldLine.cpp
   Puncture.cpp
