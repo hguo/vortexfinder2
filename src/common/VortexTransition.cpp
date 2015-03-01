@@ -71,12 +71,12 @@ std::string VortexTransitionMatrix::MatrixFileName(const std::string& dataname, 
   return ss.str();
 }
 
-int VortexTransitionMatrix::Match(int i, int j) const
+int VortexTransitionMatrix::operator()(int i, int j) const
 {
   return _match[i*n1() + j];
 }
 
-int& VortexTransitionMatrix::Match(int i, int j)
+int& VortexTransitionMatrix::operator()(int i, int j)
 {
   return _match[i*n1() + j];
 }

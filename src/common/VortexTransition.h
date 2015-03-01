@@ -19,8 +19,8 @@ public:
   bool Valid() const {return _match.size()>0;}
  
 public:
-  int Match(int, int) const;
-  int& Match(int ,int); 
+  int& operator()(int, int);
+  int operator()(int, int) const;
 
   int t0() const {return _t0;} // timestep
   int t1() const {return _t1;}

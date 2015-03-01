@@ -1,5 +1,6 @@
 #include "Extractor.h"
 #include "common/Utils.hpp"
+#include "common/VortexTransition.h"
 #include "io/GLDataset.h"
 #include <set>
 #include <climits>
@@ -517,8 +518,7 @@ void VortexExtractor::TraceOverTime()
 {
   const int n0 = _vortex_objects.size(), 
             n1 = _vortex_objects1.size();
-  int *match = (int*)malloc(sizeof(int)*n0*n1);
-  memset(match, 0, sizeof(int)*n0*n1);
+  VortexTransitionMatrix tm(_dataset->TimeStep(0), _dataset->TimeStep(1), n0, n1);
 
   RelateOverTime();
 
@@ -532,7 +532,7 @@ void VortexExtractor::TraceOverTime()
           if (_vortex_objects1[j].faces.find(related[k]) != _vortex_objects1[j].faces.end()) {
             // if (i != j)
             //   fprintf(stderr, "vid=%d --> vid=%d, fid0=%u, fid1=%u\n", i, j, *it, related[k]);
-            match[i*n1+j] ++;
+            tm(i, j) ++;
             goto next;
           }
         }
@@ -542,6 +542,9 @@ next:
     }
   }
 
+  tm.SaveToFile(Dataset()->DataName(), Dataset()->TimeStep(0), Dataset()->TimeStep(1));
+
+#if 0
   // detection from row sum. possible events: death, split, 
   for (int i=0; i<n0; i++) {
     int sum = 0;
@@ -558,6 +561,7 @@ next:
       fprintf(stderr, "special event detected, vid0=%d\n", i);
     }
   }
+#endif
 
   // detection from column sum. possible events: birth, merge
 #if 0
@@ -576,10 +580,6 @@ next:
     }
   }
 #endif
-
-  //
-
-  free(match);
 }
 
 void VortexExtractor::RotateTimeSteps()
