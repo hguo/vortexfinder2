@@ -4,7 +4,7 @@
 #include "fitCurves/fitCurves.hpp"
 
 VortexLine::VortexLine() : 
-  id(0), timestep(0), is_bezier(false)
+  id(INT_MAX), gid(INT_MAX), timestep(0), is_bezier(false)
 {
 }
 

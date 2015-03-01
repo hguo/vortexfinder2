@@ -43,8 +43,8 @@ protected:
   void ExtractSpaceTimeEdge(EdgeIdType);
 
 protected:
-  void VortexObjectsToVortexLines(const std::map<FaceIdType, PuncturedFace>& pfs, const std::vector<VortexObject>& vobjs, std::vector<VortexLine>& vlines);
-  int NewVortexId();
+  void VortexObjectsToVortexLines(const std::map<FaceIdType, PuncturedFace>& pfs, const std::vector<VortexObject>& vobjs, std::vector<VortexLine>& vlines, bool bezier=false);
+  int NewGlobalVortexId();
 
 protected:
   void AddPuncturedFace(FaceIdType, int slot, ChiralityType chirality, const double pos[3]);
@@ -63,7 +63,7 @@ protected:
   std::vector<VortexObject> _vortex_objects, _vortex_objects1;
   std::vector<VortexLine> _vortex_lines, _vortex_lines1;
  
-  int _num_vortices;
+  int _num_global_vortices;
 
 protected:
   const GLDatasetBase *_dataset;

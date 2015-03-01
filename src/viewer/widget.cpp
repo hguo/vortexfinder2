@@ -440,16 +440,15 @@ void CGLWidget::LoadVortexLines(const std::string& filename)
 
   int vertCount = 0; 
   for (int k=0; k<vortex_liness.size(); k++) { //iterator over lines
-    // fprintf(stderr, "line %d: id=%d, len=%lu\n", k, vortex_liness[k].id, vortex_liness[k].size());
     if (vortex_liness[k].size()>=3) {
-      _vids.push_back(vortex_liness[k].id);
+      _vids.push_back(vortex_liness[k].gid);
       QVector3D pt(*(vortex_liness[k].begin()), 
                    *(vortex_liness[k].begin()+1),
                    *(vortex_liness[k].begin()+2));
       _vids_coord.push_back(pt);
     }
 
-    int ci = vortex_liness[k].id % nc; // color index
+    int ci = vortex_liness[k].gid % nc; // color index
 
     if (vortex_liness[k].is_bezier) { // TODO: make it more graceful..
       VortexLine& vl = vortex_liness[k];

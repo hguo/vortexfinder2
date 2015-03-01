@@ -10,7 +10,7 @@
 VortexExtractor::VortexExtractor() :
   _dataset(NULL), 
   _gauge(false),
-  _num_vortices(0)
+  _num_global_vortices(0)
 {
 
 }
@@ -20,9 +20,9 @@ VortexExtractor::~VortexExtractor()
 
 }
 
-int VortexExtractor::NewVortexId()
+int VortexExtractor::NewGlobalVortexId()
 {
-  return _num_vortices ++;
+  return _num_global_vortices ++;
 }
 
 void VortexExtractor::SetDataset(const GLDatasetBase* ds)
@@ -469,7 +469,8 @@ void VortexExtractor::TraceOverSpace(int slot)
       vobj.traces.push_back(trace);
     }
 
-    vobj.id = NewVortexId();
+    // vobj.id = NewVortexId();
+    vobj.id = vobjs.size();  // local (time) id
     vobjs.push_back(vobj);
   }
 
@@ -479,12 +480,13 @@ void VortexExtractor::TraceOverSpace(int slot)
 void VortexExtractor::VortexObjectsToVortexLines(
     const std::map<FaceIdType, PuncturedFace>& pfs, 
     const std::vector<VortexObject>& vobjs, 
-    std::vector<VortexLine>& vlines)
+    std::vector<VortexLine>& vlines, bool bezier)
 {
   for (int i=0; i<vobjs.size(); i++) {
     const VortexObject& vobj = vobjs[i];
     VortexLine line;
     line.id = vobj.id;
+    line.gid = vobj.gid;
     line.timestep = vobj.timestep;
     
     for (int j=0; j<vobj.traces.size(); j++) {
@@ -501,14 +503,10 @@ void VortexExtractor::VortexObjectsToVortexLines(
       }
     }
 
-#if 0
-    line.Flattern(Dataset()->Origins(), Dataset()->Lengths());
-    line.ToBezier();
-    line.ToRegular();
-    line.Unflattern(Dataset()->Origins(), Dataset()->Lengths());
-#endif
-    line.Flattern(Dataset()->Origins(), Dataset()->Lengths());
-    line.ToBezier();
+    if (bezier) {
+      line.Flattern(Dataset()->Origins(), Dataset()->Lengths());
+      line.ToBezier();
+    }
 
     vlines.push_back(line);
   }
@@ -544,6 +542,7 @@ next:
     }
   }
 
+  // detection from row sum. possible events: death, split, 
   for (int i=0; i<n0; i++) {
     int sum = 0;
     int j1;
@@ -560,6 +559,14 @@ next:
     }
   }
 
+  // detection from column sum. possible events: birth, merge
+#if 0
+  for (int j=0; j<n1; j++) {
+    int sum = 0;
+
+  }
+#endif
+
 #if 0 // debug output
   for (int i=0; i<n0; i++) {
     fprintf(stderr, "vid=%d\n", _vortex_objects[i].id);
@@ -569,6 +576,8 @@ next:
     }
   }
 #endif
+
+  //
 
   free(match);
 }

@@ -23,7 +23,7 @@ struct VortexLine : public std::vector<double>
   void Flattern(const double O[3], const double L[3]);
   void Unflattern(const double O[3], const double L[3]);
 
-  int id;
+  int id, gid;
   int timestep;
   bool is_bezier;
 };

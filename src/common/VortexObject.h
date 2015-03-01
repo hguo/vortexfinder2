@@ -6,11 +6,13 @@
 #include "def.h"
 
 struct VortexObject {
-  int id;
+  int gid, id; // gid: global id; id: local (time) id
   int timestep;
   // std::map<FaceIdType, PuncturedFace> faces;
   std::set<FaceIdType> faces;
   std::vector<std::list<FaceIdType> > traces;
+
+  VortexObject() : id(INT_MAX), gid(INT_MAX) {}
 };
 
 #endif
