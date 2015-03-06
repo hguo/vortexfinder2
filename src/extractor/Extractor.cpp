@@ -10,8 +10,7 @@
 
 VortexExtractor::VortexExtractor() :
   _dataset(NULL), 
-  _gauge(false),
-  _num_global_vortices(0)
+  _gauge(false)
 {
 
 }
@@ -19,11 +18,6 @@ VortexExtractor::VortexExtractor() :
 VortexExtractor::~VortexExtractor()
 {
 
-}
-
-int VortexExtractor::NewGlobalVortexId()
-{
-  return _num_global_vortices ++;
 }
 
 void VortexExtractor::SetDataset(const GLDatasetBase* ds)
@@ -292,7 +286,7 @@ void VortexExtractor::RelateOverTime()
 
     _related_faces[it->first] = related;
 
-#if 1
+#if 0
     // if (1) {
     if (!(related.size() == 1 && it->first == related[0])) { // non-ordinary
       fprintf(stderr, "fid=%u, related={", it->first);
@@ -518,7 +512,8 @@ void VortexExtractor::TraceOverTime()
 {
   const int n0 = _vortex_objects.size(), 
             n1 = _vortex_objects1.size();
-  VortexTransitionMatrix tm(_dataset->TimeStep(0), _dataset->TimeStep(1), n0, n1);
+  VortexTransitionMatrix &tm = _vortex_transition[_dataset->TimeStep(0)]; 
+  tm = VortexTransitionMatrix(_dataset->TimeStep(0), _dataset->TimeStep(1), n0, n1);
 
   RelateOverTime();
 
@@ -543,6 +538,15 @@ next:
   }
 
   tm.SaveToFile(Dataset()->DataName(), Dataset()->TimeStep(0), Dataset()->TimeStep(1));
+
+#if 0
+  std::vector<int> ids0(n0), ids1(n1);
+  if (_num_global_vortices == 0) 
+    for (int i=0; i<n0; i++) 
+      ids0[i] = NewGlobalVortexId();
+
+  tm.RenumberIds(ids0, ids1, std::bind(&VortexExtractor::NewGlobalVortexId, this));
+#endif
 
 #if 0
   // detection from row sum. possible events: death, split, 

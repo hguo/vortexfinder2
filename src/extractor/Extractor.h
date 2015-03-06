@@ -3,6 +3,7 @@
 
 #include "common/VortexLine.h"
 #include "common/VortexObject.h"
+#include "common/VortexTransition.h"
 #include "common/Puncture.h"
 #include "InverseInterpolation.h"
 #include <map>
@@ -62,8 +63,8 @@ protected:
 
   std::vector<VortexObject> _vortex_objects, _vortex_objects1;
   std::vector<VortexLine> _vortex_lines, _vortex_lines1;
- 
-  int _num_global_vortices;
+
+  VortexTransition _vortex_transition;
 
 protected:
   const GLDatasetBase *_dataset;

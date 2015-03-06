@@ -26,3 +26,6 @@ target_link_libraries (viewer glviewer)
 
 add_executable (viewer1 main1.cpp)
 target_link_libraries (viewer1 glviewer)
+
+add_executable (storyLine storyLine.cpp)
+target_link_libraries (storyLine glviewer)
