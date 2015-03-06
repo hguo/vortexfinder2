@@ -1,6 +1,6 @@
 #include <QApplication>
 #include <QFileDialog>
-#include <GLUT/glut.h>
+// #include <GLUT/glut.h>
 #include "widget.h"
 #include "mainWindow.h"
 
