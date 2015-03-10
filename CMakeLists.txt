@@ -6,11 +6,15 @@ option (WITH_CUDA "Build with CUDA" OFF)
 option (WITH_LIBMESH "Build with libMesh" ON) 
 option (WITH_PNETCDF "Build with parallel-netcdf" OFF)
 option (WITH_QT "Build with Qt" ON)
+option (WITH_VTK "Build with VTK" OFF)
 
 set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake-modules)
 set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 set (CMAKE_INCLUDE_CURRENT_DIR ON)
+
+# enable c++11
+list(APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 
 find_package (Protobuf REQUIRED)
 
@@ -54,7 +58,9 @@ if (WITH_QT)
   )
 endif ()
 
-# enable c++11
-list(APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
+if (WITH_VTK)
+  find_package (VTK REQUIRED)
+  include (${VTK_USE_FILE})
+endif ()
 
 subdirs (src)

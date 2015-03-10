@@ -19,6 +19,9 @@ target_link_libraries (glviewer
   ${GLUT_LIBRARY}
   ${OPENGL_LIBRARIES}
 )
+if (WITH_VTK)
+  target_link_libraries (glviewer ${VTK_LIBRARIES})
+endif ()
 set_target_properties (glviewer PROPERTIES AUTOMOC ON)
 
 add_executable (viewer main.cpp)
