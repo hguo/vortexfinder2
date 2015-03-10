@@ -54,6 +54,7 @@ void CStorylineWidget::paintGL()
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
+  gluOrtho2D(0, width(), 0, height());
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 

@@ -16,6 +16,9 @@ protected:
   void initializeGL();
   void resizeGL(int w, int h);
   void paintGL();
+
+protected:
+  void renderLines();
 };
 
 #endif
