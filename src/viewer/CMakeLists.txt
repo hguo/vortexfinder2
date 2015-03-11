@@ -15,6 +15,7 @@ endif ()
 add_library (glviewer ${viewer_sources} ${viewer_headers})
 target_link_libraries (glviewer 
   glcommon
+  glio
   ${QT_LIBRARIES}
   ${GLUT_LIBRARY}
   ${OPENGL_LIBRARIES}

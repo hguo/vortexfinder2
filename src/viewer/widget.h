@@ -19,6 +19,8 @@ class QWheelEvent;
 
 class PBDataInfo;
 
+class GLGPUDataset;
+
 /* 
  * \class   CGLWidget
  * \author  Hanqi Guo
@@ -34,14 +36,14 @@ public:
 
   void LoadVortexLines(const std::string& filename); 
   void LoadVortexLinesFromTextFile(const std::string& filename);
- 
   void LoadFieldLines(const std::string& filename);
-  
   void LoadInclusionsFromTextFile(const std::string& filename);
-  
+
   void SetDataName(const std::string& dataname);
   void LoadTimeStep(int t);
   void Clear();
+  
+  void OpenGLGPUDataset();
 
 protected:
   void initializeGL(); 
@@ -57,10 +59,15 @@ protected:
   void renderVortexLines(); 
   void renderVortexTubes();
   void renderVortexArrows();
-  void updateVortexTubes(int nPatches, float radius); 
   void renderInclusions();
+  void renderIsosurfaces();
+  
+  void updateVortexTubes(int nPatches, float radius); 
 
   void renderFieldLines();
+
+protected: 
+  void extractIsosurfaces();
 
 private:
   CGLTrackball _trackball;
@@ -90,6 +97,12 @@ private: // vortex line rendering
   std::vector<GLubyte> vortex_tube_colors; 
   std::vector<GLuint> vortex_tube_indices_lines, vortex_tube_indices_vertices;
 
+private: // isosurface rendering
+  std::vector<GLfloat> s_triangle_vertices, s_triangle_normals;
+  std::vector<GLuint> s_triangle_indices;
+  std::vector<GLfloat> s_triangle_vertices1, s_triangle_normals1;
+  std::vector<GLuint> s_triangle_indices1;
+
 private: // arros (cones)
   QVector<QVector3D> _cones_pos, _cones_dir;
   QVector<QColor> _cones_color;
@@ -103,6 +116,9 @@ private: // fieldline rendering
 private: // id rendering
   QVector<int> _vids;
   QVector<QVector3D> _vids_coord;
+
+private: // GLGPU
+  GLGPUDataset *_ds;
 }; 
 
 #endif

@@ -24,6 +24,7 @@ int main(int argc, char **argv)
   CGLWidget *widget = new CGLWidget;
   widget->show();
   widget->SetDataName(filename);
+  widget->OpenGLGPUDataset();
   widget->LoadTimeStep(timestep);
 
   return app.exec(); 

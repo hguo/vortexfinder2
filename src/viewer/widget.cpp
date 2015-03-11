@@ -1,11 +1,23 @@
 #include <QMouseEvent>
+#include <QFileDialog>
 #include <QDebug>
 #include <fstream>
 #include <iostream>
+#include <vtkNew.h>
+#include <vtkImageImport.h>
+#include <vtkImageData.h>
+#include <vtkMarchingCubes.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkCell.h>
+#include <vtkTriangle.h>
+#include <vtkPointData.h>
+#include <vtkIdList.h>
+#include <vtkSmartPointer.h>
 #include "widget.h"
 #include "common/VortexLine.h"
 #include "common/FieldLine.h"
 #include "common/Utils.hpp"
+#include "io/GLGPU3DDataset.h"
 
 #ifdef __APPLE__
 #include <OpenGL/glu.h>
@@ -22,17 +34,26 @@ CGLWidget::CGLWidget(const QGLFormat& fmt, QWidget *parent, QGLWidget *sharedWid
     _fovy(30.f), _znear(0.1f), _zfar(10.f), 
     _eye(0, 0, 2.5), _center(0, 0, 0), _up(0, 1, 0), 
     _vortex_render_mode(0), 
-    _enable_inclusions(false)
+    _enable_inclusions(false),
+    _ds(NULL)
 {
 }
 
 CGLWidget::~CGLWidget()
 {
+  if (_ds != NULL)
+    delete _ds;
 }
 
 void CGLWidget::SetDataName(const std::string& dataname)
 {
   _dataname = dataname;
+}
+
+void CGLWidget::OpenGLGPUDataset()
+{
+  _ds = new GLGPU3DDataset;
+  _ds->OpenDataFile(_dataname);
 }
 
 void CGLWidget::LoadTimeStep(int t)
@@ -44,6 +65,11 @@ void CGLWidget::LoadTimeStep(int t)
 
   Clear();
   LoadVortexLines(ss.str());
+
+  if (_ds != NULL) {
+    _ds->LoadTimeStep(t, 0);
+    extractIsosurfaces();
+  }
 }
 
 void CGLWidget::mousePressEvent(QMouseEvent* e)
@@ -80,9 +106,27 @@ void CGLWidget::keyPressEvent(QKeyEvent* e)
     updateGL();
     break;
 
+  case Qt::Key_S:
+    _vortex_render_mode = 2; // isosurfaces
+    updateGL();
+    break;
+
   case Qt::Key_I:
     _enable_inclusions = !_enable_inclusions;
     updateGL();
+    break;
+
+  case Qt::Key_C: // camera I/O
+    if (e->modifiers() == Qt::ShiftModifier) { // save camera
+      QString filename = QFileDialog::getSaveFileName(this, "save trackball", "./", "*.trac");
+      if (filename.isEmpty()) break;
+      _trackball.saveStatus(filename.toStdString().c_str());
+    } else { // load camera
+      QString filename = QFileDialog::getOpenFileName(this, "open trackball", "./", "*.trac");
+      if (filename.isEmpty()) break;
+      _trackball.loadStatus(filename.toStdString().c_str());
+      updateGL();
+    }
     break;
 
   default: break; 
@@ -128,6 +172,7 @@ void CGLWidget::initializeGL()
     // glLightfv(GL_LIGHT0, GL_POSITION, pos); 
     glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, dir); 
     glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE); 
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE); 
 
     glEnable(GL_NORMALIZE); 
     glEnable(GL_COLOR_MATERIAL); 
@@ -319,6 +364,35 @@ void CGLWidget::renderVortexTubes()
   glPopAttrib();
 }
 
+void CGLWidget::renderIsosurfaces()
+{
+  glPushAttrib(GL_ENABLE_BIT);
+  glEnable(GL_DEPTH_TEST); 
+  glEnable(GL_LIGHTING); 
+  glEnable(GL_LIGHT0); 
+
+  glEnable(GL_NORMALIZE);
+
+  glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT); 
+  glEnableClientState(GL_VERTEX_ARRAY); 
+  glEnableClientState(GL_NORMAL_ARRAY); 
+
+  glColor4ub(237, 28, 36, 255);
+  glVertexPointer(3, GL_FLOAT, 0, s_triangle_vertices.data());
+  glNormalPointer(GL_FLOAT, 0, s_triangle_normals.data());
+  glDrawElements(GL_TRIANGLES, s_triangle_indices.size(), 
+      GL_UNSIGNED_INT, s_triangle_indices.data()); 
+  
+  glColor4ub(250, 168, 25, 60);
+  glVertexPointer(3, GL_FLOAT, 0, s_triangle_vertices1.data());
+  glNormalPointer(GL_FLOAT, 0, s_triangle_normals1.data());
+  glDrawElements(GL_TRIANGLES, s_triangle_indices1.size(), 
+      GL_UNSIGNED_INT, s_triangle_indices1.data()); 
+
+  glPopClientAttrib(); 
+  glPopAttrib();
+}
+
 void CGLWidget::paintGL()
 {
   glClearColor(1, 1, 1, 0); 
@@ -349,14 +423,16 @@ void CGLWidget::paintGL()
 
   if (_vortex_render_mode == 0)
     renderVortexTubes();
-  else 
+  else if (_vortex_render_mode == 1)
     renderVortexLines();
+  else if (_vortex_render_mode == 2)
+    renderIsosurfaces();
 
   if (_enable_inclusions)
     renderInclusions();
 
   // renderVortexArrows();
-  renderVortexIds();
+  // renderVortexIds();
 
   renderFieldLines();
 
@@ -644,4 +720,91 @@ void CGLWidget::updateVortexTubes(int nPatches, float radius)
       }
     }
   }
+}
+
+void CGLWidget::extractIsosurfaces()
+{
+  const double isovalue = 0.2, 
+               isovalue1 = 0.6;
+  const double *re = _ds->GetDataPointerRe(), 
+               *im = _ds->GetDataPointerIm();
+  const int count = _ds->dims()[0] * _ds->dims()[1] * _ds->dims()[2];
+  double *rho = (double*)malloc(sizeof(double)*count);
+
+  for (int i=0; i<count; i++)
+    rho[i] = sqrt(re[i]*re[i] + im[i]*im[i]);
+
+  vtkNew<vtkImageImport> import;
+  import->SetDataScalarTypeToDouble();
+  import->SetDataExtent(0, _ds->dims()[0]-1, 0, _ds->dims()[1]-1, 0, _ds->dims()[2]-1);
+  import->SetWholeExtent(0, _ds->dims()[0]-1, 0, _ds->dims()[1]-1, 0, _ds->dims()[2]-1);
+  import->SetDataOrigin(_ds->Origins()[0], _ds->Origins()[1], _ds->Origins()[2]);
+  import->SetDataSpacing(_ds->CellLengths()[0], _ds->CellLengths()[1], _ds->CellLengths()[2]);
+  import->SetImportVoidPointer(rho);
+  import->Update();
+
+  vtkNew<vtkMarchingCubes> surface;
+  surface->SetInputData(import->GetOutput());
+  surface->ComputeNormalsOn();
+  surface->SetValue(0, isovalue);
+  surface->Update();
+
+  {
+    vtkPolyData* poly = surface->GetOutput();
+
+    s_triangle_vertices.clear(); 
+    s_triangle_normals.clear();
+    s_triangle_indices.clear();
+
+    vtkDataArray* normals = poly->GetPointData()->GetNormals();
+
+    for (int i=0; i<poly->GetNumberOfPoints(); i++) {
+      s_triangle_vertices.push_back(poly->GetPoint(i)[0]); 
+      s_triangle_vertices.push_back(poly->GetPoint(i)[1]); 
+      s_triangle_vertices.push_back(poly->GetPoint(i)[2]); 
+      s_triangle_normals.push_back(normals->GetComponent(i, 0));
+      s_triangle_normals.push_back(normals->GetComponent(i, 1));
+      s_triangle_normals.push_back(normals->GetComponent(i, 2));
+    }
+
+    for (int i=0; i<poly->GetNumberOfCells(); i++) {
+      vtkSmartPointer<vtkIdList> list = vtkSmartPointer<vtkIdList>::New();
+      poly->GetCellPoints(i, list);
+      s_triangle_indices.push_back(list->GetId(0));
+      s_triangle_indices.push_back(list->GetId(1));
+      s_triangle_indices.push_back(list->GetId(2));
+    }
+  }
+  
+  surface->SetValue(0, isovalue1);
+  surface->Update();
+  
+  {
+    vtkPolyData* poly = surface->GetOutput();
+
+    s_triangle_vertices1.clear(); 
+    s_triangle_normals1.clear();
+    s_triangle_indices1.clear();
+
+    vtkDataArray* normals = poly->GetPointData()->GetNormals();
+
+    for (int i=0; i<poly->GetNumberOfPoints(); i++) {
+      s_triangle_vertices1.push_back(poly->GetPoint(i)[0]); 
+      s_triangle_vertices1.push_back(poly->GetPoint(i)[1]); 
+      s_triangle_vertices1.push_back(poly->GetPoint(i)[2]); 
+      s_triangle_normals1.push_back(normals->GetComponent(i, 0));
+      s_triangle_normals1.push_back(normals->GetComponent(i, 1));
+      s_triangle_normals1.push_back(normals->GetComponent(i, 2));
+    }
+
+    for (int i=0; i<poly->GetNumberOfCells(); i++) {
+      vtkSmartPointer<vtkIdList> list = vtkSmartPointer<vtkIdList>::New();
+      poly->GetCellPoints(i, list);
+      s_triangle_indices1.push_back(list->GetId(0));
+      s_triangle_indices1.push_back(list->GetId(1));
+      s_triangle_indices1.push_back(list->GetId(2));
+    }
+  }
+  
+  free(rho);
 }

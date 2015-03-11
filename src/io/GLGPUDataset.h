@@ -22,6 +22,9 @@ public:
 
   void PrintInfo(int slot=0) const;
 
+  const double* GetDataPointerRe() const {return _re;}
+  const double* GetDataPointerIm() const {return _im;}
+
 private:
   bool OpenBDATDataFile(const std::string& filename, int slot=0);
   bool OpenLegacyDataFile(const std::string& filename, int slot=0);
