@@ -129,6 +129,14 @@ void CGLWidget::keyPressEvent(QKeyEvent* e)
     }
     break;
 
+  case Qt::Key_P: // save to PNG
+  {
+    QString filename = QFileDialog::getSaveFileName(this, "save to png", "./", "*.png");
+    if (filename.isEmpty()) return;
+    QImage img = grabFrameBuffer(false);
+    img.save(filename);
+  }
+
   default: break; 
   }
 }
