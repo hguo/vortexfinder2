@@ -20,6 +20,7 @@ class QWheelEvent;
 class PBDataInfo;
 
 class GLGPUDataset;
+struct ctx_rc;
 
 /* 
  * \class   CGLWidget
@@ -102,6 +103,10 @@ private: // isosurface rendering
   std::vector<GLuint> s_triangle_indices;
   std::vector<GLfloat> s_triangle_vertices1, s_triangle_normals1;
   std::vector<GLuint> s_triangle_indices1;
+
+private: // volume rendering
+  struct ctx_rc *_rc;
+  float *_rc_fb;
 
 private: // arros (cones)
   QVector<QVector3D> _cones_pos, _cones_dir;

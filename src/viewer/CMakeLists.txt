@@ -39,6 +39,10 @@ if (WITH_VTK)
   target_link_libraries (glviewer ${VTK_LIBRARIES})
 endif ()
 
+if (WITH_CUDA)
+  target_link_libraries (glviewer glvolren)
+endif ()
+
 add_executable (viewer main.cpp)
 target_link_libraries (viewer glviewer)
 

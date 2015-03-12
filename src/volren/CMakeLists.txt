@@ -4,5 +4,5 @@ set (volren_sources
   rc.cu)
 
 if (WITH_CUDA)
-  cuda_add_library (gl_volren ${volren_sources})
+  cuda_add_library (glvolren ${volren_sources})
 endif ()

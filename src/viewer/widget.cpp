@@ -22,6 +22,10 @@
 #include <vtkSmartPointer.h>
 #endif
 
+#ifdef WITH_CUDA
+#include "volren/rc.h"
+#endif
+
 #ifdef __APPLE__
 #include <OpenGL/glu.h>
 #include <GLUT/glut.h>
@@ -38,6 +42,7 @@ CGLWidget::CGLWidget(const QGLFormat& fmt, QWidget *parent, QGLWidget *sharedWid
     _eye(0, 0, 2.5), _center(0, 0, 0), _up(0, 1, 0), 
     _vortex_render_mode(0), 
     _enable_inclusions(false),
+    _rc(NULL), _rc_fb(NULL),
     _ds(NULL)
 {
 }
@@ -46,6 +51,11 @@ CGLWidget::~CGLWidget()
 {
   if (_ds != NULL)
     delete _ds;
+
+#ifdef WITH_CUDA
+  rc_destroy_ctx(&_rc);
+  free(_rc_fb);
+#endif
 }
 
 void CGLWidget::SetDataName(const std::string& dataname)
@@ -191,6 +201,16 @@ void CGLWidget::initializeGL()
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shiness); 
   }
 
+  // initialize volume renderer
+#ifdef WITH_CUDA
+  {
+    rc_create_ctx(&_rc);
+    rc_set_kernel(_rc, RCKERNEL_FLOAT);
+    rc_set_stepsize(_rc, 0.5);
+    _rc_fb = (float*)malloc(sizeof(float)*2048*2048);
+  }
+#endif
+
   CHECK_GLERROR(); 
 }
 
@@ -198,7 +218,11 @@ void CGLWidget::resizeGL(int w, int h)
 {
   _trackball.reshape(w, h); 
   glViewport(0, 0, w, h);
-  
+
+#ifdef WITH_CUDA
+  rc_set_viewport(_rc, 0, 0, w, h);
+#endif
+
   CHECK_GLERROR(); 
 }
 
