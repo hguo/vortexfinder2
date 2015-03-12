@@ -3,6 +3,13 @@
 #include <QDebug>
 #include <fstream>
 #include <iostream>
+#include "widget.h"
+#include "common/VortexLine.h"
+#include "common/FieldLine.h"
+#include "common/Utils.hpp"
+#include "io/GLGPU3DDataset.h"
+
+#ifdef WITH_VTK
 #include <vtkNew.h>
 #include <vtkImageImport.h>
 #include <vtkImageData.h>
@@ -13,11 +20,7 @@
 #include <vtkPointData.h>
 #include <vtkIdList.h>
 #include <vtkSmartPointer.h>
-#include "widget.h"
-#include "common/VortexLine.h"
-#include "common/FieldLine.h"
-#include "common/Utils.hpp"
-#include "io/GLGPU3DDataset.h"
+#endif
 
 #ifdef __APPLE__
 #include <OpenGL/glu.h>
@@ -732,6 +735,7 @@ void CGLWidget::updateVortexTubes(int nPatches, float radius)
 
 void CGLWidget::extractIsosurfaces()
 {
+#ifdef WITH_VTK
   const double isovalue = 0.2, 
                isovalue1 = 0.6;
   const double *re = _ds->GetDataPointerRe(), 
@@ -815,4 +819,5 @@ void CGLWidget::extractIsosurfaces()
   }
   
   free(rho);
+#endif
 }

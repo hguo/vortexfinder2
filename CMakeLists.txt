@@ -6,6 +6,7 @@ option (WITH_CUDA "Build with CUDA" OFF)
 option (WITH_LIBMESH "Build with libMesh" ON) 
 option (WITH_PNETCDF "Build with parallel-netcdf" OFF)
 option (WITH_QT "Build with Qt" ON)
+option (WITH_CUDA "Build with CUDA" OFF)
 option (WITH_VTK "Build with VTK" OFF)
 
 set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake-modules)
@@ -48,19 +49,17 @@ endif ()
 
 if (WITH_QT)
   find_package (OpenGL REQUIRED)
+  find_package (GLEW REQUIRED)
   find_package (GLUT REQUIRED)
   find_package (Qt4 REQUIRED COMPONENTS QtCore QtGui QtOpenGL)
-  include (${QT_USE_FILE})
-  include_directories (
-    ${QT_INCLUDE_DIR}
-    ${OPENGL_INCLUDE_DIR}
-    ${GLUT_INCLUDE_DIR}
-  )
 endif ()
 
 if (WITH_VTK)
   find_package (VTK REQUIRED)
-  include (${VTK_USE_FILE})
+endif ()
+
+if (WITH_CUDA)
+  find_package (CUDA REQUIRED)
 endif ()
 
 subdirs (src)

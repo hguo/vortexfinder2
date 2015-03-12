@@ -9,7 +9,7 @@ configure_file (def.h.cmake def.h)
 subdirs (common io extractor)
 
 if (WITH_QT)
-  subdirs (viewer)
+  subdirs (volren viewer)
 endif ()
 
 if (WITH_TESTS)
