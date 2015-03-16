@@ -56,12 +56,17 @@ void CStorylineWidget::SetSequenceMap(const VortexSequenceMap *vmap)
 
     if (fit_slot>=0) {
       _slots[fit_slot].insert(i);
+      _slotmap[i] = fit_slot;
     } else {
       std::set<int> slot;
       slot.insert(i);
       _slots.push_back(slot);
+      int slot_id = _slots.size()-1;
+      _slotmap[i] = slot_id;
     }
   }
+
+  // pass 2
 
   fprintf(stderr, "nlines=%d, nslots=%d\n", vmap->size(), _slots.size());
 }
@@ -107,20 +112,34 @@ void CStorylineWidget::renderLines()
 {
   const int nlines = _vmap->size();
 
-  for (int i=0; i<_slots.size(); i++) {
-    for (std::set<int>::iterator it = _slots[i].begin(); it != _slots[i].end(); it ++) {
-      const int k = *it;
-      // fprintf(stderr, "slot=%d, id=%d\n", i, k);
+  for (std::map<int, int>::iterator it = _slotmap.begin(); it != _slotmap.end(); it++) {
+    const int gid = it->first, slot = it->second;
 
-      const float x0 = _rect_chart.x() + (_vmap->at(k).ts - _vmap->ts())  *_rect_chart.width()/_vmap->tl();
-      const float x1 = _rect_chart.x() + (_vmap->at(k).ts + _vmap->at(k).tl - _vmap->ts())*_rect_chart.width()/_vmap->tl();
-      // const float y = _rect_chart.y() + k*_rect_chart.height()/nlines;
-      const float y = _rect_chart.y() + i*_rect_chart.height()/(_slots.size()-1);
+    // node
+    const float x0 = _rect_chart.x() + (_vmap->at(gid).ts - _vmap->ts())  *_rect_chart.width()/_vmap->tl();
+    const float x1 = _rect_chart.x() + (_vmap->at(gid).ts + _vmap->at(gid).tl - _vmap->ts())*_rect_chart.width()/_vmap->tl();
+    const float y = _rect_chart.y() + slot*_rect_chart.height()/(_slots.size()-1);
 
-      glColor3f(0, 0, 0);
+    glColor3f(0, 0, 0);
+    glBegin(GL_LINES);
+    glVertex2f(x0, y);
+    glVertex2f(x1, y);
+    glEnd();
+
+    QString text = QString("%1").arg(gid);
+    renderText(x0, y, 0, text);
+
+    // right link
+    for (int i=0; i<_vmap->at(gid).links_right.size(); i++) {
+      const int gid1 = _vmap->at(gid).links_right[i], 
+                slot1 = _slotmap[gid1];
+      const float x2 = _rect_chart.x() + (_vmap->at(gid1).ts - _vmap->ts()) * _rect_chart.width()/_vmap->tl(), 
+                  y2 = _rect_chart.y() + slot1*_rect_chart.height()/(_slots.size()-1);
+      // fprintf(stderr, "gid1=%d, slot1=%d\n", gid1, slot1);
+
       glBegin(GL_LINES);
-      glVertex2f(x0, y);
       glVertex2f(x1, y);
+      glVertex2f(x1, y2);
       glEnd();
     }
   }

@@ -80,6 +80,15 @@ void VortexSequenceMap::Construct(const VortexTransition& vt, int ts, int tl)
           int gid = NewVortexSequence(i+1);
           _seqmap[std::make_tuple(i+1, r)] = gid;
         }
+
+        // right links
+        for (std::set<int>::iterator it=lhs.begin(); it!=lhs.end(); it++) {
+          int l = *it;
+          int gid = _seqmap[std::make_tuple(i, l)];
+          for (std::set<int>::iterator it1=rhs.begin(); it1!=rhs.end(); it1++) {
+            at(gid).links_right.push_back(_seqmap[std::make_tuple(i+1, *it1)]);
+          }
+        }
       }
     
 #if 0

@@ -31,6 +31,7 @@ private:
 
 private:
   std::vector<std::set<int> > _slots;
+  std::map<int, int> _slotmap;
 };
 
 #endif

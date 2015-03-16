@@ -5,11 +5,19 @@
 #include <vector>
 #include <map>
 
+enum {
+  VORTEX_EVENT_BIRTH = 0,
+  VORTEX_EVENT_DEATH = 1,
+  VORTEX_EVENT_MERGE = 2,
+  VORTEX_EVENT_SPLIT = 3,
+  VORTEX_EVENT_RECOMBINATION = 4
+};
+
 struct VortexSequence {
 public:
   int ts, tl; // start and duration
   int event_left, event_right;
-  std::vector<int> links_left, links_right;
+  std::vector<int> links_right;
 };
 
 class VortexSequenceMap : public std::vector<VortexSequence>
