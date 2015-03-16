@@ -507,6 +507,12 @@ void VortexExtractor::VortexObjectsToVortexLines(
   }
 }
 
+int VortexExtractor::NewGlobalVortexId()
+{
+  static int id = 0;
+  return id++;
+}
+
 // only relate ids
 void VortexExtractor::TraceOverTime()
 {
@@ -554,7 +560,7 @@ next:
     int sum = 0;
     int j1;
     for (int j=0; j<n1; j++) {
-      if (match[i*n1+j]) {
+      if (tm(i, j)) {
         sum ++;
         j1 = j;
       }
@@ -562,6 +568,7 @@ next:
     if (sum == 1) { // link the two
       _vortex_objects1[j1].id = _vortex_objects[i].id;
     } else {
+      _vortex_objects1[j1].id = NewGlobalVortexId();
       fprintf(stderr, "special event detected, vid0=%d\n", i);
     }
   }
@@ -584,6 +591,11 @@ next:
     }
   }
 #endif
+}
+
+void VortexExtractor::AnalyzeTransition()
+{
+
 }
 
 void VortexExtractor::RotateTimeSteps()

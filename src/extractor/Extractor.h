@@ -34,6 +34,7 @@ public:
   void TraceVirtualCells();
   void TraceOverSpace(int slot=0);
   void TraceOverTime();
+  void AnalyzeTransition();
 
   void RelateOverTime();
 

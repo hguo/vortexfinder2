@@ -9,6 +9,10 @@ public:
   VortexTransition();
   ~VortexTransition();
 
+  void LoadFromFile(const std::string &dataname, int ts, int tl);
+
+  VortexTransitionMatrix at(int i) const;
+
 private:
   int _num_global_vortices;
 };

@@ -22,6 +22,8 @@ GLDataset::~GLDataset()
 
 void GLDataset::RotateTimeSteps()
 {
+  GLDatasetBase::RotateTimeSteps();
+
   double k = _Kex;
   _Kex = _Kex1; _Kex1 = k;
 

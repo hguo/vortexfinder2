@@ -467,7 +467,7 @@ void CGLWidget::paintGL()
     renderInclusions();
 
   // renderVortexArrows();
-  // renderVortexIds();
+  renderVortexIds();
 
   renderFieldLines();
 

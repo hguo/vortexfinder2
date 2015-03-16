@@ -11,6 +11,7 @@
 #include "trackball.h"
 #include "common/Inclusions.h"
 #include "common/DataInfo.pb.h"
+#include "common/VortexTransition.h"
 
 class QMConnector; 
 class QMouseEvent;
