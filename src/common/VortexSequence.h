@@ -18,11 +18,15 @@ public:
   void Construct(const VortexTransition& vt, int ts, int tl);
   int SequenceID(int t, int lid) const;
 
+  int ts() const {return _ts;}
+  int tl() const {return _tl;}
+
 private:
   int NewVortexSequence(int ts);
 
 private: 
   std::map<std::tuple<int, int>, int> _seqmap; // <time, lid>, gid
+  int _ts, _tl;
 };
 
 #endif

@@ -23,6 +23,9 @@ int VortexSequenceMap::NewVortexSequence(int ts)
 
 void VortexSequenceMap::Construct(const VortexTransition& vt, int ts, int tl)
 {
+  _ts = ts;
+  _tl = tl;
+
   for (int i=ts; i<ts+tl-1; i++) {
     // fprintf(stderr, "=====t=%d\n", i);
 
