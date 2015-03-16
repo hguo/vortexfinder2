@@ -7,11 +7,11 @@
 int main(int argc, char **argv)
 {
   if (argc < 4) {
-    fprintf(stderr, "Usage: %s <filename> <ts> <tl>\n", argv[0]);
+    fprintf(stderr, "Usage: %s <dataname> <ts> <tl>\n", argv[0]);
     return EXIT_FAILURE;
   }
 
-  const std::string filename = argv[1];
+  const std::string dataname = argv[1];
   const int ts = atoi(argv[2]), 
             tl = atoi(argv[3]);
 
@@ -22,9 +22,16 @@ int main(int argc, char **argv)
   fmt.setSamples(16); 
   QGLFormat::setDefaultFormat(fmt); 
 
+  VortexTransition vt;
+  VortexSequenceMap vmap;
+  for (int i=ts; i<ts+tl-1; i++) 
+    vt.LoadFromFile(dataname, i, i+1);
+  vmap.Construct(vt, ts, tl);
+
   CGLWidget *widget = new CGLWidget;
   widget->show();
-  widget->SetData(filename, ts, tl);
+  widget->SetData(dataname, ts, tl);
+  widget->SetSequenceMap(&vmap);
   widget->LoadTimeStep(ts);
 
   return app.exec(); 

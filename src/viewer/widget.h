@@ -43,6 +43,9 @@ public:
 
   void SetData(const std::string& dataname, int ts, int tl);
   void LoadTimeStep(int t);
+
+  void SetSequenceMap(const VortexSequenceMap* vmap);
+
   void Clear();
   
   void OpenGLGPUDataset();
@@ -83,8 +86,9 @@ private: //data
   int _timestep;
   int _ts, _tl;
 
-  VortexTransition _vt;
-  VortexSequenceMap _vseq;
+  // VortexTransition _vt;
+  // VortexSequenceMap _vseq;
+  const VortexSequenceMap *_vmap;
 
 private: // camera
   const float _fovy, _znear, _zfar; 
