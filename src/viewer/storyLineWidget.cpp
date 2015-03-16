@@ -26,9 +26,9 @@ CStorylineWidget::~CStorylineWidget()
 
 static bool conflict(int ts0, int tl0, int ts, int tl, int gap = 2)
 {
-  if (ts + tl + gap <= ts0) return true;
-  else if (ts >= ts0 + tl0 + gap) return true;
-  return false;
+  if (ts + tl + gap <= ts0) return false;
+  else if (ts >= ts0 + tl0 + gap) return false;
+  return true;
 }
 
 void CStorylineWidget::SetSequenceMap(const VortexSequenceMap *vmap)
@@ -37,12 +37,13 @@ void CStorylineWidget::SetSequenceMap(const VortexSequenceMap *vmap)
 
   // pass 1
   for (int i=0; i<_vmap->size(); i++) {
-    bool fit = true;
     int fit_slot = -1;
+    
     for (int j=0; j<_slots.size(); j++) {
+      bool fit = true;
       for (std::set<int>::iterator it = _slots[j].begin(); it != _slots[j].end(); it ++) {
         int i0 = *it;
-        if (conflict(vmap->at(i0).ts, vmap->at(i0).tl, vmap->at(i).ts, vmap->at(i).tl), 10) {
+        if (conflict(vmap->at(i0).ts, vmap->at(i0).tl, vmap->at(i).ts, vmap->at(i).tl)) {
           fit = false;
           break;
         }
@@ -53,11 +54,7 @@ void CStorylineWidget::SetSequenceMap(const VortexSequenceMap *vmap)
       }
     }
 
-    if (fit_slot<0) fit = false;
-    // fprintf(stderr, "fit=%d, slot=%d\n", fit, fit_slot);
-
-next:
-    if (fit) {
+    if (fit_slot>=0) {
       _slots[fit_slot].insert(i);
     } else {
       std::set<int> slot;
@@ -117,7 +114,8 @@ void CStorylineWidget::renderLines()
 
       const float x0 = _rect_chart.x() + (_vmap->at(k).ts - _vmap->ts())  *_rect_chart.width()/_vmap->tl();
       const float x1 = _rect_chart.x() + (_vmap->at(k).ts + _vmap->at(k).tl - _vmap->ts())*_rect_chart.width()/_vmap->tl();
-      const float y = _rect_chart.y() + k*_rect_chart.height()/nlines;
+      // const float y = _rect_chart.y() + k*_rect_chart.height()/nlines;
+      const float y = _rect_chart.y() + i*_rect_chart.height()/(_slots.size()-1);
 
       glColor3f(0, 0, 0);
       glBegin(GL_LINES);

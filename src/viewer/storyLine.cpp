@@ -22,8 +22,7 @@ int main(int argc, char **argv)
   
   VortexTransition vt;
   VortexSequenceMap vmap;
-  for (int i=ts; i<ts+tl-1; i++) 
-    vt.LoadFromFile(dataname, i, i+1);
+  vt.LoadFromFile(dataname, ts, tl);
   vmap.Construct(vt, ts, tl);
 
   CStorylineWidget *widget = new CStorylineWidget;

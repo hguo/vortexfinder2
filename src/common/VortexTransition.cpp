@@ -19,6 +19,8 @@ void VortexTransition::LoadFromFile(const std::string& dataname, int ts, int tl)
     VortexTransitionMatrix tm;
     if (tm.LoadFromFile(ss.str()))
       insert(std::make_pair(i, tm));
+    else 
+      fprintf(stderr, "cannot open file %s\n", ss.str().c_str());
   }
 }
 
