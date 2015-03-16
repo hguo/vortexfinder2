@@ -11,7 +11,7 @@
 #include "trackball.h"
 #include "common/Inclusions.h"
 #include "common/DataInfo.pb.h"
-#include "common/VortexTransition.h"
+#include "common/VortexSequence.h"
 
 class QMConnector; 
 class QMouseEvent;
@@ -36,12 +36,12 @@ public:
   CGLWidget(const QGLFormat& fmt=QGLFormat::defaultFormat(), QWidget *parent=NULL, QGLWidget *sharedWidget=NULL); 
   ~CGLWidget(); 
 
-  void LoadVortexLines(const std::string& filename); 
-  void LoadVortexLinesFromTextFile(const std::string& filename);
+  void LoadVortexLines();
+  void LoadVortexLinesFromTextFile(const std::string& filename); // legacy
   void LoadFieldLines(const std::string& filename);
   void LoadInclusionsFromTextFile(const std::string& filename);
 
-  void SetDataName(const std::string& dataname);
+  void SetData(const std::string& dataname, int ts, int tl);
   void LoadTimeStep(int t);
   void Clear();
   
@@ -81,6 +81,10 @@ private: //data
   PBDataInfo _data_info;
   std::string _dataname;
   int _timestep;
+  int _ts, _tl;
+
+  VortexTransition _vt;
+  VortexSequenceMap _vseq;
 
 private: // camera
   const float _fovy, _znear, _zfar; 

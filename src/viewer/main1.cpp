@@ -6,13 +6,14 @@
 
 int main(int argc, char **argv)
 {
-  if (argc < 3) {
-    fprintf(stderr, "Usage: %s <filename> <timestep>\n", argv[0]);
+  if (argc < 4) {
+    fprintf(stderr, "Usage: %s <filename> <ts> <tl>\n", argv[0]);
     return EXIT_FAILURE;
   }
 
   const std::string filename = argv[1];
-  int timestep = atoi(argv[2]);
+  const int ts = atoi(argv[2]), 
+            tl = atoi(argv[3]);
 
   QApplication app(argc, argv); 
 
@@ -23,9 +24,8 @@ int main(int argc, char **argv)
 
   CGLWidget *widget = new CGLWidget;
   widget->show();
-  widget->SetDataName(filename);
-  // widget->OpenGLGPUDataset();
-  widget->LoadTimeStep(timestep);
+  widget->SetData(filename, ts, tl);
+  widget->LoadTimeStep(ts);
 
   return app.exec(); 
 }

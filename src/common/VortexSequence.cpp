@@ -4,7 +4,7 @@
 
 int VortexSequenceMap::SequenceID(int t, int lid) const
 {
-  std::tuple<int, int> key(t, lid);
+  std::tuple<int, int> key = std::make_tuple(t, lid);
   std::map<std::tuple<int,int>,int>::const_iterator it = _seqmap.find(key);
   if (it == _seqmap.end())
     return -1;
@@ -24,6 +24,8 @@ int VortexSequenceMap::NewVortexSequence(int ts)
 void VortexSequenceMap::Construct(const VortexTransition& vt, int ts, int tl)
 {
   for (int i=ts; i<ts+tl-1; i++) {
+    // fprintf(stderr, "=====t=%d\n", i);
+
     VortexTransitionMatrix tm = vt.at(i);
     assert(tm.Valid());
 
@@ -128,7 +130,9 @@ void VortexSequenceMap::Construct(const VortexTransition& vt, int ts, int tl)
     }
   }
 
+#if 0
   for (int i=0; i<size(); i++) 
     fprintf(stderr, "gid=%d, ts=%d, tl=%d\n",
         i, at(i).ts, at(i).tl);
+#endif
 }

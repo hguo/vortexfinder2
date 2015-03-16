@@ -42,6 +42,7 @@ CGLWidget::CGLWidget(const QGLFormat& fmt, QWidget *parent, QGLWidget *sharedWid
     _eye(0, 0, 2.5), _center(0, 0, 0), _up(0, 1, 0), 
     _vortex_render_mode(0), 
     _enable_inclusions(false),
+    _ts(0), _tl(0), 
     _rc(NULL), _rc_fb(NULL),
     _ds(NULL)
 {
@@ -58,9 +59,16 @@ CGLWidget::~CGLWidget()
 #endif
 }
 
-void CGLWidget::SetDataName(const std::string& dataname)
+void CGLWidget::SetData(const std::string& dataname, int ts, int tl)
 {
   _dataname = dataname;
+  _ts = ts; 
+  _tl = tl;
+
+  for (int i=ts; i<ts+tl-1; i++) 
+    _vt.LoadFromFile(dataname, i, i+1);
+
+  _vseq.Construct(_vt, ts, tl);
 }
 
 void CGLWidget::OpenGLGPUDataset()
@@ -71,14 +79,12 @@ void CGLWidget::OpenGLGPUDataset()
 
 void CGLWidget::LoadTimeStep(int t)
 {
+  if (t<_ts || t>=_ts+_tl) return;
   _timestep = t;
   
-  stringstream ss;
-  ss << _dataname << ".vlines." << t;
-
   Clear();
-  LoadVortexLines(ss.str());
-
+  LoadVortexLines();
+  
   if (_ds != NULL) {
     _ds->LoadTimeStep(t, 0);
     extractIsosurfaces();
@@ -525,17 +531,26 @@ void CGLWidget::Clear()
   _cones_color.clear();
 }
 
-void CGLWidget::LoadVortexLines(const std::string& filename)
+void CGLWidget::LoadVortexLines()
 {
+  stringstream ss;
+  ss << _dataname << ".vlines." << _timestep;
+  const std::string filename = ss.str();
+
   std::string info_bytes;
   std::vector<VortexLine> vortex_liness;
   if (!::LoadVortexLines(vortex_liness, info_bytes, filename))
     return;
 
-  fprintf(stderr, "Loaded vortex line file from %s\n", filename.c_str());
-
   if (info_bytes.length()>0) 
     _data_info.ParseFromString(info_bytes);
+  
+  for (int i=0; i<vortex_liness.size(); i++) {
+    vortex_liness[i].gid = _vseq.SequenceID(_timestep, vortex_liness[i].id);
+    // fprintf(stderr, "t=%d, lid=%d, gid=%d\n", _timestep, vortex_liness[i].id, vortex_liness[i].gid);
+  }
+  
+  fprintf(stderr, "Loaded vortex line file from %s\n", filename.c_str());
 
   const double O[3] = {_data_info.ox(), _data_info.oy(), _data_info.oz()},
                L[3] = {_data_info.lx(), _data_info.ly(), _data_info.lz()};
