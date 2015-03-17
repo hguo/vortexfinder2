@@ -23,14 +23,13 @@ int main(int argc, char **argv)
   QGLFormat::setDefaultFormat(fmt); 
 
   VortexTransition vt;
-  VortexSequenceMap vmap;
   vt.LoadFromFile(dataname, ts, tl);
-  vmap.Construct(vt, ts, tl);
+  vt.ConstructSequence();
 
   CGLWidget *widget = new CGLWidget;
   widget->show();
   widget->SetData(dataname, ts, tl);
-  widget->SetSequenceMap(&vmap);
+  widget->SetVortexTransition(&vt);
   widget->LoadTimeStep(ts);
 
   return app.exec(); 

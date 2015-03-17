@@ -44,7 +44,7 @@ CGLWidget::CGLWidget(const QGLFormat& fmt, QWidget *parent, QGLWidget *sharedWid
     _enable_inclusions(false),
     _ts(0), _tl(0), 
     _rc(NULL), _rc_fb(NULL),
-    _ds(NULL), _vmap(NULL)
+    _ds(NULL), _vt(NULL)
 {
 }
 
@@ -66,9 +66,9 @@ void CGLWidget::SetData(const std::string& dataname, int ts, int tl)
   _tl = tl;
 }
 
-void CGLWidget::SetSequenceMap(const VortexSequenceMap *vmap)
+void CGLWidget::SetVortexTransition(const VortexTransition *vt)
 {
-  _vmap = vmap;
+  _vt = vt;
 }
 
 void CGLWidget::OpenGLGPUDataset()
@@ -546,7 +546,7 @@ void CGLWidget::LoadVortexLines()
     _data_info.ParseFromString(info_bytes);
   
   for (int i=0; i<vortex_liness.size(); i++) {
-    vortex_liness[i].gid = _vmap->SequenceID(_timestep, vortex_liness[i].id);
+    vortex_liness[i].gid = _vt->SequenceIdx(_timestep, vortex_liness[i].id);
     // fprintf(stderr, "t=%d, lid=%d, gid=%d\n", _timestep, vortex_liness[i].id, vortex_liness[i].gid);
   }
   

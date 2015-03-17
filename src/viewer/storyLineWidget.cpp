@@ -14,7 +14,7 @@
 #endif
 
 CStorylineWidget::CStorylineWidget(const QGLFormat& fmt, QWidget *parent, QGLWidget *sharedWidget) :
-  _vmap(NULL)
+  _vt(NULL)
 {
 
 }
@@ -31,10 +31,11 @@ static bool conflict(int ts0, int tl0, int ts, int tl, int gap = 2)
   return true;
 }
 
-void CStorylineWidget::SetSequenceMap(const VortexSequenceMap *vmap)
+void CStorylineWidget::SetVortexTrasition(const VortexTransition *vt)
 {
-  _vmap = vmap;
+  _vt = vt;
 
+#if 0
   // pass 1
   for (int i=0; i<_vmap->size(); i++) {
     int fit_slot = -1;
@@ -69,6 +70,7 @@ void CStorylineWidget::SetSequenceMap(const VortexSequenceMap *vmap)
   // pass 2
 
   fprintf(stderr, "nlines=%d, nslots=%d\n", vmap->size(), _slots.size());
+#endif
 }
 
 void CStorylineWidget::initializeGL()
@@ -110,6 +112,7 @@ void CStorylineWidget::renderRect()
 
 void CStorylineWidget::renderLines()
 {
+#if 0
   const int nlines = _vmap->size();
 
   for (std::map<int, int>::iterator it = _slotmap.begin(); it != _slotmap.end(); it++) {
@@ -143,6 +146,7 @@ void CStorylineWidget::renderLines()
       glEnd();
     }
   }
+#endif
 }
 
 void CStorylineWidget::paintGL()

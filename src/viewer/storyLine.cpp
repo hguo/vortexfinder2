@@ -21,12 +21,11 @@ int main(int argc, char **argv)
   QGLFormat::setDefaultFormat(fmt); 
   
   VortexTransition vt;
-  VortexSequenceMap vmap;
   vt.LoadFromFile(dataname, ts, tl);
-  vmap.Construct(vt, ts, tl);
+  vt.ConstructSequence();
 
   CStorylineWidget *widget = new CStorylineWidget;
-  widget->SetSequenceMap(&vmap);
+  widget->SetVortexTrasition(&vt);
   widget->show();
 
   return app.exec(); 

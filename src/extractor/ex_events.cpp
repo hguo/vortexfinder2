@@ -15,12 +15,8 @@ int main(int argc, char **argv)
 
   VortexTransition vt;
   vt.LoadFromFile(dataname, ts, tl);
+  vt.ConstructSequence();
   vt.SaveToDotFile("dot");
-
-  VortexSequenceMap seq;
-  seq.Construct(vt, ts, tl);
-
-  // ExtractEvents(ts, tl);
   
   return EXIT_SUCCESS; 
 }

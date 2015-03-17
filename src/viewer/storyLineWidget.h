@@ -4,7 +4,7 @@
 #include <QGLWidget>
 #include <QRect>
 #include <set>
-#include "common/VortexSequence.h"
+#include "common/VortexTransition.h"
 
 class CStorylineWidget : public QGLWidget
 {
@@ -14,7 +14,7 @@ public:
   CStorylineWidget(const QGLFormat& fmt=QGLFormat::defaultFormat(), QWidget *parent=NULL, QGLWidget *sharedWidget=NULL);
   ~CStorylineWidget();
 
-  void SetSequenceMap(const VortexSequenceMap *vmap);
+  void SetVortexTrasition(const VortexTransition *vt);
 
 protected:
   void initializeGL();
@@ -27,7 +27,7 @@ protected:
 
 private:
   QRectF _rect_chart;
-  const VortexSequenceMap *_vmap;
+  const VortexTransition *_vt;
 
 private:
   std::vector<std::set<int> > _slots;

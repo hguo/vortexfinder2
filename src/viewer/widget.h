@@ -11,7 +11,7 @@
 #include "trackball.h"
 #include "common/Inclusions.h"
 #include "common/DataInfo.pb.h"
-#include "common/VortexSequence.h"
+#include "common/VortexTransition.h"
 
 class QMConnector; 
 class QMouseEvent;
@@ -44,7 +44,7 @@ public:
   void SetData(const std::string& dataname, int ts, int tl);
   void LoadTimeStep(int t);
 
-  void SetSequenceMap(const VortexSequenceMap* vmap);
+  void SetVortexTransition(const VortexTransition* vt);
 
   void Clear();
   
@@ -86,9 +86,7 @@ private: //data
   int _timestep;
   int _ts, _tl;
 
-  // VortexTransition _vt;
-  // VortexSequenceMap _vseq;
-  const VortexSequenceMap *_vmap;
+  const VortexTransition *_vt;
 
 private: // camera
   const float _fovy, _znear, _zfar; 

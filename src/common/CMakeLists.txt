@@ -5,7 +5,6 @@ set (common_sources
   VortexLine.cpp
   VortexTransitionMatrix.cpp
   VortexTransition.cpp
-  VortexSequence.cpp
   Inclusions.cpp
   FieldLine.cpp
   Puncture.cpp

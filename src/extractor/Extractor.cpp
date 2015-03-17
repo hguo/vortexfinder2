@@ -518,8 +518,8 @@ void VortexExtractor::TraceOverTime()
 {
   const int n0 = _vortex_objects.size(), 
             n1 = _vortex_objects1.size();
-  VortexTransitionMatrix &tm = _vortex_transition[_dataset->TimeStep(0)]; 
-  tm = VortexTransitionMatrix(_dataset->TimeStep(0), _dataset->TimeStep(1), n0, n1);
+  // VortexTransitionMatrix &tm = _vortex_transition[_dataset->TimeStep(0)]; 
+  VortexTransitionMatrix tm(_dataset->TimeStep(0), _dataset->TimeStep(1), n0, n1);
 
   RelateOverTime();
 
@@ -544,6 +544,7 @@ next:
   }
 
   tm.SaveToFile(Dataset()->DataName(), Dataset()->TimeStep(0), Dataset()->TimeStep(1));
+  _vortex_transition.AddMatrix(tm);
 
 #if 0
   std::vector<int> ids0(n0), ids1(n1);

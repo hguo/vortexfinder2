@@ -4,8 +4,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <tuple>
-#include <functional>
 
 class VortexTransitionMatrix {
 public:
