@@ -80,3 +80,19 @@ int& VortexTransitionMatrix::operator()(int i, int j)
 {
   return _match[i*n1() + j];
 }
+
+int VortexTransitionMatrix::colsum(int j) const
+{
+  int sum = 0;
+  for (int i=0; i<n0(); i++)
+    sum += _match[i*n1() + j];
+  return sum;
+}
+
+int VortexTransitionMatrix::rowsum(int i) const 
+{
+  int sum = 0;
+  for (int j=0; j<n1(); j++) 
+    sum += _match[i*n1() + j];
+  return sum;
+}

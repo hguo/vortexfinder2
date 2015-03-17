@@ -14,8 +14,8 @@ int main(int argc, char **argv)
       tl = atoi(argv[3]);
 
   VortexTransition vt;
-  for (int i=ts; i<ts+tl-1; i++) 
-    vt.LoadFromFile(dataname, i, i+1);
+  vt.LoadFromFile(dataname, ts, tl);
+  vt.SaveToDotFile("dot");
 
   VortexSequenceMap seq;
   seq.Construct(vt, ts, tl);

@@ -31,6 +31,9 @@ public: // access
   int n0() const {return _n0;}
   int n1() const {return _n1;}
 
+  int colsum(int j) const;
+  int rowsum(int i) const;
+
 private:
   std::string MatrixFileName(const std::string& dataname, int t0, int t1) const;
 

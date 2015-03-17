@@ -10,11 +10,13 @@ public:
   ~VortexTransition();
 
   void LoadFromFile(const std::string &dataname, int ts, int tl);
+  void SaveToDotFile(const std::string &filename);
 
   VortexTransitionMatrix at(int i) const;
 
 private:
   int _num_global_vortices;
+  int _ts, _tl;
 };
 
 #endif
