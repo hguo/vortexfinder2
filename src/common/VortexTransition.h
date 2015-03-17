@@ -31,6 +31,8 @@ private:
   std::map<int, VortexTransitionMatrix> _matrices;
   std::vector<struct VortexSequence> _seqs;
   std::map<std::tuple<int, int>, int> _seqmap; // <time, lid>, gid
+  std::map<int, int> _nvortices_per_frame;
+  int _max_nvortices_per_frame;
 };
 
 #endif

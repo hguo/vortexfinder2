@@ -23,11 +23,20 @@ void VortexTransition::LoadFromFile(const std::string& dataname, int ts, int tl)
     ss << dataname << ".match." << i << "." << i+1;
 
     VortexTransitionMatrix tm;
-    if (tm.LoadFromFile(ss.str()))
+    if (tm.LoadFromFile(ss.str())) {
       _matrices.insert(std::make_pair(i, tm));
+      _nvortices_per_frame[i] = tm.n0(); 
+      _nvortices_per_frame[i+1] = tm.n1();
+    }
     else 
       fprintf(stderr, "cannot open file %s\n", ss.str().c_str());
   }
+
+  _max_nvortices_per_frame = 0;
+  for (std::map<int, int>::iterator it = _nvortices_per_frame.begin(); it != _nvortices_per_frame.end(); it ++) {
+    _max_nvortices_per_frame = std::max(_max_nvortices_per_frame, it->second);
+  }
+  fprintf(stderr, "max_nvortices_per_frame=%d\n", _max_nvortices_per_frame);
 }
 
 void VortexTransition::SaveToDotFile(const std::string& filename)
@@ -41,6 +50,7 @@ void VortexTransition::SaveToDotFile(const std::string& filename)
   ofs << "rankdir = LR;" << endl;
   ofs << "ranksep =\"1.0 equally\";" << endl;
   ofs << "node [shape=circle];" << endl;
+#if 1
   for (int t=_ts; t<_ts+_tl-1; t++) {
     const VortexTransitionMatrix &tm = _matrices[t];
     for (int i=0; i<tm.n0(); i++) {
@@ -59,6 +69,47 @@ void VortexTransition::SaveToDotFile(const std::string& filename)
     for (int i=0; i<tm.n0(); i++) {
       if (i<tm.n0()-1) ofs << t << "." << i << ", ";
       else ofs << t << "." << i << " }" << endl;
+    }
+  }
+#else
+  // iteration over sequences
+  for (int i=0; i<_seqs.size(); i++) {
+    const VortexSequence &seq = _seqs[i];
+    for (int k=0; k<seq.lids.size(); k++) {
+      const int t = seq.ts + k;
+      const int weight = seq.tl;
+      if (k<seq.lids.size()-1) 
+        ofs << t << "." << seq.lids[k] << "->";
+      else 
+        ofs << t << "." << seq.lids[k] 
+            << " [weight = " << weight << "];" << endl;
+    }
+  }
+  for (int t=_ts; t<_ts+_tl-1; t++) {
+    const int n = _nvortices_per_frame[t];
+    ofs << "{ rank=same; ";
+    for (int i=0; i<n; i++) {
+      if (i<n-1) ofs << t << "." << i << ", ";
+      else ofs << t << "." << i << " }" << endl;
+    }
+  }
+#endif
+  // node colors
+  for (int t=_ts; t<_ts+_tl; t++) {
+    for (int k=0; k<_nvortices_per_frame[t]; k++) {
+      const int nc = 6;
+      int vid = SequenceIdx(t, k);
+      int c = vid % nc;
+      std::string color;
+      
+      if (c == 0) color = "blue";
+      else if (c == 1) color = "green";
+      else if (c == 2) color = "cyan";
+      else if (c == 3) color = "red";
+      else if (c == 4) color = "purple";
+      else if (c == 5) color = "yellow";
+
+      ofs << t << "." << k << " [style=filled, fillcolor=" << color << "];" << endl;
     }
   }
   ofs << "}" << endl;
@@ -138,7 +189,7 @@ void VortexTransition::ConstructSequence()
           for (int j=0; j<n1; j++) 
             if (tm(v, j)>0 && unvisited.find(j+n0) != unvisited.end())
               Q.push_back(j+n0);
-        } else {
+        } else { // right hand side
           for (int i=0; i<n0; i++) 
             if (tm(i, v-n0)>0 && unvisited.find(i) != unvisited.end())
               Q.push_back(i);
@@ -150,10 +201,12 @@ void VortexTransition::ConstructSequence()
         int gid = _seqmap[std::make_tuple(i, l)];
         _seqmap[std::make_tuple(i+1, r)] = gid;
         _seqs[gid].tl ++;
+        _seqs[gid].lids.push_back(r);
       } else { // some events, need re-ID
         for (std::set<int>::iterator it=rhs.begin(); it!=rhs.end(); it++) {
           int r = *it;
           int gid = NewVortexSequence(i+1);
+          _seqs[gid].lids.push_back(r);
           _seqmap[std::make_tuple(i+1, r)] = gid;
         }
 
