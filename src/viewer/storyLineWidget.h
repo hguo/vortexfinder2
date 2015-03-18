@@ -3,6 +3,7 @@
 
 #include <QGLWidget>
 #include <QRect>
+#include <QVector2D>
 #include <set>
 #include "common/VortexTransition.h"
 
@@ -26,12 +27,14 @@ protected:
   void renderRect();
 
 private:
+  void parseLayout();
+
+private:
   QRectF _rect_chart;
   const VortexTransition *_vt;
 
-private:
-  std::vector<std::set<int> > _slots;
-  std::map<int, int> _slotmap;
+  QMap<QPair<int, int>, QVector2D> _coords;
+  float _layout_width, _layout_height;
 };
 
 #endif

@@ -36,10 +36,11 @@ void VortexTransition::LoadFromFile(const std::string& dataname, int ts, int tl)
   for (std::map<int, int>::iterator it = _nvortices_per_frame.begin(); it != _nvortices_per_frame.end(); it ++) {
     _max_nvortices_per_frame = std::max(_max_nvortices_per_frame, it->second);
   }
-  fprintf(stderr, "max_nvortices_per_frame=%d\n", _max_nvortices_per_frame);
+  // fprintf(stderr, "max_nvortices_per_frame=%d\n", _max_nvortices_per_frame);
 }
 
-void VortexTransition::SaveToDotFile(const std::string& filename)
+#define HUMAN_READABLE 0
+void VortexTransition::SaveToDotFile(const std::string& filename) const
 {
   using namespace std;
   ofstream ofs(filename);
@@ -50,25 +51,39 @@ void VortexTransition::SaveToDotFile(const std::string& filename)
   ofs << "rankdir = LR;" << endl;
   ofs << "ranksep =\"1.0 equally\";" << endl;
   ofs << "node [shape=circle];" << endl;
+  // ofs << "node [shape=point];" << endl;
 #if 1
   for (int t=_ts; t<_ts+_tl-1; t++) {
-    const VortexTransitionMatrix &tm = _matrices[t];
+    const VortexTransitionMatrix &tm = Matrix(t); 
     for (int i=0; i<tm.n0(); i++) {
       for (int j=0; j<tm.n1(); j++) {
         int weight = 1;
         if (tm.rowsum(i) == 1 && tm.colsum(j) == 1) weight = 1000;
 
         if (tm(i, j)) {
+#if HUMAN_READABLE
           ofs << t << "." << i << "->" 
-              << t+1 << "." << j << " [weight = " << weight << "];" << endl;
+              << t+1 << "." << j 
+              << " [weight = " << weight << "];" << endl;
+#else
+          ofs << t*_max_nvortices_per_frame+i 
+              << "->" 
+              << (t+1)*_max_nvortices_per_frame+j 
+              << " [weight = " << weight << "];" << endl;
+#endif
         }
       }
     }
     
     ofs << "{ rank=same; ";
     for (int i=0; i<tm.n0(); i++) {
+#if HUMAN_READABLE
       if (i<tm.n0()-1) ofs << t << "." << i << ", ";
-      else ofs << t << "." << i << " }" << endl;
+      else ofs << t << "." << i << "}" << endl;
+#else
+      if (i<tm.n0()-1) ofs << t*_max_nvortices_per_frame+i << ", ";
+      else ofs << t*_max_nvortices_per_frame+i << " }" << endl;
+#endif
     }
   }
 #else
@@ -96,7 +111,9 @@ void VortexTransition::SaveToDotFile(const std::string& filename)
 #endif
   // node colors
   for (int t=_ts; t<_ts+_tl; t++) {
-    for (int k=0; k<_nvortices_per_frame[t]; k++) {
+    std::map<int, int>::const_iterator it = _nvortices_per_frame.find(t); 
+    const int n = it->second;
+    for (int k=0; k<n; k++) {
       const int nc = 6;
       int vid = SequenceIdx(t, k);
       int c = vid % nc;
@@ -109,7 +126,13 @@ void VortexTransition::SaveToDotFile(const std::string& filename)
       else if (c == 4) color = "purple";
       else if (c == 5) color = "yellow";
 
-      ofs << t << "." << k << " [style=filled, fillcolor=" << color << "];" << endl;
+#if HUMAN_READABLE
+      ofs << t << "." << k 
+          << " [style=filled, fillcolor=" << color << "];" << endl;
+#else
+      ofs << t*_max_nvortices_per_frame+k
+          << " [style=filled, fillcolor=" << color << "];" << endl;
+#endif
     }
   }
   ofs << "}" << endl;
@@ -200,16 +223,18 @@ void VortexTransition::ConstructSequence()
         int l = *lhs.begin(), r = *rhs.begin();
         int gid = _seqmap[std::make_tuple(i, l)];
         _seqmap[std::make_tuple(i+1, r)] = gid;
+        if (_seqs[gid].tl == 1)
+          _seqs[gid].lids.push_back(l);
         _seqs[gid].tl ++;
         _seqs[gid].lids.push_back(r);
       } else { // some events, need re-ID
         for (std::set<int>::iterator it=rhs.begin(); it!=rhs.end(); it++) {
           int r = *it;
           int gid = NewVortexSequence(i+1);
-          _seqs[gid].lids.push_back(r);
+          // _seqs[gid].lids.push_back(r);
           _seqmap[std::make_tuple(i+1, r)] = gid;
         }
-
+#if 0
         // right links
         for (std::set<int>::iterator it=lhs.begin(); it!=lhs.end(); it++) {
           int l = *it;
@@ -218,6 +243,7 @@ void VortexTransition::ConstructSequence()
             // _seqs[gid].links_right.push_back(_seqmap[std::make_tuple(i+1, *it1)]);
           }
         }
+#endif
       }
     
 #if 0

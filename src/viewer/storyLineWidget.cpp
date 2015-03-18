@@ -1,5 +1,6 @@
 #include <QMouseEvent>
 #include <QDebug>
+#include <fstream>
 #include "def.h"
 #include "storyLineWidget.h"
 #include "common/VortexTransition.h"
@@ -24,53 +25,45 @@ CStorylineWidget::~CStorylineWidget()
 
 }
 
-static bool conflict(int ts0, int tl0, int ts, int tl, int gap = 2)
+void CStorylineWidget::parseLayout()
 {
-  if (ts + tl + gap <= ts0) return false;
-  else if (ts >= ts0 + tl0 + gap) return false;
-  return true;
+  using namespace std;
+  ifstream ifs("dot.out");
+  if (!ifs.is_open()) return;
+
+  string str, label, type, shape, color, fillcolor;
+  int id; 
+  float x, y, w, h;
+
+  ifs >> str >> id >> _layout_width >> _layout_height;
+  while (1) {
+    ifs >> str;
+    if (str == "node") {
+      ifs >> id >> x >> y >> w >> h >> label >> type >> shape >> color >> fillcolor;
+      const int t = id / _vt->MaxNVorticesPerFrame(), 
+                k = id % _vt->MaxNVorticesPerFrame();
+      const QPair<int, int> key(t, k);
+      _coords[key] = QVector2D(x, y);
+      // fprintf(stderr, "t=%d, k=%d, x=%f, y=%f\n", t, k, x, y);
+    } else 
+      break;
+  }
+
+  ifs.close();
 }
 
 void CStorylineWidget::SetVortexTrasition(const VortexTransition *vt)
 {
   _vt = vt;
 
-#if 0
-  // pass 1
-  for (int i=0; i<_vmap->size(); i++) {
-    int fit_slot = -1;
-    
-    for (int j=0; j<_slots.size(); j++) {
-      bool fit = true;
-      for (std::set<int>::iterator it = _slots[j].begin(); it != _slots[j].end(); it ++) {
-        int i0 = *it;
-        if (conflict(vmap->at(i0).ts, vmap->at(i0).tl, vmap->at(i).ts, vmap->at(i).tl)) {
-          fit = false;
-          break;
-        }
-      }
-      if (fit) {
-        fit_slot = j;
-        break;
-      }
-    }
-
-    if (fit_slot>=0) {
-      _slots[fit_slot].insert(i);
-      _slotmap[i] = fit_slot;
-    } else {
-      std::set<int> slot;
-      slot.insert(i);
-      _slots.push_back(slot);
-      int slot_id = _slots.size()-1;
-      _slotmap[i] = slot_id;
-    }
+  vt->SaveToDotFile("dot");
+  int succ = system("dot -Tplain dot > dot.out");
+  if (succ != 0) {
+    fprintf(stderr, "FATAL: graphviz not available. exiting.\n");
+    exit(1);
   }
 
-  // pass 2
-
-  fprintf(stderr, "nlines=%d, nslots=%d\n", vmap->size(), _slots.size());
-#endif
+  parseLayout();
 }
 
 void CStorylineWidget::initializeGL()
@@ -112,41 +105,44 @@ void CStorylineWidget::renderRect()
 
 void CStorylineWidget::renderLines()
 {
-#if 0
-  const int nlines = _vmap->size();
+  const int nc = 6;
+  const GLubyte c[nc][3] = {
+    {0, 0, 255},
+    {0, 255, 0},
+    {0, 255, 255},
+    {255, 0, 0},
+    {255, 0, 255},
+    {255, 255, 0}};
+  const std::vector<struct VortexSequence> seqs = _vt->Sequences();
+  
+  if (_coords.empty()) return;
 
-  for (std::map<int, int>::iterator it = _slotmap.begin(); it != _slotmap.end(); it++) {
-    const int gid = it->first, slot = it->second;
+  glPushMatrix();
 
-    // node
-    const float x0 = _rect_chart.x() + (_vmap->at(gid).ts - _vmap->ts())  *_rect_chart.width()/_vmap->tl();
-    const float x1 = _rect_chart.x() + (_vmap->at(gid).ts + _vmap->at(gid).tl - _vmap->ts())*_rect_chart.width()/_vmap->tl();
-    const float y = _rect_chart.y() + slot*_rect_chart.height()/(_slots.size()-1);
+  glTranslatef(_rect_chart.x(), _rect_chart.y(), 0);
+  glScalef(_rect_chart.width(), _rect_chart.height(), 1);
+  glScalef(1/_layout_width, 1/_layout_height, 1);
 
-    glColor3f(0, 0, 0);
-    glBegin(GL_LINES);
-    glVertex2f(x0, y);
-    glVertex2f(x1, y);
-    glEnd();
+  glColor3f(1, 0, 0);
 
-    QString text = QString("%1").arg(gid);
-    renderText(x0, y, 0, text);
+  for (int i=0; i<seqs.size(); i++) {
+    const struct VortexSequence& seq = seqs[i];
+    const int cid = i % nc;
+    glColor3ub(c[cid][0], c[cid][1], c[cid][2]);
 
-    // right link
-    for (int i=0; i<_vmap->at(gid).links_right.size(); i++) {
-      const int gid1 = _vmap->at(gid).links_right[i], 
-                slot1 = _slotmap[gid1];
-      const float x2 = _rect_chart.x() + (_vmap->at(gid1).ts - _vmap->ts()) * _rect_chart.width()/_vmap->tl(), 
-                  y2 = _rect_chart.y() + slot1*_rect_chart.height()/(_slots.size()-1);
-      // fprintf(stderr, "gid1=%d, slot1=%d\n", gid1, slot1);
-
-      glBegin(GL_LINES);
-      glVertex2f(x1, y);
-      glVertex2f(x1, y2);
-      glEnd();
+    glBegin(GL_LINE_STRIP);
+    for (int j=0; j<seq.lids.size(); j++) {
+      const int t = seq.ts + j; 
+      const int k = seq.lids[j];
+      const QPair<int, int> key(t, k);
+      if (!_coords.contains(key)) qDebug() << key;
+      QVector2D v = _coords[key];
+      glVertex2f(v.x(), v.y());
     }
+    glEnd();
   }
-#endif
+
+  glPopMatrix();
 }
 
 void CStorylineWidget::paintGL()

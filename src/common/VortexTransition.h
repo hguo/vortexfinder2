@@ -14,7 +14,7 @@ public:
   int tl() const {return _tl;}
 
   void LoadFromFile(const std::string &dataname, int ts, int tl);
-  void SaveToDotFile(const std::string &filename);
+  void SaveToDotFile(const std::string &filename) const;
 
   VortexTransitionMatrix Matrix(int t) const;
   void AddMatrix(const VortexTransitionMatrix& m);
@@ -22,6 +22,10 @@ public:
 
   void ConstructSequence();
   int SequenceIdx(int t, int lid) const;
+
+  int MaxNVorticesPerFrame() const {return _max_nvortices_per_frame;}
+
+  const std::vector<struct VortexSequence> Sequences() const {return _seqs;}
 
 private:
   int NewVortexSequence(int ts);
