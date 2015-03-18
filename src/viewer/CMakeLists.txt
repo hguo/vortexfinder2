@@ -40,7 +40,7 @@ if (WITH_VTK)
 endif ()
 
 if (WITH_CUDA)
-  target_link_libraries (glviewer glvolren)
+  target_link_libraries (glviewer glvolren gl2ps)
 endif ()
 
 # add_executable (viewer main.cpp)

@@ -1,7 +1,10 @@
 #include <QMouseEvent>
+#include <QKeyEvent>
+#include <QFileDialog>
 #include <QDebug>
 #include <fstream>
 #include "def.h"
+#include "gl2ps/gl2ps.h"
 #include "storyLineWidget.h"
 #include "common/VortexTransition.h"
 #include "common/Utils.hpp"
@@ -160,4 +163,38 @@ void CStorylineWidget::paintGL()
   renderLines();
 
   CHECK_GLERROR();
+}
+
+void CStorylineWidget::saveEps()
+{
+  QString filename = QFileDialog::getSaveFileName(this, "save to eps", "./", "*.eps"); 
+  if (filename.isEmpty()) return; 
+
+  FILE *fp = fopen(filename.toStdString().c_str(), "wb"); 
+  if (!fp) return; 
+  fprintf(stderr, "saving eps %s\n", filename.toStdString().c_str()); 
+
+  int state = GL2PS_OVERFLOW; 
+  int bufsize = 0; 
+
+  while (state == GL2PS_OVERFLOW) {
+    bufsize += 1024*1024; 
+    gl2psBeginPage("test", "test", NULL, GL2PS_EPS, GL2PS_SIMPLE_SORT, 
+                   GL2PS_DRAW_BACKGROUND | GL2PS_USE_CURRENT_VIEWPORT, 
+                   GL_RGBA, 0, NULL, 0, 0, 0, bufsize, fp, filename.toStdString().c_str()); 
+    paintGL(); 
+    state = gl2psEndPage(); 
+  }
+  fclose(fp); 
+}
+
+void CStorylineWidget::keyPressEvent(QKeyEvent *e)
+{
+  switch (e->key()) {
+  case Qt::Key_E:
+    saveEps(); 
+    break;
+
+  default: break;
+  }
 }

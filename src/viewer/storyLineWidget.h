@@ -22,12 +22,15 @@ protected:
   void resizeGL(int w, int h);
   void paintGL();
 
+  void keyPressEvent(QKeyEvent *e);
+
 protected:
   void renderLines();
   void renderRect();
 
 private:
   void parseLayout();
+  void saveEps();
 
 private:
   QRectF _rect_chart;
