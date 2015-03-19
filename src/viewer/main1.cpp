@@ -29,6 +29,7 @@ int main(int argc, char **argv)
   CGLWidget *widget = new CGLWidget;
   widget->show();
   widget->SetData(dataname, ts, tl);
+  // widget->OpenGLGPUDataset();
   widget->SetVortexTransition(&vt);
   widget->LoadTimeStep(ts);
 

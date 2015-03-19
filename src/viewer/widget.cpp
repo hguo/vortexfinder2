@@ -418,11 +418,13 @@ void CGLWidget::renderIsosurfaces()
   glEnableClientState(GL_VERTEX_ARRAY); 
   glEnableClientState(GL_NORMAL_ARRAY); 
 
+#if 0
   glColor4ub(237, 28, 36, 255);
   glVertexPointer(3, GL_FLOAT, 0, s_triangle_vertices.data());
   glNormalPointer(GL_FLOAT, 0, s_triangle_normals.data());
   glDrawElements(GL_TRIANGLES, s_triangle_indices.size(), 
       GL_UNSIGNED_INT, s_triangle_indices.data()); 
+#endif
   
   glColor4ub(250, 168, 25, 60);
   glVertexPointer(3, GL_FLOAT, 0, s_triangle_vertices1.data());
@@ -466,8 +468,10 @@ void CGLWidget::paintGL()
     renderVortexTubes();
   else if (_vortex_render_mode == 1)
     renderVortexLines();
-  else if (_vortex_render_mode == 2)
+  else if (_vortex_render_mode == 2) {
+    renderVortexTubes();
     renderIsosurfaces();
+  }
 
   if (_enable_inclusions)
     renderInclusions();
@@ -858,5 +862,6 @@ void CGLWidget::extractIsosurfaces()
   }
   
   free(rho);
+  fprintf(stderr, "isosurface extracted.\n");
 #endif
 }

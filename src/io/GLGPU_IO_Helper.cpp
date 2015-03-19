@@ -1,3 +1,4 @@
+#include "def.h"
 #include "GLGPU_IO_Helper.h"
 #include <cmath>
 #include <cassert>
@@ -333,10 +334,9 @@ bool GLGPU_IO_Helper_ReadLegacy(
   return true;
 }
 
-#if 0
 bool GLGPU_IO_Helper_WriteNetCDF(
     const std::string& filename, 
-    int &ndims, 
+    int ndims, 
     int *dims,
     double *lengths,
     bool *pbc,
@@ -344,8 +344,8 @@ bool GLGPU_IO_Helper_WriteNetCDF(
     double &Jxext, 
     double &Kx, 
     double &V, 
-    double **re, 
-    double **im)
+    double *re, 
+    double *im)
 {
 #ifdef WITH_LIBMESH
   int ncid; 
@@ -353,17 +353,17 @@ bool GLGPU_IO_Helper_WriteNetCDF(
   int varids[8];
 
   size_t starts[3] = {0, 0, 0}, 
-         sizes[3]  = {(size_t)_dims[2], (size_t)_dims[1], (size_t)_dims[0]};
+         sizes[3]  = {(size_t)dims[2], (size_t)dims[1], (size_t)dims[0]};
 
   const int cnt = sizes[0]*sizes[1]*sizes[2];
   double *rho = (double*)malloc(sizeof(double)*cnt), 
          *phi = (double*)malloc(sizeof(double)*cnt);
   for (int i=0; i<cnt; i++) {
-    rho[i] = sqrt(_re[i]*_re[i] + _im[i]*_im[i]);
-    phi[i] = atan2(_im[i], _re[i]);
+    rho[i] = sqrt(re[i]*re[i] + im[i]*im[i]);
+    phi[i] = atan2(im[i], re[i]);
   }
 
-  fprintf(stderr, "filename=%s\n", filename.c_str());
+  fprintf(stderr, "netcdf filename=%s\n", filename.c_str());
 
   NC_SAFE_CALL( nc_create(filename.c_str(), NC_CLOBBER | NC_64BIT_OFFSET, &ncid) ); 
   NC_SAFE_CALL( nc_def_dim(ncid, "z", sizes[0], &dimids[0]) );
@@ -373,20 +373,18 @@ bool GLGPU_IO_Helper_WriteNetCDF(
   NC_SAFE_CALL( nc_def_var(ncid, "phi", NC_DOUBLE, 3, dimids, &varids[1]) );
   NC_SAFE_CALL( nc_def_var(ncid, "re", NC_DOUBLE, 3, dimids, &varids[2]) );
   NC_SAFE_CALL( nc_def_var(ncid, "im", NC_DOUBLE, 3, dimids, &varids[3]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "Jx", NC_DOUBLE, 3, dimids, &varids[4]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "Jy", NC_DOUBLE, 3, dimids, &varids[5]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "Jz", NC_DOUBLE, 3, dimids, &varids[6]) );
-  // NC_SAFE_CALL( nc_def_var(ncid, "scm", NC_DOUBLE, 3, dimids, &varids[7]) );
+  // NC_SAFE_CALL( nc_def_var(ncid, "Jx", NC_DOUBLE, 3, dimids, &varids[4]) );
+  // NC_SAFE_CALL( nc_def_var(ncid, "Jy", NC_DOUBLE, 3, dimids, &varids[5]) );
+  // NC_SAFE_CALL( nc_def_var(ncid, "Jz", NC_DOUBLE, 3, dimids, &varids[6]) );
   NC_SAFE_CALL( nc_enddef(ncid) );
 
   NC_SAFE_CALL( nc_put_vara_double(ncid, varids[0], starts, sizes, rho) ); 
   NC_SAFE_CALL( nc_put_vara_double(ncid, varids[1], starts, sizes, phi) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[2], starts, sizes, _re) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[3], starts, sizes, _im) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[4], starts, sizes, _Jx) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[5], starts, sizes, _Jy) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[6], starts, sizes, _Jz) ); 
-  // NC_SAFE_CALL( nc_put_vara_double(ncid, varids[7], starts, sizes, _scm) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[2], starts, sizes, re) ); 
+  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[3], starts, sizes, im) ); 
+  // NC_SAFE_CALL( nc_put_vara_double(ncid, varids[4], starts, sizes, _Jx) ); 
+  // NC_SAFE_CALL( nc_put_vara_double(ncid, varids[5], starts, sizes, _Jy) ); 
+  // NC_SAFE_CALL( nc_put_vara_double(ncid, varids[6], starts, sizes, _Jz) ); 
 
   NC_SAFE_CALL( nc_close(ncid) );
 
@@ -396,4 +394,3 @@ bool GLGPU_IO_Helper_WriteNetCDF(
   return false;
 #endif
 }
-#endif

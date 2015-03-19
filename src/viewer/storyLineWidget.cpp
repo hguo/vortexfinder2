@@ -55,6 +55,68 @@ void CStorylineWidget::parseLayout()
   ifs.close();
 }
 
+void CStorylineWidget::saveLayoutToJs()
+{
+  using namespace std;
+  ofstream ofs("dot.js");
+  if (!ofs.is_open()) return;
+
+  ofs << "var dataset = [" << endl;
+
+  const std::vector<struct VortexSequence> seqs = _vt->Sequences();
+  for (int i=0; i<seqs.size(); i++) {
+    const struct VortexSequence& seq = seqs[i];
+    if (seq.lids.size() == 0) continue; // FIXME
+
+    ofs << "\t[ ";
+    for (int j=0; j<seq.lids.size(); j++) {
+      const int t = seq.ts + j; 
+      const int k = seq.lids[j];
+      const QPair<int, int> key(t, k);
+      QVector2D v = _coords[key];
+      if (j<seq.lids.size()-1) 
+        ofs << "[" << t << ", " << v.y() << "], ";
+      else 
+        ofs << "[" << t << ", " << v.y() << "]";
+    }
+    ofs << " ]," << endl;
+  }
+
+  ofs << "];" << endl;
+  ofs.close();
+}
+
+void CStorylineWidget::saveLayoutToSVG()
+{
+  using namespace std;
+  ofstream ofs("dot.svg");
+  if (!ofs.is_open()) return;
+
+  ofs << "<svg width='" << _vt->tl() << "' height='" << _layout_height << "'>" << endl;
+
+  const std::vector<struct VortexSequence> seqs = _vt->Sequences();
+  for (int i=0; i<seqs.size(); i++) {
+    const struct VortexSequence& seq = seqs[i];
+    if (seq.lids.size() == 0) continue; // FIXME
+
+    ofs << "<polyline style='fill:none;stroke:black;stroke-width:3' points='";
+    for (int j=0; j<seq.lids.size(); j++) {
+      const int t = seq.ts + j; 
+      const int k = seq.lids[j];
+      const QPair<int, int> key(t, k);
+      QVector2D v = _coords[key];
+      ofs << t << "," << v.y() << " ";
+    }
+    ofs << "'/>" << endl;
+  }
+
+  ofs << "</svg>" << endl;
+  fprintf(stderr, "saved to svg file.\n");
+  exit(1);
+
+  ofs.close();
+}
+
 void CStorylineWidget::SetVortexTrasition(const VortexTransition *vt)
 {
   _vt = vt;
@@ -67,6 +129,8 @@ void CStorylineWidget::SetVortexTrasition(const VortexTransition *vt)
   }
 
   parseLayout();
+  // saveLayoutToJs();
+  saveLayoutToSVG();
 }
 
 void CStorylineWidget::initializeGL()

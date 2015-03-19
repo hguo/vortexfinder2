@@ -30,6 +30,8 @@ protected:
 
 private:
   void parseLayout();
+  void saveLayoutToJs();
+  void saveLayoutToSVG();
   void saveEps();
 
 private:

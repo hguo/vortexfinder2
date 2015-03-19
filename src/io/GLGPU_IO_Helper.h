@@ -46,7 +46,7 @@ bool GLGPU_IO_Helper_ReadNetCDF(
 
 bool GLGPU_IO_Helper_WriteNetCDF(
     const std::string& filename, 
-    int &ndims, 
+    int ndims, 
     int *dims,
     double *lengths,
     bool *pbc,
@@ -54,7 +54,7 @@ bool GLGPU_IO_Helper_WriteNetCDF(
     double &Jxext, 
     double &Kx, 
     double &V, 
-    double **re, 
-    double **im);
+    double *re, 
+    double *im);
 
 #endif

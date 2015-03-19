@@ -71,8 +71,12 @@ bool VortexExtractor::SavePuncturedFaces(int slot) const
   const GLDatasetBase *ds = _dataset;
   std::ostringstream os; 
   os << ds->DataName() << ".pf." << ds->TimeStep(slot);
-  return ::SavePuncturedFaces(
+  bool succ = ::SavePuncturedFaces(
       slot == 0 ? _punctured_faces : _punctured_faces1, os.str());
+
+  if (!succ) 
+    fprintf(stderr, "failed to read punctured faces from file %s\n", os.str().c_str());
+  return succ;
 }
 
 bool VortexExtractor::LoadPuncturedEdges()

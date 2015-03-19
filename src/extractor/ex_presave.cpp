@@ -19,9 +19,15 @@ int main(int argc, char **argv)
 
   VortexExtractor *extractor = new VortexExtractor;
   extractor->SetDataset(ds);
+#if 0
+  fprintf(stderr, "...2\n");
   if (!extractor->LoadPuncturedFaces(0)) return EXIT_FAILURE;
+  fprintf(stderr, "...3\n");
   if (!extractor->LoadPuncturedFaces(1)) return EXIT_FAILURE;
+  fprintf(stderr, "...4\n");
   if (!extractor->LoadPuncturedEdges()) return EXIT_FAILURE;
+  fprintf(stderr, "...5\n");
+#endif
 
   fprintf(stderr, "tracing..\n");
 
