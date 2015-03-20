@@ -196,86 +196,35 @@ void VortexTransition::ConstructSequence()
     VortexTransitionMatrix tm = Matrix(i);
     assert(tm.Valid());
 
-    const int n0 = tm.n0(), n1 = tm.n1(), 
-              n = n0 + n1;
-    
-    if (i == _ts) { // initial ids;
-      for (int k=0; k<n0; k++) {
+    if (i == _ts) { // initial
+      for (int k=0; k<tm.n0(); k++) {
         int gid = NewVortexSequence(i);
         _seqs[gid].tl ++;
         _seqs[gid].lids.push_back(k);
         _seqmap[std::make_tuple(i, k)] = gid;
       }
     }
-    
-    std::set<int> unvisited; 
-    for (int i=0; i<n; i++) 
-      unvisited.insert(i);
- 
-    while (!unvisited.empty()) {
-      std::set<int> lhs, rhs; 
-      std::vector<int> Q;
-      Q.push_back(*unvisited.begin());
 
-      while (!Q.empty()) {
-        int v = Q.back();
-        Q.pop_back();
-        unvisited.erase(v);
-        if (v<n0) lhs.insert(v);
-        else rhs.insert(v-n0);
-
-        if (v<n0) { // left hand side
-          for (int j=0; j<n1; j++) 
-            if (tm(v, j)>0 && unvisited.find(j+n0) != unvisited.end())
-              Q.push_back(j+n0);
-        } else { // right hand side
-          for (int i=0; i<n0; i++) 
-            if (tm(i, v-n0)>0 && unvisited.find(i) != unvisited.end())
-              Q.push_back(i);
-        }
-      }
+    for (int k=0; k<tm.NModules(); k++) {
+      int event;
+      std::vector<int> lhs, rhs;
+      tm.GetModule(k, lhs, rhs, event);
 
       if (lhs.size() == 1 && rhs.size() == 1) { // ordinary case
-        int l = *lhs.begin(), r = *rhs.begin();
+        int l = lhs[0], r = rhs[0];
         int gid = _seqmap[std::make_tuple(i, l)];
-        // if (_seqs[gid].tl == 1)
-        //   _seqs[gid].lids.push_back(l);
         _seqs[gid].tl ++;
         _seqs[gid].lids.push_back(r);
         _seqmap[std::make_tuple(i+1, r)] = gid;
       } else { // some events, need re-ID
-        for (std::set<int>::iterator it=rhs.begin(); it!=rhs.end(); it++) {
-          int r = *it;
+        for (int j=0; j<rhs.size(); j++) {
+          int r = rhs[j];
           int gid = NewVortexSequence(i+1);
           _seqs[gid].tl ++;
           _seqs[gid].lids.push_back(r);
           _seqmap[std::make_tuple(i+1, r)] = gid;
         }
-#if 0
-        // right links
-        for (std::set<int>::iterator it=lhs.begin(); it!=lhs.end(); it++) {
-          int l = *it;
-          int gid = _seqmap[std::make_tuple(i, l)];
-          for (std::set<int>::iterator it1=rhs.begin(); it1!=rhs.end(); it1++) {
-            // _seqs[gid].links_right.push_back(_seqmap[std::make_tuple(i+1, *it1)]);
-          }
-        }
-#endif
       }
-    
-#if 0
-      if (lhs.size() == 0 && rhs.size() == 1) {
-        fprintf(stderr, "birth\n");
-      } else if (lhs.size() == 1 && rhs.size() == 0) {
-        fprintf(stderr, "death\n"); 
-      } else if (lhs.size() == 1 && rhs.size() == 2) { // TODO: keep an ID
-        fprintf(stderr, "split\n"); 
-      } else if (lhs.size() == 2 && rhs.size() == 1) { // TODO: keep an ID
-        fprintf(stderr, "merge\n");
-      } else if (lhs.size() > 1 && rhs.size() > 1) { 
-        fprintf(stderr, "recombination\n");
-      }
-#endif
 
 #if 0
       int cnt=0;
