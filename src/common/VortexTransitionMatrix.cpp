@@ -110,7 +110,7 @@ int VortexTransitionMatrix::rowsum(int i) const
   return sum;
 }
 
-void VortexTransitionMatrix::GetModule(int i, std::vector<int> &lhs, std::vector<int> &rhs, int &event) const
+void VortexTransitionMatrix::GetModule(int i, std::set<int> &lhs, std::set<int> &rhs, int &event) const
 {
   if (i>=_lhss.size()) return;
 
@@ -123,10 +123,10 @@ void VortexTransitionMatrix::Normalize()
 {
   if (NModules() == 0) Modularize();
   for (int i=0; i<NModules(); i++) {
-    const std::vector<int> &lhs = _lhss[i];
-    const std::vector<int> &rhs = _rhss[i];
-    for (std::vector<int>::const_iterator it0=lhs.begin(); it0!=lhs.end(); it0++) 
-      for (std::vector<int>::const_iterator it1=rhs.begin(); it1!=rhs.end(); it1++) {
+    const std::set<int> &lhs = _lhss[i];
+    const std::set<int> &rhs = _rhss[i];
+    for (std::set<int>::const_iterator it0=lhs.begin(); it0!=lhs.end(); it0++) 
+      for (std::set<int>::const_iterator it1=rhs.begin(); it1!=rhs.end(); it1++) {
         int l = *it0, r = *it1;
         at(l, r) = 1;
       }
@@ -146,7 +146,7 @@ void VortexTransitionMatrix::Modularize()
     unvisited.insert(i);
 
   while (!unvisited.empty()) {
-    std::vector<int> lhs, rhs; 
+    std::set<int> lhs, rhs; 
     std::vector<int> Q;
     Q.push_back(*unvisited.begin());
 
@@ -154,8 +154,8 @@ void VortexTransitionMatrix::Modularize()
       int v = Q.back();
       Q.pop_back();
       unvisited.erase(v);
-      if (v<n0()) lhs.push_back(v);
-      else rhs.push_back(v-n0());
+      if (v<n0()) lhs.insert(v);
+      else rhs.insert(v-n0());
 
       if (v<n0()) { // left hand side
         for (int j=0; j<n1(); j++) 

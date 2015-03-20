@@ -40,6 +40,18 @@ void VortexTransition::LoadFromFile(const std::string& dataname, int ts, int tl)
 }
 
 #define HUMAN_READABLE 0
+std::string VortexTransition::NodeToString(int i, int j) const
+{
+  using namespace std;
+  stringstream ss;
+#if HUMAN_READABLE
+  ss << i << "." << j;
+#else
+  ss << i*_max_nvortices_per_frame + j;
+#endif
+  return ss.str();
+}
+
 void VortexTransition::SaveToDotFile(const std::string& filename) const
 {
   using namespace std;
@@ -52,7 +64,7 @@ void VortexTransition::SaveToDotFile(const std::string& filename) const
   ofs << "ranksep =\"1.0 equally\";" << endl;
   ofs << "node [shape=circle];" << endl;
   // ofs << "node [shape=point];" << endl;
-#if 1
+#if 0
   for (int t=_ts; t<_ts+_tl-1; t++) {
     const VortexTransitionMatrix &tm = Matrix(t); 
     for (int i=0; i<tm.n0(); i++) {
@@ -61,29 +73,17 @@ void VortexTransition::SaveToDotFile(const std::string& filename) const
         if (tm.rowsum(i) == 1 && tm.colsum(j) == 1) weight = 1000;
 
         if (tm(i, j)) {
-#if HUMAN_READABLE
-          ofs << t << "." << i << "->" 
-              << t+1 << "." << j 
+          ofs << NodeToString(t, i) << "->" 
+              << NodeToString(t+1, j)
               << " [weight = " << weight << "];" << endl;
-#else
-          ofs << t*_max_nvortices_per_frame+i 
-              << "->" 
-              << (t+1)*_max_nvortices_per_frame+j 
-              << " [weight = " << weight << "];" << endl;
-#endif
         }
       }
     }
     
     ofs << "{ rank=same; ";
     for (int i=0; i<tm.n0(); i++) {
-#if HUMAN_READABLE
-      if (i<tm.n0()-1) ofs << t << "." << i << ", ";
-      else ofs << t << "." << i << "}" << endl;
-#else
-      if (i<tm.n0()-1) ofs << t*_max_nvortices_per_frame+i << ", ";
-      else ofs << t*_max_nvortices_per_frame+i << " }" << endl;
-#endif
+      if (i<tm.n0()-1) ofs << NodeToString(t, i) << ", ";
+      else ofs << NodeToString(t, i) << "}" << endl;
     }
   }
 #else
@@ -93,34 +93,33 @@ void VortexTransition::SaveToDotFile(const std::string& filename) const
     for (int k=0; k<seq.lids.size(); k++) {
       const int t = seq.ts + k;
       const int weight = seq.tl;
-#if HUMAN_READABLE
       if (k<seq.lids.size()-1) 
-        ofs << t << "." << seq.lids[k] << "->";
+        ofs << NodeToString(t, seq.lids[k]) << "->";
       else 
-        ofs << t << "." << seq.lids[k] 
+        ofs << NodeToString(t, seq.lids[k]) 
             << " [weight = " << weight << "];" << endl;
-#else
-      if (k<seq.lids.size()-1) 
-        ofs << t*_max_nvortices_per_frame + seq.lids[k] << "->";
-      else 
-        ofs << t*_max_nvortices_per_frame + seq.lids[k] 
-            << " [weight = " << weight << "];" << endl;
-#endif
     }
   }
+  // ranks
   for (int t=_ts; t<_ts+_tl-1; t++) {
     std::map<int, int>::const_iterator it = _nvortices_per_frame.find(t); 
     const int n = it->second;
     ofs << "{ rank=same; ";
     for (int i=0; i<n; i++) {
-#if HUMAN_READABLE
-      if (i<n-1) ofs << t << "." << i << ", ";
-      else ofs << t << "." << i << " }" << endl;
-#else
-      if (i<n-1) ofs << t*_max_nvortices_per_frame + i << ", ";
-      else ofs << t*_max_nvortices_per_frame + i << " }" << endl;
-#endif
+      if (i<n-1) ofs << NodeToString(t, i) << ", ";
+      else ofs << NodeToString(t, i) << " }" << endl;
     }
+  }
+  // subgraphs
+  for (int i=0; i<_events.size(); i++) {
+    int t = _events[i].t;
+    ofs << "subgraph {";
+    for (std::set<int>::iterator it0 = _events[i].lhs.begin(); it0 != _events[i].lhs.end(); it0 ++) 
+      for (std::set<int>::iterator it1 = _events[i].rhs.begin(); it1 != _events[i].rhs.end(); it1 ++) {
+        ofs << NodeToString(t, *it0) << "->" 
+            << NodeToString(t+1, *it1) << ";" << endl;
+      }
+    ofs << "};" << endl;
   }
 #endif
   // node colors
@@ -171,9 +170,10 @@ void VortexTransition::AddMatrix(const VortexTransitionMatrix& m)
 
 int VortexTransition::NewVortexSequence(int ts)
 {
-  VortexSequence vs; 
+  VortexSequence vs;
   vs.ts = ts;
   vs.tl = 0;
+  // vs.lhs_event = vs.rhs_event = VORTEX_EVENT_DUMMY;
   _seqs.push_back(vs);
   return _seqs.size() - 1;
 }
@@ -207,24 +207,54 @@ void VortexTransition::ConstructSequence()
 
     for (int k=0; k<tm.NModules(); k++) {
       int event;
-      std::vector<int> lhs, rhs;
+      std::set<int> lhs, rhs;
       tm.GetModule(k, lhs, rhs, event);
 
       if (lhs.size() == 1 && rhs.size() == 1) { // ordinary case
-        int l = lhs[0], r = rhs[0];
+        int l = *lhs.begin(), r = *rhs.begin();
         int gid = _seqmap[std::make_tuple(i, l)];
         _seqs[gid].tl ++;
         _seqs[gid].lids.push_back(r);
         _seqmap[std::make_tuple(i+1, r)] = gid;
       } else { // some events, need re-ID
-        for (int j=0; j<rhs.size(); j++) {
-          int r = rhs[j];
+        for (std::set<int>::iterator it=rhs.begin(); it!=rhs.end(); it++) {
+          int r = *it; 
           int gid = NewVortexSequence(i+1);
           _seqs[gid].tl ++;
           _seqs[gid].lids.push_back(r);
           _seqmap[std::make_tuple(i+1, r)] = gid;
         }
       }
+
+      // build events
+      if (event >= VORTEX_EVENT_MERGE) {
+        VortexEvent e;
+        e.t = i;
+        e.event = event;
+        e.lhs = lhs;
+        e.rhs = rhs;
+        _events.push_back(e);
+      }
+    }
+  }
+
+#if 0
+  for (int i=0; i<_events.size(); i++) 
+    fprintf(stderr, "e=%d, #l=%d, #r=%d\n", _events[i].event, _events[i].lhs.size(), _events[i].rhs.size());
+#endif
+}
+
+
+#if 0
+      if (event >= VORTEX_EVENT_MERGE) { // FIXME: other events
+        for (int u=0; u<lhs.size(); u++) {
+          const int lgid = _seqmap[std::make_tuple(i, lhs[u])];
+          _seqs[lgid].rhs_event = event;
+          _seqs[lgid].rhs_gids = rhs;
+        }
+      }
+#endif
+
 
 #if 0
       int cnt=0;
@@ -242,12 +272,3 @@ void VortexTransition::ConstructSequence()
         cnt ++;
       }
 #endif
-    }
-  }
-
-#if 0
-  for (int i=0; i<size(); i++) 
-    fprintf(stderr, "gid=%d, ts=%d, tl=%d\n",
-        i, at(i).ts, at(i).tl);
-#endif
-}

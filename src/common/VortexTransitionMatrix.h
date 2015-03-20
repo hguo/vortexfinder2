@@ -5,16 +5,7 @@
 #include <vector>
 #include <map>
 #include <set>
-
-enum {
-  VORTEX_EVENT_DUMMY = 0,
-  VORTEX_EVENT_BIRTH = 1,
-  VORTEX_EVENT_DEATH = 2,
-  VORTEX_EVENT_MERGE = 3,
-  VORTEX_EVENT_SPLIT = 4,
-  VORTEX_EVENT_RECOMBINATION = 5, 
-  VORTEX_EVENT_COMPOUND = 6
-};
+#include "common/VortexEvents.h"
 
 class VortexTransitionMatrix {
 public:
@@ -34,7 +25,7 @@ public: // IO
 public: // modulars
   void Modularize();
   int NModules() const {return _lhss.size();}
-  void GetModule(int i, std::vector<int>& lhs, std::vector<int>& rhs, int &event) const;
+  void GetModule(int i, std::set<int>& lhs, std::set<int>& rhs, int &event) const;
   void Normalize();
  
 public: // access
@@ -60,7 +51,7 @@ private:
   std::vector<int> _match; // match matrix
 
   // modulars
-  std::vector<std::vector<int> > _lhss, _rhss;
+  std::vector<std::set<int> > _lhss, _rhss;
   std::vector<int> _events;
 };
 
