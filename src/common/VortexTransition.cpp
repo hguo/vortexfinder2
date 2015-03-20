@@ -93,19 +93,33 @@ void VortexTransition::SaveToDotFile(const std::string& filename) const
     for (int k=0; k<seq.lids.size(); k++) {
       const int t = seq.ts + k;
       const int weight = seq.tl;
+#if HUMAN_READABLE
       if (k<seq.lids.size()-1) 
         ofs << t << "." << seq.lids[k] << "->";
       else 
         ofs << t << "." << seq.lids[k] 
             << " [weight = " << weight << "];" << endl;
+#else
+      if (k<seq.lids.size()-1) 
+        ofs << t*_max_nvortices_per_frame + seq.lids[k] << "->";
+      else 
+        ofs << t*_max_nvortices_per_frame + seq.lids[k] 
+            << " [weight = " << weight << "];" << endl;
+#endif
     }
   }
   for (int t=_ts; t<_ts+_tl-1; t++) {
-    const int n = _nvortices_per_frame[t];
+    std::map<int, int>::const_iterator it = _nvortices_per_frame.find(t); 
+    const int n = it->second;
     ofs << "{ rank=same; ";
     for (int i=0; i<n; i++) {
+#if HUMAN_READABLE
       if (i<n-1) ofs << t << "." << i << ", ";
       else ofs << t << "." << i << " }" << endl;
+#else
+      if (i<n-1) ofs << t*_max_nvortices_per_frame + i << ", ";
+      else ofs << t*_max_nvortices_per_frame + i << " }" << endl;
+#endif
     }
   }
 #endif
@@ -159,7 +173,7 @@ int VortexTransition::NewVortexSequence(int ts)
 {
   VortexSequence vs; 
   vs.ts = ts;
-  vs.tl = 1;
+  vs.tl = 0;
   _seqs.push_back(vs);
   return _seqs.size() - 1;
 }
@@ -188,6 +202,8 @@ void VortexTransition::ConstructSequence()
     if (i == _ts) { // initial ids;
       for (int k=0; k<n0; k++) {
         int gid = NewVortexSequence(i);
+        _seqs[gid].tl ++;
+        _seqs[gid].lids.push_back(k);
         _seqmap[std::make_tuple(i, k)] = gid;
       }
     }
@@ -222,16 +238,17 @@ void VortexTransition::ConstructSequence()
       if (lhs.size() == 1 && rhs.size() == 1) { // ordinary case
         int l = *lhs.begin(), r = *rhs.begin();
         int gid = _seqmap[std::make_tuple(i, l)];
-        _seqmap[std::make_tuple(i+1, r)] = gid;
-        if (_seqs[gid].tl == 1)
-          _seqs[gid].lids.push_back(l);
+        // if (_seqs[gid].tl == 1)
+        //   _seqs[gid].lids.push_back(l);
         _seqs[gid].tl ++;
         _seqs[gid].lids.push_back(r);
+        _seqmap[std::make_tuple(i+1, r)] = gid;
       } else { // some events, need re-ID
         for (std::set<int>::iterator it=rhs.begin(); it!=rhs.end(); it++) {
           int r = *it;
           int gid = NewVortexSequence(i+1);
-          // _seqs[gid].lids.push_back(r);
+          _seqs[gid].tl ++;
+          _seqs[gid].lids.push_back(r);
           _seqmap[std::make_tuple(i+1, r)] = gid;
         }
 #if 0

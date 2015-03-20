@@ -31,7 +31,7 @@ protected:
 private:
   void parseLayout();
   void saveLayoutToJs();
-  void saveLayoutToSVG();
+  void saveLayoutToSVG(int w, int h);
   void saveEps();
 
 private:

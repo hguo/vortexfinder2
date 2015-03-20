@@ -16,6 +16,17 @@
 #include <GL/glu.h>
 #include <GL/glut.h>
 #endif
+  
+static const int nc = 6;
+static const GLubyte c[nc][3] = {
+    {0, 0, 255},
+    {0, 255, 0},
+    {0, 255, 255},
+    {255, 0, 0},
+    {255, 0, 255},
+    {255, 255, 0}};
+static const std::string cs[nc] = {
+  "blue", "green", "cyan", "red", "purple", "yellow"};
 
 CStorylineWidget::CStorylineWidget(const QGLFormat& fmt, QWidget *parent, QGLWidget *sharedWidget) :
   _vt(NULL)
@@ -86,26 +97,28 @@ void CStorylineWidget::saveLayoutToJs()
   ofs.close();
 }
 
-void CStorylineWidget::saveLayoutToSVG()
+void CStorylineWidget::saveLayoutToSVG(int w, int h)
 {
   using namespace std;
   ofstream ofs("dot.svg");
   if (!ofs.is_open()) return;
 
-  ofs << "<svg width='" << _vt->tl() << "' height='" << _layout_height << "'>" << endl;
+  // ofs << "<svg width='" << _vt->tl() << "' height='" << _layout_height << "'>" << endl;
+  ofs << "<svg width='" << w << "' height='" << h << "'>" << endl;
 
   const std::vector<struct VortexSequence> seqs = _vt->Sequences();
   for (int i=0; i<seqs.size(); i++) {
     const struct VortexSequence& seq = seqs[i];
     if (seq.lids.size() == 0) continue; // FIXME
+    const int cid = i % nc;
 
-    ofs << "<polyline style='fill:none;stroke:black;stroke-width:3' points='";
+    ofs << "<polyline style='fill:none;stroke:" << cs[cid] << ";stroke-width:2' points='";
     for (int j=0; j<seq.lids.size(); j++) {
       const int t = seq.ts + j; 
       const int k = seq.lids[j];
       const QPair<int, int> key(t, k);
       QVector2D v = _coords[key];
-      ofs << t << "," << v.y() << " ";
+      ofs << ((float)t-_vt->ts())/_vt->tl()*(w-1) << "," << v.y()/_layout_height*h << " ";
     }
     ofs << "'/>" << endl;
   }
@@ -130,7 +143,7 @@ void CStorylineWidget::SetVortexTrasition(const VortexTransition *vt)
 
   parseLayout();
   // saveLayoutToJs();
-  saveLayoutToSVG();
+  saveLayoutToSVG(1000, 50);
 }
 
 void CStorylineWidget::initializeGL()
@@ -172,14 +185,6 @@ void CStorylineWidget::renderRect()
 
 void CStorylineWidget::renderLines()
 {
-  const int nc = 6;
-  const GLubyte c[nc][3] = {
-    {0, 0, 255},
-    {0, 255, 0},
-    {0, 255, 255},
-    {255, 0, 0},
-    {255, 0, 255},
-    {255, 255, 0}};
   const std::vector<struct VortexSequence> seqs = _vt->Sequences();
   
   if (_coords.empty()) return;
