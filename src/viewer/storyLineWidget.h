@@ -15,7 +15,8 @@ public:
   CStorylineWidget(const QGLFormat& fmt=QGLFormat::defaultFormat(), QWidget *parent=NULL, QGLWidget *sharedWidget=NULL);
   ~CStorylineWidget();
 
-  void SetVortexTrasition(const VortexTransition *vt);
+  // void SetVortexTrasition(const VortexTransition *vt);
+  void SetVortexTrasition(VortexTransition *vt);
 
 protected:
   void initializeGL();
@@ -36,7 +37,8 @@ private:
 
 private:
   QRectF _rect_chart;
-  const VortexTransition *_vt;
+  // const VortexTransition *_vt;
+  VortexTransition *_vt; // jie cao ne?
 
   QMap<QPair<int, int>, QVector2D> _coords;
   float _layout_width, _layout_height;

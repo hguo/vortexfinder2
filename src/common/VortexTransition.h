@@ -19,6 +19,8 @@ public:
   VortexTransitionMatrix Matrix(int t) const;
   void AddMatrix(const VortexTransitionMatrix& m);
   int Transition(int t, int i, int j) const;
+  // const std::map<int, VortexTransitionMatrix>& Matrices() const {return _matrices;}
+  std::map<int, VortexTransitionMatrix>& Matrices() {return _matrices;}
 
   void ConstructSequence();
   int SequenceIdx(int t, int lid) const;

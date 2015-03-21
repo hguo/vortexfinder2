@@ -103,12 +103,34 @@ void CStorylineWidget::saveLayoutToSVG(int w, int h)
   ofs << "<svg width='" << w << "' height='" << h << "'>" << endl;
 
   const std::vector<struct VortexSequence> seqs = _vt->Sequences();
+  std::map<int, VortexTransitionMatrix>& matrices = _vt->Matrices();
+ 
+  // links
+  for (int i=0; i<seqs.size(); i++) {
+    int t = seqs[i].ts + seqs[i].tl - 1;
+    if (t>=_vt->ts() + _vt->tl() - 1) continue; 
+    int lhs_lid = seqs[i].lids.back();
+    for (int k=0; k<matrices[t].n1(); k++) {
+      if (matrices[t](lhs_lid, k)) {
+        int rhs_lid = k;
+        QVector2D v1 = _coords[qMakePair(t, lhs_lid)], 
+                  v2 = _coords[qMakePair(t+1, rhs_lid)];
+        ofs << "<line style='fill:none;stroke:grey;stroke-width:0.25' "
+            << "x1='" << ((float)t-_vt->ts())/_vt->tl()*(w-1) << "' " 
+            << "y1='" << v1.y()/_layout_height*h << "' "
+            << "x2='" << ((float)(t+1)-_vt->ts())/_vt->tl()*(w-1) << "' "
+            << "y2='" << v2.y()/_layout_height*h << "' />" << endl;
+      }
+    }
+  }
+
+  // vortices 
   for (int i=0; i<seqs.size(); i++) {
     const struct VortexSequence& seq = seqs[i];
     // if (seq.lids.size() == 0) continue; // FIXME
     const std::string color = color2str(seq.r, seq.g, seq.b);
 
-    ofs << "<polyline style='fill:none;stroke:" << color << ";stroke-width:2' points='";
+    ofs << "<polyline style='fill:none;stroke:" << color << ";stroke-width:1' points='";
     for (int j=0; j<seq.lids.size(); j++) {
       const int t = seq.ts + j; 
       const int k = seq.lids[j];
@@ -126,7 +148,7 @@ void CStorylineWidget::saveLayoutToSVG(int w, int h)
   ofs.close();
 }
 
-void CStorylineWidget::SetVortexTrasition(const VortexTransition *vt)
+void CStorylineWidget::SetVortexTrasition(VortexTransition *vt)
 {
   _vt = vt;
 
