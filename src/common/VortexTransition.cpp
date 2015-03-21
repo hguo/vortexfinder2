@@ -325,6 +325,18 @@ void VortexTransition::SequenceGraphColoring()
   }
 
   // 1.2 events
+  for (int i=0; i<n; i++) {
+    int t = _seqs[i].ts + _seqs[i].tl - 1;
+    if (t>=ts()+tl()-1) continue; 
+    int lhs_lid = _seqs[i].lids.back();
+    for (int k=0; k<_matrices[t].n1(); k++) {
+      if (_matrices[t](lhs_lid, k)) {
+        int rhs_lid = k;
+        int rgid = _seqmap[std::make_tuple(t+1, k)];
+        M[i][rgid] = M[rgid][i] = true;
+      }
+    }
+  }
 
   // 2. graph coloring
   int *cids = (int*)malloc(sizeof(int)*n);
