@@ -170,20 +170,26 @@ void CGLWidget::initializeGL()
 {
   _trackball.init();
 
-  glEnable(GL_MULTISAMPLE);
+  // opengl smooth rendering
+  {
+    glEnable(GL_MULTISAMPLE);
 
-  GLint bufs, samples; 
-  glGetIntegerv(GL_SAMPLE_BUFFERS, &bufs); 
-  glGetIntegerv(GL_SAMPLES, &samples); 
+    GLint bufs, samples; 
+    glGetIntegerv(GL_SAMPLE_BUFFERS, &bufs); 
+    glGetIntegerv(GL_SAMPLES, &samples); 
 
-  glEnable(GL_LINE_SMOOTH); 
-  glHint(GL_LINE_SMOOTH_HINT, GL_NICEST); 
-  
-  glEnable(GL_POLYGON_SMOOTH); 
-  glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST); 
+    glEnable(GL_LINE_SMOOTH); 
+    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST); 
+    
+    glEnable(GL_POLYGON_SMOOTH); 
+    glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST); 
+    
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(1, 1);
 
-  glEnable(GL_BLEND); 
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+    glEnable(GL_BLEND); 
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  }
   
   // initialze light for tubes
   {
@@ -191,13 +197,24 @@ void CGLWidget::initializeGL()
             diffuse[]  = {0.5, 0.5, 0.5}, 
             specular[] = {0.8, 0.8, 0.8}; 
     GLfloat dir[] = {0, 0, -1}; 
+    GLfloat pos[] = {1, 1, 4, 1};
     GLfloat shiness = 100; 
 
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambient); 
     glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse); 
     glLightfv(GL_LIGHT0, GL_SPECULAR, specular); 
-    // glLightfv(GL_LIGHT0, GL_POSITION, pos); 
+    glLightfv(GL_LIGHT0, GL_POSITION, pos); 
     glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, dir); 
+    
+    GLfloat light1_position[] = {-4.0, 4.0, 0.0, 1.0};
+    GLfloat light1_spot_direction[] = {1.0, -1.0, 0.0};
+
+    glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, specular);
+    glLightfv(GL_LIGHT1, GL_POSITION, light1_position);
+    glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, light1_spot_direction);
+
     glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE); 
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE); 
 
@@ -326,6 +343,7 @@ void CGLWidget::renderInclusions()
   glDisable(GL_DEPTH_TEST);
   glEnable(GL_LIGHTING); 
   glEnable(GL_LIGHT0); 
+  glEnable(GL_LIGHT1); 
   glEnable(GL_CULL_FACE);
 
   glPushMatrix();
@@ -348,6 +366,7 @@ void CGLWidget::renderVortexArrows()
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_LIGHTING); 
   glEnable(GL_LIGHT0); 
+  glEnable(GL_LIGHT1); 
 
   for (int i=0; i<_cones_pos.size(); i++) {
     QColor c = _cones_color[i];
@@ -389,6 +408,7 @@ void CGLWidget::renderVortexTubes()
   glEnable(GL_DEPTH_TEST); 
   glEnable(GL_LIGHTING); 
   glEnable(GL_LIGHT0); 
+  glEnable(GL_LIGHT1); 
 
   glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT); 
   glEnableClientState(GL_VERTEX_ARRAY); 
