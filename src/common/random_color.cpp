@@ -12,6 +12,8 @@ void generate_random_colors(int count, std::vector<unsigned char>& colors)
     hues[i] = (double)i/(count-1);
   
   std::random_shuffle(hues.begin(), hues.end());
+  std::random_shuffle(hues.begin(), hues.end());
+  std::random_shuffle(hues.begin(), hues.end());
 
   for (int i=0; i<count; i++) {
     ZHSI hsi;

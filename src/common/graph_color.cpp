@@ -16,10 +16,10 @@ bool compare1(Node n0, Node n1) {
   return n0.index < n1.index;
 }
 
-bool check_ok(bool **M, Node *nodes, int *cid, int i, int j)
+bool check_ok(int n, bool **M, Node *nodes, int *cid, int i, int j)
 {
   if (M[nodes[i].index][nodes[j].index] != 0 || cid[j] != 0) return false;
-  for (int k=0; k<j; k++) {
+  for (int k=0; k<n; k++) {
     if (M[nodes[i].index][nodes[k].index] == 0 && M[nodes[k].index][nodes[j].index] != 0)
       return false;
   }
@@ -38,7 +38,7 @@ int welsh_powell(int n, bool **M, int *cid)
     nodes[i].color = 0;
   }
 
-  std::sort(nodes, nodes+n, compare);
+  std::stable_sort(nodes, nodes+n, compare);
   int k=0;
   
   while (1) {
@@ -52,11 +52,11 @@ int welsh_powell(int n, bool **M, int *cid)
     }
     if (i==n) break;
     for (int j=0; j<n; j++)
-      if (i!=j && check_ok(M, nodes, cid, i, j))
+      if (i!=j && check_ok(n, M, nodes, cid, i, j))
         nodes[j].color = k;
   }
 
-  std::sort(nodes, nodes+n, compare1);
+  std::stable_sort(nodes, nodes+n, compare1);
   for (int i=0; i<n; i++) 
     cid[i] = nodes[i].color - 1;
 
