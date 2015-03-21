@@ -551,6 +551,7 @@ void CGLWidget::LoadVortexLines()
   
   for (int i=0; i<vortex_liness.size(); i++) {
     vortex_liness[i].gid = _vt->SequenceIdx(_timestep, vortex_liness[i].id);
+    _vt->SequenceColor(vortex_liness[i].gid, vortex_liness[i].r, vortex_liness[i].g, vortex_liness[i].b);
     // fprintf(stderr, "t=%d, lid=%d, gid=%d\n", _timestep, vortex_liness[i].id, vortex_liness[i].gid);
   }
   
@@ -558,15 +559,6 @@ void CGLWidget::LoadVortexLines()
 
   const double O[3] = {_data_info.ox(), _data_info.oy(), _data_info.oz()},
                L[3] = {_data_info.lx(), _data_info.ly(), _data_info.lz()};
-
-  const int nc = 6;
-  const GLubyte c[nc][3] = {
-    {0, 0, 255},
-    {0, 255, 0},
-    {0, 255, 255},
-    {255, 0, 0},
-    {255, 0, 255},
-    {255, 255, 0}};
 
   int vertCount = 0; 
   for (int k=0; k<vortex_liness.size(); k++) { //iterator over lines
@@ -577,8 +569,6 @@ void CGLWidget::LoadVortexLines()
                    *(vortex_liness[k].begin()+2));
       _vids_coord.push_back(pt);
     }
-
-    int ci = vortex_liness[k].gid % nc; // color index
 
     if (vortex_liness[k].is_bezier) { // TODO: make it more graceful..
       VortexLine& vl = vortex_liness[k];
@@ -592,7 +582,7 @@ void CGLWidget::LoadVortexLines()
         QVector3D p0(vl[i*3], vl[i*3+1], vl[i*3+2]), 
                   p1(vl[i*3+3], vl[i*3+4], vl[i*3+5]);
         QVector3D d = (p1 - p0).normalized();
-        QColor color(c[ci][0], c[ci][1], c[ci][2]);
+        QColor color(vl.r, vl.g, vl.b);
 
         _cones_pos.push_back(p);
         _cones_dir.push_back(d);
@@ -604,6 +594,7 @@ void CGLWidget::LoadVortexLines()
     }
     
     std::vector<double>::iterator it = vortex_liness[k].begin();
+    unsigned char c[3] = {vortex_liness[k].r, vortex_liness[k].g, vortex_liness[k].b};
     QVector3D p0;
     for (int i=0; i<vortex_liness[k].size()/3; i++) {
       QVector3D p(*it, *(++it), *(++it));
@@ -612,9 +603,9 @@ void CGLWidget::LoadVortexLines()
       v_line_vertices.push_back(p.x()); 
       v_line_vertices.push_back(p.y()); 
       v_line_vertices.push_back(p.z()); 
-      v_line_colors.push_back(c[ci][0]); 
-      v_line_colors.push_back(c[ci][1]); 
-      v_line_colors.push_back(c[ci][2]); 
+      v_line_colors.push_back(c[0]); 
+      v_line_colors.push_back(c[1]); 
+      v_line_colors.push_back(c[2]); 
 
       if (i>0 && (p-p0).length()>5) {
         v_line_vert_count.push_back(vertCount); 

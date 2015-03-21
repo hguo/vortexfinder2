@@ -8,6 +8,8 @@ set (common_sources
   Inclusions.cpp
   FieldLine.cpp
   Puncture.cpp
+  zcolor.cpp
+  random_color.cpp
 )
 
 set (common_protos

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <set>
 #include <cassert>
+#include "random_color.h"
 
 VortexTransition::VortexTransition() :
   _ts(0), _tl(0)
@@ -64,7 +65,7 @@ void VortexTransition::SaveToDotFile(const std::string& filename) const
   ofs << "ranksep =\"1.0 equally\";" << endl;
   ofs << "node [shape=circle];" << endl;
   // ofs << "node [shape=point];" << endl;
-#if 0
+#if 1
   for (int t=_ts; t<_ts+_tl-1; t++) {
     const VortexTransitionMatrix &tm = Matrix(t); 
     for (int i=0; i<tm.n0(); i++) {
@@ -188,6 +189,13 @@ int VortexTransition::SequenceIdx(int t, int lid) const
     return it->second;
 }
 
+void VortexTransition::SequenceColor(int gid, unsigned char &r, unsigned char &g, unsigned char &b) const
+{
+  r = _seqs[gid].r;
+  g = _seqs[gid].g;
+  b = _seqs[gid].b;
+}
+
 void VortexTransition::ConstructSequence()
 {
   for (int i=_ts; i<_ts+_tl-1; i++) {
@@ -238,6 +246,8 @@ void VortexTransition::ConstructSequence()
     }
   }
 
+  RandomColorSchemes();
+
 #if 0
   for (int i=0; i<_events.size(); i++) 
     fprintf(stderr, "e=%d, #l=%d, #r=%d\n", _events[i].event, _events[i].lhs.size(), _events[i].rhs.size());
@@ -272,3 +282,15 @@ void VortexTransition::ConstructSequence()
         cnt ++;
       }
 #endif
+
+void VortexTransition::RandomColorSchemes()
+{
+  std::vector<unsigned char> colors;
+  generate_random_colors(_seqs.size(), colors);
+
+  for (int i=0; i<_seqs.size(); i++) {
+    _seqs[i].r = colors[i*3];
+    _seqs[i].g = colors[i*3+1];
+    _seqs[i].b = colors[i*3+2];
+  }
+}

@@ -12,7 +12,6 @@ if (WITH_QT)
 endif ()
 
 set (viewer_sources
-  zcolor.cpp
   trackball.cpp
   widget.cpp
   storyLineWidget.cpp

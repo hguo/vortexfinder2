@@ -16,17 +16,13 @@
 #include <GL/glu.h>
 #include <GL/glut.h>
 #endif
-  
-static const int nc = 6;
-static const GLubyte c[nc][3] = {
-    {0, 0, 255},
-    {0, 255, 0},
-    {0, 255, 255},
-    {255, 0, 0},
-    {255, 0, 255},
-    {255, 255, 0}};
-static const std::string cs[nc] = {
-  "blue", "green", "cyan", "red", "purple", "yellow"};
+
+std::string color2str(unsigned char r, unsigned char g, unsigned char b)
+{
+  char buf[10];
+  sprintf(buf, "#%02X%02X%02X", r, g, b);
+  return std::string(buf);
+}
 
 CStorylineWidget::CStorylineWidget(const QGLFormat& fmt, QWidget *parent, QGLWidget *sharedWidget) :
   _vt(NULL)
@@ -109,10 +105,10 @@ void CStorylineWidget::saveLayoutToSVG(int w, int h)
   const std::vector<struct VortexSequence> seqs = _vt->Sequences();
   for (int i=0; i<seqs.size(); i++) {
     const struct VortexSequence& seq = seqs[i];
-    if (seq.lids.size() == 0) continue; // FIXME
-    const int cid = i % nc;
+    // if (seq.lids.size() == 0) continue; // FIXME
+    const std::string color = color2str(seq.r, seq.g, seq.b);
 
-    ofs << "<polyline style='fill:none;stroke:" << cs[cid] << ";stroke-width:2' points='";
+    ofs << "<polyline style='fill:none;stroke:" << color << ";stroke-width:2' points='";
     for (int j=0; j<seq.lids.size(); j++) {
       const int t = seq.ts + j; 
       const int k = seq.lids[j];
@@ -199,8 +195,7 @@ void CStorylineWidget::renderLines()
 
   for (int i=0; i<seqs.size(); i++) {
     const struct VortexSequence& seq = seqs[i];
-    const int cid = i % nc;
-    glColor3ub(c[cid][0], c[cid][1], c[cid][2]);
+    glColor3ub(seq.r, seq.g, seq.b);
 
     glBegin(GL_LINE_STRIP);
     for (int j=0; j<seq.lids.size(); j++) {

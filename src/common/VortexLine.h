@@ -26,6 +26,8 @@ struct VortexLine : public std::vector<double>
   int id, gid;
   int timestep;
   bool is_bezier;
+
+  unsigned char r, g, b;
 };
 
 bool SerializeVortexLines(const std::vector<VortexLine>& lines, const std::string& info, std::string& buf);

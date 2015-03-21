@@ -10,6 +10,8 @@ public:
   int ts, tl; // start and duration
   std::vector<int> lids; // local ids
 
+  unsigned char r, g, b;
+
   // std::vector<int> lhs_gids, rhs_gids;
   // int lhs_event, rhs_event;
 };

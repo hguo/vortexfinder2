@@ -22,10 +22,12 @@ public:
 
   void ConstructSequence();
   int SequenceIdx(int t, int lid) const;
+  void SequenceColor(int gid, unsigned char &r, unsigned char &g, unsigned char &b) const;
 
   int MaxNVorticesPerFrame() const {return _max_nvortices_per_frame;}
 
   const std::vector<struct VortexSequence> Sequences() const {return _seqs;}
+  void RandomColorSchemes();
 
 private:
   int NewVortexSequence(int ts);
