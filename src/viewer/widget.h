@@ -13,6 +13,8 @@
 #include "common/DataInfo.pb.h"
 #include "common/VortexTransition.h"
 
+namespace ILines {class ILRender;}
+
 class QMConnector; 
 class QMouseEvent;
 class QKeyEvent; 
@@ -53,7 +55,8 @@ public:
 protected:
   void initializeGL(); 
   void resizeGL(int w, int h); 
-  void paintGL(); 
+  void paintGL();
+  void initIL();
 
   void mousePressEvent(QMouseEvent*); 
   void mouseMoveEvent(QMouseEvent*);
@@ -93,7 +96,14 @@ private: // camera
   const QVector3D _eye, _center, _up;
 
   int _vortex_render_mode;
-  bool _enable_inclusions;
+  bool _toggle_inclusions;
+  bool _toggle_history;
+  bool _toggle_il;
+  bool _toggle_ids;
+  bool _toggle_bezier;
+
+private: // IL render
+  ILines::ILRender *_ilrender;
 
 private: // vortex line rendering
   std::vector<GLfloat> v_line_vertices;
@@ -104,6 +114,18 @@ private: // vortex line rendering
   std::vector<GLfloat> vortex_tube_vertices, vortex_tube_normals;
   std::vector<GLubyte> vortex_tube_colors; 
   std::vector<GLuint> vortex_tube_indices_lines, vortex_tube_indices_vertices;
+
+private: // history line render
+  const int h_max;
+  QVector<std::vector<GLfloat> > h_line_vertices;
+  QVector<std::vector<GLubyte> > h_line_colors;
+  QVector<std::vector<GLsizei> > h_line_vert_count;
+  QVector<std::vector<GLint> > h_line_indices;
+
+  void addCurrentLineToHistory();
+  void correctHistoryAlpha();
+  void clearHistory();
+  void renderHistoryVortexLines();
 
 private: // isosurface rendering
   std::vector<GLfloat> s_triangle_vertices, s_triangle_normals;

@@ -1,6 +1,7 @@
 #include "random_color.h"
 #include "zcolor.h"
 #include <algorithm>
+#include <cstdlib>
 
 void generate_random_colors(int count, std::vector<unsigned char>& colors)
 {
@@ -10,7 +11,8 @@ void generate_random_colors(int count, std::vector<unsigned char>& colors)
   std::vector<double> hues(count);
   for (int i=0; i<count; i++) 
     hues[i] = (double)i/(count-1);
-  
+
+  srand(0);
   std::random_shuffle(hues.begin(), hues.end());
   std::random_shuffle(hues.begin(), hues.end());
   std::random_shuffle(hues.begin(), hues.end());

@@ -1,3 +1,4 @@
+#include "ilines/ILRender.h"
 #include <QMouseEvent>
 #include <QFileDialog>
 #include <QDebug>
@@ -34,22 +35,27 @@
 #include <GL/glut.h>
 #endif
 
-using namespace std; 
-
 CGLWidget::CGLWidget(const QGLFormat& fmt, QWidget *parent, QGLWidget *sharedWidget)
   : QGLWidget(fmt, parent, sharedWidget), 
     _fovy(30.f), _znear(0.1f), _zfar(10.f), 
     _eye(0, 0, 2.5), _center(0, 0, 0), _up(0, 1, 0), 
     _vortex_render_mode(0), 
-    _enable_inclusions(false),
+    _toggle_inclusions(false),
+    _toggle_history(false),
+    _toggle_il(false),
+    _toggle_ids(true),
+    _toggle_bezier(false),
     _ts(0), _tl(0), 
     _rc(NULL), _rc_fb(NULL),
-    _ds(NULL), _vt(NULL)
+    _ds(NULL), _vt(NULL),
+    h_max(1000)
 {
+  _ilrender = new ILines::ILRender;
 }
 
 CGLWidget::~CGLWidget()
 {
+  delete _ilrender;
   if (_ds != NULL)
     delete _ds;
 
@@ -106,12 +112,14 @@ void CGLWidget::keyPressEvent(QKeyEvent* e)
 {
   switch (e->key()) {
   case Qt::Key_Comma: 
-    LoadTimeStep(_timestep - 1); 
+    LoadTimeStep(_timestep - 1);
+    addCurrentLineToHistory();
     updateGL();
     break;
 
   case Qt::Key_Period: 
     LoadTimeStep(_timestep + 1);
+    addCurrentLineToHistory();
     updateGL();
     break;
 
@@ -131,7 +139,31 @@ void CGLWidget::keyPressEvent(QKeyEvent* e)
     break;
 
   case Qt::Key_I:
-    _enable_inclusions = !_enable_inclusions;
+    _toggle_inclusions = !_toggle_inclusions;
+    updateGL();
+    break;
+
+  case Qt::Key_D:
+    _toggle_ids = !_toggle_ids;
+    updateGL();
+    break;
+
+  case Qt::Key_B:
+    _toggle_bezier = !_toggle_bezier;
+    Clear();
+    LoadVortexLines();
+    updateGL();
+
+  case Qt::Key_H:
+    if (e->modifiers() == Qt::ShiftModifier) 
+      clearHistory();
+    else 
+      _toggle_history = !_toggle_history;
+    updateGL();
+    break;
+   
+  case Qt::Key_M:
+    _toggle_il = !_toggle_il;
     updateGL();
     break;
 
@@ -168,6 +200,9 @@ void CGLWidget::wheelEvent(QWheelEvent* e)
 
 void CGLWidget::initializeGL()
 {
+  glewInit();
+  initIL();
+
   _trackball.init();
 
   // opengl smooth rendering
@@ -235,6 +270,24 @@ void CGLWidget::initializeGL()
 #endif
 
   CHECK_GLERROR(); 
+}
+
+void CGLWidget::initIL()
+{
+  const float ka = 0.02f, kd = 0.8f, ks = 1.0f, gloss = 10.0f;
+  //const float ka = 0.005f, kd = 0.8f, ks = 1.0f, gloss = 10.0f;
+  const int texDim=256; 
+  GLfloat lightDir[3] = {-1.0f, -1.0f, 6.0f}; 
+  //GLfloat lightDir[3] = {-1.0f, 2.0f, 0.0f}; 
+
+#if 0
+  _ilrender->setupTextures(0.1f*ka, kd, 3.0f*ks, gloss, texDim,
+                                ILines::ILLightingModel::IL_CYLINDER_PHONG, false,
+                                lightDir);
+#else
+  _ilrender->setupTextures(0.2f*ka, kd, 3.0f*ks, 4.0f * gloss, texDim,
+                                ILines::ILLightingModel::IL_CYLINDER_BLINN, false);
+#endif
 }
 
 void CGLWidget::resizeGL(int w, int h)
@@ -348,11 +401,12 @@ void CGLWidget::renderInclusions()
 
   glPushMatrix();
   glTranslatef(-64, -32, -8); // FIXME: hard code
+  glColor4f(0.5, 0.5, 0.5, 0.4);
   for (int i=0; i<n; i++) {
-    glColor4ub(inclusions[i].c.red(), inclusions[i].c.green(), inclusions[i].c.blue(), 128);
+    // glColor4ub(inclusions[i].c.red(), inclusions[i].c.green(), inclusions[i].c.blue(), 128);
     glPushMatrix();
     glTranslatef(inclusions[i].p.x(), inclusions[i].p.y(), inclusions[i].p.z());
-    glutSolidSphere(radius, 20, 20);
+    glutSolidSphere(radius, 64, 64);
     glPopMatrix();
   }
   glPopMatrix();
@@ -392,13 +446,62 @@ void CGLWidget::renderVortexLines()
   glEnableClientState(GL_VERTEX_ARRAY); 
   glEnableClientState(GL_COLOR_ARRAY); 
   glVertexPointer(3, GL_FLOAT, 0, v_line_vertices.data()); 
-  glColorPointer(3, GL_UNSIGNED_BYTE, 3*sizeof(GLubyte), v_line_colors.data());
-  
-  glMultiDrawArrays(GL_LINE_STRIP, v_line_indices.data(), v_line_vert_count.data(), v_line_vert_count.size());
-  // glMultiDrawArrays(GL_POINTS, v_line_indices.data(), v_line_vert_count.data(), v_line_vert_count.size());
+  glColorPointer(4, GL_UNSIGNED_BYTE, 4*sizeof(GLubyte), v_line_colors.data());
+
+#if 1
+  _ilrender->enableZSort(true);
+  glLineWidth(3.f);
+  glDepthMask(GL_FALSE);
+  _ilrender->multiDrawArrays(
+      v_line_indices.data(), 
+      v_line_vert_count.data(), 
+      v_line_vert_count.size());
+  glDepthMask(GL_TRUE);
+#else
+  glMultiDrawArrays(
+      GL_LINE_STRIP, 
+      v_line_indices.data(), 
+      v_line_vert_count.data(), 
+      v_line_vert_count.size());
+#endif
 
   glDisableClientState(GL_COLOR_ARRAY); 
-  glDisableClientState(GL_VERTEX_ARRAY); 
+  glDisableClientState(GL_VERTEX_ARRAY);
+
+  CHECK_GLERROR();
+}
+
+void CGLWidget::renderHistoryVortexLines()
+{
+  _ilrender->enableZSort(true);
+  glLineWidth(3.f);
+  glDepthMask(GL_FALSE);
+ 
+  for (int i=0; i<h_line_vertices.size(); i++) {
+    glEnableClientState(GL_VERTEX_ARRAY); 
+    glEnableClientState(GL_COLOR_ARRAY); 
+    glVertexPointer(3, GL_FLOAT, 0, h_line_vertices[i].data());
+    glColorPointer(4, GL_UNSIGNED_BYTE, 4*sizeof(GLubyte), h_line_colors[i].data());
+
+    if (_toggle_il)
+      _ilrender->multiDrawArrays(
+          h_line_indices[i].data(),
+          h_line_vert_count[i].data(), 
+          h_line_vert_count[i].size());
+    else 
+      glMultiDrawArrays(
+          GL_LINE_STRIP, 
+          h_line_indices[i].data(), 
+          h_line_vert_count[i].data(), 
+          h_line_vert_count[i].size());
+
+    glDisableClientState(GL_COLOR_ARRAY); 
+    glDisableClientState(GL_VERTEX_ARRAY);
+  }
+  
+  glDepthMask(GL_TRUE);
+
+  CHECK_GLERROR();
 }
 
 void CGLWidget::renderVortexTubes()
@@ -483,6 +586,9 @@ void CGLWidget::paintGL()
   glutWireCube(1.0);
   glPopMatrix();
 #endif
+  
+  if (_toggle_history)
+    renderHistoryVortexLines();
 
   if (_vortex_render_mode == 0)
     renderVortexTubes();
@@ -493,11 +599,12 @@ void CGLWidget::paintGL()
     renderIsosurfaces();
   }
 
-  if (_enable_inclusions)
+  if (_toggle_inclusions)
     renderInclusions();
 
-  // renderVortexArrows();
-  renderVortexIds();
+  renderVortexArrows();
+  if (_toggle_ids)
+    renderVortexIds();
 
   renderFieldLines();
 
@@ -557,7 +664,7 @@ void CGLWidget::Clear()
 
 void CGLWidget::LoadVortexLines()
 {
-  stringstream ss;
+  std::stringstream ss;
   ss << _dataname << ".vlines." << _timestep;
   const std::string filename = ss.str();
 
@@ -605,8 +712,10 @@ void CGLWidget::LoadVortexLines()
       _vids_coord.push_back(pt);
     }
 
-    // vortex_liness[k].Flattern(O, L);
-    // vortex_liness[k].ToBezier();
+    if (_toggle_bezier) {
+      vortex_liness[k].Flattern(O, L);
+      vortex_liness[k].ToBezier();
+    }
 
     if (vortex_liness[k].is_bezier) { // TODO: make it more graceful..
       VortexLine& vl = vortex_liness[k];
@@ -644,6 +753,7 @@ void CGLWidget::LoadVortexLines()
       v_line_colors.push_back(c[0]); 
       v_line_colors.push_back(c[1]); 
       v_line_colors.push_back(c[2]); 
+      v_line_colors.push_back(255); 
 
       if (i>0 && (p-p0).length()>5) {
         v_line_vert_count.push_back(vertCount); 
@@ -668,7 +778,7 @@ void CGLWidget::LoadVortexLines()
   }
   // v_line_indices.push_back(cnt); 
 
-  updateVortexTubes(20, 0.5); 
+  updateVortexTubes(20, 0.3); 
 }
 
 void CGLWidget::LoadVortexLinesFromTextFile(const std::string& filename)
@@ -696,7 +806,7 @@ void CGLWidget::LoadVortexLinesFromTextFile(const std::string& filename)
     v_line_vertices.push_back(x); 
     v_line_vertices.push_back(y); 
     v_line_vertices.push_back(z);
-    for (int m=0; m<3; m++) 
+    for (int m=0; m<4; m++) 
       v_line_colors.push_back(c[m]); 
 
     if (vertCount > 1) {
@@ -749,7 +859,7 @@ void CGLWidget::updateVortexTubes(int nPatches, float radius)
     for (int j=1; j<v_line_vert_count[i]; j++) {
       QVector3D P0 = QVector3D(v_line_vertices[(first+j-1)*3], v_line_vertices[(first+j-1)*3+1], v_line_vertices[(first+j-1)*3+2]); 
       QVector3D P  = QVector3D(v_line_vertices[(first+j)*3], v_line_vertices[(first+j)*3+1], v_line_vertices[(first+j)*3+2]);
-      GLubyte color[3] = {v_line_colors[(first+j)*3], v_line_colors[(first+j)*3+1], v_line_colors[(first+j)*3+2]}; 
+      GLubyte color[3] = {v_line_colors[(first+j)*4], v_line_colors[(first+j)*4+1], v_line_colors[(first+j)*4+2]}; 
 
       QVector3D T = (P - P0).normalized(); 
       QVector3D N = QVector3D(-T.y(), T.x(), 0.0).normalized(); 
@@ -894,4 +1004,45 @@ void CGLWidget::extractIsosurfaces()
   free(rho);
   fprintf(stderr, "isosurface extracted.\n");
 #endif
+}
+
+void CGLWidget::addCurrentLineToHistory()
+{
+  h_line_vertices.push_back(v_line_vertices);
+  h_line_colors.push_back(v_line_colors);
+  h_line_vert_count.push_back(v_line_vert_count);
+  h_line_indices.push_back(v_line_indices);
+
+  if (h_line_vertices.size() >= h_max) {
+    h_line_vertices.pop_front();
+    h_line_colors.pop_front();
+    h_line_vert_count.pop_front();
+    h_line_indices.pop_front();
+  }
+
+  correctHistoryAlpha();
+}
+
+void CGLWidget::correctHistoryAlpha()
+{
+  const float alpha0 = 0.3, alpha1 = 1.0; 
+  const int n = h_line_vertices.size();
+
+  for (int i=0; i<n; i++) {
+    const int k = h_max - n + i;
+    const float a = (float)k/h_max;
+    const float alpha = (1-a) * alpha0 + a * alpha1;
+
+    for (int j=0; j<h_line_colors[i].size()/4; j++)
+      h_line_colors[i][j*4+3] = alpha * 255;
+  }
+  // TODO
+}
+
+void CGLWidget::clearHistory()
+{
+  h_line_vertices.clear();
+  h_line_colors.clear();
+  h_line_vert_count.clear();
+  h_line_indices.clear();
 }

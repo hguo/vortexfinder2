@@ -30,6 +30,7 @@ set_target_properties (glviewer PROPERTIES AUTOMOC ON)
 target_link_libraries (glviewer 
   glcommon
   glio
+  ilines
   ${QT_LIBRARIES}
   ${GLUT_LIBRARY}
   ${GLEW_LIBRARY}
