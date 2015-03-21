@@ -10,6 +10,7 @@ set (common_sources
   Puncture.cpp
   zcolor.cpp
   random_color.cpp
+  graph_color.cpp
 )
 
 set (common_protos

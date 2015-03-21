@@ -22,6 +22,7 @@ public:
 
   void ConstructSequence();
   int SequenceIdx(int t, int lid) const;
+  void SequenceGraphColoring();
   void SequenceColor(int gid, unsigned char &r, unsigned char &g, unsigned char &b) const;
 
   int MaxNVorticesPerFrame() const {return _max_nvortices_per_frame;}

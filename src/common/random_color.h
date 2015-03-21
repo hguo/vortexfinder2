@@ -5,7 +5,6 @@
 #include <string>
 
 void generate_random_colors(int count, std::vector<unsigned char>& colors);
-
-std::string color2str(unsigned char r, unsigned char g, unsigned char b);
+void generate_colors(int count, std::vector<unsigned char>& colors);
 
 #endif

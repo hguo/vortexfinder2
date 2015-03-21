@@ -4,6 +4,8 @@
 #include <set>
 #include <cassert>
 #include "random_color.h"
+#include "graph_color.h"
+#include "def.h"
 
 VortexTransition::VortexTransition() :
   _ts(0), _tl(0)
@@ -246,7 +248,8 @@ void VortexTransition::ConstructSequence()
     }
   }
 
-  RandomColorSchemes();
+  // RandomColorSchemes();
+  SequenceGraphColoring(); 
 
 #if 0
   for (int i=0; i<_events.size(); i++) 
@@ -293,4 +296,55 @@ void VortexTransition::RandomColorSchemes()
     _seqs[i].g = colors[i*3+1];
     _seqs[i].b = colors[i*3+2];
   }
+}
+
+void VortexTransition::SequenceGraphColoring()
+{
+  using namespace std;
+
+  // 1. construct graph
+  const int n = _seqs.size();
+  bool **M;
+  malloc2D(M, n, n, bool);
+  memset(M[0], 0, sizeof(bool)*n*n);
+
+  // 1.1 concurrent vortices
+  map<int, std::set<int> > time_slots;
+  for (int i=0; i<n; i++) {
+    for (int j=0; j<_seqs[i].tl; j++) {
+      time_slots[_seqs[i].ts+j].insert(i);
+    }
+  }
+  for (map<int, std::set<int> >::iterator it=time_slots.begin(); it!=time_slots.end(); it++) {
+    const set<int> &concurrents = it->second;
+    for (set<int>::iterator it0=concurrents.begin(); it0!=concurrents.end(); it0++)
+      for (set<int>::iterator it1=concurrents.begin(); it1!=concurrents.end(); it1++)
+        if (it0!=it1) {
+          M[*it0][*it1] = M[*it1][*it0] = true;
+        }
+  }
+
+  // 1.2 events
+
+  // 2. graph coloring
+  int *cids = (int*)malloc(sizeof(int)*n);
+  int nc = welsh_powell(n, M, cids);
+
+  // 3. generate colors
+  fprintf(stderr, "#color=%d\n", nc);
+  vector<unsigned char> colors;
+  generate_random_colors(nc, colors);
+
+  for (int i=0; i<_seqs.size(); i++) {
+    int c = cids[i];
+    // fprintf(stderr, "seq=%d, c=%d\n", i, c);
+    _seqs[i].r = colors[c*3];
+    _seqs[i].g = colors[c*3+1];
+    _seqs[i].b = colors[c*3+2];
+  }
+
+  // 4. release memory
+  free(M[0]);
+  free(M);
+  free(cids);
 }
