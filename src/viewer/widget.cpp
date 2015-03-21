@@ -564,11 +564,29 @@ void CGLWidget::LoadVortexLines()
   for (int k=0; k<vortex_liness.size(); k++) { //iterator over lines
     if (vortex_liness[k].size()>=3) {
       _vids.push_back(vortex_liness[k].gid);
+#if 0
+      // search for the min(x) point
+      QVector3D maxv;
+      int maxi;
+      for (int i=0; i<vortex_liness[k].size()/3; i++) {
+        if (vortex_liness[k][i*3] < minx) {
+          minx = vortex_liness[k][i*3];
+          minxi = i;
+        }
+      }
+      QVector3D pt(vortex_liness[k][minxi*3], 
+                   vortex_liness[k][minxi*3+1],
+                   vortex_liness[k][minxi*3+2]);
+#else
       QVector3D pt(*(vortex_liness[k].begin()), 
                    *(vortex_liness[k].begin()+1),
                    *(vortex_liness[k].begin()+2));
+#endif
       _vids_coord.push_back(pt);
     }
+
+    // vortex_liness[k].Flattern(O, L);
+    // vortex_liness[k].ToBezier();
 
     if (vortex_liness[k].is_bezier) { // TODO: make it more graceful..
       VortexLine& vl = vortex_liness[k];
@@ -717,6 +735,7 @@ void CGLWidget::updateVortexTubes(int nPatches, float radius)
       QVector3D N = QVector3D(-T.y(), T.x(), 0.0).normalized(); 
       QVector3D B = QVector3D::crossProduct(N, T); 
 
+      if (N.length() == 0 || isnan(N.length())) N=QVector3D(1,0,0);
       // if (N.length() == 0 || isnan(N.length())) continue;
 
       if (j>1) {

@@ -8,6 +8,7 @@ if (WITH_QT)
     # ${QT_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
     ${GLUT_INCLUDE_DIR}
+    ${GLEW_INCLUDE_DIR}
   )
 endif ()
 
@@ -51,3 +52,5 @@ target_link_libraries (viewer1 glviewer)
 
 add_executable (storyLine storyLine.cpp)
 target_link_libraries (storyLine glviewer)
+
+subdirs (volren gl2ps ilines)

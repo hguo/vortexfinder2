@@ -6,10 +6,10 @@ include_directories (
 configure_file (def.h.cmake def.h)
 
 # subdirs (common io extractor tracer)
-subdirs (common io extractor gl2ps)
+subdirs (common io extractor)
 
 if (WITH_QT)
-  subdirs (volren viewer)
+  subdirs (viewer)
 endif ()
 
 if (WITH_TESTS)
