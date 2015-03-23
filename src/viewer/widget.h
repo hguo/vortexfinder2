@@ -40,6 +40,7 @@ public:
 
   void LoadVortexLines();
   void LoadVortexLinesFromTextFile(const std::string& filename); // legacy
+  void LoadVortexLines2D(); // special for 2D simulation
   void LoadFieldLines(const std::string& filename);
   void LoadInclusionsFromTextFile(const std::string& filename);
 
@@ -101,6 +102,9 @@ private: // camera
   bool _toggle_il;
   bool _toggle_ids;
   bool _toggle_bezier;
+  bool _toggle_vip;
+
+  QSet<int> _vips;
 
 private: // IL render
   ILines::ILRender *_ilrender;
@@ -150,6 +154,7 @@ private: // fieldline rendering
 private: // id rendering
   QVector<int> _vids;
   QVector<QVector3D> _vids_coord;
+  QVector<QColor> _vids_colors;
 
 private: // GLGPU
   GLGPUDataset *_ds;

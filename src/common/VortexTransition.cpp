@@ -26,13 +26,14 @@ void VortexTransition::LoadFromFile(const std::string& dataname, int ts, int tl)
     ss << dataname << ".match." << i << "." << i+1;
 
     VortexTransitionMatrix tm;
-    if (tm.LoadFromFile(ss.str())) {
-      _matrices.insert(std::make_pair(i, tm));
-      _nvortices_per_frame[i] = tm.n0(); 
-      _nvortices_per_frame[i+1] = tm.n1();
-    }
-    else 
+    if (!tm.LoadFromFile(ss.str())) {
       fprintf(stderr, "cannot open file %s\n", ss.str().c_str());
+      tm.SetToDummy();
+    }
+    
+    _matrices.insert(std::make_pair(i, tm));
+    _nvortices_per_frame[i] = tm.n0(); 
+    _nvortices_per_frame[i+1] = tm.n1();
   }
 
   _max_nvortices_per_frame = 0;

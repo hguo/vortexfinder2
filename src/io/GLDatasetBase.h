@@ -11,6 +11,8 @@ class GLDatasetBase
 public:
   GLDatasetBase(); 
   virtual ~GLDatasetBase();
+  
+  virtual void SerializeDataInfoToString(std::string& buf) const;
 
 public:
   void SetDataName(const std::string& dn);

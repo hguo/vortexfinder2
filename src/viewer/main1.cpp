@@ -31,7 +31,12 @@ int main(int argc, char **argv)
   widget->SetData(dataname, ts, tl);
   // widget->OpenGLGPUDataset();
   widget->SetVortexTransition(&vt);
+
+#if 1
   widget->LoadTimeStep(ts);
+#else
+  widget->LoadVortexLines2D();
+#endif
 
   return app.exec(); 
 }

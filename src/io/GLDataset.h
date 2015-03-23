@@ -11,7 +11,6 @@ public:
 
   bool Valid() const {return _valid;}
   virtual void PrintInfo(int slot=0) const = 0;
-  virtual void SerializeDataInfoToString(std::string& buf) const = 0;
 
 public: // data I/O
   virtual bool OpenDataFile(const std::string& filename); 

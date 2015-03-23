@@ -16,8 +16,8 @@ int main(int argc, char **argv)
   double Jxext, Kx, V;
   double *re, *im;
 
-  // GLGPU_IO_Helper_ReadBDAT(
-  GLGPU_IO_Helper_ReadLegacy(
+  GLGPU_IO_Helper_ReadBDAT(
+  // GLGPU_IO_Helper_ReadLegacy(
       filename_in, 
       ndims, dims, lengths, pbc,
       time, B, Jxext, Kx, V, 

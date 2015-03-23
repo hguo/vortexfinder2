@@ -44,6 +44,7 @@ int main(int argc, char **argv)
     extractor->TraceOverTime();
     extractor->SaveVortexLines(1);
     extractor->RotateTimeSteps();
+    ds->RotateTimeSteps();
   }
 
   // extractor->SaveVortexLines(dataname + ".vortex");

@@ -13,6 +13,11 @@ GLDatasetBase::~GLDatasetBase()
     delete _mg;
 }
 
+void GLDatasetBase::SerializeDataInfoToString(std::string& buf) const
+{
+
+}
+
 void GLDatasetBase::SetDataName(const std::string& dn)
 {
   _data_name = dn;

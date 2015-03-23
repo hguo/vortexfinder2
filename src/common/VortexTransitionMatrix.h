@@ -20,6 +20,8 @@ public: // IO
   bool LoadFromFile(const std::string& dataname, int t0, int t1);
   bool SaveToFile(const std::string& dataname, int t0, int t1) const;
 
+  void SetToDummy() {_n0 = _n1 = 0; _match.push_back(0);}
+
   bool Valid() const {return _match.size()>0;}
   
 public: // modulars

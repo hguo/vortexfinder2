@@ -45,12 +45,15 @@ CGLWidget::CGLWidget(const QGLFormat& fmt, QWidget *parent, QGLWidget *sharedWid
     _toggle_il(false),
     _toggle_ids(true),
     _toggle_bezier(false),
+    _toggle_vip(false),
     _ts(0), _tl(0), 
     _rc(NULL), _rc_fb(NULL),
     _ds(NULL), _vt(NULL),
-    h_max(1000)
+    h_max(100)
 {
   _ilrender = new ILines::ILRender;
+
+  _vips << 39 << 40 << 43 << 44;
 }
 
 CGLWidget::~CGLWidget()
@@ -95,6 +98,80 @@ void CGLWidget::LoadTimeStep(int t)
     _ds->LoadTimeStep(t, 0);
     extractIsosurfaces();
   }
+}
+
+void CGLWidget::LoadVortexLines2D()
+{
+  QMap<int, QVector<double> > lines;
+  QMap<int, QColor> colors;
+  const double delta = 0.1;
+
+  for (int t=_ts; t<_ts+_tl; t++) {
+    std::stringstream ss;
+    ss << _dataname << ".vlines." << t;
+    const std::string filename = ss.str();
+  
+    std::string info_bytes;
+    std::vector<VortexLine> vortex_liness;
+    if (!::LoadVortexLines(vortex_liness, info_bytes, filename))
+      continue;
+    
+    if (info_bytes.length()>0) 
+      _data_info.ParseFromString(info_bytes);
+
+    for (int i=0; i<vortex_liness.size(); i++) {
+      const int gid = _vt->SequenceIdx(t, vortex_liness[i].id);
+      unsigned char r, g, b;
+      _vt->SequenceColor(gid, r, g, b);
+      lines[gid] << *(vortex_liness[i].begin())
+                 << *(vortex_liness[i].begin()+1)
+                 << t*delta - (_tl*delta*0.5);
+      colors[gid] = QColor(r, g, b);
+    }
+  }
+  
+  const double O[2] = {_data_info.ox(), _data_info.oy()},
+               L[2] = {_data_info.lx(), _data_info.ly()};
+  int vertCount = 0;
+
+  foreach (int gid, lines.keys()) {
+    const QVector<double>& line = lines[gid];
+    QColor c = colors[gid];
+    QVector3D p0;
+    for (int i=0; i<line.size()/3; i++) {
+      QVector3D p(line[i*3], line[i*3+1], line[i*3+2]);
+      
+      v_line_vertices.push_back(p.x()); 
+      v_line_vertices.push_back(p.y()); 
+      v_line_vertices.push_back(p.z()); 
+      v_line_colors.push_back(c.red()); 
+      v_line_colors.push_back(c.green()); 
+      v_line_colors.push_back(c.blue()); 
+      v_line_colors.push_back(255); 
+
+      if (i>0 && (p-p0).length()>5) {
+        v_line_vert_count.push_back(vertCount); 
+        vertCount = 0;
+      }
+      p0 = p;
+
+      vertCount ++;
+    }
+
+    if (vertCount != 0) {
+      v_line_vert_count.push_back(vertCount); 
+      vertCount = 0;
+    }
+
+  }
+  
+  int cnt = 0; 
+  for (int i=0; i<v_line_vert_count.size(); i++) {
+    v_line_indices.push_back(cnt); 
+    cnt += v_line_vert_count[i]; 
+  }
+  
+  updateVortexTubes(20, 0.3); 
 }
 
 void CGLWidget::mousePressEvent(QMouseEvent* e)
@@ -153,6 +230,14 @@ void CGLWidget::keyPressEvent(QKeyEvent* e)
     Clear();
     LoadVortexLines();
     updateGL();
+    break;
+
+  case Qt::Key_V:
+    _toggle_vip = !_toggle_vip;
+    Clear();
+    LoadVortexLines();
+    updateGL();
+    break;
 
   case Qt::Key_H:
     if (e->modifiers() == Qt::ShiftModifier) 
@@ -327,18 +412,19 @@ void CGLWidget::renderVortexIds()
   renderText(20, 60, s0, ft);
 
   ft.setPointSize(24);
-  glColor3f(0, 0, 0);
   for (int i=0; i<_vids.size(); i++) {
     int id = _vids[i];
     QVector3D v = _vids_coord[i];
     QString s = QString("%1").arg(id);
-#if 0
+#if 1
+    glColor3ub(_vids_colors[i].red(), _vids_colors[i].green(), _vids_colors[i].blue());
     glPushMatrix();
     glTranslatef(v.x(), v.y(), v.z());
     glutSolidSphere(0.5, 20, 20);
     glPopMatrix();
 #endif
 
+    glColor3f(0, 0, 0);
     renderText(v.x(), v.y(), v.z(), s, ft);
   }
 }
@@ -475,7 +561,7 @@ void CGLWidget::renderHistoryVortexLines()
 {
   _ilrender->enableZSort(true);
   glLineWidth(3.f);
-  glDepthMask(GL_FALSE);
+  glEnable(GL_DEPTH_TEST);
  
   for (int i=0; i<h_line_vertices.size(); i++) {
     glEnableClientState(GL_VERTEX_ARRAY); 
@@ -483,11 +569,14 @@ void CGLWidget::renderHistoryVortexLines()
     glVertexPointer(3, GL_FLOAT, 0, h_line_vertices[i].data());
     glColorPointer(4, GL_UNSIGNED_BYTE, 4*sizeof(GLubyte), h_line_colors[i].data());
 
-    if (_toggle_il)
+    if (_toggle_il) {
+      // glDepthMask(GL_FALSE);
       _ilrender->multiDrawArrays(
           h_line_indices[i].data(),
           h_line_vert_count[i].data(), 
           h_line_vert_count[i].size());
+      // glDepthMask(GL_TRUE);
+    }
     else 
       glMultiDrawArrays(
           GL_LINE_STRIP, 
@@ -498,8 +587,6 @@ void CGLWidget::renderHistoryVortexLines()
     glDisableClientState(GL_COLOR_ARRAY); 
     glDisableClientState(GL_VERTEX_ARRAY);
   }
-  
-  glDepthMask(GL_TRUE);
 
   CHECK_GLERROR();
 }
@@ -579,10 +666,12 @@ void CGLWidget::paintGL()
   glLoadIdentity(); 
   glLoadMatrixd(_mvmatrix.data()); 
 
-#if 0
+#if 1
+  glEnable(GL_DEPTH_TEST);
   glColor3f(0.f, 0.f, 0.f);
   glPushMatrix();
-  glScalef(128.f, 128.f, 64.f);
+  // glScalef(128.f, 128.f, 64.f);
+  glScalef(64.f, 64.f, 0.1f);
   glutWireCube(1.0);
   glPopMatrix();
 #endif
@@ -595,7 +684,7 @@ void CGLWidget::paintGL()
   else if (_vortex_render_mode == 1)
     renderVortexLines();
   else if (_vortex_render_mode == 2) {
-    renderVortexTubes();
+    // renderVortexTubes();
     renderIsosurfaces();
   }
 
@@ -689,6 +778,8 @@ void CGLWidget::LoadVortexLines()
 
   int vertCount = 0; 
   for (int k=0; k<vortex_liness.size(); k++) { //iterator over lines
+    if (_toggle_vip && !_vips.contains(vortex_liness[k].gid)) continue;
+
     if (vortex_liness[k].size()>=3) {
       _vids.push_back(vortex_liness[k].gid);
 #if 0
@@ -710,6 +801,9 @@ void CGLWidget::LoadVortexLines()
                    *(vortex_liness[k].begin()+2));
 #endif
       _vids_coord.push_back(pt);
+      
+      QColor color(vortex_liness[k].r, vortex_liness[k].g, vortex_liness[k].b);
+      _vids_colors.push_back(color);
     }
 
     if (_toggle_bezier) {
@@ -720,12 +814,17 @@ void CGLWidget::LoadVortexLines()
     if (vortex_liness[k].is_bezier) { // TODO: make it more graceful..
       VortexLine& vl = vortex_liness[k];
       const int span = 6;
+      // const int span = 15;
 
       for (int i=4*span; i<vl.size()/3; i+=4*span) {
+#if 1
         QVector3D p(
             fmod1(vl[i*3]-O[0], L[0]) + O[0], 
             fmod1(vl[i*3+1]-O[1], L[1]) + O[1], 
             fmod1(vl[i*3+2]-O[2], L[2]) + O[2]);
+#else
+        QVector3D p(vl[i*3], vl[i*3+1], vl[i*3+2]);
+#endif
         QVector3D p0(vl[i*3], vl[i*3+1], vl[i*3+2]), 
                   p1(vl[i*3+3], vl[i*3+4], vl[i*3+5]);
         QVector3D d = (p1 - p0).normalized();
@@ -1025,7 +1124,7 @@ void CGLWidget::addCurrentLineToHistory()
 
 void CGLWidget::correctHistoryAlpha()
 {
-  const float alpha0 = 0.3, alpha1 = 1.0; 
+  const float alpha0 = 0.3, alpha1 = 0.8; 
   const int n = h_line_vertices.size();
 
   for (int i=0; i<n; i++) {

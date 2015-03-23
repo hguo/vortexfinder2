@@ -30,6 +30,7 @@ set_target_properties (glviewer PROPERTIES AUTOMOC ON)
 target_link_libraries (glviewer 
   glcommon
   glio
+  gl2ps
   ilines
   ${QT_LIBRARIES}
   ${GLUT_LIBRARY}
@@ -42,7 +43,7 @@ if (WITH_VTK)
 endif ()
 
 if (WITH_CUDA)
-  target_link_libraries (glviewer glvolren gl2ps)
+  target_link_libraries (glviewer glvolren)
 endif ()
 
 # add_executable (viewer main.cpp)
