@@ -49,11 +49,12 @@ CGLWidget::CGLWidget(const QGLFormat& fmt, QWidget *parent, QGLWidget *sharedWid
     _ts(0), _tl(0), 
     _rc(NULL), _rc_fb(NULL),
     _ds(NULL), _vt(NULL),
-    h_max(100)
+    h_max(1000)
 {
   _ilrender = new ILines::ILRender;
 
-  _vips << 39 << 40 << 43 << 44;
+  // _vips << 39 << 40 << 43 << 44;
+  _vips << 2; 
 }
 
 CGLWidget::~CGLWidget()
@@ -416,7 +417,7 @@ void CGLWidget::renderVortexIds()
     int id = _vids[i];
     QVector3D v = _vids_coord[i];
     QString s = QString("%1").arg(id);
-#if 1
+#if 0
     glColor3ub(_vids_colors[i].red(), _vids_colors[i].green(), _vids_colors[i].blue());
     glPushMatrix();
     glTranslatef(v.x(), v.y(), v.z());
@@ -520,6 +521,7 @@ void CGLWidget::renderVortexArrows()
     glPushMatrix();
     glTranslatef(p.x(), p.y(), p.z());
     glRotatef(omega, a.x(), a.y(), a.z());
+    glTranslatef(0, 0, -1.5);
     glutSolidCone(1, 3, 12, 4); 
     glPopMatrix();
   }
@@ -534,7 +536,7 @@ void CGLWidget::renderVortexLines()
   glVertexPointer(3, GL_FLOAT, 0, v_line_vertices.data()); 
   glColorPointer(4, GL_UNSIGNED_BYTE, 4*sizeof(GLubyte), v_line_colors.data());
 
-#if 1
+#if 0
   _ilrender->enableZSort(true);
   glLineWidth(3.f);
   glDepthMask(GL_FALSE);
@@ -628,13 +630,11 @@ void CGLWidget::renderIsosurfaces()
   glEnableClientState(GL_VERTEX_ARRAY); 
   glEnableClientState(GL_NORMAL_ARRAY); 
 
-#if 0
   glColor4ub(237, 28, 36, 255);
   glVertexPointer(3, GL_FLOAT, 0, s_triangle_vertices.data());
   glNormalPointer(GL_FLOAT, 0, s_triangle_normals.data());
   glDrawElements(GL_TRIANGLES, s_triangle_indices.size(), 
       GL_UNSIGNED_INT, s_triangle_indices.data()); 
-#endif
   
   glColor4ub(250, 168, 25, 60);
   glVertexPointer(3, GL_FLOAT, 0, s_triangle_vertices1.data());
@@ -666,7 +666,7 @@ void CGLWidget::paintGL()
   glLoadIdentity(); 
   glLoadMatrixd(_mvmatrix.data()); 
 
-#if 1
+#if 0
   glEnable(GL_DEPTH_TEST);
   glColor3f(0.f, 0.f, 0.f);
   glPushMatrix();
@@ -807,14 +807,14 @@ void CGLWidget::LoadVortexLines()
     }
 
     if (_toggle_bezier) {
-      vortex_liness[k].Flattern(O, L);
+      // vortex_liness[k].Flattern(O, L);
       vortex_liness[k].ToBezier();
     }
 
     if (vortex_liness[k].is_bezier) { // TODO: make it more graceful..
       VortexLine& vl = vortex_liness[k];
-      const int span = 6;
-      // const int span = 15;
+      const int span = vl.size()/4/2/2;
+      // const int span = 18;
 
       for (int i=4*span; i<vl.size()/3; i+=4*span) {
 #if 1
@@ -836,7 +836,7 @@ void CGLWidget::LoadVortexLines()
       }
 
       vl.ToRegular(0.02);
-      vl.Unflattern(O, L);
+      // vl.Unflattern(O, L);
     }
     
     std::vector<double>::iterator it = vortex_liness[k].begin();

@@ -21,7 +21,7 @@ void VortexLine::ToBezier()
 
   if (is_bezier) return;
 
-  int npts = size()/3;
+  int npts = size()/3-1;
   Pt *pts = (Pt*)malloc(npts*3*sizeof(Pt));
 
   for (int i=0; i<npts; i++) {

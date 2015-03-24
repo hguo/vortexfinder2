@@ -386,6 +386,8 @@ void VortexExtractor::TraceOverSpace(int slot)
     visited.clear();
 
     // fprintf(stderr, "#ordinary=%ld, #special=%ld\n", ordinary_pcells.size(), special_pcells.size());
+    if (special_pcells.size()>0) 
+      fprintf(stderr, "SPECIAL\n");
 
     /// 2. trace vortex lines
     VortexObject vobj; 
