@@ -54,7 +54,8 @@ CGLWidget::CGLWidget(const QGLFormat& fmt, QWidget *parent, QGLWidget *sharedWid
   _ilrender = new ILines::ILRender;
 
   // _vips << 39 << 40 << 43 << 44;
-  _vips << 2; 
+  // _vips << 3 << 15 << 16 << 17 << 18 << 19; 
+  _vips << 2;
 }
 
 CGLWidget::~CGLWidget()
@@ -652,7 +653,7 @@ void CGLWidget::paintGL()
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
 
   _projmatrix.setToIdentity(); 
-  _projmatrix.perspective(_fovy, (float)width()/height(), _znear, _zfar); 
+  _projmatrix.perspective(_fovy, 0.5*(float)width()/height(), _znear, _zfar); 
   _mvmatrix.setToIdentity();
   _mvmatrix.lookAt(_eye, _center, _up);
   _mvmatrix.rotate(_trackball.getRotation());
