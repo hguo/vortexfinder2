@@ -103,6 +103,7 @@ private: // camera
   bool _toggle_ids;
   bool _toggle_bezier;
   bool _toggle_vip;
+  bool _toggle_video;
 
   QSet<int> _vips;
 

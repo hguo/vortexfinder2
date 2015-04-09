@@ -46,6 +46,7 @@ CGLWidget::CGLWidget(const QGLFormat& fmt, QWidget *parent, QGLWidget *sharedWid
     _toggle_ids(true),
     _toggle_bezier(false),
     _toggle_vip(false),
+    _toggle_video(false),
     _ts(0), _tl(0), 
     _rc(NULL), _rc_fb(NULL),
     _ds(NULL), _vt(NULL),
@@ -267,8 +268,13 @@ void CGLWidget::keyPressEvent(QKeyEvent* e)
     }
     break;
 
-  case Qt::Key_P: // save to PNG
-  {
+  case Qt::Key_P: 
+  if (e->modifiers() == Qt::ShiftModifier) { // capture video
+    _toggle_video = true;
+    _timestep = _ts;
+    LoadTimeStep(_timestep);
+    updateGL();
+  } else { // save to PNG
     QString filename = QFileDialog::getSaveFileName(this, "save to png", "./", "*.png");
     if (filename.isEmpty()) return;
     QImage img = grabFrameBuffer(false);
@@ -410,7 +416,7 @@ void CGLWidget::renderVortexIds()
   glColor3f(0, 0, 0);
   glDisable(GL_DEPTH_TEST);
 
-  QString s0 = QString("timestep=%1").arg(_timestep);
+  QString s0 = QString("frame=%1").arg(_timestep-40);
   renderText(20, 60, s0, ft);
 
   ft.setPointSize(24);
@@ -653,7 +659,7 @@ void CGLWidget::paintGL()
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
 
   _projmatrix.setToIdentity(); 
-  _projmatrix.perspective(_fovy, 0.5*(float)width()/height(), _znear, _zfar); 
+  _projmatrix.perspective(_fovy, (float)width()/height(), _znear, _zfar); 
   _mvmatrix.setToIdentity();
   _mvmatrix.lookAt(_eye, _center, _up);
   _mvmatrix.rotate(_trackball.getRotation());
@@ -697,6 +703,18 @@ void CGLWidget::paintGL()
     renderVortexIds();
 
   renderFieldLines();
+
+  if (_toggle_video) {
+    QString filename = QString("frame-%1.png").arg(_timestep);
+    qDebug() << filename;
+    QImage img = grabFrameBuffer(false);
+    img.save(filename);
+    if (_timestep < _ts + _tl - 1)
+      LoadTimeStep(_timestep + 1);
+    else 
+      _toggle_video = false;
+    QMetaObject::invokeMethod(this, "updateGL", Qt::QueuedConnection);
+  }
 
   CHECK_GLERROR(); 
 }
@@ -746,6 +764,7 @@ void CGLWidget::Clear()
 
   _vids.clear();
   _vids_coord.clear();
+  _vids_colors.clear();
 
   _cones_pos.clear();
   _cones_dir.clear();
