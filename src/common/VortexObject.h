@@ -1,32 +1,18 @@
 #ifndef _VORTEX_OBJECT_H
 #define _VORTEX_OBJECT_H
 
-#include <string>
+#include <set>
 #include <list>
-#include <vector>
-#include <sstream>
 #include "def.h"
 
-/* 
- * \class   VortexObject
- * \author  Hanqi Guo
- * \brief   Vortex objects
-*/
-class VortexObject : public std::vector<std::vector<double> >
-{
-public:
-  VortexObject();
-  ~VortexObject(); 
+struct VortexObject {
+  int gid, id; // gid: global id; id: local (time) id
+  int timestep;
+  // std::map<FaceIdType, PuncturedFace> faces;
+  std::set<FaceIdType> faces;
+  std::vector<std::list<FaceIdType> > traces;
 
-  void AddVortexLine(const std::list<double>& line); 
-
-  // (un)serialization for communication and I/O
-  void SerializeToString(std::string& str) const; 
-  bool UnserializeFromString(const std::string& str);
-}; 
-
-void WriteVortexObjects(const std::string& filename, const std::vector<VortexObject>& objs);
-
-bool ReadVortexOjbects(const std::string& filename, std::vector<VortexObject>& objs); 
+  VortexObject() : id(INT_MAX), gid(INT_MAX) {}
+};
 
 #endif

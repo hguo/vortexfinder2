@@ -1,0 +1,34 @@
+message PBEdge {
+  required uint32 node0 = 1;
+  required uint32 node1 = 2;
+
+  repeated uint32 contained_faces = 3;
+  repeated sint32 contained_faces_chirality = 4;
+  repeated uint32 contained_faces_eid = 5;
+};
+
+message PBFace {
+  repeated uint32 nodes = 1;
+
+  repeated uint32 edges = 2;
+  repeated sint32 edges_chirality = 3;
+
+  repeated uint32 contained_cells = 4;
+  repeated sint32 contained_cells_chirality = 5;
+  repeated uint32 contained_cells_fid = 6;
+};
+
+message PBCell {
+  repeated uint32 nodes = 1;
+
+  repeated uint32 faces = 2;
+  repeated sint32 faces_chirality = 3;
+
+  repeated uint32 neighbor_cells = 4;
+};
+
+message PBMeshGraph {
+  repeated PBEdge edges = 1;
+  repeated PBFace faces = 2;
+  repeated PBCell cells = 3;
+};

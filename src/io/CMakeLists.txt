@@ -1,12 +1,15 @@
 set (io_sources
   BDATReader.cpp
-  GLGPUDataset.cpp
+  GLDatasetBase.cpp
   GLDataset.cpp
+  GLGPUDataset.cpp
+  GLGPU2DDataset.cpp
+  GLGPU3DDataset.cpp
+  GLGPU_IO_Helper.cpp
 )
   
 if (WITH_LIBMESH)
   set (io_sources ${io_sources}
-    MeshWrapper.cpp
     Condor2Dataset.cpp)
 endif ()
 

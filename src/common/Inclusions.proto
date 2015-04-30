@@ -1,0 +1,6 @@
+message PBInclusions {
+  required float radius = 1;
+  repeated float x = 2;
+  repeated float y = 3;
+  repeated float z = 4;
+};

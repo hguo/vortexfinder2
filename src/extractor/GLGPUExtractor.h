@@ -19,11 +19,8 @@ public:
 
   void SetInterpolationMode(int);
 
-  void Extract();
-
 protected:
-  PuncturedElem* NewPuncturedElem(ElemIdType) const;
-  bool FindZero(const double X[][3], const double re[], const double im[], double pos[3]) const;
+  bool FindFaceZero(const double X[][3], const double re[], const double im[], double pos[3]) const;
 
 private: 
   int _interpolation_mode;

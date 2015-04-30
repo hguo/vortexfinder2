@@ -1,55 +1,31 @@
-#include <cstdlib>
-#include <cstdio>
+#include "GLGPUDataset.h"
+#include "GLGPU_IO_Helper.h"
+#include "common/Utils.hpp"
+#include "common/DataInfo.pb.h"
 #include <cassert>
 #include <cmath>
 #include <iostream>
-#include "common/Utils.hpp"
-#include "common/Lerp.hpp"
-#include "common/DataInfo.pb.h"
-#include "GLGPUDataset.h"
-#include "BDATReader.h"
+#include <fstream>
+#include <glob.h>
 
-#ifdef WITH_LIBMESH // suppose libmesh is built with netcdf
-#include <netcdf.h>
-#endif
-
-static const int GLGPU_LEGACY_TAG_SIZE = 4;
-static const char GLGPU_LEGACY_TAG[] = "CA02";
-
-enum {
-  GLGPU_ENDIAN_LITTLE = 0, 
-  GLGPU_ENDIAN_BIG = 1
-};
-
-enum {
-  GLGPU_TYPE_FLOAT = 0, 
-  GLGPU_TYPE_DOUBLE = 1
-};
-
-GLGPUDataset::GLGPUDataset() : 
+GLGPUDataset::GLGPUDataset() :
   _re(NULL), _im(NULL), 
+  _re1(NULL), _im1(NULL),
   _Jx(NULL), _Jy(NULL), _Jz(NULL)
 {
-  Reset();
+  memset(_B, 0, sizeof(double)*3);
+  memset(_B1, 0, sizeof(double)*3);
 }
 
 GLGPUDataset::~GLGPUDataset()
 {
-  if (_re) free(_re);
-  if (_im) free(_im);
-  if (_Jx) free(_Jx);
+  if (_re != NULL) delete _re;
+  if (_im != NULL) delete _im;
+  if (_re1 != NULL) delete _re1;
+  if (_im1 != NULL) delete _im1;
 }
 
-void GLGPUDataset::Reset()
-{
-  for (int i=0; i<3; i++) {
-    _dims[i] = 1; 
-    _pbc[i] = false;
-  }
-  // TODO
-}
-
-void GLGPUDataset::PrintInfo() const
+void GLGPUDataset::PrintInfo(int slot) const
 {
   fprintf(stderr, "dims={%d, %d, %d}\n", _dims[0], _dims[1], _dims[2]); 
   fprintf(stderr, "pbc={%d, %d, %d}\n", _pbc[0], _pbc[1], _pbc[2]); 
@@ -57,20 +33,215 @@ void GLGPUDataset::PrintInfo() const
   fprintf(stderr, "lengths={%f, %f, %f}\n", _lengths[0], _lengths[1], _lengths[2]);
   fprintf(stderr, "cell_lengths={%f, %f, %f}\n", _cell_lengths[0], _cell_lengths[1], _cell_lengths[2]); 
   fprintf(stderr, "B={%f, %f, %f}\n", _B[0], _B[1], _B[2]);
-  fprintf(stderr, "Kex=%f, Kex_dot=%f\n", _Kex, _Kex_dot); 
+  fprintf(stderr, "Kex=%f\n", slot == 0 ? _Kex : _Kex1);
   fprintf(stderr, "Jxext=%f\n", _Jxext);
   fprintf(stderr, "V=%f\n", _V);
-  // fprintf(stderr, "time=%f\n", time); 
+  fprintf(stderr, "time=%f\n", slot == 0 ? _time : _time1); 
   fprintf(stderr, "fluctuation_amp=%f\n", _fluctuation_amp); 
 }
-
-ElemIdType GLGPUDataset::Pos2ElemId(const double X[]) const
+  
+void GLGPUDataset::SerializeDataInfoToString(std::string& buf) const
 {
-  // TODO
-  return UINT_MAX;
+  PBDataInfo pb;
+
+  pb.set_model(PBDataInfo::GLGPU);
+  pb.set_name(_data_name);
+
+  if (Lengths()[0]>0) {
+    pb.set_ox(Origins()[0]); 
+    pb.set_oy(Origins()[1]); 
+    pb.set_oz(Origins()[2]); 
+    pb.set_lx(Lengths()[0]); 
+    pb.set_ly(Lengths()[1]); 
+    pb.set_lz(Lengths()[2]); 
+  }
+
+  pb.set_bx(B()[0]);
+  pb.set_by(B()[1]);
+  pb.set_bz(B()[2]);
+
+  pb.set_kex(Kex());
+
+  pb.set_dx(dims()[0]);
+  pb.set_dy(dims()[1]);
+  pb.set_dz(dims()[2]);
+
+  pb.set_pbc_x(pbc()[0]);
+  pb.set_pbc_y(pbc()[0]);
+  pb.set_pbc_z(pbc()[0]);
+
+  pb.SerializeToString(&buf);
 }
 
-void GLGPUDataset::ElemId2Idx(ElemIdType id, int *idx) const
+bool GLGPUDataset::OpenDataFile(const std::string &filename)
+{
+  std::ifstream ifs;
+  ifs.open(filename, std::ifstream::in);
+  if (!ifs.is_open()) return false;
+
+  char fname[1024];
+
+  _filenames.clear();
+  while (ifs.getline(fname, 1024)) {
+    // std::cout << fname << std::endl;
+    _filenames.push_back(fname);
+  }
+
+  ifs.close();
+
+  _data_name = filename;
+  return true;
+}
+
+bool GLGPUDataset::OpenDataFileByPattern(const std::string &pattern)
+{
+  glob_t results;
+
+  glob(pattern.c_str(), 0, NULL, &results);
+  _filenames.clear();
+  for (int i=0; i<results.gl_pathc; i++) 
+    _filenames.push_back(results.gl_pathv[i]);
+
+  fprintf(stderr, "found %lu files\n", _filenames.size());
+  return _filenames.size()>0;
+}
+
+void GLGPUDataset::CloseDataFile()
+{
+  _filenames.clear();
+}
+
+void GLGPUDataset::LoadTimeStep(int timestep, int slot)
+{
+  assert(timestep>=0 && timestep<=_filenames.size());
+  bool succ = false;
+  const std::string &filename = _filenames[timestep];
+
+  fprintf(stderr, "loading time step %d, %s\n", timestep, _filenames[timestep].c_str());
+
+  // load
+  if (OpenBDATDataFile(filename, slot)) succ = true; 
+  else if (OpenLegacyDataFile(filename, slot)) succ = true;
+
+  if (!succ) return;
+  
+  for (int i=0; i<Dimensions(); i++) {
+    _origins[i] = -0.5*_lengths[i];
+    if (_pbc[i]) _cell_lengths[i] = _lengths[i] / _dims[i];  
+    else _cell_lengths[i] = _lengths[i] / (_dims[i]-1); 
+  }
+
+  // ModulateKex(slot);
+
+  SetTimeStep(timestep, slot);
+}
+
+void GLGPUDataset::ModulateKex(int slot)
+{
+  double K = Kex(slot);
+  double *re = slot == 0 ? _re : _re1,
+         *im = slot == 0 ? _im : _im1;
+
+  for (int i=0; i<dims()[0]; i++) 
+    for (int j=0; j<dims()[1]; j++)
+      for (int k=0; k<dims()[2]; k++) {
+        const int idx[3] = {i, j, k};
+        NodeIdType nid = Idx2Nid(idx);
+        double x = i * CellLengths()[0] + Origins()[0];
+
+        double rho = sqrt(re[nid]*re[nid] + im[nid]*im[nid]), 
+               // phi = atan2(im[nid], re[nid]) - K*x;
+               phi = atan2(im[nid], re[nid]) + K*x;
+
+        re[nid] = rho * cos(phi);
+        im[nid] = rho * sin(phi);
+      }
+}
+
+void GLGPUDataset::RotateTimeSteps()
+{
+  double *r = _re, *i = _im;
+  _re = _re1; _im = _im1;
+  _re1 = r; _im1 = i;
+
+  double B[3];
+  memcpy(B, _B, sizeof(double)*3);
+  memcpy(_B, _B1, sizeof(double)*3);
+  memcpy(_B1, _B, sizeof(double)*3);
+
+  GLDataset::RotateTimeSteps();
+}
+
+bool GLGPUDataset::OpenLegacyDataFile(const std::string& filename, int slot)
+{
+  int ndims;
+  if (!::GLGPU_IO_Helper_ReadLegacy(
+      filename, ndims, _dims, _lengths, _pbc, 
+      slot == 0 ? _time : _time1, 
+      slot == 0 ? _B : _B1, 
+      _Jxext, 
+      slot == 0 ? _Kex : _Kex1,
+      _V, 
+      slot == 0 ? &_re : &_re1, 
+      slot == 0 ? &_im : &_im1)) 
+    return false;
+
+  if (ndims == 2)
+    _dims[2] = 1;
+
+  return true;
+}
+
+bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
+{
+  int ndims;
+  if (!::GLGPU_IO_Helper_ReadBDAT(
+      filename, ndims, _dims, _lengths, _pbc, 
+      slot == 0 ? _time : _time1, 
+      slot == 0 ? _B : _B1, 
+      _Jxext, 
+      slot == 0 ? _Kex : _Kex1,
+      _V, 
+      slot == 0 ? &_re : &_re1, 
+      slot == 0 ? &_im : &_im1)) 
+    return false;
+
+  if (ndims == 2)
+    _dims[2] = 1;
+
+  return true;
+}
+
+#if 0
+double Ax(const double X[3], int slot=0) const {if (By()>0) return -Kex(slot); else return -X[1]*Bz()-Kex(slot);}
+// double Ax(const double X[3], int slot=0) const {if (By()>0) return 0; else return -X[1]*Bz();}
+double Ay(const double X[3], int slot=0) const {if (By()>0) return X[0]*Bz(); else return 0;}
+double Az(const double X[3], int slot=0) const {if (By()>0) return -X[0]*By(); else return X[1]*Bx();}
+#endif
+
+bool GLGPUDataset::A(const double X[3], double A[3], int slot) const
+{
+  if (B(slot)[1]>0) {
+    A[0] = -Kex(slot);
+    A[1] = X[0] * B(slot)[2];
+    A[2] = -X[0] * B(slot)[1];
+  } else {
+    A[0] = -X[1] * B(slot)[2] - Kex(slot);
+    A[1] = 0;
+    A[2] = X[1] * B(slot)[0];
+  }
+  
+  return true;
+}
+
+bool GLGPUDataset::A(NodeIdType n, double A_[3], int slot) const
+{
+  double X[3];
+  Pos(n, X);
+  return A(X, A_, slot);
+}
+
+void GLGPUDataset::Nid2Idx(NodeIdType id, int *idx) const
 {
   int s = dims()[0] * dims()[1]; 
   int k = id / s; 
@@ -80,7 +251,7 @@ void GLGPUDataset::ElemId2Idx(ElemIdType id, int *idx) const
   idx[0] = i; idx[1] = j; idx[2] = k;
 }
 
-ElemIdType GLGPUDataset::Idx2ElemId(int *idx) const
+NodeIdType GLGPUDataset::Idx2Nid(const int *idx) const
 {
   for (int i=0; i<3; i++) 
     if (idx[i]<0 || idx[i]>=dims()[i])
@@ -108,573 +279,50 @@ void GLGPUDataset::Pos2Grid(const double pos[], double gpos[]) const
     gpos[i] = (pos[i] - Origins()[i]) / CellLengths()[i]; 
 }
 
-#if 0
-double GLGPUDataset::Flux(int face) const
+bool GLGPUDataset::Pos(NodeIdType id, double X[3]) const
 {
-  // TODO: pre-compute the flux
-  switch (face) {
-  case 0: return -dx() * dy() * Bz();
-  case 1: return -dy() * dz() * Bx(); 
-  case 2: return -dz() * dx() * By(); 
-  case 3: return  dx() * dy() * Bz(); 
-  case 4: return  dy() * dz() * Bx(); 
-  case 5: return  dz() * dx() * By();
-  default: assert(false);
-  }
-  return 0.0;
-}
-#endif
+  int idx[3];
 
-double GLGPUDataset::GaugeTransformation(const double X0[], const double X1[]) const
-{
-  double gx, gy, gz; 
-  double dx = X1[0] - X0[0], 
-         dy = X1[1] - X0[1], 
-         dz = X1[2] - X0[2]; 
-  double x = X0[0] + 0.5*dx, 
-         y = X0[1] + 0.5*dy, 
-         z = X0[2] + 0.5*dz;
+  Nid2Idx(id, idx);
+  Idx2Pos(idx, X);
 
-  if (By()>0) { // Y-Z gauge
-    gx = dx * Kex(); 
-    gy =-dy * x * Bz(); // -dy*x^hat*Bz
-    gz = dz * x * By(); //  dz*x^hat*By
-  } else { // X-Z gauge
-    gx = dx * y * Bz() + dx * Kex(); //  dx*y^hat*Bz + dx*K
-    gy = 0; 
-    gz =-dz * y * Bx(); // -dz*y^hat*Bx
-  }
-
-  return gx + gy + gz; 
-}
-
-std::vector<ElemIdType> GLGPUDataset::GetNeighborIds(ElemIdType elem_id) const
-{
-  std::vector<ElemIdType> neighbors; 
-
-  int idx[3], idx1[3];
-  ElemId2Idx(elem_id, idx); 
-
-  for (int face=0; face<6; face++) {
-    switch (face) {
-    case 0: idx1[0] = idx[0];   idx1[1] = idx[1];   idx1[2] = idx[2]-1; break; 
-    case 1: idx1[0] = idx[0]-1; idx1[1] = idx[1];   idx1[2] = idx[2];   break;
-    case 2: idx1[0] = idx[0];   idx1[1] = idx[1]-1; idx1[2] = idx[2];   break;
-    case 3: idx1[0] = idx[0];   idx1[1] = idx[1];   idx1[2] = idx[2]+1; break; 
-    case 4: idx1[0] = idx[0]+1; idx1[1] = idx[1];   idx1[2] = idx[2];   break;
-    case 5: idx1[0] = idx[0];   idx1[1] = idx[1]+1; idx1[2] = idx[2];   break;
-    default: break;
-    }
-
-#if 0 // pbc
-    for (int i=0; i<3; i++) 
-      if (pbc()[i]) {
-        idx1[i] = idx1[i] % dims()[i]; 
-        if (idx1[i]<0) idx1[i] += dims()[i];
-      }
-#endif
-    
-    neighbors.push_back(Idx2ElemId(idx1)); 
-  }
-
-  return neighbors; 
-}
-  
-void GLGPUDataset::SerializeDataInfoToString(std::string& buf) const
-{
-  PBDataInfo pb;
-
-  pb.set_model(PBDataInfo::GLGPU);
-  pb.set_name(_data_name);
-
-  if (Lengths()[0]>0) {
-    pb.set_ox(Origins()[0]); 
-    pb.set_oy(Origins()[1]); 
-    pb.set_oz(Origins()[2]); 
-    pb.set_lx(Lengths()[0]); 
-    pb.set_ly(Lengths()[1]); 
-    pb.set_lz(Lengths()[2]); 
-  }
-
-  pb.set_bx(Bx());
-  pb.set_by(By());
-  pb.set_bz(Bz());
-
-  pb.set_kex(Kex());
-
-  pb.set_dx(dims()[0]);
-  pb.set_dy(dims()[1]);
-  pb.set_dz(dims()[2]);
-
-  pb.set_pbc_x(pbc()[0]);
-  pb.set_pbc_y(pbc()[0]);
-  pb.set_pbc_z(pbc()[0]);
-
-  pb.SerializeToString(&buf);
-}
-
-bool GLGPUDataset::OpenDataFile(const std::string &filename)
-{
-  bool succ = false;
-
-  if (OpenBDATDataFile(filename)) succ = true; 
-  else if (OpenLegacyDataFile(filename)) succ = true;
-
-  if (succ)
-    ComputeSupercurrentField();
-
-  return succ;
-}
-
-bool GLGPUDataset::OpenLegacyDataFile(const std::string &filename)
-{
-  FILE *fp = fopen(filename.c_str(), "rb");
-  if (!fp) return false;
-
-  _data_name = filename;
-
-  // tag check
-  char tag[GLGPU_LEGACY_TAG_SIZE+1] = {0};  
-  fread(tag, 1, GLGPU_LEGACY_TAG_SIZE, fp);
-  if (strcmp(tag, GLGPU_LEGACY_TAG) != 0) return false;
-
-  // endians
-  int endian; 
-  fread(&endian, sizeof(int), 1, fp); 
-
-  // num_dims
-  int num_dims; 
-  fread(&num_dims, sizeof(int), 1, fp);
-
-  // data type
-  int size_real, datatype; 
-  fread(&size_real, sizeof(int), 1, fp);
-  if (size_real == 4) datatype = GLGPU_TYPE_FLOAT; 
-  else if (size_real == 8) datatype = GLGPU_TYPE_DOUBLE; 
-  else assert(false); 
-
-  // dimensions 
-  for (int i=0; i<num_dims; i++) {
-    fread(&_dims[i], sizeof(int), 1, fp);
-    if (datatype == GLGPU_TYPE_FLOAT) {
-      float length; 
-      fread(&length, sizeof(float), 1, fp);
-      _lengths[i] = length; 
-    } else if (datatype == GLGPU_TYPE_DOUBLE) {
-      fread(&_lengths[i], sizeof(double), 1, fp); 
-    }
-    _origins[i] = -0.5*_lengths[i];
-  }
-
-  // dummy
-  int dummy; 
-  fread(&dummy, sizeof(int), 1, fp);
-
-  // time, fluctuation_amp, Bx, By, Bz, Jx
-  if (datatype == GLGPU_TYPE_FLOAT) {
-    float time, fluctuation_amp, B[3], Jx; 
-    fread(&time, sizeof(float), 1, fp);
-    fread(&fluctuation_amp, sizeof(float), 1, fp); 
-    fread(&B, sizeof(float), 3, fp);
-    fread(&Jx, sizeof(float), 1, fp); 
-    // _time = time; 
-    _fluctuation_amp = fluctuation_amp;
-    _B[0] = B[0]; _B[1] = B[1]; _B[2] = B[2];
-    // _Jx = Jx; 
-  } else if (datatype == GLGPU_TYPE_DOUBLE) {
-    double time, Jx;  
-    fread(&time, sizeof(double), 1, fp); 
-    fread(&_fluctuation_amp, sizeof(double), 1, fp);
-    fread(_B, sizeof(double), 3, fp);
-    fread(&Jx, sizeof(double), GLGPU_TYPE_FLOAT, fp); 
-  }
-
-  // btype
-  int btype; 
-  fread(&btype, sizeof(int), 1, fp); 
-  _pbc[0] = btype & 0x0000ff;
-  _pbc[1] = btype & 0x00ff00;
-  _pbc[2] = btype & 0xff0000; 
-  // update cell lengths 
-  for (int i=0; i<num_dims; i++) 
-    if (_pbc[i]) _cell_lengths[i] = _lengths[i] / _dims[i];  
-    else _cell_lengths[i] = _lengths[i] / (_dims[i]-1); 
-
-  // optype
-  int optype; 
-  fread(&optype, sizeof(int), 1, fp);
-  if (datatype == GLGPU_TYPE_FLOAT) {
-    float Kex, Kex_dot; 
-    fread(&Kex, sizeof(float), 1, fp);
-    fread(&Kex_dot, sizeof(float), 1, fp); 
-    _Kex = Kex; 
-    _Kex_dot = Kex_dot; 
-  } else if (datatype == GLGPU_TYPE_DOUBLE) {
-    fread(&_Kex, sizeof(double), 1, fp);
-    fread(&_Kex_dot, sizeof(double), 1, fp); 
-  }
-
-  int count = 1; 
-  for (int i=0; i<num_dims; i++) 
-    count *= _dims[i]; 
-
-  int offset = ftell(fp);
-  
-  // mem allocation 
-  _re = (double*)malloc(sizeof(double)*count);  
-  _im = (double*)malloc(sizeof(double)*count);
-
-  if (datatype == GLGPU_TYPE_FLOAT) {
-    // raw data
-    float *buf = (float*)malloc(sizeof(float)*count*2); // complex numbers
-    fread(buf, sizeof(float), count*2, fp);
-
-    // separation of ch1 and ch2
-    float *ch1 = (float*)malloc(sizeof(float)*count), 
-          *ch2 = (float*)malloc(sizeof(float)*count);
-    for (int i=0; i<count; i++) {
-      ch1[i] = buf[i*2]; 
-      ch2[i] = buf[i*2+1];
-    }
-    free(buf); 
-
-    if (optype == 0) { // order parameter type
-      for (int i=0; i<count; i++) {
-        _re[i] = ch1[i]; 
-        _im[i] = ch2[i]; 
-        // fprintf(stderr, "rho=%f, phi=%f, re=%f, im=%f\n", _rho[i], _phi[i], _re[i], _im[i]); 
-      }
-    } else if (optype == 1) {
-      for (int i=0; i<count; i++) {
-        _re[i] = ch1[i] * cos(ch2[i]); 
-        _im[i] = ch1[i] * sin(ch2[i]);
-      }
-    } else assert(false); 
-  } else if (datatype == GLGPU_TYPE_DOUBLE) {
-    assert(false);
-    // The following lines are copied from legacy code. To be reorganized later
-#if 0
-    // raw data
-    double *buf = (double*)malloc(sizeof(double)*count*2); // complex
-    fread(buf, sizeof(double), count, fp);
-
-    // separation of ch1 and ch2
-    double *ct1 = (double*)malloc(sizeof(double)*count), 
-           *ct2 = (double*)malloc(sizeof(double)*count);
-    for (int i=0; i<count; i++) {
-      ct1[i] = buf[i*2]; 
-      ct2[i] = buf[i*2+1];
-    }
-    free(buf); 
-
-    // transpose
-    double *ch1 = (double*)malloc(sizeof(double)*count), 
-           *ch2 = (double*)malloc(sizeof(double)*count);
-    int dims1[] = {_dims[2], _dims[1], _dims[0]}; 
-    for (int i=0; i<_dims[0]; i++) 
-      for (int j=0; j<_dims[1]; j++) 
-        for (int k=0; k<_dims[2]; k++) {
-          texel3D(ch1, _dims, i, j, k) = texel3D(ct1, dims1, k, j, i);
-          texel3D(ch2, _dims, i, j, k) = texel3D(ct2, dims1, k, j, i); 
-        }
-
-    if (optype == 0) {
-      _re = ch1; 
-      _im = ch2;
-      _rho = (double*)malloc(sizeof(double)*count);
-      _phi = (double*)malloc(sizeof(double)*count); 
-      for (int i=0; i<count; i++) {
-        _rho[i] = sqrt(_re[i]*_re[i] + _im[i]*_im[i]);
-        _phi[i] = atan2(_im[i], _re[i]); 
-      }
-    } else if (optype == 1) {
-      _rho = ch1; 
-      _phi = ch2;
-      _re = (double*)malloc(sizeof(double)*count); 
-      _im = (double*)malloc(sizeof(double)*count); 
-      for (int i=0; i<count; i++) {
-        _re[i] = _rho[i] * cos(_phi[i]); 
-        _im[i] = _rho[i] * sin(_phi[i]); 
-      }
-    } else assert(false);
-#endif
-  }
- 
-  _valid = true;
-  return true; 
-}
-
-bool GLGPUDataset::OpenBDATDataFile(const std::string& filename)
-{
-  BDATReader *reader = new BDATReader(filename); 
-  if (!reader->Valid()) {
-    delete reader;
-    return false;
-  }
-
-  Reset();
-
-  std::string name, buf;
-  while (1) {
-    name = reader->ReadNextRecordInfo();
-    if (name.size()==0) break;
-    
-    ElemIdType type = reader->RecType(), 
-               recID = reader->RedID(); 
-    float f; // temp var
-    
-    reader->ReadNextRecordData(&buf);
-    void *p = (void*)buf.data();
-
-    if (name == "dim") {
-      assert(type == BDAT_INT32);
-      int dim; 
-      memcpy(&dim, p, sizeof(int));
-      assert(dim == 3);
-    } else if (name == "Nx") {
-      assert(type == BDAT_INT32);
-      memcpy(&_dims[0], p, sizeof(int));
-    } else if (name == "Ny") {
-      assert(type == BDAT_INT32);
-      memcpy(&_dims[1], p, sizeof(int));
-    } else if (name == "Nz") {
-      assert(type == BDAT_INT32);
-      memcpy(&_dims[2], p, sizeof(int));
-    } else if (name == "Lx") {
-      assert(type == BDAT_FLOAT);
-      memcpy(&f, p, sizeof(float));
-      _lengths[0] = f;
-    } else if (name == "Ly") {
-      assert(type == BDAT_FLOAT);
-      memcpy(&f, p, sizeof(float));
-      _lengths[1] = f;
-    } else if (name == "Lz") {
-      assert(type == BDAT_FLOAT);
-      memcpy(&f, p, sizeof(float));
-      _lengths[2] = f;
-    } else if (name == "BC") {
-      assert(type == BDAT_INT32);
-      int btype; 
-      memcpy(&btype, p, sizeof(int));
-      _pbc[0] = btype & 0x0000ff;
-      _pbc[1] = btype & 0x00ff00;
-      _pbc[2] = btype & 0xff0000; 
-    } else if (name == "zaniso") {
-      assert(type == BDAT_FLOAT);
-    } else if (name == "t") {
-      assert(type == BDAT_FLOAT);
-    } else if (name == "Tf") {
-      assert(type == BDAT_FLOAT);
-    } else if (name == "Bx") {
-      assert(type == BDAT_FLOAT);
-      memcpy(&f, p, sizeof(float));
-      _B[0] = f;
-    } else if (name == "By") {
-      assert(type == BDAT_FLOAT);
-      memcpy(&f, p, sizeof(float));
-      _B[1] = f;
-    } else if (name == "Bz") {
-      assert(type == BDAT_FLOAT);
-      memcpy(&f, p, sizeof(float));
-      _B[2] = f;
-    } else if (name == "Jxext") {
-      assert(type == BDAT_FLOAT);
-      memcpy(&f, p, sizeof(float));
-      _Jxext = f;
-    } else if (name == "K") {
-      assert(type == BDAT_FLOAT);
-      memcpy(&f, p, sizeof(float));
-      _Kex = f;
-    } else if (name == "V") {
-      assert(type == BDAT_FLOAT);
-      memcpy(&f, p, sizeof(float));
-      _V = f;
-    } else if (name == "psi") {
-      if (type == BDAT_FLOAT) {
-        int count = buf.size()/sizeof(float)/2;
-        int optype = recID == 2000 ? 0 : 1;
-        float *data = (float*)p;
-        
-        _re = (double*)malloc(sizeof(double)*count);
-        _im = (double*)malloc(sizeof(double)*count);
-
-        if (optype == 0) { // re, im
-          for (int i=0; i<count; i++) {
-            _re[i] = data[i*2];
-            _im[i] = data[i*2+1];
-          }
-        } else { // rho^2, phi
-          for (int i=0; i<count; i++) {
-            double rho = sqrt(data[i*2]), 
-                   phi = data[i*2+1];
-            _re[i] = rho * cos(phi); 
-            _im[i] = rho * sin(phi);
-            // fprintf(stderr, "rho=%f, phi=%f\n", rho, phi);
-          }
-        }
-      } else if (type == BDAT_DOUBLE) {
-        // TODO
-        assert(false);
-      } else 
-        assert(false);
-    }
-  }
-
-  // update necessary variables
-  for (int i=0; i<3; i++) {
-    _origins[i] = -0.5*_lengths[i];
-    if (_pbc[i]) _cell_lengths[i] = _lengths[i] / _dims[i];  
-    else _cell_lengths[i] = _lengths[i] / (_dims[i]-1); 
-  }
-
-  _valid = true;
-  
   return true;
 }
 
-void GLGPUDataset::ComputeSupercurrentField()
-{
-  const int nvoxels = dims()[0]*dims()[1]*dims()[2];
-
-  if (_Jx != NULL) free(_Jx);
-  _Jx = (double*)malloc(3*sizeof(double)*nvoxels);
-  _Jy = _Jx + nvoxels; 
-  _Jz = _Jy + nvoxels;
-  memset(_Jx, 0, 3*sizeof(double)*nvoxels);
- 
-  double u, v, rho;
-  double du[3], dv[3], dphi[3], J[3];
-
-  // central difference
-  for (int x=1; x<dims()[0]-1; x++) {
-    for (int y=1; y<dims()[1]-1; y++) {
-      for (int z=1; z<dims()[2]-1; z++) {
-        int idx[3] = {x, y, z}; 
-        double pos[3]; 
-        Idx2Pos(idx, pos);
-
-#if 1 // gradient estimation by \grad\psi or \grad\theta
-        du[0] = 0.5 * (Re(x+1, y, z) - Re(x-1, y, z)) / dx();
-        du[1] = 0.5 * (Re(x, y+1, z) - Re(x, y-1, z)) / dy();
-        du[2] = 0.5 * (Re(x, y, z+1) - Re(x, y, z-1)) / dz();
-        
-        dv[0] = 0.5 * (Im(x+1, y, z) - Im(x-1, y, z)) / dx();
-        dv[1] = 0.5 * (Im(x, y+1, z) - Im(x, y-1, z)) / dy();
-        dv[2] = 0.5 * (Im(x, y, z+1) - Im(x, y, z-1)) / dz();
-
-        u = Re(x, y, z); 
-        v = Im(x, y, z);
-        rho = sqrt(u*u + v*v);
-
-        J[0] = (u*dv[0] - v*du[0]) / rho - Ax(pos);
-        J[1] = (u*dv[1] - v*du[1]) / rho - Ay(pos);
-        J[2] = (u*dv[2] - v*du[2]) / rho - Az(pos);
-#else
-        dphi[0] = 0.5 * (mod2pi(Phi(x+1, y, z) - Phi(x-1, y, z) + M_PI) - M_PI) / dx();
-        dphi[1] = 0.5 * (mod2pi(Phi(x, y+1, z) - Phi(x, y-1, z) + M_PI) - M_PI) / dy();
-        dphi[2] = 0.5 * (mod2pi(Phi(x, y, z+1) - Phi(x, y, z-1) + M_PI) - M_PI) / dz();
-
-        J[0] = dphi[0] - Ax(pos);
-        J[1] = dphi[1] - Ay(pos);
-        J[2] = dphi[2] - Az(pos);
-#endif
-
-        texel3D(_Jx, dims(), x, y, z) = J[0]; 
-        texel3D(_Jy, dims(), x, y, z) = J[1];
-        texel3D(_Jz, dims(), x, y, z) = J[2];
-      }
-    }
-  }
-}
-
-bool GLGPUDataset::WriteNetCDFFile(const std::string& filename)
-{
-#ifdef WITH_LIBMESH
-  int ncid; 
-  int dimids[3]; 
-  int varids[8];
-
-  size_t starts[3] = {0, 0, 0}, 
-         sizes[3]  = {(size_t)_dims[2], (size_t)_dims[1], (size_t)_dims[0]};
-
-  const int cnt = sizes[0]*sizes[1]*sizes[2];
-  double *rho = (double*)malloc(sizeof(double)*cnt), 
-         *phi = (double*)malloc(sizeof(double)*cnt);
-  for (int i=0; i<cnt; i++) {
-    rho[i] = sqrt(_re[i]*_re[i] + _im[i]*_im[i]);
-    phi[i] = atan2(_im[i], _re[i]);
-  }
-
-  fprintf(stderr, "filename=%s\n", filename.c_str());
-
-  NC_SAFE_CALL( nc_create(filename.c_str(), NC_CLOBBER | NC_64BIT_OFFSET, &ncid) ); 
-  NC_SAFE_CALL( nc_def_dim(ncid, "z", sizes[0], &dimids[0]) );
-  NC_SAFE_CALL( nc_def_dim(ncid, "y", sizes[1], &dimids[1]) );
-  NC_SAFE_CALL( nc_def_dim(ncid, "x", sizes[2], &dimids[2]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "rho", NC_DOUBLE, 3, dimids, &varids[0]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "phi", NC_DOUBLE, 3, dimids, &varids[1]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "re", NC_DOUBLE, 3, dimids, &varids[2]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "im", NC_DOUBLE, 3, dimids, &varids[3]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "Jx", NC_DOUBLE, 3, dimids, &varids[4]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "Jy", NC_DOUBLE, 3, dimids, &varids[5]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "Jz", NC_DOUBLE, 3, dimids, &varids[6]) );
-  // NC_SAFE_CALL( nc_def_var(ncid, "scm", NC_DOUBLE, 3, dimids, &varids[7]) );
-  NC_SAFE_CALL( nc_enddef(ncid) );
-
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[0], starts, sizes, rho) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[1], starts, sizes, phi) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[2], starts, sizes, _re) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[3], starts, sizes, _im) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[4], starts, sizes, _Jx) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[5], starts, sizes, _Jy) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[6], starts, sizes, _Jz) ); 
-  // NC_SAFE_CALL( nc_put_vara_double(ncid, varids[7], starts, sizes, _scm) ); 
-
-  NC_SAFE_CALL( nc_close(ncid) );
-
-  return true;
-#else
-  assert(false);
-  return false;
-#endif
-}
-
-bool GLGPUDataset::Psi(const double X[3], double &re, double &im) const
+bool GLGPUDataset::Psi(const double X[3], double &re, double &im, int slot) const
 {
   // TODO
   return false;
 }
 
-bool GLGPUDataset::Supercurrent(const double X[3], double J[3]) const
+bool GLGPUDataset::Psi(NodeIdType id, double &re, double &im, int slot) const
 {
-  static const int st[3] = {0};
-  double gpt[3];
-  const double *sc[3] = {_Jx, _Jy, _Jz};
-  
-  Pos2Grid(X, gpt);
-  if (gpt[0]<=1 || gpt[0]>dims()[0]-2 || 
-      gpt[1]<=1 || gpt[1]>dims()[1]-2 || 
-      gpt[2]<=1 || gpt[2]>dims()[2]-2) return false;
+  double *r = slot == 0 ? _re : _re1;
+  double *i = slot == 0 ? _im : _im1;
 
-  if (!lerp3D(gpt, st, dims(), 3, sc, J))
-    return false;
-  else return true;
+  re = r[id]; 
+  im = i[id];
+
+  return true;
 }
-  
-bool GLGPUDataset::OnBoundary(ElemIdType id) const
+
+bool GLGPUDataset::Supercurrent(const double X[2], double J[3], int slot) const
 {
-  int idx[3];
-  ElemId2Idx(id, idx);
-
-  for (int i=0; i<3; i++) 
-    if (idx[i] == 0 || idx[i] == dims()[i]-1) return true;
-
+  // TODO
   return false;
 }
 
+bool GLGPUDataset::Supercurrent(NodeIdType, double J[3], int slot) const
+{
+  // TODO
+  return false;
+}
+
+#if 0
 double GLGPUDataset::QP(const double X0[], const double X1[]) const 
 {
-  const double *L = Lengths();
+  const double *L = Lengths(), 
+               *O = Origins();
   double d[3] = {X1[0] - X0[0], X1[1] - X0[1], X1[2] - X0[2]};
   int p[3] = {0}; // 0: not crossed; 1: positive; -1: negative
 
@@ -684,81 +332,57 @@ double GLGPUDataset::QP(const double X0[], const double X1[]) const
     else if (d[i]<-L[i]/2) {d[i] += L[i]; p[i] = -1;}
   }
 
-  if (pbc()[0] && p[0]!=0) { // By>0
-    return p[0] * (L[0]*Bz()*X0[1] - L[2]*By()*X0[2]); // FIXME: the cross point
-  } else if (pbc()[1] && p[1]!=0) {
-    return p[1] * (-L[2]*Bz()*X0[0] + L[2]*Bx()*X0[2]);
+  const double X[3] = {X0[0] - O[0], X0[1] - O[1], X0[2] - O[2]};
+
+  if (By()>0 && p[0]!=0) { // By>0
+    return p[0] * L[0] * (Bz()*X[1] - By()*X[2]); 
+  } else if (p[1]!=0) {
+    return p[1] * L[1] * (Bx()*X[2] - Bz()*X[0]);
   } else return 0.0;
 }
-
-bool GLGPUDataset::GetFace(ElemIdType id, int face, double X[][3], double A[][3], double re[], double im[]) const
+#else
+double GLGPUDataset::QP(const double X0_[], const double X1_[], int slot) const
 {
-  int idx0[3]; 
-  ElemId2Idx(id, idx0);
-  int idx1[3] = {(idx0[0]+1)%dims()[0], (idx0[1]+1)%dims()[1], (idx0[2]+1)%dims()[2]}; 
-  
-  int V[4][3];
-
-  switch (face) {
-  case 0: // XY0
-    V[0][0] = idx0[0]; V[0][1] = idx0[1]; V[0][2] = idx0[2]; 
-    V[1][0] = idx0[0]; V[1][1] = idx1[1]; V[1][2] = idx0[2]; 
-    V[2][0] = idx1[0]; V[2][1] = idx1[1]; V[2][2] = idx0[2]; 
-    V[3][0] = idx1[0]; V[3][1] = idx0[1]; V[3][2] = idx0[2]; 
-    break; 
-  
-  case 1: // YZ0
-    V[0][0] = idx0[0]; V[0][1] = idx0[1]; V[0][2] = idx0[2]; 
-    V[1][0] = idx0[0]; V[1][1] = idx0[1]; V[1][2] = idx1[2]; 
-    V[2][0] = idx0[0]; V[2][1] = idx1[1]; V[2][2] = idx1[2]; 
-    V[3][0] = idx0[0]; V[3][1] = idx1[1]; V[3][2] = idx0[2]; 
-    break; 
-  
-  case 2: // ZX0
-    V[0][0] = idx0[0]; V[0][1] = idx0[1]; V[0][2] = idx0[2]; 
-    V[1][0] = idx1[0]; V[1][1] = idx0[1]; V[1][2] = idx0[2]; 
-    V[2][0] = idx1[0]; V[2][1] = idx0[1]; V[2][2] = idx1[2]; 
-    V[3][0] = idx0[0]; V[3][1] = idx0[1]; V[3][2] = idx1[2]; 
-    break; 
-  
-  case 3: // XY1
-    V[0][0] = idx0[0]; V[0][1] = idx0[1]; V[0][2] = idx1[2]; 
-    V[1][0] = idx1[0]; V[1][1] = idx0[1]; V[1][2] = idx1[2]; 
-    V[2][0] = idx1[0]; V[2][1] = idx1[1]; V[2][2] = idx1[2]; 
-    V[3][0] = idx0[0]; V[3][1] = idx1[1]; V[3][2] = idx1[2]; 
-    break; 
-
-  case 4: // YZ1
-    V[0][0] = idx1[0]; V[0][1] = idx0[1]; V[0][2] = idx0[2]; 
-    V[1][0] = idx1[0]; V[1][1] = idx1[1]; V[1][2] = idx0[2]; 
-    V[2][0] = idx1[0]; V[2][1] = idx1[1]; V[2][2] = idx1[2]; 
-    V[3][0] = idx1[0]; V[3][1] = idx0[1]; V[3][2] = idx1[2]; 
-    break; 
-
-  case 5: // ZX1
-    V[0][0] = idx0[0]; V[0][1] = idx1[1]; V[0][2] = idx0[2]; 
-    V[1][0] = idx0[0]; V[1][1] = idx1[1]; V[1][2] = idx1[2]; 
-    V[2][0] = idx1[0]; V[2][1] = idx1[1]; V[2][2] = idx1[2]; 
-    V[3][0] = idx1[0]; V[3][1] = idx1[1]; V[3][2] = idx0[2]; 
-    break; 
-
-  default: return false; 
+  double X0[3], X1[3];
+  double N[3];
+  for (int i=0; i<3; i++) {
+    X0[i] = (X0_[i] - Origins()[i]) / CellLengths()[i];
+    X1[i] = (X1_[i] - Origins()[i]) / CellLengths()[i];
+    N[i] = dims()[i];
   }
 
-  for (int i=0; i<4; i++) {
-    Idx2Pos(V[i], X[i]); 
-    re[i] = Re(V[i][0], V[i][1], V[i][2]);
-    im[i] = Im(V[i][0], V[i][1], V[i][2]);
-    GLGPUDataset::A(X[i], A[i]);
-  }
+  if (B(slot)[1]>0 && fabs(X1[0]-X0[0])>N[0]/2) {
+    // TODO
+    assert(false);
+    return 0.0;
+  } else if (fabs(X1[1]-X0[1])>N[1]/2) {
+    // pbc j
+    double dj = X1[1] - X0[1];
+    if (dj > N[1]/2) dj = dj - N[1];
+    else if (dj < -N[1]/2) dj = dj + N[1];
+    
+    double dist = fabs(dj);
+    double dist1 = fabs(fmod1(X0[1] + N[1]/2, N[1]) - N[1]);
+    double f = dist1/dist;
 
-  return true;
-}
+    // pbc k
+    double dk = X1[2] - X0[2];
+    if (dk > N[2]/2) dk = dk - N[2];
+    else if (dk < -N[2]/2) dk = dk + N[2];
+    double k = fmod1(X0[2] + f*dk, N[2]);
 
-bool GLGPUDataset::A(const double X[3], double A[3]) const
-{
-  A[0] = Ax(X);
-  A[1] = Ay(X);
-  A[2] = Az(X);
-  return true;
+    // pbc i
+    double di = X1[0] - X0[0];
+    if (di > N[0]/2) di = di - N[0];
+    else if (di < -N[0]/2) di = di + N[0];
+    double i = fmod1(X0[0] + f*dk, N[0]);
+
+    double sign = dj>0 ? 1 : -1;
+    double qp = sign * (k*CellLengths()[2]*B(slot)[0]*Lengths()[1] - i*CellLengths()[0]*B(slot)[2]*Lengths()[1]);
+
+    return qp;
+  } 
+  
+  return 0.0;
 }
+#endif

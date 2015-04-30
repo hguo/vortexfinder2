@@ -1,0 +1,24 @@
+message PBPuncturedEdge {
+  required uint32 id = 1;
+  required sint32 chirality = 2;
+  optional double t = 3;
+};
+
+message PBPuncturedEdges {
+  repeated PBPuncturedEdge edges = 2;
+};
+
+////
+message PBPuncturedFace {
+  required uint32 id = 1;
+  required sint32 chirality = 2;
+  optional double x = 3;
+  optional double y = 4;
+  optional double z = 5;
+};
+
+message PBPuncturedFaces {
+  repeated PBPuncturedFace faces = 1;
+  optional int32 timestep = 2;
+};
+

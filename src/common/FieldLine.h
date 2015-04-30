@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <list>
+#include <string>
 
 class FieldLine : public std::vector<double> {
 public:
