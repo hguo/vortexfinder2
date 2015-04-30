@@ -192,12 +192,14 @@ void CGLWidget::keyPressEvent(QKeyEvent* e)
 {
   switch (e->key()) {
   case Qt::Key_Comma: 
+  case Qt::Key_Left:
     LoadTimeStep(_timestep - 1);
     addCurrentLineToHistory();
     updateGL();
     break;
 
   case Qt::Key_Period: 
+  case Qt::Key_Right:
     LoadTimeStep(_timestep + 1);
     addCurrentLineToHistory();
     updateGL();
