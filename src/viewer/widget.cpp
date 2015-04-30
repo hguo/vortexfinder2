@@ -50,7 +50,7 @@ CGLWidget::CGLWidget(const QGLFormat& fmt, QWidget *parent, QGLWidget *sharedWid
     _ts(0), _tl(0), 
     _rc(NULL), _rc_fb(NULL),
     _ds(NULL), _vt(NULL),
-    h_max(1000)
+    h_max(0)
 {
   _ilrender = new ILines::ILRender;
 
@@ -416,7 +416,7 @@ void CGLWidget::renderVortexIds()
   glColor3f(0, 0, 0);
   glDisable(GL_DEPTH_TEST);
 
-  QString s0 = QString("frame=%1").arg(_timestep-40);
+  QString s0 = QString("frame=%1").arg(_timestep);
   renderText(20, 60, s0, ft);
 
   ft.setPointSize(24);
