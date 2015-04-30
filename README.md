@@ -11,12 +11,20 @@ A visualization and analysis tool for condor2/GLGPU dataset
 
 #### Prerequisites ####
 
+The following tools/libraries are needed for building the cores:
+
 * [CMake](http://www.cmake.org/) (mandatory, version >= 3.0.2)
 * [Protocol Buffers](https://github.com/google/protobuf/) (mandatory, version >= 2.6.1), used for the serialization/unserialization of vortex objects
 * [libMesh](http://libmesh.github.io/) (optional, preferable 0.9.4-rc1 built with PETSc), used for Condor2 data analysis
     * [PETSc](http://www.mcs.anl.gov/petsc/) (version >= 3.5.2), used for non-linear implicit system support in libMesh
     * [MPICH](http://www.mpich.org/) (version >= 3.1.2), PETSc dependency
-* [Qt4](http://qt-project.org/) (optional, preferable 4.8.6), used for the GUI
+
+The following tools/libraries are needed for buiding the GUI:
+
+* [Qt4](http://www.qt.io/) (preferable 4.8.6), used for the GUI
+* [GLEW](http://glew.sourceforge.net/), used for using OpenGL extensions
+
+The above tools could be installed with MacPorts or Homebrew.
 
 #### Build the core only ####
 
@@ -61,67 +69,47 @@ $ cmake .. \
 $ make
 ```
 
-### Running Examples ###
+### Analyzing GLGPU Data ###
 
-Change the working directory:
+#### Creating the file list ####
 
-``` shell
-$ cd build/bin
-```
+Create a file (e.g. GL3D_CrBx004_full_long) which contains a list of GLGPU data file. The frame ID is indexed by the line numbers. 
 
-To show help information, run the command without arguments: 
+~~~
+GL3D_CrBx004_full_long_0001_amph.dat
+GL3D_CrBx004_full_long_0002_amph.dat
+GL3D_CrBx004_full_long_0003_amph.dat
+GL3D_CrBx004_full_long_0004_amph.dat
+GL3D_CrBx004_full_long_0005_amph.dat
+GL3D_CrBx004_full_long_0006_amph.dat
+GL3D_CrBx004_full_long_0007_amph.dat
+GL3D_CrBx004_full_long_0008_amph.dat
+GL3D_CrBx004_full_long_0009_amph.dat
+GL3D_CrBx004_full_long_0010_amph.dat
+...
+~~~
 
-``` shell
-$ ./extractor_condor2
-FATAL: input filename not given.
-USAGE:
-./extractor_condor2 -i <input_filename> [-o output_filename] [--nogauge] [-t=<t>] [-T=<T>]
-
-  --verbose   verbose output
-  --benchmark Enable benchmark
-  --nogauge   Disable gauge transformation
-  -t          Starting time step for the analysis
-  -T          Number of time step for the analysis
-```
-
-``` shell
-./extractor_glgpu
-FATAL: input filename not given.
-USAGE:
-./extractor_glgpu -i <input_filename> [-o output_filename] [--nogauge]
-
-  --verbose   verbose output
-  --benchmark Enable benchmark
-  --nogauge   Disable gauge transformation
-```
-
-To analyze the Condor2 example data (tslab.3.Bz0_02.Nt1000.lu.512.e), please run with all necessary arguments: 
+#### Running the vortex extractor/tracker ####
 
 ``` shell
-$ ./extractor_condor2 tslab.3.Bz0_02.Nt1000.lu.512.e --Bz 0.02 -t 600
+$ ../extractor_glgpu3D GL3D_CrBx004_full_long -t 0 -l 1000
 ```
 
-To analyze the GLGPU example data (GL3D_Xfieldramp_inter_0437_cop.dat), please run:
+The argument -t specifies the starting frame; -l specifies the number of frames. Then the program generates a series of files. GL3D_CrBx004_full_long.pf.(i) are the punctured faces at frame i; GL3D_CrBx004_full_long.pe.(i).(i+1) are the intersected space-time edges for frame i and i+1; GL3D_CrBx004_full_long.vlines.(i) are the vortex lines at frame i; GL3D_CrBx004_full_long.match.(i).(i+1) are the correspondence of vortex IDs of frame i and i+1. This process may take a long time.
+
+#### Interactive 3D visualization ####
+
+After the extraction and tracking, run the viewer for the 3D interactive visualization:
 
 ``` shell
-$ ./extractor_glgpu GL3D_Xfieldramp_inter_0437_cop.dat
+$ ../viewer1 GL3D_CrBx004_full_long -t 0 -l 1000
 ```
 
-By default, the output file is the input filename plus ".vortex" suffix, 
-e.g. "tslab.3.Bz0_02.Nt1000.lu.512.e.vortex" and "GL3D_Xfieldramp_inter_0437_cop.dat.vortex". The output file could be 
-visualized by the viewer if it is compiled: 
-
-``` shell
-$ ./viewer tslab.3.Bz0_02.Nt1000.lu.512.e.vortex
-$ ./viewer GL3D_Xfieldramp_inter_0437_cop.dat.vortex
-```
-
-In the GUI, use left mouse button to rotate, and use wheel to zoom in/out. 
+In the viewer, use left mouse button to rotate, and wheel to zoom in/out. Press left/right key to show the previous/next frame.
 
 ### TODOs ###
 
 * Interface for in-situ analysis
-* Vortex line tracking
 * More features in the GUI, e.g. super current streamlines, inclusions, etc. 
 * Plugins to production visualization tools, e.g. ParaView and VisIt
 
