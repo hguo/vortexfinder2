@@ -30,7 +30,8 @@ bool GLGPU_IO_Helper_ReadLegacy(
     double &Kx, 
     double &V, 
     double **re, 
-    double **im);
+    double **im, 
+    bool header_only=false);
 
 bool GLGPU_IO_Helper_ReadNetCDF(
     const std::string& filename, 

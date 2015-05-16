@@ -165,7 +165,8 @@ bool GLGPU_IO_Helper_ReadLegacy(
     double &Kex, 
     double &V, 
     double **re, 
-    double **im)
+    double **im, 
+    bool header_only)
 {
   FILE *fp = fopen(filename.c_str(), "rb");
   if (!fp) return false;
@@ -247,13 +248,16 @@ bool GLGPU_IO_Helper_ReadLegacy(
     fread(&Kex, sizeof(double), 1, fp);
     fread(&Kex_dot, sizeof(double), 1, fp); 
   }
+ 
+  if (header_only) return true;
+  // read the actual data
 
   int count = 1; 
   for (int i=0; i<ndims; i++) 
     count *= dims[i]; 
 
   int offset = ftell(fp);
-  
+
   // mem allocation 
   *re = (double*)realloc(*re, sizeof(double)*count);
   *im = (double*)realloc(*im, sizeof(double)*count);
