@@ -33,7 +33,8 @@ bool GLGPU_IO_Helper_ReadBDAT(
     double &Kex, 
     double &V, 
     double **re, 
-    double **im)
+    double **im, 
+    bool header_only)
 {
   BDATReader *reader = new BDATReader(filename); 
   if (!reader->Valid()) {
@@ -117,7 +118,7 @@ bool GLGPU_IO_Helper_ReadBDAT(
       assert(type == BDAT_FLOAT);
       memcpy(&f, p, sizeof(float));
       V = f;
-    } else if (name == "psi") {
+    } else if (name == "psi" && !header_only) {
       if (type == BDAT_FLOAT) {
         int count = buf.size()/sizeof(float)/2;
         int optype = recID == 2000 ? 0 : 1;

@@ -15,7 +15,8 @@ bool GLGPU_IO_Helper_ReadBDAT(
     double &Kx, 
     double &V, 
     double **re, 
-    double **im);
+    double **im, 
+    bool header_only=false);
 
 bool GLGPU_IO_Helper_ReadLegacy(
     const std::string& filename, 

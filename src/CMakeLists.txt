@@ -8,6 +8,10 @@ configure_file (def.h.cmake def.h)
 # subdirs (common io extractor tracer)
 subdirs (common io extractor)
 
+if (WITH_PARAVIEW)
+  subdirs (paraview_plugins)
+endif ()
+
 if (WITH_QT)
   subdirs (viewer)
 endif ()

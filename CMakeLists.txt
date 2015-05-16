@@ -3,11 +3,12 @@ cmake_minimum_required (VERSION 2.8)
 
 option (WITH_TESTS "Build the tests" OFF)
 option (WITH_CUDA "Build with CUDA" OFF)
-option (WITH_LIBMESH "Build with libMesh" ON) 
+option (WITH_LIBMESH "Build with libMesh" OFF) 
 option (WITH_PNETCDF "Build with parallel-netcdf" OFF)
-option (WITH_QT "Build with Qt" ON)
+option (WITH_QT "Build with Qt" OFF)
 option (WITH_CUDA "Build with CUDA" OFF)
 option (WITH_VTK "Build with VTK" OFF)
+option (WITH_PARAVIEW "Build paraview plugins" OFF)
 
 set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake-modules)
 set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
@@ -60,6 +61,11 @@ endif ()
 
 if (WITH_CUDA)
   find_package (CUDA REQUIRED)
+endif ()
+
+if (WITH_PARAVIEW)
+  find_package (ParaView REQUIRED)
+  include (${PARAVIEW_USE_FILE})
 endif ()
 
 subdirs (src)

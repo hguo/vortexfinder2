@@ -1,0 +1,24 @@
+<ServerManagerConfiguration>
+  <ProxyGroup name="sources">
+    <SourceProxy name="BDATReader" class="vtkBDATReader" label="BDAT Reader">
+      <Documentation
+         short_help="Read BDAT files."
+         long_help="Read BDAT files.">
+      </Documentation>
+      <StringVectorProperty
+          name="FileName"
+          animateable="0"
+          command="SetFileName"
+          number_of_elements="1">
+          <FileListDomain name="files"/>
+          <Documentation>
+            This property specifies the file name for the BDAT reader.
+          </Documentation>
+      </StringVectorProperty>
+
+      <Hints>
+        <ReaderFactory extensions="dat" file_description="BDAT file format"/>
+      </Hints>
+    </SourceProxy>
+  </ProxyGroup>
+</ServerManagerConfiguration>
