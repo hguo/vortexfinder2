@@ -60,7 +60,7 @@ int vtkBDATReader::RequestInformation(
   outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), ext, 6);
   outInfo->Set(vtkDataObject::SPACING(), cellLengths, 3);
   outInfo->Set(vtkDataObject::ORIGIN(), origins, 3);
-  vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_DOUBLE, 1);
+  // vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_DOUBLE, 1);
 
   return 1;
 }
@@ -77,6 +77,7 @@ int vtkBDATReader::RequestData(
   double origins[3], lengths[3], cellLengths[3], B[3];
   double time, Jxext, Kx, V;
   double *re=NULL, *im=NULL;
+  double *rho=NULL, *phi=NULL;
 
   bool succ = false;
   if (!succ) {
@@ -105,18 +106,49 @@ int vtkBDATReader::RequestData(
   vtkImageData *imageData = 
     vtkImageData::SafeDownCast(outInfo->Get(vtkDataObject::DATA_OBJECT()));
   imageData->SetDimensions(dims[0], dims[1], dims[2]);
-  imageData->AllocateScalars(VTK_DOUBLE, 1);
-  vtkDataArray *scalars = imageData->GetPointData()->GetScalars();
-  scalars->SetName("rho");
+  // imageData->AllocateScalars(VTK_DOUBLE, 1);
 
-  for (int i=0; i<dims[0]; i++) 
-    for (int j=0; j<dims[1]; j++)
-      for (int k=0; k<dims[2]; k++) {
-        double *pixel = static_cast<double*>(imageData->GetScalarPointer(i, j, k));
-        int idx = i + dims[0] * (j + dims[1] * k);
-        pixel[0] = sqrt(re[idx]*re[idx] + im[idx]*im[idx]);
-      }
+  const int arraySize = dims[0]*dims[1]*dims[2];
+  vtkSmartPointer<vtkDataArray> dataArrayRe, dataArrayIm, dataArrayRho, dataArrayPhi;
 
+  rho = (double*)malloc(sizeof(double)*arraySize);
+  phi = (double*)malloc(sizeof(double)*arraySize);
+  for (int i=0; i<arraySize; i++) {
+    rho[i] = sqrt(re[i]*re[i] + im[i]*im[i]);
+    phi[i] = atan2(im[i], re[i]);
+  }
+  
+  dataArrayRho.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
+  dataArrayRho->SetNumberOfComponents(1); 
+  dataArrayRho->SetNumberOfTuples(arraySize);
+  dataArrayRho->SetName("rho");
+  memcpy(dataArrayRho->GetVoidPointer(0), rho, sizeof(double)*arraySize);
+  
+  dataArrayPhi.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
+  dataArrayPhi->SetNumberOfComponents(1); 
+  dataArrayPhi->SetNumberOfTuples(arraySize);
+  dataArrayPhi->SetName("phi");
+  memcpy(dataArrayPhi->GetVoidPointer(0), phi, sizeof(double)*arraySize);
+
+  dataArrayRe.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
+  dataArrayRe->SetNumberOfComponents(1); 
+  dataArrayRe->SetNumberOfTuples(arraySize);
+  dataArrayRe->SetName("re");
+  memcpy(dataArrayRe->GetVoidPointer(0), re, sizeof(double)*arraySize);
+  
+  dataArrayIm.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
+  dataArrayIm->SetNumberOfComponents(1); 
+  dataArrayIm->SetNumberOfTuples(arraySize);
+  dataArrayIm->SetName("im");
+  memcpy(dataArrayIm->GetVoidPointer(0), im, sizeof(double)*arraySize);
+
+  imageData->GetPointData()->AddArray(dataArrayRho);
+  imageData->GetPointData()->AddArray(dataArrayPhi);
+  imageData->GetPointData()->AddArray(dataArrayRe);
+  imageData->GetPointData()->AddArray(dataArrayIm);
+
+  free(rho);
+  free(phi);
   free(re);
   free(im);
   
