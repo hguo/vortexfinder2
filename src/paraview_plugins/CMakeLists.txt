@@ -1,1 +1,1 @@
-subdirs (BDATReader)
+subdirs (BDATReader GLGPUVortexFilter)
