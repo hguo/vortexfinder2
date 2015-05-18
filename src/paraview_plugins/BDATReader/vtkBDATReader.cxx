@@ -147,6 +147,8 @@ int vtkBDATReader::RequestData(
   imageData->GetPointData()->AddArray(dataArrayRe);
   imageData->GetPointData()->AddArray(dataArrayIm);
 
+  // TODO: global properties, including B, V, etc.
+
   free(rho);
   free(phi);
   free(re);

@@ -1,24 +1,24 @@
 #ifndef __vtkGLGPUVortexFilter_h
 #define __vtkGLGPUVortexFilter_h
 
+#include "vtkImageAlgorithm.h"
 #include "vtkPolyDataAlgorithm.h"
 
 class vtkDataSet;
 
-class vtkGLGPUVortexFilter : public vtkPolyDataAlgorithm
+class vtkGLGPUVortexFilter : public vtkImageAlgorithm
 {
 public:
   static vtkGLGPUVortexFilter *New();
-  vtkTypeRevisionMacro(vtkGLGPUVortexFilter, vtkPolyDataAlgorithm);
-
-  // virtual int ProcessRequest(vtkInformation*, vtkInformationVector**, vtkInformationVector*);
+  vtkTypeRevisionMacro(vtkGLGPUVortexFilter, vtkImageAlgorithm);
 
 protected:
   vtkGLGPUVortexFilter();
   ~vtkGLGPUVortexFilter();
 
-  // virtual int RequestInformation(vtkInformation*, vtkInformationVector**, vtkInformationVector*);
   virtual int RequestData(vtkInformation*, vtkInformationVector**, vtkInformationVector*);
+  
+  int FillOutputPortInformation(int, vtkInformation*);
 
 private:
   vtkGLGPUVortexFilter(const vtkGLGPUVortexFilter&);
