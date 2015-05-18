@@ -55,17 +55,17 @@ if (WITH_QT)
   find_package (Qt4 REQUIRED COMPONENTS QtCore QtGui QtOpenGL)
 endif ()
 
+if (WITH_PARAVIEW)
+  find_package (ParaView REQUIRED)
+  include (${PARAVIEW_USE_FILE})
+endif ()
+
 if (WITH_VTK)
   find_package (VTK REQUIRED)
 endif ()
 
 if (WITH_CUDA)
   find_package (CUDA REQUIRED)
-endif ()
-
-if (WITH_PARAVIEW)
-  find_package (ParaView REQUIRED)
-  include (${PARAVIEW_USE_FILE})
 endif ()
 
 subdirs (src)

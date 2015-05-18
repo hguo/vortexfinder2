@@ -1,6 +1,6 @@
 <ServerManagerConfiguration>
   <ProxyGroup name="filters">
-    <SourceProxy name="GLGPUVortexFilter" class="GLGPUVortexFilter" label="GLGPUVortexFilter">
+    <SourceProxy name="GLGPUVortexFilter" class="vtkGLGPUVortexFilter" label="GLGPUVortexFilter">
       <Documentation
          short_help="extract vortex from glgpu data"
          long_help="extract vortex from glgpu data">
@@ -18,7 +18,7 @@
       </InputProperty>
 
       <Hints>
-        <ShowInMenu category="Extensions"/>
+        <ShowInMenu category="TDGL"/>
       </Hints>
     </SourceProxy>
   </ProxyGroup>

@@ -1,5 +1,6 @@
 #include "vtkGLGPUVortexFilter.h"
 #include "vtkInformation.h"
+#include "vtkImageData.h"
 #include "vtkInformationVector.h"
 #include "vtkObjectFactory.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
@@ -16,12 +17,16 @@ vtkGLGPUVortexFilter::~vtkGLGPUVortexFilter()
 {
 }
   
-int vtkGLGPUVortexFilter::RequestInformation(vtkInformation*, vtkInformationVector**, vtkInformationVector*)
+int vtkGLGPUVortexFilter::RequestData(
+    vtkInformation*, 
+    vtkInformationVector** inputVector, 
+    vtkInformationVector* outputVector)
 {
-  return 1;
-}
+  vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
+  vtkInformation *outInfo = outputVector->GetInformationObject(0);
 
-int vtkGLGPUVortexFilter::RequestData(vtkInformation*, vtkInformationVector**, vtkInformationVector*)
-{
+  vtkImageData *input = vtkImageData::SafeDownCast(inInfo->Get(vtkDataObject::DATA_OBJECT()));
+  vtkPolyData *output = vtkPolyData::SafeDownCast(outInfo->Get(vtkDataObject::DATA_OBJECT()));
+
   return 1;
 }
