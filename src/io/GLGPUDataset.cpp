@@ -135,6 +135,41 @@ void GLGPUDataset::LoadTimeStep(int timestep, int slot)
 
   SetTimeStep(timestep, slot);
 }
+  
+bool GLGPUDataset::BuildDataFromArray(
+      int ndims, 
+      const int *dims, 
+      const double *lengths,
+      const bool *pbc,
+      double time,
+      const double *B,
+      double Jxext, 
+      double Kx, 
+      double V,
+      const double *re,
+      const double *im)
+{
+  memcpy(_dims, dims, sizeof(int)*3);
+  memcpy(_lengths, lengths, sizeof(double)*3);
+  memcpy(_pbc, pbc, sizeof(bool)*3);
+  _time = time;
+  memcpy(_B, B, sizeof(double)*3);
+  _Jxext = Jxext;
+  _Kex = Kx; 
+  _V = V;
+  
+  for (int i=0; i<Dimensions(); i++) {
+    _origins[i] = -0.5*_lengths[i];
+    if (_pbc[i]) _cell_lengths[i] = _lengths[i] / _dims[i];  
+    else _cell_lengths[i] = _lengths[i] / (_dims[i]-1); 
+  }
+ 
+  int count = _dims[0]*_dims[1]*_dims[2];
+  memcpy(_re, re, sizeof(double)*count);
+  memcpy(_im, im, sizeof(double)*count);
+
+  return true;
+}
 
 void GLGPUDataset::ModulateKex(int slot)
 {

@@ -28,6 +28,19 @@ public:
 private:
   bool OpenBDATDataFile(const std::string& filename, int slot=0);
   bool OpenLegacyDataFile(const std::string& filename, int slot=0);
+  bool BuildDataFromArray(
+      int ndims, 
+      const int *dims, 
+      const double *lengths,
+      const bool *pbc,
+      double time,
+      const double *B,
+      double Jxext, 
+      double Kx, 
+      double V,
+      const double *re,
+      const double *im);
+  
   void ModulateKex(int slot=0);
 
 protected:
