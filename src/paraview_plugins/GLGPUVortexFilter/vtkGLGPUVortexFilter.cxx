@@ -3,6 +3,8 @@
 #include "vtkSmartPointer.h"
 #include "vtkPointData.h"
 #include "vtkPolyData.h"
+#include "vtkPolyLine.h"
+#include "vtkCellArray.h"
 #include "vtkImageData.h"
 #include "vtkSphereSource.h"
 #include "vtkInformationVector.h"
@@ -76,11 +78,11 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
 
   double lengths[3];
   for (int i=0; i<3; i++) 
-    lengths[i] = origins[i] + cellLengths[i] * dims[i];
+    lengths[i] = cellLengths[i] * dims[i];
 
-  bool pbc[3]; // TODO
+  bool pbc[3] = {false}; 
   double time = 0; // dummy
-  double B[3] = {0}; // TODO
+  double B[3] = {0.13, 0, 0}; // TODO
   double Jxext;
   double Kx = 0; // TODO
   double V;
@@ -89,14 +91,42 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   ds->BuildDataFromArray(
       ndims, dims, lengths, pbc, time, B, Jxext, Kx, V, 
       (double*)dataArrayRe->GetVoidPointer(0),
-      (double*)dataArrayIm->GetVoidPointer(1));
+      (double*)dataArrayIm->GetVoidPointer(0));
   ds->BuildMeshGraph();
 
   GLGPUVortexExtractor *ex = new GLGPUVortexExtractor;
   ex->SetDataset(ds);
-  ex->SetGaugeTransformation(false); // TODO
+  ex->SetArchive(false);
+  ex->SetGaugeTransformation(false); 
   ex->ExtractFaces(0);
   ex->TraceOverSpace(0);
+
+  std::vector<VortexLine> vlines = ex->GetVortexLines(0);
+  vtkSmartPointer<vtkPoints> points = vtkPoints::New();
+  vtkSmartPointer<vtkCellArray> cells = vtkCellArray::New();
+  int np = 0;
+
+  for (int i=0; i<vlines.size(); i++) {
+    const int nv = vlines[i].size()/3;
+    if (nv<=0) continue;
+    // fprintf(stderr, "id=%d, n=%d\n", i, nv);
+    for (int j=0; j<nv; j++) {
+      double p[3] = {vlines[i][j*3], vlines[i][j*3+1], vlines[i][j*3+2]};
+      // fprintf(stderr, "%f, %f, %f\n", p[0], p[1], p[2]);
+      points->InsertNextPoint(p);
+    }
+
+    vtkSmartPointer<vtkPolyLine> polyLine = vtkPolyLine::New();
+    polyLine->GetPointIds()->SetNumberOfIds(nv);
+    for (int j=0; j<nv; j++)
+      polyLine->GetPointIds()->SetId(j, j+np);
+
+    cells->InsertNextCell(polyLine);
+    np+=nv;
+  }
+
+  polyData->SetPoints(points);
+  polyData->SetLines(cells);
 
   // TODO: transform output data to polyData;
 

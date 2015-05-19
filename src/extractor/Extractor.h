@@ -30,7 +30,9 @@ public:
   bool SavePuncturedFaces(int slot=0) const; 
   bool LoadPuncturedFaces(int slot=0);
   void ClearPuncturedObjects();
+  
   void SaveVortexLines(int slot=0);
+  std::vector<VortexLine> GetVortexLines(int slot=0);
 
   void TraceVirtualCells();
   void TraceOverSpace(int slot=0);

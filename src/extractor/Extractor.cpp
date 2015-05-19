@@ -57,6 +57,19 @@ void VortexExtractor::SaveVortexLines(int slot)
   ::SaveVortexLines(vlines, info, os.str());
 }
 
+std::vector<VortexLine> VortexExtractor::GetVortexLines(int slot)
+{
+  std::vector<VortexLine> vlines;
+  
+  std::vector<VortexObject> &vobjs = 
+    slot == 0 ? _vortex_objects : _vortex_objects1;
+  std::map<FaceIdType, PuncturedFace> &pfs =
+    slot == 0 ? _punctured_faces : _punctured_faces1;
+
+  VortexObjectsToVortexLines(pfs, vobjs, vlines);
+  return vlines;
+}
+
 void VortexExtractor::ClearPuncturedObjects()
 {
   _punctured_edges.clear();
