@@ -163,8 +163,10 @@ bool GLGPUDataset::BuildDataFromArray(
     if (_pbc[i]) _cell_lengths[i] = _lengths[i] / _dims[i];  
     else _cell_lengths[i] = _lengths[i] / (_dims[i]-1); 
   }
- 
+
   int count = _dims[0]*_dims[1]*_dims[2];
+  _re = (double*)malloc(sizeof(double)*count);
+  _im = (double*)malloc(sizeof(double)*count);
   memcpy(_re, re, sizeof(double)*count);
   memcpy(_im, im, sizeof(double)*count);
 

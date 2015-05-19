@@ -16,7 +16,8 @@ public:
   VortexExtractor(); 
   ~VortexExtractor(); 
 
-  void SetGaugeTransformation(bool); 
+  void SetGaugeTransformation(bool);
+  void SetArchive(bool); // archive intermediate results for data reuse
   
   virtual void SetDataset(const GLDatasetBase* ds);
   const GLDataset* Dataset() const {return (GLDataset*)_dataset;}
@@ -70,6 +71,7 @@ protected:
 protected:
   const GLDatasetBase *_dataset;
   bool _gauge; 
+  bool _archive;
 }; 
 
 #endif

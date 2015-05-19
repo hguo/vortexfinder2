@@ -108,6 +108,11 @@ int vtkBDATReader::RequestData(
   imageData->SetDimensions(dims[0], dims[1], dims[2]);
   // imageData->AllocateScalars(VTK_DOUBLE, 1);
 
+  // information
+  vtkInformation *imageDataInfo = imageData->GetInformation();
+  // imageDataInfo->Set("Kx", Kx);
+
+  // copy data
   const int arraySize = dims[0]*dims[1]*dims[2];
   vtkSmartPointer<vtkDataArray> dataArrayRe, dataArrayIm, dataArrayRho, dataArrayPhi;
 

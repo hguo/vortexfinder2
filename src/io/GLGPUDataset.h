@@ -24,10 +24,7 @@ public:
 
   const double* GetDataPointerRe() const {return _re;}
   const double* GetDataPointerIm() const {return _im;}
-
-private:
-  bool OpenBDATDataFile(const std::string& filename, int slot=0);
-  bool OpenLegacyDataFile(const std::string& filename, int slot=0);
+  
   bool BuildDataFromArray(
       int ndims, 
       const int *dims, 
@@ -40,6 +37,10 @@ private:
       double V,
       const double *re,
       const double *im);
+
+private:
+  bool OpenBDATDataFile(const std::string& filename, int slot=0);
+  bool OpenLegacyDataFile(const std::string& filename, int slot=0);
   
   void ModulateKex(int slot=0);
 

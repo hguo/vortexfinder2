@@ -10,7 +10,8 @@
 
 VortexExtractor::VortexExtractor() :
   _dataset(NULL), 
-  _gauge(false)
+  _gauge(false), 
+  _archive(true)
 {
 
 }
@@ -28,6 +29,11 @@ void VortexExtractor::SetDataset(const GLDatasetBase* ds)
 void VortexExtractor::SetGaugeTransformation(bool g)
 {
   _gauge = g; 
+}
+
+void VortexExtractor::SetArchive(bool a)
+{
+  _archive = a;
 }
 
 void VortexExtractor::SaveVortexLines(int slot)
@@ -549,7 +555,7 @@ next:
     }
   }
 
-  tm.SaveToFile(Dataset()->DataName(), Dataset()->TimeStep(0), Dataset()->TimeStep(1));
+  if (_archive) tm.SaveToFile(Dataset()->DataName(), Dataset()->TimeStep(0), Dataset()->TimeStep(1));
   _vortex_transition.AddMatrix(tm);
 
 #if 0
@@ -629,7 +635,7 @@ void VortexExtractor::ExtractFaces(int slot)
   if (!LoadPuncturedFaces(slot)) {
     for (FaceIdType i=0; i<mg->NFaces(); i++) 
       ExtractFace(i, slot);
-    SavePuncturedFaces(slot);
+    if (_archive) SavePuncturedFaces(slot);
   }
 }
 
@@ -640,7 +646,7 @@ void VortexExtractor::ExtractEdges()
   if (!LoadPuncturedEdges()) {
     for (EdgeIdType i=0; i<mg->NEdges(); i++) 
       ExtractSpaceTimeEdge(i);
-    SavePuncturedEdges();
+    if (_archive) SavePuncturedEdges();
   }
 }
 

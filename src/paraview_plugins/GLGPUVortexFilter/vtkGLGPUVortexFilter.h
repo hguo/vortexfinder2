@@ -21,6 +21,9 @@ protected:
   int FillOutputPortInformation(int, vtkInformation*);
 
 private:
+  int ExtractVorticies(vtkImageData*, vtkPolyData*);
+
+private:
   vtkGLGPUVortexFilter(const vtkGLGPUVortexFilter&);
   void operator=(const vtkGLGPUVortexFilter&);
 };
