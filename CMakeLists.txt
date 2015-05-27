@@ -16,7 +16,8 @@ set (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 set (CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # enable c++11
-list(APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
+list(APPEND CMAKE_CXX_FLAGS "-std=c++0x -stdlib=libc++")
+# ${CMAKE_CXX_FLAGS}")
 
 find_package (Protobuf REQUIRED)
 

@@ -80,7 +80,7 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   for (int i=0; i<3; i++) 
     lengths[i] = cellLengths[i] * dims[i];
 
-  bool pbc[3] = {false}; 
+  bool pbc[3] = {1, 0, 0}; 
   double time = 0; // dummy
   double B[3] = {0.13, 0, 0}; // TODO
   double Jxext;
