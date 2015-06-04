@@ -112,9 +112,9 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   vtkSmartPointer<vtkPoints> points = vtkPoints::New();
   vtkSmartPointer<vtkCellArray> cells = vtkCellArray::New();
 
-  int vertCount = 0;
   std::vector<int> vertCounts;
   for (int i=0; i<vlines.size(); i++) {
+    int vertCount = 0;
     const int nv = vlines[i].size()/3;
     if (nv==0) continue;
     double p0[3];
@@ -139,7 +139,7 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
 
   int nv = 0;
   for (int i=0; i<vertCounts.size(); i++) {
-    fprintf(stderr, "vertCount=%d\n", vertCounts[i]);
+    // fprintf(stderr, "vertCount=%d\n", vertCounts[i]);
     vtkSmartPointer<vtkPolyLine> polyLine = vtkPolyLine::New();
     polyLine->GetPointIds()->SetNumberOfIds(vertCounts[i]);
     for (int j=0; j<vertCounts[i]; j++)
