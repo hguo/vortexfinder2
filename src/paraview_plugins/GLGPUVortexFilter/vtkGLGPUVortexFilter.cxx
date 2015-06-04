@@ -43,28 +43,22 @@ int vtkGLGPUVortexFilter::RequestData(
   vtkPolyData *output = vtkPolyData::SafeDownCast(outInfo->Get(vtkDataObject::DATA_OBJECT()));
 
   return ExtractVorticies(input, output);
-
-#if 0
-  // dummy output
-  vtkSmartPointer<vtkSphereSource> source = vtkSphereSource::New();
-  source->SetRadius(30.0);
-  source->SetCenter(0, 0, 0);
-  source->Update();
-
-  output->DeepCopy(source->GetOutput());
-  
-  return 1;
-#endif
 }
 
 int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData* polyData)
 {
   // TODO: check compatability
   vtkSmartPointer<vtkDataArray> dataArrayRe, dataArrayIm;
+  vtkSmartPointer<vtkDataArray> dataArrayB, dataArrayPBC, dataArrayJxext, dataArrayKx, dataArrayV;
   int index;
 
   dataArrayRe = imageData->GetPointData()->GetArray("re", index);
   dataArrayIm = imageData->GetPointData()->GetArray("im", index);
+  dataArrayB = imageData->GetFieldData()->GetArray("B", index);
+  dataArrayPBC = imageData->GetFieldData()->GetArray("pbc", index);
+  dataArrayJxext = imageData->GetFieldData()->GetArray("Jxext", index);
+  dataArrayKx = imageData->GetFieldData()->GetArray("Kx", index);
+  dataArrayV = imageData->GetFieldData()->GetArray("V", index);
 
   const int ndims = 3;
   int dims[3];
@@ -80,13 +74,26 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   for (int i=0; i<3; i++) 
     lengths[i] = cellLengths[i] * dims[i];
 
-  bool pbc[3] = {1, 0, 0}; 
-  double time = 0; // dummy
-  double B[3] = {0.13, 0, 0}; // TODO
+  bool pbc[3];
+  double pbc1[3];
+  double time = 0; // FIXME
+  double B[3];
   double Jxext;
-  double Kx = 0; // TODO
+  double Kx;
   double V;
 
+  dataArrayB->GetTuple(0, B);
+  dataArrayPBC->GetTuple(0, pbc1);
+  for (int i=0; i<3; i++)
+    pbc[i] = (pbc1[i]>0);
+  Jxext = dataArrayJxext->GetTuple1(0);
+  Kx = dataArrayKx->GetTuple1(0);
+  V = dataArrayV->GetTuple1(0);
+
+  // fprintf(stderr, "B={%f, %f, %f}, pbc={%d, %d, %d}, Jxext=%f, Kx=%f, V=%f\n", 
+  //     B[0], B[1], B[2], pbc[0], pbc[1], pbc[2], Jxext, Kx, V);
+
+  // build data
   GLGPU3DDataset *ds = new GLGPU3DDataset;
   ds->BuildDataFromArray(
       ndims, dims, lengths, pbc, time, B, Jxext, Kx, V, 
@@ -97,7 +104,7 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   GLGPUVortexExtractor *ex = new GLGPUVortexExtractor;
   ex->SetDataset(ds);
   ex->SetArchive(false);
-  ex->SetGaugeTransformation(false); 
+  ex->SetGaugeTransformation(true); 
   ex->ExtractFaces(0);
   ex->TraceOverSpace(0);
 
@@ -122,13 +129,11 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
       polyLine->GetPointIds()->SetId(j, j+np);
 
     cells->InsertNextCell(polyLine);
-    np+=nv;
+    np += nv;
   }
 
   polyData->SetPoints(points);
   polyData->SetLines(cells);
-
-  // TODO: transform output data to polyData;
 
   delete ex;
   delete ds;

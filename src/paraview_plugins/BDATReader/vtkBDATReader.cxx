@@ -156,31 +156,31 @@ int vtkBDATReader::RequestData(
   dataArrayB->SetNumberOfComponents(3);
   dataArrayB->SetNumberOfTuples(1);
   dataArrayB->SetName("B");
-  memcpy(dataArrayB->GetVoidPointer(0), B, sizeof(double)*3);
+  dataArrayB->SetTuple(0, B);
  
   dataArrayPBC.TakeReference(vtkDataArray::CreateDataArray(VTK_UNSIGNED_CHAR));
   dataArrayPBC->SetNumberOfComponents(3);
   dataArrayPBC->SetNumberOfTuples(1);
   dataArrayPBC->SetName("pbc");
-  memcpy(dataArrayPBC->GetVoidPointer(0), pbc, sizeof(bool)*3);
+  dataArrayPBC->SetTuple3(0, pbc[0], pbc[1], pbc[2]);
 
   dataArrayJxext.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
   dataArrayJxext->SetNumberOfComponents(1);
   dataArrayJxext->SetNumberOfTuples(1);
   dataArrayJxext->SetName("Jxext");
-  memcpy(dataArrayJxext->GetVoidPointer(0), &Jxext, sizeof(double));
+  dataArrayJxext->SetTuple1(0, Jxext);
   
   dataArrayKx.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
   dataArrayKx->SetNumberOfComponents(1);
   dataArrayKx->SetNumberOfTuples(1);
-  dataArrayKx->SetName("Jxext");
-  memcpy(dataArrayKx->GetVoidPointer(0), &Kx, sizeof(double));
+  dataArrayKx->SetName("Kx");
+  dataArrayKx->SetTuple1(0, Kx);
   
   dataArrayV.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
   dataArrayV->SetNumberOfComponents(1);
   dataArrayV->SetNumberOfTuples(1);
   dataArrayV->SetName("V");
-  memcpy(dataArrayV->GetVoidPointer(0), &V, sizeof(double));
+  dataArrayV->SetTuple1(0, V);
   
   imageData->GetFieldData()->AddArray(dataArrayB);
   imageData->GetFieldData()->AddArray(dataArrayPBC);
