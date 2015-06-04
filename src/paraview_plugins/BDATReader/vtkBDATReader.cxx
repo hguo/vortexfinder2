@@ -3,6 +3,7 @@
 #include "vtkImageData.h"
 #include "vtkCellData.h"
 #include "vtkPointData.h"
+#include "vtkFieldData.h"
 #include "vtkRectilinearGrid.h"
 #include "vtkStructuredGrid.h"
 #include "vtkInformation.h"
@@ -108,10 +109,6 @@ int vtkBDATReader::RequestData(
   imageData->SetDimensions(dims[0], dims[1], dims[2]);
   // imageData->AllocateScalars(VTK_DOUBLE, 1);
 
-  // information
-  vtkInformation *imageDataInfo = imageData->GetInformation();
-  // imageDataInfo->Set("Kx", Kx);
-
   // copy data
   const int arraySize = dims[0]*dims[1]*dims[2];
   vtkSmartPointer<vtkDataArray> dataArrayRe, dataArrayIm, dataArrayRho, dataArrayPhi;
@@ -152,7 +149,44 @@ int vtkBDATReader::RequestData(
   imageData->GetPointData()->AddArray(dataArrayRe);
   imageData->GetPointData()->AddArray(dataArrayIm);
 
-  // TODO: global properties, including B, V, etc.
+  // global attributes
+  vtkSmartPointer<vtkDataArray> dataArrayB, dataArrayPBC, dataArrayJxext, dataArrayKx, dataArrayV;
+  
+  dataArrayB.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
+  dataArrayB->SetNumberOfComponents(3);
+  dataArrayB->SetNumberOfTuples(1);
+  dataArrayB->SetName("B");
+  memcpy(dataArrayB->GetVoidPointer(0), B, sizeof(double)*3);
+ 
+  dataArrayPBC.TakeReference(vtkDataArray::CreateDataArray(VTK_UNSIGNED_CHAR));
+  dataArrayPBC->SetNumberOfComponents(3);
+  dataArrayPBC->SetNumberOfTuples(1);
+  dataArrayPBC->SetName("pbc");
+  memcpy(dataArrayPBC->GetVoidPointer(0), pbc, sizeof(bool)*3);
+
+  dataArrayJxext.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
+  dataArrayJxext->SetNumberOfComponents(1);
+  dataArrayJxext->SetNumberOfTuples(1);
+  dataArrayJxext->SetName("Jxext");
+  memcpy(dataArrayJxext->GetVoidPointer(0), &Jxext, sizeof(double));
+  
+  dataArrayKx.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
+  dataArrayKx->SetNumberOfComponents(1);
+  dataArrayKx->SetNumberOfTuples(1);
+  dataArrayKx->SetName("Jxext");
+  memcpy(dataArrayKx->GetVoidPointer(0), &Kx, sizeof(double));
+  
+  dataArrayV.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
+  dataArrayV->SetNumberOfComponents(1);
+  dataArrayV->SetNumberOfTuples(1);
+  dataArrayV->SetName("V");
+  memcpy(dataArrayV->GetVoidPointer(0), &V, sizeof(double));
+  
+  imageData->GetFieldData()->AddArray(dataArrayB);
+  imageData->GetFieldData()->AddArray(dataArrayPBC);
+  imageData->GetFieldData()->AddArray(dataArrayJxext);
+  imageData->GetFieldData()->AddArray(dataArrayKx);
+  imageData->GetFieldData()->AddArray(dataArrayV);
 
   free(rho);
   free(phi);
