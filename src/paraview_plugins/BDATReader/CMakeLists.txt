@@ -1,6 +1,6 @@
 add_paraview_plugin (
   BDATReader "0.1"
-  SERVER_MANAGER_XML bdat.xml
+  SERVER_MANAGER_XML BDATReader.xml
   SERVER_MANAGER_SOURCES vtkBDATReader.cxx
 )
 
