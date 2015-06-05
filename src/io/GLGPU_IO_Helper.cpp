@@ -174,7 +174,10 @@ bool GLGPU_IO_Helper_ReadLegacy(
   // tag check
   char tag[GLGPU_LEGACY_TAG_SIZE+1] = {0};  
   fread(tag, 1, GLGPU_LEGACY_TAG_SIZE, fp);
-  if (strcmp(tag, GLGPU_LEGACY_TAG) != 0) return false;
+  if (strcmp(tag, GLGPU_LEGACY_TAG) != 0) {
+    fclose(fp);
+    return false;
+  }
 
   // endians
   int endian; 
@@ -213,7 +216,7 @@ bool GLGPU_IO_Helper_ReadLegacy(
     fread(&fluctuation_amp_, sizeof(float), 1, fp); 
     fread(&B_, sizeof(float), 3, fp);
     fread(&Jx_, sizeof(float), 1, fp); 
-    time = time_; 
+    time = time_;
     // _fluctuation_amp = fluctuation_amp;
     B[0] = B_[0]; 
     B[1] = B_[1]; 
@@ -249,7 +252,10 @@ bool GLGPU_IO_Helper_ReadLegacy(
     fread(&Kex_dot, sizeof(double), 1, fp); 
   }
  
-  if (header_only) return true;
+  if (header_only) {
+    fclose(fp);
+    return true;
+  }
   // read the actual data
 
   int count = 1; 
@@ -336,6 +342,8 @@ bool GLGPU_IO_Helper_ReadLegacy(
     } else assert(false);
 #endif
   }
+
+  fclose(fp);
   return true;
 }
 

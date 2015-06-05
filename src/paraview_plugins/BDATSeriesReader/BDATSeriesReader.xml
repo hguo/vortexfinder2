@@ -22,7 +22,7 @@
         number_of_elements="1"
         panel_visibility="never"
         repeat_command="1">
-        <FileListDOmain name="files"/>
+        <FileListDomain name="files"/>
         <Documentation>The list of files</Documentation>
       </StringVectorProperty>
 
@@ -35,7 +35,7 @@
       </DoubleVectorProperty>
 
       <Hints>
-        <ReaderFactory extensions="dat" file_description="BDAT file format"/>
+        <ReaderFactory extensions="dat" file_description="BDAT series file format"/>
       </Hints>
     </SourceProxy>
   </ProxyGroup>

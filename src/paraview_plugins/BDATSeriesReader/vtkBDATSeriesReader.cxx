@@ -11,6 +11,7 @@
 #include "vtkStreamingDemandDrivenPipeline.h"
 #include "vtkBDATSeriesReader.h"
 #include "io/GLGPU_IO_Helper.h"
+#include <assert.h>
 
 vtkStandardNewMacro(vtkBDATSeriesReader);
 
@@ -53,43 +54,59 @@ unsigned int vtkBDATSeriesReader::GetNumberOfFileNames()
 }
 
 int vtkBDATSeriesReader::RequestInformation(
-    vtkInformation*, 
+    vtkInformation* request,
     vtkInformationVector**, 
     vtkInformationVector* outVec)
 {
-#if 0
   vtkInformation *outInfo = outVec->GetInformationObject(0);
+
+  const int nfiles = GetNumberOfFileNames();
+  std::vector<double> timeSteps;
 
   int ndims; 
   int dims[3];
   bool pbc[3];
   double origins[3], lengths[3], cellLengths[3], B[3];
   double time, Jxext, Kx, V;
-  
-  bool succ = false;
-  if (!succ) {
-    succ = GLGPU_IO_Helper_ReadBDAT(
-        FileName, ndims, dims, lengths, pbc, 
-        time, B, Jxext, Kx, V, NULL, NULL, true); // header only
-  } 
-  if (!succ) {
-    succ = GLGPU_IO_Helper_ReadLegacy(
-        FileName, ndims, dims, lengths, pbc, 
-        time, B, Jxext, Kx, V, NULL, NULL, true);
-  }
+
+  for (int fidx=0; fidx<nfiles; fidx++) {
+    bool succ = false;
+    if (!succ) {
+      succ = GLGPU_IO_Helper_ReadBDAT(
+          FileNames[fidx], ndims, dims, lengths, pbc, 
+          time, B, Jxext, Kx, V, NULL, NULL, true); // header only
+    } 
+    if (!succ) {
+      succ = GLGPU_IO_Helper_ReadLegacy(
+          FileNames[fidx], ndims, dims, lengths, pbc, 
+          time, B, Jxext, Kx, V, NULL, NULL, true);
+    }
+    if (!succ) {
+      fprintf(stderr, "cannot open file: %s\n", FileNames[fidx].c_str());
+      assert(false); // TODO
+    }
+
+    timeSteps.push_back(time);
+    // fprintf(stderr, "fidx=%d, time=%f\n", fidx, time);
  
-  for (int i=0; i<ndims; i++) {
-    origins[i] = -0.5*lengths[i];
-    cellLengths[i] = lengths[i] / (dims[i]-1);
+    if (fidx == 0) {
+      for (int i=0; i<ndims; i++) {
+        origins[i] = -0.5*lengths[i];
+        cellLengths[i] = lengths[i] / (dims[i]-1);
+      }
+
+      int ext[6] = {0, dims[0]-1, 0, dims[1]-1, 0, dims[2]-1};
+
+      outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), ext, 6);
+      outInfo->Set(vtkDataObject::SPACING(), cellLengths, 3);
+      outInfo->Set(vtkDataObject::ORIGIN(), origins, 3);
+      // vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_DOUBLE, 1);
+    }
   }
 
-  int ext[6] = {0, dims[0]-1, 0, dims[1]-1, 0, dims[2]-1};
+  outInfo->Set(vtkStreamingDemandDrivenPipeline::TIME_STEPS(), 
+      &timeSteps[0], static_cast<int>(timeSteps.size()));
 
-  outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), ext, 6);
-  outInfo->Set(vtkDataObject::SPACING(), cellLengths, 3);
-  outInfo->Set(vtkDataObject::ORIGIN(), origins, 3);
-  // vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_DOUBLE, 1);
-#endif
   return 1;
 }
 
