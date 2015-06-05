@@ -24,6 +24,34 @@ vtkBDATSeriesReader::~vtkBDATSeriesReader()
 {
 }
 
+void vtkBDATSeriesReader::AddFileName(const char* filename)
+{
+  FileNames.push_back(filename);
+}
+
+void vtkBDATSeriesReader::RemoveAllFileNames()
+{
+  FileNames.clear();
+}
+
+const char* vtkBDATSeriesReader::GetFileName(unsigned int idx)
+{
+  if (idx >= FileNames.size())
+    return 0;
+  else 
+    return FileNames[idx].c_str();
+}
+
+const char* vtkBDATSeriesReader::GetCurrentFileName()
+{
+  return GetFileName(FileIndex);
+}
+
+unsigned int vtkBDATSeriesReader::GetNumberOfFileNames()
+{
+  return FileNames.size();
+}
+
 int vtkBDATSeriesReader::RequestInformation(
     vtkInformation*, 
     vtkInformationVector**, 
