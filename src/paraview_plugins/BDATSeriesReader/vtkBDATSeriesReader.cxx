@@ -61,7 +61,8 @@ int vtkBDATSeriesReader::RequestInformation(
   vtkInformation *outInfo = outVec->GetInformationObject(0);
 
   const int nfiles = GetNumberOfFileNames();
-  std::vector<double> timeSteps;
+  TimeSteps.clear();
+  TimeStepsMap.clear();
 
   int ndims; 
   int dims[3];
@@ -86,7 +87,8 @@ int vtkBDATSeriesReader::RequestInformation(
       assert(false); // TODO
     }
 
-    timeSteps.push_back(time);
+    TimeSteps.push_back(time);
+    TimeStepsMap[time] = fidx;
     // fprintf(stderr, "fidx=%d, time=%f\n", fidx, time);
  
     if (fidx == 0) {
@@ -105,7 +107,7 @@ int vtkBDATSeriesReader::RequestInformation(
   }
 
   outInfo->Set(vtkStreamingDemandDrivenPipeline::TIME_STEPS(), 
-      &timeSteps[0], static_cast<int>(timeSteps.size()));
+      &TimeSteps[0], static_cast<int>(TimeSteps.size()));
 
   return 1;
 }
@@ -115,7 +117,13 @@ int vtkBDATSeriesReader::RequestData(
     vtkInformationVector**, 
     vtkInformationVector* outVec)
 {
-#if 0
+  vtkInformation *outInfo = outVec->GetInformationObject(0);
+  double upTime = outInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_TIME_STEP());
+  int upTimeStep = TimeStepsMap[upTime];
+  std::string filename = FileNames[upTimeStep];
+
+  fprintf(stderr, "uptime=%f, timestep=%d\n", upTime, upTimeStep);
+
   // load the data
   int ndims; 
   int dims[3];
@@ -128,17 +136,17 @@ int vtkBDATSeriesReader::RequestData(
   bool succ = false;
   if (!succ) {
     succ = GLGPU_IO_Helper_ReadBDAT(
-        FileName, ndims, dims, lengths, pbc, 
+        filename.c_str(), ndims, dims, lengths, pbc, 
         time, B, Jxext, Kx, V, &re, &im);
   }
   if (!succ) {
     succ = GLGPU_IO_Helper_ReadLegacy(
-        FileName, ndims, dims, lengths, pbc, 
+        filename.c_str(), ndims, dims, lengths, pbc, 
         time, B, Jxext, Kx, V, &re, &im);
   }
   if (!succ || ndims!=3)
   {
-    vtkErrorMacro("Error opening file " << FileName);
+    vtkErrorMacro("Error opening file " << filename);
     return 0;
   }
 
@@ -148,7 +156,6 @@ int vtkBDATSeriesReader::RequestData(
   }
     
   // vtk data structures
-  vtkInformation *outInfo = outVec->GetInformationObject(0);
   vtkImageData *imageData = 
     vtkImageData::SafeDownCast(outInfo->Get(vtkDataObject::DATA_OBJECT()));
   imageData->SetDimensions(dims[0], dims[1], dims[2]);
@@ -237,7 +244,6 @@ int vtkBDATSeriesReader::RequestData(
   free(phi);
   free(re);
   free(im);
-#endif
 
   return 1;
 }

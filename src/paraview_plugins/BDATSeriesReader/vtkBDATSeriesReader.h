@@ -6,6 +6,7 @@
 #include "vtkImageAlgorithm.h"
 #include <string>
 #include <vector>
+#include <map>
 
 class vtkBDATSeriesReader : public vtkImageAlgorithm
 {
@@ -27,7 +28,9 @@ public:
 
 private:
   std::vector<std::string> FileNames;
-  vtkIdType FileIndex; 
+  std::vector<double> TimeSteps;
+  std::map<double, int> TimeStepsMap;
+  vtkIdType FileIndex;
 
 protected:
   vtkBDATSeriesReader();
