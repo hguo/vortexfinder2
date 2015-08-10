@@ -20,16 +20,11 @@ GLGPU3DDataset::~GLGPU3DDataset()
 
 void GLGPU3DDataset::Reset()
 {
-  for (int i=0; i<3; i++) {
-    _dims[i] = 1; 
-    _pbc[i] = false;
-  }
-  // TODO
 }
 
 void GLGPU3DDataset::BuildMeshGraph()
 {
-  _mg = new class MeshGraphRegular3D(_dims, _pbc);
+  _mg = new class MeshGraphRegular3D(_h[0].dims, _h[0].pbc);
 }
 
 #if 0

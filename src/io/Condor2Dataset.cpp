@@ -162,12 +162,12 @@ void Condor2Dataset::ProbeBoundingBox()
     U[2] = std::max(U[2], (*it)->slice(2));
   }
 
-  _origins[0] = L[0]; 
-  _origins[1] = L[1]; 
-  _origins[2] = L[2]; 
-  _lengths[0] = U[0] - L[0]; 
-  _lengths[1] = U[1] - L[1]; 
-  _lengths[2] = U[2] - L[2];
+  _h[0].origins[0] = L[0]; 
+  _h[0].origins[1] = L[1]; 
+  _h[0].origins[2] = L[2]; 
+  _h[0].lengths[0] = U[0] - L[0]; 
+  _h[0].lengths[1] = U[1] - L[1]; 
+  _h[0].lengths[2] = U[2] - L[2];
 }
 
 void Condor2Dataset::LoadTimeStep_(int timestep)

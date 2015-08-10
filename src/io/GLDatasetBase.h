@@ -5,6 +5,7 @@
 #include <vector>
 #include "def.h"
 #include "common/MeshGraph.h"
+#include "GLHeader.h"
 
 class GLDatasetBase
 {
@@ -32,8 +33,9 @@ public:
 
 protected: 
   struct MeshGraph *_mg;
-  int _timestep, _timestep1; 
   std::string _data_name;
+  GLHeader _h[2];
+  int _timestep[2];
 };
 
 #endif

@@ -15,5 +15,5 @@ add_executable (test_curves test_curves.cpp)
 add_executable (test_inclusions test_inclusions.cpp)
 target_link_libraries (test_inclusions glcommon)
 
-add_executable (test_nc test_nc.cpp)
-target_link_libraries (test_nc glio)
+#add_executable (test_nc test_nc.cpp)
+#target_link_libraries (test_nc glio)

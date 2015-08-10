@@ -23,15 +23,7 @@ static const char GLGPU_LEGACY_TAG[] = "CA02";
 
 bool GLGPU_IO_Helper_ReadBDAT(
     const std::string& filename, 
-    int &ndims, 
-    int *dims,
-    double *lengths,
-    bool *pbc,
-    double &time,
-    double *B,
-    double &Jxext, 
-    double &Kex, 
-    double &V, 
+    GLHeader &h, 
     double **re, 
     double **im, 
     bool header_only)
@@ -51,73 +43,76 @@ bool GLGPU_IO_Helper_ReadBDAT(
                  recID = reader->RedID(); 
     float f; // temp var
     
-    reader->ReadNextRecordData(&buf);
+    if (name != "psi")
+      reader->ReadNextRecordData(&buf);
+    else if (!header_only)
+      reader->ReadNextRecordData(&buf);
     void *p = (void*)buf.data();
 
     if (name == "dim") {
       assert(type == BDAT_INT32);
-      memcpy(&ndims, p, sizeof(int));
-      assert(ndims == 2 || ndims == 3);
+      memcpy(&h.ndims, p, sizeof(int));
+      assert(h.ndims == 2 || h.ndims == 3);
     } else if (name == "Nx") {
       assert(type == BDAT_INT32);
-      memcpy(&dims[0], p, sizeof(int));
+      memcpy(&h.dims[0], p, sizeof(int));
     } else if (name == "Ny") {
       assert(type == BDAT_INT32);
-      memcpy(&dims[1], p, sizeof(int));
+      memcpy(&h.dims[1], p, sizeof(int));
     } else if (name == "Nz") {
       assert(type == BDAT_INT32);
-      memcpy(&dims[2], p, sizeof(int));
+      memcpy(&h.dims[2], p, sizeof(int));
     } else if (name == "Lx") {
       assert(type == BDAT_FLOAT);
       memcpy(&f, p, sizeof(float));
-      lengths[0] = f;
+      h.lengths[0] = f;
     } else if (name == "Ly") {
       assert(type == BDAT_FLOAT);
       memcpy(&f, p, sizeof(float));
-      lengths[1] = f;
+      h.lengths[1] = f;
     } else if (name == "Lz") {
       assert(type == BDAT_FLOAT);
       memcpy(&f, p, sizeof(float));
-      lengths[2] = f;
+      h.lengths[2] = f;
     } else if (name == "BC") {
       assert(type == BDAT_INT32);
       int btype; 
       memcpy(&btype, p, sizeof(int));
-      pbc[0] = ((btype & 0x0000ff) == 0x01);
-      pbc[1] = ((btype & 0x00ff00) == 0x0100);
-      pbc[2] = ((btype & 0xff0000) == 0x010000); 
+      h.pbc[0] = ((btype & 0x0000ff) == 0x01);
+      h.pbc[1] = ((btype & 0x00ff00) == 0x0100);
+      h.pbc[2] = ((btype & 0xff0000) == 0x010000); 
     } else if (name == "zaniso") {
       assert(type == BDAT_FLOAT);
     } else if (name == "t") {
       assert(type == BDAT_FLOAT);
       memcpy(&f, p, sizeof(float));
-      time = f;
+      h.time = f;
     } else if (name == "Tf") {
       assert(type == BDAT_FLOAT);
     } else if (name == "Bx") {
       assert(type == BDAT_FLOAT);
       memcpy(&f, p, sizeof(float));
-      B[0] = f;
+      h.B[0] = f;
     } else if (name == "By") {
       assert(type == BDAT_FLOAT);
       memcpy(&f, p, sizeof(float));
-      B[1] = f;
+      h.B[1] = f;
     } else if (name == "Bz") {
       assert(type == BDAT_FLOAT);
       memcpy(&f, p, sizeof(float));
-      B[2] = f;
+      h.B[2] = f;
     } else if (name == "Jxext") {
       assert(type == BDAT_FLOAT);
       memcpy(&f, p, sizeof(float));
-      Jxext = f;
+      h.Jxext = f;
     } else if (name == "K") {
       assert(type == BDAT_FLOAT);
       memcpy(&f, p, sizeof(float));
-      Kex = f;
+      h.Kex = f;
     } else if (name == "V") {
       assert(type == BDAT_FLOAT);
       memcpy(&f, p, sizeof(float));
-      V = f;
+      h.V = f;
     } else if (name == "psi" && !header_only) {
       if (type == BDAT_FLOAT) {
         int count = buf.size()/sizeof(float)/2;
@@ -155,21 +150,15 @@ bool GLGPU_IO_Helper_ReadBDAT(
 
 bool GLGPU_IO_Helper_ReadLegacy(
     const std::string& filename, 
-    int &ndims, 
-    int *dims,
-    double *lengths,
-    bool *pbc,
-    double &time,
-    double *B,
-    double &Jxext, 
-    double &Kex, 
-    double &V, 
+    GLHeader& h,
     double **re, 
     double **im, 
     bool header_only)
 {
   FILE *fp = fopen(filename.c_str(), "rb");
   if (!fp) return false;
+
+  memset(&h, 0, sizeof(GLHeader));
 
   // tag check
   char tag[GLGPU_LEGACY_TAG_SIZE+1] = {0};  
@@ -184,7 +173,7 @@ bool GLGPU_IO_Helper_ReadLegacy(
   fread(&endian, sizeof(int), 1, fp); 
 
   // num_dims
-  fread(&ndims, sizeof(int), 1, fp);
+  fread(&h.ndims, sizeof(int), 1, fp);
 
   // data type
   int size_real, datatype; 
@@ -194,14 +183,14 @@ bool GLGPU_IO_Helper_ReadLegacy(
   else assert(false); 
 
   // dimensions 
-  for (int i=0; i<ndims; i++) {
-    fread(&dims[i], sizeof(int), 1, fp);
+  for (int i=0; i<h.ndims; i++) {
+    fread(&h.dims[i], sizeof(int), 1, fp);
     if (datatype == GLGPU_TYPE_FLOAT) {
       float length; 
       fread(&length, sizeof(float), 1, fp);
-      lengths[i] = length; 
+      h.lengths[i] = length; 
     } else if (datatype == GLGPU_TYPE_DOUBLE) {
-      fread(&lengths[i], sizeof(double), 1, fp); 
+      fread(&h.lengths[i], sizeof(double), 1, fp); 
     }
   }
 
@@ -216,26 +205,34 @@ bool GLGPU_IO_Helper_ReadLegacy(
     fread(&fluctuation_amp_, sizeof(float), 1, fp); 
     fread(&B_, sizeof(float), 3, fp);
     fread(&Jx_, sizeof(float), 1, fp); 
-    time = time_;
+    h.time = time_;
     // _fluctuation_amp = fluctuation_amp;
-    B[0] = B_[0]; 
-    B[1] = B_[1]; 
-    B[2] = B_[2];
-    Jxext = Jx_;
+    h.B[0] = B_[0]; 
+    h.B[1] = B_[1]; 
+    h.B[2] = B_[2];
+    h.Jxext = Jx_;
   } else if (datatype == GLGPU_TYPE_DOUBLE) {
     double fluctuation_amp;
-    fread(&time, sizeof(double), 1, fp); 
+    fread(&h.time, sizeof(double), 1, fp); 
     fread(&fluctuation_amp, sizeof(double), 1, fp);
-    fread(B, sizeof(double), 3, fp);
-    fread(&Jxext, sizeof(double), 1, fp); 
+    fread(h.B, sizeof(double), 3, fp);
+    fread(&h.Jxext, sizeof(double), 1, fp); 
   }
 
   // btype
   int btype; 
   fread(&btype, sizeof(int), 1, fp); 
-  pbc[0] = btype & 0x0000ff;
-  pbc[1] = btype & 0x00ff00;
-  pbc[2] = btype & 0xff0000; 
+  h.pbc[0] = btype & 0x0000ff;
+  h.pbc[1] = btype & 0x00ff00;
+  h.pbc[2] = btype & 0xff0000; 
+
+  for (int i=0; i<3; i++) {
+    h.origins[i] = -0.5 * h.lengths[i];
+    if (h.pbc[i]) 
+      h.cell_lengths[i] = h.lengths[i] / h.dims[i];
+    else 
+      h.cell_lengths[i] = h.lengths[i] / (h.dims[i] - 1);
+  }
 
   // optype
   int optype; 
@@ -244,11 +241,11 @@ bool GLGPU_IO_Helper_ReadLegacy(
     float Kex_, Kex_dot_; 
     fread(&Kex_, sizeof(float), 1, fp);
     fread(&Kex_dot_, sizeof(float), 1, fp); 
-    Kex = Kex_;
-    // Kex_dot = Kex_dot_;
+    h.Kex = Kex_;
+    h.Kex_dot = Kex_dot_;
   } else if (datatype == GLGPU_TYPE_DOUBLE) {
     double Kex_dot;
-    fread(&Kex, sizeof(double), 1, fp);
+    fread(&h.Kex, sizeof(double), 1, fp);
     fread(&Kex_dot, sizeof(double), 1, fp); 
   }
  
@@ -259,8 +256,8 @@ bool GLGPU_IO_Helper_ReadLegacy(
   // read the actual data
 
   int count = 1; 
-  for (int i=0; i<ndims; i++) 
-    count *= dims[i]; 
+  for (int i=0; i<h.ndims; i++) 
+    count *= h.dims[i]; 
 
   int offset = ftell(fp);
 
@@ -293,6 +290,9 @@ bool GLGPU_IO_Helper_ReadLegacy(
         (*im)[i] = ch1[i] * sin(ch2[i]);
       }
     } else assert(false); 
+
+    free(ch1); 
+    free(ch2);
   } else if (datatype == GLGPU_TYPE_DOUBLE) {
     assert(false);
     // The following lines are copied from legacy code. To be reorganized later
@@ -349,14 +349,7 @@ bool GLGPU_IO_Helper_ReadLegacy(
 
 bool GLGPU_IO_Helper_WriteNetCDF(
     const std::string& filename, 
-    int ndims, 
-    int *dims,
-    double *lengths,
-    bool *pbc,
-    double *B,
-    double &Jxext, 
-    double &Kx, 
-    double &V, 
+    GLHeader& h,
     double *re, 
     double *im)
 {
@@ -366,7 +359,7 @@ bool GLGPU_IO_Helper_WriteNetCDF(
   int varids[8];
 
   size_t starts[3] = {0, 0, 0}, 
-         sizes[3]  = {(size_t)dims[2], (size_t)dims[1], (size_t)dims[0]};
+         sizes[3]  = {(size_t)h.dims[2], (size_t)h.dims[1], (size_t)h.dims[0]};
 
   const int cnt = sizes[0]*sizes[1]*sizes[2];
   double *rho = (double*)malloc(sizeof(double)*cnt), 

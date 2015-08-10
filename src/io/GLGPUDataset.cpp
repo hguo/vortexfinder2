@@ -13,8 +13,6 @@ GLGPUDataset::GLGPUDataset() :
   _re1(NULL), _im1(NULL),
   _Jx(NULL), _Jy(NULL), _Jz(NULL)
 {
-  memset(_B, 0, sizeof(double)*3);
-  memset(_B1, 0, sizeof(double)*3);
 }
 
 GLGPUDataset::~GLGPUDataset()
@@ -27,19 +25,21 @@ GLGPUDataset::~GLGPUDataset()
 
 void GLGPUDataset::PrintInfo(int slot) const
 {
-  fprintf(stderr, "dims={%d, %d, %d}\n", _dims[0], _dims[1], _dims[2]); 
-  fprintf(stderr, "pbc={%d, %d, %d}\n", _pbc[0], _pbc[1], _pbc[2]); 
-  fprintf(stderr, "origins={%f, %f, %f}\n", _origins[0], _origins[1], _origins[2]);
-  fprintf(stderr, "lengths={%f, %f, %f}\n", _lengths[0], _lengths[1], _lengths[2]);
-  fprintf(stderr, "cell_lengths={%f, %f, %f}\n", _cell_lengths[0], _cell_lengths[1], _cell_lengths[2]); 
-  fprintf(stderr, "B={%f, %f, %f}\n", _B[0], _B[1], _B[2]);
-  fprintf(stderr, "Kex=%f\n", slot == 0 ? _Kex : _Kex1);
-  fprintf(stderr, "Jxext=%f\n", _Jxext);
-  fprintf(stderr, "V=%f\n", _V);
-  fprintf(stderr, "time=%f\n", slot == 0 ? _time : _time1); 
-  fprintf(stderr, "fluctuation_amp=%f\n", _fluctuation_amp); 
+  const GLHeader &h = _h[slot];
+
+  fprintf(stderr, "dims={%d, %d, %d}\n", h.dims[0], h.dims[1], h.dims[2]); 
+  fprintf(stderr, "pbc={%d, %d, %d}\n", h.pbc[0], h.pbc[1], h.pbc[2]); 
+  fprintf(stderr, "origins={%f, %f, %f}\n", h.origins[0], h.origins[1], h.origins[2]);
+  fprintf(stderr, "lengths={%f, %f, %f}\n", h.lengths[0], h.lengths[1], h.lengths[2]);
+  fprintf(stderr, "cell_lengths={%f, %f, %f}\n", h.cell_lengths[0], h.cell_lengths[1], h.cell_lengths[2]); 
+  fprintf(stderr, "B={%f, %f, %f}\n", h.B[0], h.B[1], h.B[2]);
+  fprintf(stderr, "Kex=%f\n", h.Kex);
+  fprintf(stderr, "Jxext=%f\n", h.Jxext);
+  fprintf(stderr, "V=%f\n", h.V);
+  fprintf(stderr, "time=%f\n", h.time);
+  fprintf(stderr, "fluctuation_amp=%f\n", h.fluctuation_amp); 
 }
-  
+
 void GLGPUDataset::SerializeDataInfoToString(std::string& buf) const
 {
   PBDataInfo pb;
@@ -124,18 +124,20 @@ void GLGPUDataset::LoadTimeStep(int timestep, int slot)
   else if (OpenLegacyDataFile(filename, slot)) succ = true;
 
   if (!succ) return;
-  
+#if 0 
   for (int i=0; i<Dimensions(); i++) {
     _origins[i] = -0.5*_lengths[i];
     if (_pbc[i]) _cell_lengths[i] = _lengths[i] / _dims[i];  
     else _cell_lengths[i] = _lengths[i] / (_dims[i]-1); 
   }
+#endif
 
   // ModulateKex(slot);
 
   SetTimeStep(timestep, slot);
 }
-  
+
+#if 0
 bool GLGPUDataset::BuildDataFromArray(
       int ndims, 
       const int *dims, 
@@ -172,6 +174,7 @@ bool GLGPUDataset::BuildDataFromArray(
 
   return true;
 }
+#endif
 
 void GLGPUDataset::ModulateKex(int slot)
 {
@@ -201,11 +204,6 @@ void GLGPUDataset::RotateTimeSteps()
   _re = _re1; _im = _im1;
   _re1 = r; _im1 = i;
 
-  double B[3];
-  memcpy(B, _B, sizeof(double)*3);
-  memcpy(_B, _B1, sizeof(double)*3);
-  memcpy(_B1, _B, sizeof(double)*3);
-
   GLDataset::RotateTimeSteps();
 }
 
@@ -213,40 +211,24 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string& filename, int slot)
 {
   int ndims;
   if (!::GLGPU_IO_Helper_ReadLegacy(
-      filename, ndims, _dims, _lengths, _pbc, 
-      slot == 0 ? _time : _time1, 
-      slot == 0 ? _B : _B1, 
-      _Jxext, 
-      slot == 0 ? _Kex : _Kex1,
-      _V, 
-      slot == 0 ? &_re : &_re1, 
-      slot == 0 ? &_im : &_im1)) 
+        filename, _h[slot], 
+        slot == 0 ? &_re : &_re1, 
+        slot == 0 ? &_im : &_im1))
     return false;
-
-  if (ndims == 2)
-    _dims[2] = 1;
-
-  return true;
+  else 
+    return true;
 }
 
 bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
 {
   int ndims;
   if (!::GLGPU_IO_Helper_ReadBDAT(
-      filename, ndims, _dims, _lengths, _pbc, 
-      slot == 0 ? _time : _time1, 
-      slot == 0 ? _B : _B1, 
-      _Jxext, 
-      slot == 0 ? _Kex : _Kex1,
-      _V, 
-      slot == 0 ? &_re : &_re1, 
-      slot == 0 ? &_im : &_im1)) 
+        filename, _h[slot], 
+        slot == 0 ? &_re : &_re1, 
+        slot == 0 ? &_im : &_im1))
     return false;
-
-  if (ndims == 2)
-    _dims[2] = 1;
-
-  return true;
+  else 
+    return true;
 }
 
 #if 0

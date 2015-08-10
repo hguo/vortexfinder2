@@ -2,7 +2,6 @@
 #include "common/MeshGraph.h"
 
 GLDatasetBase::GLDatasetBase() :
-  _timestep(-1), _timestep1(-1), 
   _mg(NULL)
 {
 }
@@ -25,20 +24,19 @@ void GLDatasetBase::SetDataName(const std::string& dn)
 
 void GLDatasetBase::SetTimeStep(int t, int slot)
 {
-  if (slot == 0) _timestep = t;
-  else _timestep1 = t;
+  _timestep[slot] = t;
 }
 
 void GLDatasetBase::RotateTimeSteps()
 {
-  int t = _timestep1;
-  _timestep1 = _timestep;
-  _timestep = t;
+  int t = _timestep[1];
+  _timestep[1] = _timestep[0];
+  _timestep[0] = t;
 }
 
 int GLDatasetBase::TimeStep(int slot) const
 {
-  return slot == 0 ? _timestep : _timestep1;
+  return _timestep[slot];
 }
 
 bool GLDatasetBase::LoadDefaultMeshGraph()

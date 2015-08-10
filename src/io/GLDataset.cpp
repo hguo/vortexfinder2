@@ -7,13 +7,8 @@
 #include "common/Utils.hpp"
 
 GLDataset::GLDataset() : 
-  _Kex(0), _Kex1(0), _Kex_dot(0), _fluctuation_amp(0), 
-  _V(0), _Jxext(0),
-  _time(0), _time1(0),
   _valid(false)
 {
-  memset(_origins, 0, sizeof(double)*3); 
-  memset(_lengths, 0, sizeof(double)*3); 
 }
 
 GLDataset::~GLDataset()
@@ -23,12 +18,6 @@ GLDataset::~GLDataset()
 void GLDataset::RotateTimeSteps()
 {
   GLDatasetBase::RotateTimeSteps();
-
-  double k = _Kex;
-  _Kex = _Kex1; _Kex1 = k;
-
-  double t = _time;
-  _time = _time1; _time1 = t;
 }
 
 bool GLDataset::OpenDataFile(const std::string& filename)

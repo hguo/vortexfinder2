@@ -37,19 +37,19 @@ public: // transformations and utils
   virtual double QP(const double X0[], const double X1[], int slot=0) const;
 
 public: // properties
-  // Voltage
-  double V() const {return _V;}
-
   // Geometries
-  const double* Origins() const {return _origins;}
-  const double* Lengths() const {return _lengths;} 
+  const double* Origins() const {return _h[0].origins;}
+  const double* Lengths() const {return _h[0].lengths;}
 
   // Time
-  double Time(int slot=0) const {return slot == 0 ? _time : _time1;}
+  double Time(int slot=0) const {return _h[slot].time;}
+  
+  // Voltage
+  double V(int slot=0) const {return _h[slot].V;}
 
   // Kx
-  double Kex(int slot=0) const {return slot == 0 ? _Kex : _Kex1;}
-  double Kex_dot() const {return _Kex_dot;}
+  double Kex(int slot=0) const {return _h[slot].Kex;}
+  double Kex_dot(int slot=0) const {return _h[slot].Kex_dot;}
 
   // Positions 
   virtual bool Pos(NodeIdType, double X[3]) const = 0;
@@ -70,16 +70,6 @@ public: // properties
 
 protected:
   std::vector<double> _time_stamps; 
-
-  double _origins[3]; 
-  double _lengths[3];
-  double _Kex, _Kex1; 
-  double _Kex_dot;
-  double _Jxext;
-  double _V;
-  double _fluctuation_amp; 
-  double _time, _time1;
-
   bool _valid;
 }; 
 

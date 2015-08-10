@@ -16,7 +16,7 @@ void GLGPU2DDataset::SerializeDataInfoToString(std::string& buf) const
 void GLGPU2DDataset::BuildMeshGraph()
 {
   if (_mg != NULL) delete _mg;
-  _mg = new MeshGraphRegular2D(_dims, _pbc);
+  _mg = new MeshGraphRegular2D(_h[0].dims, _h[0].pbc);
 }
 
 CellIdType GLGPU2DDataset::Pos2CellId(const double X[]) const

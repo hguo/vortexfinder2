@@ -53,20 +53,20 @@ protected:
   void Pos2Grid(const double pos[3], double gpos[3]) const; //!< to grid coordinates
 
 public: // rectilinear grid
-  const int* dims() const {return _dims;}
-  const bool* pbc() const {return _pbc;}
-  const double* CellLengths() const {return _cell_lengths;}
+  const int* dims() const {return _h[0].dims;}
+  const bool* pbc() const {return _h[0].pbc;}
+  const double* CellLengths() const {return _h[0].cell_lengths;}
 
-  double dx() const {return _cell_lengths[0];}
-  double dy() const {return _cell_lengths[1];}
-  double dz() const {return _cell_lengths[2];}
+  double dx() const {return _h[0].cell_lengths[0];}
+  double dy() const {return _h[0].cell_lengths[1];}
+  double dz() const {return _h[0].cell_lengths[2];}
   
   // Magnetic potential
   bool A(const double X[3], double A[3], int slot=0) const;
   bool A(NodeIdType n, double A[3], int slot=0) const;
   
   // Magnetic field
-  const double* B(int slot=0) const {return slot == 0 ? _B : _B1;}
+  const double* B(int slot=0) const {return _h[slot].B;}
   
   bool Pos(NodeIdType, double X[3]) const;
   bool Psi(const double X[3], double &re, double &im, int slot=0) const;
@@ -78,12 +78,6 @@ public:
   double QP(const double X0[], const double X1[], int slot=0) const;
 
 protected:
-  int _dims[3]; 
-  bool _pbc[3]; 
-  double _cell_lengths[3]; 
-
-  double _B[3], _B1[3]; // magnetic field
-
   double *_re, *_im, 
          *_re1, *_im1;
   double *_Jx, *_Jy, *_Jz; // only for timestep 0
