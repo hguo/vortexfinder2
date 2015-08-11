@@ -48,6 +48,7 @@ double GLDataset::QP(const double X0[], const double X1[], int slot) const
   return 0.0;
 }
 
+#if 0
 bool GLDataset::Rho(const double X[3], double &rho, int slot) const
 {
   double re, im;
@@ -69,6 +70,7 @@ bool GLDataset::Phi(const double X[3], double &phi, int slot) const
     return true;
   }
 }
+#endif
 
 static void AverageA(int n, double A[][3])
 {
@@ -80,19 +82,18 @@ static void AverageA(int n, double A[][3])
   }
 }
 
-void GLDataset::GetFaceValues(const CFace& f, int slot, double X[][3], double A_[][3], double re[], double im[]) const
+void GLDataset::GetFaceValues(const CFace& f, int slot, double X[][3], double A_[][3], double rho[], double phi[]) const
 {
   for (int i=0; i<f.nodes.size(); i++) {
     Pos(f.nodes[i], X[i]);
-    // A(X[i], A_[i], slot);
     A(f.nodes[i], A_[i], slot);
-    Psi(f.nodes[i], re[i], im[i], slot);
+    RhoPhi(f.nodes[i], rho[i], phi[i], slot);
   }
     
   AverageA(f.nodes.size(), A_);
 }
 
-void GLDataset::GetSpaceTimeEdgeValues(const CEdge& e, double X[][3], double A_[][3], double re[], double im[]) const
+void GLDataset::GetSpaceTimeEdgeValues(const CEdge& e, double X[][3], double A_[][3], double rho[], double phi[]) const
 {
   Pos(e.node0, X[0]);
   Pos(e.node1, X[1]);
@@ -102,9 +103,9 @@ void GLDataset::GetSpaceTimeEdgeValues(const CEdge& e, double X[][3], double A_[
   A(e.node1, A_[2], 1);
   A(e.node0, A_[3], 1);
 
-  Psi(e.node0, re[0], im[0], 0);
-  Psi(e.node1, re[1], im[1], 0);
-  Psi(e.node1, re[2], im[2], 1);
-  Psi(e.node0, re[3], im[3], 1);
+  RhoPhi(e.node0, rho[0], phi[0], 0);
+  RhoPhi(e.node1, rho[1], phi[1], 0);
+  RhoPhi(e.node1, rho[2], phi[2], 1);
+  RhoPhi(e.node0, rho[3], phi[3], 1);
 }
 

@@ -36,8 +36,8 @@ public:
   void SerializeDataInfoToString(std::string& buf) const;
 
 public:
-  void GetFaceValues(const CFace&, int slot, double X[][3], double A[][3], double re[], double im[]) const;
-  void GetSpaceTimeEdgeValues(const CEdge&, double X[][3], double A[][3], double re[], double im[]) const;
+  void GetFaceValues(const CFace&, int slot, double X[][3], double A[][3], double rho[], double phi[]) const;
+  void GetSpaceTimeEdgeValues(const CEdge&, double X[][3], double A[][3], double rho[], double phi[]) const;
   
   CellIdType Pos2CellId(const double X[]) const; //!< returns the elemId for a given position
   bool OnBoundary(ElemIdType id) const;
@@ -48,16 +48,19 @@ public:
   libMesh::NonlinearImplicitSystem* tsys() const {return _tsys;}
   libMesh::System* asys() const {return _asys;}
 
-  unsigned int u_var() const {return _u_var;}
-  unsigned int v_var() const {return _v_var;}
+  unsigned int rho_var() const {return _rho_var;}
+  unsigned int phi_var() const {return _phi_var;}
   unsigned int Ax_var() const {return _Ax_var;}
   unsigned int Ay_var() const {return _Ay_var;}
   unsigned int Az_var() const {return _Az_var;}
 
 public:
+  double Rho(NodeIdType, int slot) const;
+  double Phi(NodeIdType, int slot) const;
+
   bool Pos(NodeIdType, double X[3]) const;
   bool Psi(const double X[3], double &re, double &im, int slot) const;
-  bool Psi(NodeIdType, double &re, double &im, int slot) const;
+  // bool Psi(NodeIdType, double &re, double &im, int slot) const;
   bool A(const double X[3], double A[3], int slot) const;
   bool A(NodeIdType, double A[3], int slot) const;
   bool Supercurrent(const double X[3], double J[3], int slot) const;
@@ -78,7 +81,7 @@ private:
   libMesh::System *_asys;
   libMesh::PointLocatorTree *_locator;
 
-  unsigned int _u_var, _v_var;
+  unsigned int _rho_var, _phi_var;
   unsigned int _Ax_var, _Ay_var, _Az_var;
   // unsigned int _rho_var, _phi_var;
 

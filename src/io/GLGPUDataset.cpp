@@ -9,18 +9,15 @@
 #include <glob.h>
 
 GLGPUDataset::GLGPUDataset() :
-  _re(NULL), _im(NULL), 
-  _re1(NULL), _im1(NULL),
   _Jx(NULL), _Jy(NULL), _Jz(NULL)
 {
+  _psi[0] = _psi[1] = NULL;
 }
 
 GLGPUDataset::~GLGPUDataset()
 {
-  if (_re != NULL) delete _re;
-  if (_im != NULL) delete _im;
-  if (_re1 != NULL) delete _re1;
-  if (_im1 != NULL) delete _im1;
+  if (_psi[0] != NULL) delete _psi[0]; 
+  if (_psi[1] != NULL) delete _psi[1];
 }
 
 void GLGPUDataset::PrintInfo(int slot) const
@@ -176,6 +173,7 @@ bool GLGPUDataset::BuildDataFromArray(
 }
 #endif
 
+#if 0
 void GLGPUDataset::ModulateKex(int slot)
 {
   double K = Kex(slot);
@@ -197,12 +195,11 @@ void GLGPUDataset::ModulateKex(int slot)
         im[nid] = rho * sin(phi);
       }
 }
+#endif
 
 void GLGPUDataset::RotateTimeSteps()
 {
-  double *r = _re, *i = _im;
-  _re = _re1; _im = _im1;
-  _re1 = r; _im1 = i;
+  std::swap(_psi[0], _psi[1]);
 
   GLDataset::RotateTimeSteps();
 }
@@ -211,9 +208,7 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string& filename, int slot)
 {
   int ndims;
   if (!::GLGPU_IO_Helper_ReadLegacy(
-        filename, _h[slot], 
-        slot == 0 ? &_re : &_re1, 
-        slot == 0 ? &_im : &_im1))
+        filename, _h[slot], &_psi[slot]))
     return false;
   else 
     return true;
@@ -223,9 +218,7 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
 {
   int ndims;
   if (!::GLGPU_IO_Helper_ReadBDAT(
-        filename, _h[slot], 
-        slot == 0 ? &_re : &_re1, 
-        slot == 0 ? &_im : &_im1))
+        filename, _h[slot], &_psi[slot]))
     return false;
   else 
     return true;
@@ -304,23 +297,6 @@ bool GLGPUDataset::Pos(NodeIdType id, double X[3]) const
 
   Nid2Idx(id, idx);
   Idx2Pos(idx, X);
-
-  return true;
-}
-
-bool GLGPUDataset::Psi(const double X[3], double &re, double &im, int slot) const
-{
-  // TODO
-  return false;
-}
-
-bool GLGPUDataset::Psi(NodeIdType id, double &re, double &im, int slot) const
-{
-  double *r = slot == 0 ? _re : _re1;
-  double *i = slot == 0 ? _im : _im1;
-
-  re = r[id]; 
-  im = i[id];
 
   return true;
 }

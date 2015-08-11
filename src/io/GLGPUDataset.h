@@ -21,9 +21,6 @@ public:
   int NTimeSteps() const {return _filenames.size();}
 
   void PrintInfo(int slot=0) const;
-
-  const double* GetDataPointerRe() const {return _re;}
-  const double* GetDataPointerIm() const {return _im;}
   
   bool BuildDataFromArray(
       int ndims, 
@@ -35,8 +32,8 @@ public:
       double Jxext, 
       double Kx, 
       double V,
-      const double *re,
-      const double *im);
+      const double *rho,
+      const double *phi);
 
 private:
   bool OpenBDATDataFile(const std::string& filename, int slot=0);
@@ -67,10 +64,14 @@ public: // rectilinear grid
   
   // Magnetic field
   const double* B(int slot=0) const {return _h[slot].B;}
+
+  // bool Psi(NodeIdType, double &rho, double &phi, int slot=0) const;
+  // bool Psi(const double X[3], double &rho, double &phi, int slot=0) const;
+
+  inline double Rho(NodeIdType i, int slot=0) const {return _psi[slot][i*2];}
+  inline double Phi(NodeIdType i, int slot=0) const {return _psi[slot][i*2+1];}
   
   bool Pos(NodeIdType, double X[3]) const;
-  bool Psi(const double X[3], double &re, double &im, int slot=0) const;
-  bool Psi(NodeIdType, double &re, double &im, int slot=0) const;
   bool Supercurrent(const double X[3], double J[3], int slot=0) const;
   bool Supercurrent(NodeIdType, double J[3], int slot=0) const;
 
@@ -78,8 +79,7 @@ public:
   double QP(const double X0[], const double X1[], int slot=0) const;
 
 protected:
-  double *_re, *_im, 
-         *_re1, *_im1;
+  double *_psi[2]; // (rho, phi)
   double *_Jx, *_Jy, *_Jz; // only for timestep 0
 
   std::vector<std::string> _filenames; // filenames for different timesteps

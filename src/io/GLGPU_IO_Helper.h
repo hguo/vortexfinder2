@@ -7,27 +7,23 @@
 bool GLGPU_IO_Helper_ReadBDAT(
     const std::string& filename, 
     GLHeader &hdr, 
-    double **re, 
-    double **im, 
+    double **psi, 
     bool header_only=false);
 
 bool GLGPU_IO_Helper_ReadLegacy(
     const std::string& filename, 
     GLHeader &hdr, 
-    double **re, 
-    double **im, 
+    double **psi, 
     bool header_only=false);
 
 bool GLGPU_IO_Helper_ReadNetCDF(
     const std::string& filename, 
     GLHeader &hdr, 
-    double **re, 
-    double **im);
+    double **psi); 
 
 bool GLGPU_IO_Helper_WriteNetCDF(
     const std::string& filename, 
     GLHeader &hdr, 
-    double *re, 
-    double *im);
+    double **psi); 
 
 #endif

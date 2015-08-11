@@ -2,6 +2,7 @@
 #define _GLDATASET_H
 
 #include "GLDatasetBase.h"
+#include <cmath>
 
 class GLDataset : public GLDatasetBase
 {
@@ -26,8 +27,8 @@ public: // mesh info
   virtual void BuildMeshGraph() = 0;
 
 public: // mesh utils
-  virtual void GetFaceValues(const CFace&, int timeslot, double X[][3], double A[][3], double re[], double im[]) const;
-  virtual void GetSpaceTimeEdgeValues(const CEdge&, double X[][3], double A[][3], double re[], double im[]) const;
+  virtual void GetFaceValues(const CFace&, int timeslot, double X[][3], double A[][3], double rho[], double phi[]) const;
+  virtual void GetSpaceTimeEdgeValues(const CEdge&, double X[][3], double A[][3], double rho[], double phi[]) const;
   
   virtual CellIdType Pos2CellId(const double X[]) const = 0; //!< returns the elemId for a given position
   // virtual bool OnBoundary(ElemIdType id) const = 0;
@@ -55,10 +56,16 @@ public: // properties
   virtual bool Pos(NodeIdType, double X[3]) const = 0;
 
   // Order parameters (direct access/linear interpolation)
-  virtual bool Psi(const double X[3], double &re, double &im, int slot=0) const = 0;
-  virtual bool Psi(NodeIdType, double &re, double &im, int slot=0) const = 0;
   bool Rho(const double X[3], double &rho, int slot=0) const;
   bool Phi(const double X[3], double &phi, int slot=0) const;
+
+  virtual double Rho(NodeIdType i, int slot=0) const = 0;
+  virtual double Phi(NodeIdType i, int slot=0) const = 0;
+  inline double Re(NodeIdType i, int slot=0) const {return Rho(i, slot) * cos(Phi(i, slot));}
+  inline double Im(NodeIdType i, int slot=0) const {return Rho(i, slot) * sin(Phi(i, slot));}
+  
+  inline void RhoPhi(NodeIdType i, double &rho, double &phi, int slot=0) const {rho = Rho(i, slot); phi = Phi(i, slot);}
+  inline void ReIm(NodeIdType i, double &re, double &im, int slot=0) const {re = Re(i, slot); im = Im(i, slot);}
   
   // Magnetic potential
   virtual bool A(const double X[3], double A[3], int slot=0) const = 0; //!< the vector potential at given position

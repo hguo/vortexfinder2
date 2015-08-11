@@ -68,8 +68,8 @@ bool Condor2Dataset::OpenDataFile(const std::string& filename)
   _eqsys = new EquationSystems(*_mesh); 
   
   _tsys = &(_eqsys->add_system<NonlinearImplicitSystem>("GLsys"));
-  _u_var = _tsys->add_variable("u", FIRST, LAGRANGE);
-  _v_var = _tsys->add_variable("v", FIRST, LAGRANGE); 
+  _rho_var = _tsys->add_variable("rho", FIRST, LAGRANGE);
+  _phi_var = _tsys->add_variable("phi", FIRST, LAGRANGE); 
   
   _asys = &(_eqsys->add_system<System>("Auxsys"));
   _Ax_var = _asys->add_variable("Ax", FIRST, LAGRANGE);
@@ -257,6 +257,7 @@ bool Condor2Dataset::Pos(NodeIdType, double X[3]) const
   return false;
 }
 
+#if 0
 bool Condor2Dataset::Psi(const double X[3], double &re, double &im, int slot) const
 {
   if (X[0] < Origins()[0] || X[0] > Origins()[0] + Lengths()[0] ||
@@ -273,12 +274,7 @@ bool Condor2Dataset::Psi(const double X[3], double &re, double &im, int slot) co
 
   return true;
 }
-
-bool Condor2Dataset::Psi(NodeIdType, double &re, double &im, int slot) const 
-{
-  // TODO
-  return false;
-}
+#endif
 
 bool Condor2Dataset::Supercurrent(NodeIdType, double J[3], int slot) const
 {
@@ -288,6 +284,8 @@ bool Condor2Dataset::Supercurrent(NodeIdType, double J[3], int slot) const
 
 bool Condor2Dataset::Supercurrent(const double X[3], double J[3], int slot) const
 {
+  return false;
+#if 0
   Point p(X[0], X[1], X[2]);
 
   const Elem *e = (*_locator)(p);
@@ -298,11 +296,11 @@ bool Condor2Dataset::Supercurrent(const double X[3], double J[3], int slot) cons
   A(1) = asys()->point_value(_Ay_var, p, e);
   A(2) = asys()->point_value(_Az_var, p, e);
 
-  double u, v;
+  double rho, phi;
   Gradient du, dv;
 
-  u = tsys()->point_value(_u_var, p, e);
-  v = tsys()->point_value(_v_var, p, e);
+  rho = tsys()->point_value(_u_var, p, e);
+  phi = tsys()->point_value(_v_var, p, e);
   du = tsys()->point_gradient(_u_var, p, e);
   dv = tsys()->point_gradient(_v_var, p, e);
 
@@ -315,6 +313,7 @@ bool Condor2Dataset::Supercurrent(const double X[3], double J[3], int slot) cons
   J[2] = Js(2);
 
   return true;
+#endif
 }
  
 const Elem* Condor2Dataset::LocateElemCoherently(const double X[3]) const
@@ -454,7 +453,7 @@ bool Condor2Dataset::GetSpaceTimeEdgeValues(const Edge* e, double X[][3], double
 }
 #endif
 
-void Condor2Dataset::GetFaceValues(const CFace& f, int time, double X[][3], double A[][3], double re[], double im[]) const
+void Condor2Dataset::GetFaceValues(const CFace& f, int time, double X[][3], double A[][3], double rho[], double phi[]) const
 {
   const NumericVector<Number> &ts = time == 0 ? *_ts : *_ts1;
   const NumericVector<Number> &as = time == 0 ? *_as : *_as1;
@@ -473,12 +472,12 @@ void Condor2Dataset::GetFaceValues(const CFace& f, int time, double X[][3], doub
     A[i][1] = as( nodes[i].dof_number(asys()->number(), _Ay_var, 0) );
     A[i][2] = as( nodes[i].dof_number(asys()->number(), _Az_var, 0) );
 
-    re[i] = ts( nodes[i].dof_number(tsys()->number(), _u_var, 0) );
-    im[i] = ts( nodes[i].dof_number(tsys()->number(), _v_var, 0) );
+    rho[i] = ts( nodes[i].dof_number(tsys()->number(), _rho_var, 0) );
+    phi[i] = ts( nodes[i].dof_number(tsys()->number(), _phi_var, 0) );
   }
 }
 
-void Condor2Dataset::GetSpaceTimeEdgeValues(const CEdge& e, double X[][3], double A[][3], double re[], double im[]) const
+void Condor2Dataset::GetSpaceTimeEdgeValues(const CEdge& e, double X[][3], double A[][3], double rho[], double phi[]) const
 {
   const NumericVector<Number> &ts = *_ts;
   const NumericVector<Number> &ts1 = *_ts1;
@@ -509,13 +508,25 @@ void Condor2Dataset::GetSpaceTimeEdgeValues(const CEdge& e, double X[][3], doubl
   A[3][1] = as1( node0.dof_number(asys()->number(), _Ay_var, 0) );
   A[3][2] = as1( node0.dof_number(asys()->number(), _Az_var, 0) );
 
-  re[0] = ts( node0.dof_number(tsys()->number(), _u_var, 0) );
-  re[1] = ts( node1.dof_number(tsys()->number(), _u_var, 0) );
-  re[2] = ts1( node1.dof_number(tsys()->number(), _u_var, 0) );
-  re[3] = ts1( node0.dof_number(tsys()->number(), _u_var, 0) );
+  rho[0] = ts( node0.dof_number(tsys()->number(), _rho_var, 0) );
+  rho[1] = ts( node1.dof_number(tsys()->number(), _rho_var, 0) );
+  rho[2] = ts1( node1.dof_number(tsys()->number(), _rho_var, 0) );
+  rho[3] = ts1( node0.dof_number(tsys()->number(), _rho_var, 0) );
 
-  im[0] = ts( node0.dof_number(tsys()->number(), _v_var, 0) );
-  im[1] = ts( node1.dof_number(tsys()->number(), _v_var, 0) );
-  im[2] = ts1( node1.dof_number(tsys()->number(), _v_var, 0) );
-  im[3] = ts1( node0.dof_number(tsys()->number(), _v_var, 0) );
+  phi[0] = ts( node0.dof_number(tsys()->number(), _phi_var, 0) );
+  phi[1] = ts( node1.dof_number(tsys()->number(), _phi_var, 0) );
+  phi[2] = ts1( node1.dof_number(tsys()->number(), _phi_var, 0) );
+  phi[3] = ts1( node0.dof_number(tsys()->number(), _phi_var, 0) );
+}
+
+double Condor2Dataset::Rho(NodeIdType, int) const
+{
+  // TODO
+  assert(false);
+}
+
+double Condor2Dataset::Phi(NodeIdType, int) const
+{
+  // TODO
+  assert(false);
 }

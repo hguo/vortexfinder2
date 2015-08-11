@@ -23,9 +23,8 @@ static const char GLGPU_LEGACY_TAG[] = "CA02";
 
 bool GLGPU_IO_Helper_ReadBDAT(
     const std::string& filename, 
-    GLHeader &h, 
-    double **re, 
-    double **im, 
+    GLHeader &h,
+    double **psi, 
     bool header_only)
 {
   BDATReader *reader = new BDATReader(filename); 
@@ -118,22 +117,19 @@ bool GLGPU_IO_Helper_ReadBDAT(
         int count = buf.size()/sizeof(float)/2;
         int optype = recID == 2000 ? 0 : 1;
         float *data = (float*)p;
-        
-        *re = (double*)realloc(*re, sizeof(double)*count);
-        *im = (double*)realloc(*im, sizeof(double)*count);
+      
+        *psi = (double*)realloc(*psi, sizeof(double)*count*2);
 
         if (optype == 0) { // re, im
           for (int i=0; i<count; i++) {
-            (*re)[i] = data[i*2];
-            (*im)[i] = data[i*2+1];
+            double re = data[i*2], im = data[i*2+1];
+            (*psi)[i*2] = sqrt(re*re + im*im);
+            (*psi)[i*2+1] = atan2(im, re);
           }
         } else { // rho^2, phi
           for (int i=0; i<count; i++) {
-            double rho = sqrt(data[i*2]), 
-                   phi = data[i*2+1];
-            (*re)[i] = rho * cos(phi); 
-            (*im)[i] = rho * sin(phi);
-            // fprintf(stderr, "rho=%f, phi=%f\n", rho, phi);
+            (*psi)[i*2] = sqrt(data[i*2]);
+            (*psi)[i*2+1] = data[i*2+1];
           }
         }
       } else if (type == BDAT_DOUBLE) {
@@ -151,8 +147,7 @@ bool GLGPU_IO_Helper_ReadBDAT(
 bool GLGPU_IO_Helper_ReadLegacy(
     const std::string& filename, 
     GLHeader& h,
-    double **re, 
-    double **im, 
+    double **psi, 
     bool header_only)
 {
   FILE *fp = fopen(filename.c_str(), "rb");
@@ -262,37 +257,27 @@ bool GLGPU_IO_Helper_ReadLegacy(
   int offset = ftell(fp);
 
   // mem allocation 
-  *re = (double*)realloc(*re, sizeof(double)*count);
-  *im = (double*)realloc(*im, sizeof(double)*count);
+  *psi = (double*)realloc(*psi, sizeof(double)*count*2);
 
   if (datatype == GLGPU_TYPE_FLOAT) {
     // raw data
     float *buf = (float*)malloc(sizeof(float)*count*2); // complex numbers
     fread(buf, sizeof(float), count*2, fp);
-
-    // separation of ch1 and ch2
-    float *ch1 = (float*)malloc(sizeof(float)*count), 
-          *ch2 = (float*)malloc(sizeof(float)*count);
-    for (int i=0; i<count; i++) {
-      ch1[i] = buf[i*2]; 
-      ch2[i] = buf[i*2+1];
+    
+    if (optype == 0) { // re, im
+      for (int i=0; i<count; i++) {
+        float re = buf[i*2], im = buf[i*2+1]; 
+        (*psi)[i*2] = sqrt(re*re + im*im);
+        (*psi)[i*2+1] = atan2(im, re);
+      }
+    } else { // rho, phi
+      for (int i=0; i<count; i++) {
+        (*psi)[i*2] = buf[i*2]; 
+        (*psi)[i*2+1] = buf[i*2+1];
+      }
     }
-    free(buf); 
 
-    if (optype == 0) { // order parameter type
-      for (int i=0; i<count; i++) {
-        (*re)[i] = ch1[i]; 
-        (*im)[i] = ch2[i]; 
-      }
-    } else if (optype == 1) {
-      for (int i=0; i<count; i++) {
-        (*re)[i] = ch1[i] * cos(ch2[i]); 
-        (*im)[i] = ch1[i] * sin(ch2[i]);
-      }
-    } else assert(false); 
-
-    free(ch1); 
-    free(ch2);
+    free(buf);
   } else if (datatype == GLGPU_TYPE_DOUBLE) {
     assert(false);
     // The following lines are copied from legacy code. To be reorganized later
