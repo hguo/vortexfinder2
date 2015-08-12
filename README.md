@@ -107,7 +107,7 @@ Then you get two binaries libBDATReader.dylib and libGLGPUVortexFilter.dylib in 
 Install the plugins by loading them in the plugin manager in ParaView.
 
 
-## Usage ## 
+## Using the tools ##
 
 ### Analyzing and visualizing GLGPU data with standalone tools ###
 
