@@ -107,9 +107,11 @@ Then you get two binaries libBDATReader.dylib and libGLGPUVortexFilter.dylib in 
 Install the plugins by loading them in the plugin manager in ParaView.
 
 
-## Analyzing and visualizing GLGPU data with standalone tools ##
+## Usage ## 
 
-### Creating the file list ###
+### Analyzing and visualizing GLGPU data with standalone tools ###
+
+#### Creating the file list ####
 
 Create a file (e.g. GL3D_CrBx004_full_long) which contains a list of GLGPU data file. The frame ID is indexed by the line numbers. 
 
@@ -122,7 +124,7 @@ GL3D_CrBx004_full_long_0004_amph.dat
 ~~~
 
 
-### Run the vortex extractor/tracker ###
+#### Run the vortex extractor/tracker ####
 
 ``` shell
 $ ../extractor_glgpu3D GL3D_CrBx004_full_long -t 0 -l 1000
@@ -137,7 +139,7 @@ GL3D_CrBx004_full_long.match.(i).(i+1) are the correspondence of vortex IDs of f
 This process may take a long time.
 
 
-### Interactive 3D visualization ###
+#### Interactive 3D visualization ####
 
 After the extraction and tracking, run the viewer for the 3D interactive visualization:
 
@@ -148,7 +150,7 @@ $ ../viewer1 GL3D_CrBx004_full_long -t 0 -l 1000
 In the viewer, use left mouse button to rotate, and wheel to zoom in/out. Press left/right key to show the previous/next frame.
 
 
-## Analyzing and visualizing GLGPU data with ParaView plugins ##
+### Analyzing and visualizing GLGPU data with ParaView plugins ###
 
 - Install the two plugins, BDATReader and GLGPUVortexFilter. BDATReader can open GLGPU output files in both BDAT format and the legacy "CA02" format. 
 - Open the .dat file with BDATReader
