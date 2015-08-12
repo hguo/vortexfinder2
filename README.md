@@ -2,12 +2,14 @@
 
 ## Introduction ##
 
-A standalone tool and ParaView plugins to analyze and visualize vortices in Condor2/GLGPU data
+Tools to analyze and visualize vorticies in time-dependent Ginzburg-Landau (TDGL) superconductor simulation data. 
+Output data from two simulation models are supported, namely GLGPU and Condor2. 
+GLGPU and Condor2 are based on structured grid and unstructured grid, respectively. 
 
-We provide a set of tools: 
+A set of tools are provided: 
 
 * Standalone command-line tools for extracting and tracking vortices
-* Standalone OpenGL-based GUI for visualizing vortices
+* Standalone Qt and OpenGL based GUI for visualizing vortices
 * ParaView plugins for analyzing and visualizing vorticies
 
 ## Build Guidelines ##
@@ -158,7 +160,7 @@ In the viewer, use left mouse button to rotate, and wheel to zoom in/out. Press 
 
 * Interface for in-situ analysis
 * More features in the GUI, e.g. super current streamlines, inclusions, etc. 
-
+* ParaView plugins for Condor2 datasets
 
 ## References ##
 
