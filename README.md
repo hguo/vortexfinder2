@@ -52,7 +52,6 @@ $ make
 ``` shell
 $ cd $VORTEX_FINDER2_SOURCE_DIR
 $ mkdir build && cd build
-$ cd build
 $ cmake .. \
   -DWITH_LIBMESH=ON \
   -DPROTOBUF_ROOT=$PROTOBUF_INSTALL_DIR \
@@ -93,7 +92,6 @@ Build the plugins
 ``` shell
 $ cd $VORTEX_FINDER2_SOURCE_DIR
 $ mkdir build && cd build
-$ cd build
 $ cmake .. \
   -DWITH_PARAVIEW=ON \
   -DParaView_DIR=$PARAVIEW_BUILD_DIR \
@@ -107,7 +105,7 @@ Then you get two binaries libBDATReader.dylib and libGLGPUVortexFilter.dylib in 
 Install the plugins by loading them in the plugin manager in ParaView.
 
 
-## Analyzing GLGPU Data ##
+## Analyzing and visualizing GLGPU data with standalone tools ##
 
 ### Creating the file list ###
 
@@ -118,22 +116,24 @@ GL3D_CrBx004_full_long_0001_amph.dat
 GL3D_CrBx004_full_long_0002_amph.dat
 GL3D_CrBx004_full_long_0003_amph.dat
 GL3D_CrBx004_full_long_0004_amph.dat
-GL3D_CrBx004_full_long_0005_amph.dat
-GL3D_CrBx004_full_long_0006_amph.dat
-GL3D_CrBx004_full_long_0007_amph.dat
-GL3D_CrBx004_full_long_0008_amph.dat
-GL3D_CrBx004_full_long_0009_amph.dat
-GL3D_CrBx004_full_long_0010_amph.dat
 ...
 ~~~
 
-### Running the vortex extractor/tracker ###
+
+### Run the vortex extractor/tracker ###
 
 ``` shell
 $ ../extractor_glgpu3D GL3D_CrBx004_full_long -t 0 -l 1000
 ```
 
-The argument -t specifies the starting frame; -l specifies the number of frames. Then the program generates a series of files. GL3D_CrBx004_full_long.pf.(i) are the punctured faces at frame i; GL3D_CrBx004_full_long.pe.(i).(i+1) are the intersected space-time edges for frame i and i+1; GL3D_CrBx004_full_long.vlines.(i) are the vortex lines at frame i; GL3D_CrBx004_full_long.match.(i).(i+1) are the correspondence of vortex IDs of frame i and i+1. This process may take a long time.
+The argument -t specifies the starting frame; -l specifies the number of frames. 
+The tool then analyzes the data and store the results into a series of files. 
+GL3D_CrBx004_full_long.pf.(i) are the punctured faces at frame i; 
+GL3D_CrBx004_full_long.pe.(i).(i+1) are the intersected space-time edges for frame i and i+1; 
+GL3D_CrBx004_full_long.vlines.(i) are the vortex lines at frame i; 
+GL3D_CrBx004_full_long.match.(i).(i+1) are the correspondence of vortex IDs of frame i and i+1. 
+This process may take a long time.
+
 
 ### Interactive 3D visualization ###
 
@@ -145,11 +145,20 @@ $ ../viewer1 GL3D_CrBx004_full_long -t 0 -l 1000
 
 In the viewer, use left mouse button to rotate, and wheel to zoom in/out. Press left/right key to show the previous/next frame.
 
+
+## Analyzing and visualizing GLGPU data with ParaView plugins ##
+
+- Install the two plugins, BDATReader and GLGPUVortexFilter. BDATReader can open GLGPU output files in both BDAT format and the legacy "CA02" format. 
+- Open the .dat file with BDATReader
+- Use GLGPUVortexFilter (Filters-->TDGL-->GLGPUVortexFilter in menu) to extract vortices
+- Use Tube filter to make the vortex lines look better (optional)
+
+
 ## TODOs ##
 
 * Interface for in-situ analysis
 * More features in the GUI, e.g. super current streamlines, inclusions, etc. 
-* Plugins to production visualization tools, e.g. ParaView and VisIt
+
 
 ## References ##
 
@@ -158,6 +167,7 @@ Extracting, Tracking and Visualizing Magnetic Flux Vortices in 3D Complex-Valued
 
 C. L. Phillps, T. Peterka, D. Karpeyev, and A. Glatz.
 Detecting Vortices in Superconductors: Extracting One-Dimensional Topological Singularities from a Discretized Complex Scalar Field. Physics Review E, 023331(91):1-12, 2015.
+
 
 ## Contact ##
 
