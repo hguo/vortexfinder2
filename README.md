@@ -96,13 +96,15 @@ $ mkdir build && cd build
 $ cd build
 $ cmake .. \
   -DWITH_PARAVIEW=ON \
+  -DParaView_DIR=$PARAVIEW_BUILD_DIR \
   -DPROTOBUF_INCLUDE_DIR=$PARAVIEW_SOURCE_DIR/ThirdParty/protobuf/vtkprotobuf/src \
   -DPROTOBUF_LIBRARY=$PARAVIEW_BUILD_DIR/lib/libprotobuf.dylib \
   -DPROTOBUF_PROTOC_EXECUTABLE=$PARAVIEW_BUILD_DIR/bin/protoc
 $ make
 ```
 
-Then you get two libraries libBDATReader.dylib and libGLGPUVortexFilter.dylib.  Install them by Loading the libraries in plugin manager in ParaView.
+Then you get two binaries libBDATReader.dylib and libGLGPUVortexFilter.dylib.  Install the plugins by loading them in the plugin manager in ParaView.
+
 
 ## Analyzing GLGPU Data ##
 
