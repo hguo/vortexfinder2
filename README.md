@@ -103,7 +103,8 @@ $ cmake .. \
 $ make
 ```
 
-Then you get two binaries libBDATReader.dylib and libGLGPUVortexFilter.dylib.  Install the plugins by loading them in the plugin manager in ParaView.
+Then you get two binaries libBDATReader.dylib and libGLGPUVortexFilter.dylib in lib directory.
+Install the plugins by loading them in the plugin manager in ParaView.
 
 
 ## Analyzing GLGPU Data ##
