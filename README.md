@@ -39,17 +39,17 @@ The following libraries are needed for buiding ParaView plugins:
 
 #### GLGPU data only ####
 
-``` shell
+`` shell
 $ cd $VORTEX_FINDER2_SOURCE_DIR
 $ mkdir build && cd build
 $ cmake .. \
   -DPROTOBUF_ROOT=$PROTOBUF_INSTALL_DIR
 $ make
-```
+``
 
 #### GLGPU and Condor2 data ####
 
-``` shell
+`` shell
 $ cd $VORTEX_FINDER2_SOURCE_DIR
 $ mkdir build && cd build
 $ cd build
@@ -60,11 +60,11 @@ $ cmake .. \
   -DLIBMESH_DIR=$LIBMESH_INSTALL_DIR \
   -DPETSC_DIR=$PETSC_INSTALL_DIR 
 $ make
-```
+``
 
 ### Build the standalone GUI (requires Qt4) ###
 
-``` shell
+`` shell
 $ cd $VORTEX_FINDER2_SOURCE_DIR
 $ mkdir build && cd build
 $ cmake .. \
@@ -72,13 +72,13 @@ $ cmake .. \
   -DPROTOBUF_ROOT=$PROTOBUF_INSTALL_DIR \
   -DQT_QMAKE_EXECUTABLE=$QT_INSTALL_DIR/bin/qmake 
 $ make
-```
+``
 
 ### Build ParaView plugins only ###
 
 Build ParaView first
 
-``` shell
+`` shell
 $ tar zxf ParaView-v4.3.1-source.tar.gz
 $ cd ParaView-v4.3.1-source
 $ export PARAVIEW_SOURCE_DIR=$PWD
@@ -86,11 +86,11 @@ $ mkdir build && cd build
 $ export PARAVIEW_BUILD_DIR=$PWD
 $ cmake ..
 $ make
-```
+``
 
 Build the plugins
 
-``` shell
+`` shell
 $ cd $VORTEX_FINDER2_SOURCE_DIR
 $ mkdir build && cd build
 $ cd build
@@ -101,7 +101,7 @@ $ cmake .. \
   -DPROTOBUF_LIBRARY=$PARAVIEW_BUILD_DIR/lib/libprotobuf.dylib \
   -DPROTOBUF_PROTOC_EXECUTABLE=$PARAVIEW_BUILD_DIR/bin/protoc
 $ make
-```
+``
 
 Then you get two binaries libBDATReader.dylib and libGLGPUVortexFilter.dylib.  Install the plugins by loading them in the plugin manager in ParaView.
 
@@ -128,9 +128,9 @@ GL3D_CrBx004_full_long_0010_amph.dat
 
 ### Running the vortex extractor/tracker ###
 
-``` shell
+`` shell
 $ ../extractor_glgpu3D GL3D_CrBx004_full_long -t 0 -l 1000
-```
+``
 
 The argument -t specifies the starting frame; -l specifies the number of frames. Then the program generates a series of files. GL3D_CrBx004_full_long.pf.(i) are the punctured faces at frame i; GL3D_CrBx004_full_long.pe.(i).(i+1) are the intersected space-time edges for frame i and i+1; GL3D_CrBx004_full_long.vlines.(i) are the vortex lines at frame i; GL3D_CrBx004_full_long.match.(i).(i+1) are the correspondence of vortex IDs of frame i and i+1. This process may take a long time.
 
@@ -138,9 +138,9 @@ The argument -t specifies the starting frame; -l specifies the number of frames.
 
 After the extraction and tracking, run the viewer for the 3D interactive visualization:
 
-``` shell
+`` shell
 $ ../viewer1 GL3D_CrBx004_full_long -t 0 -l 1000
-```
+``
 
 In the viewer, use left mouse button to rotate, and wheel to zoom in/out. Press left/right key to show the previous/next frame.
 
