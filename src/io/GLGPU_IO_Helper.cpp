@@ -119,7 +119,8 @@ bool GLGPU_IO_Helper_ReadBDAT(
         int optype = recID == 2000 ? 0 : 1;
         float *data = (float*)p;
 
-        *psi = (double*)realloc(*psi, sizeof(double)*count*2);
+        // *psi = (double*)realloc(*psi, sizeof(double)*count*2);
+        *psi = (double*)malloc(sizeof(double)*count*2);
 
         if (optype == 0) { // re, im
           for (int i=0; i<count; i++) {
@@ -266,7 +267,8 @@ bool GLGPU_IO_Helper_ReadLegacy(
   int offset = ftell(fp);
 
   // mem allocation 
-  *psi = (double*)realloc(*psi, sizeof(double)*count*2);
+  // *psi = (double*)realloc(*psi, sizeof(double)*count*2);
+  *psi = (double*)malloc(sizeof(double)*count*2);
 
   if (datatype == GLGPU_TYPE_FLOAT) {
     // raw data
