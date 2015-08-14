@@ -2,23 +2,41 @@
 #include "common/Utils.hpp"
 #include "common/VortexTransition.h"
 #include "io/GLDataset.h"
+#include <pthread.h>
 #include <set>
+#include <thread>
 #include <climits>
 #include <cstdlib>
 #include <cassert>
 #include <cstring>
+
+#include <mach/mach.h>
+#include <mach/mach_time.h>
+
+typedef struct {
+  VortexExtractor *extractor;
+  int nthreads; 
+  int tid;
+  int type; // 0: face; 1: edge
+  int slot;
+} extractor_thread_t;
+
+pthread_mutex_t mutex;
 
 VortexExtractor::VortexExtractor() :
   _dataset(NULL), 
   _gauge(false), 
   _archive(false)
 {
+  pthread_mutex_init(&mutex, NULL);
 
+  // probe number of cores
+  _nthreads = std::thread::hardware_concurrency();
 }
 
 VortexExtractor::~VortexExtractor()
 {
-
+  pthread_mutex_destroy(&mutex);
 }
 
 void VortexExtractor::SetDataset(const GLDatasetBase* ds)
@@ -132,6 +150,8 @@ bool VortexExtractor::LoadPuncturedFaces(int slot)
 
 void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType chirality, const double pos[])
 {
+  pthread_mutex_lock(&mutex);
+  
   // face
   PuncturedFace pf;
 
@@ -158,14 +178,19 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType ch
     
     // bool found = _punctured_cells.find(cid) != _punctured_cells.end();
     // fprintf(stderr, "cid=%u, found=%d\n", cid, found);
-    
+
     PuncturedCell &c = slot == 0 ? _punctured_cells[cid] : _punctured_cells1[cid];
     c.SetChirality(fid, chirality * fchirality);
+
   }
+    
+  pthread_mutex_unlock(&mutex);
 }
 
 void VortexExtractor::AddPuncturedEdge(EdgeIdType id, ChiralityType chirality, double t)
 {
+  pthread_mutex_lock(&mutex);
+  
   // edge
   PuncturedEdge pe;
 
@@ -180,9 +205,12 @@ void VortexExtractor::AddPuncturedEdge(EdgeIdType id, ChiralityType chirality, d
   for (int i=0; i<edge.contained_faces.size(); i++) {
     int echirality = edge.contained_faces_chirality[i];
     int eid = edge.contained_faces_eid[i]; 
+    
     PuncturedCell &vc = _punctured_vcells[edge.contained_faces[i]];
     vc.SetChirality(eid+2, chirality * echirality);
   }
+    
+  pthread_mutex_unlock(&mutex);
 }
   
 bool VortexExtractor::FindSpaceTimeEdgeZero(const double re[], const double im[], double &t) const
@@ -644,24 +672,72 @@ void VortexExtractor::RotateTimeSteps()
 
 void VortexExtractor::ExtractFaces(int slot) 
 {
-  const MeshGraph *mg = _dataset->MeshGraph();
+  uint64_t t0 = mach_absolute_time();
 
   if (!LoadPuncturedFaces(slot)) {
+    // running in threads
+    const int nthreads = _nthreads; 
+    pthread_t threads[nthreads-1]; 
+    extractor_thread_t ctx[nthreads];
+   
+    for (int i=0; i<nthreads-1; i++) {
+      ctx[i].extractor = this;
+      ctx[i].nthreads = nthreads;
+      ctx[i].tid = i+1;
+      ctx[i].type = 0; // faces
+      ctx[i].slot = slot;
+
+      pthread_create(&threads[i], NULL, &VortexExtractor::execute_thread_helper, &ctx[i]);
+    }
+
+    execute_thread(nthreads, 0, 0, slot); // main thread
+ 
+#if 0 // serial version
     for (FaceIdType i=0; i<mg->NFaces(); i++) 
       ExtractFace(i, slot);
+#endif
+
     if (_archive) SavePuncturedFaces(slot);
   }
+ 
+  uint64_t t1 = mach_absolute_time();
+  double elapsed = (t1 - t0) / 1000000000.0;
+  fprintf(stderr, "t_f=%f\n", elapsed);
 }
 
 void VortexExtractor::ExtractEdges() 
 {
-  const MeshGraph *mg = _dataset->MeshGraph();
- 
+  uint64_t t0 = mach_absolute_time();
+
   if (!LoadPuncturedEdges()) {
+    // running in threads
+    const int nthreads = _nthreads; 
+    pthread_t threads[nthreads-1]; 
+    extractor_thread_t ctx[nthreads];
+   
+    for (int i=0; i<nthreads-1; i++) {
+      ctx[i].extractor = this;
+      ctx[i].nthreads = nthreads;
+      ctx[i].tid = i+1;
+      ctx[i].type = 1; // edges
+      ctx[i].slot = 0;
+
+      pthread_create(&threads[i], NULL, &VortexExtractor::execute_thread_helper, &ctx[i]);
+    }
+
+    execute_thread(nthreads, 0, 1, 0); // main thread
+    
+#if 0 // serial version
     for (EdgeIdType i=0; i<mg->NEdges(); i++) 
       ExtractSpaceTimeEdge(i);
+#endif
+    
     if (_archive) SavePuncturedEdges();
   }
+  
+  uint64_t t1 = mach_absolute_time();
+  double elapsed = (t1 - t0) / 1000000000.0;
+  fprintf(stderr, "t_e=%f\n", elapsed);
 }
 
 void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
@@ -784,4 +860,25 @@ void VortexExtractor::ExtractFace(FaceIdType id, int slot)
     pos[0] = pos[1] = pos[2] = NAN;
     AddPuncturedFace(id, slot, chirality, pos);
   }
+}
+
+void *VortexExtractor::execute_thread_helper(void *ctx_)
+{
+  extractor_thread_t *ctx = (extractor_thread_t*)ctx_;
+  ctx->extractor->execute_thread(ctx->nthreads, ctx->tid, ctx->type, ctx->slot);
+  return NULL;
+}
+
+void VortexExtractor::execute_thread(int nthreads, int tid, int type, int slot)
+{
+  const MeshGraph *mg = _dataset->MeshGraph();
+
+  // fprintf(stderr, "nthreads=%d, tid=%d, type=%d\n", nthreads, tid, type);
+  if (type == 0) {
+    for (FaceIdType i=tid; i<mg->NFaces(); i+=nthreads) 
+      ExtractFace(i, slot);
+  } else if (type == 1) { // TODO
+    for (EdgeIdType i=tid; i<mg->NEdges(); i+=nthreads) 
+      ExtractSpaceTimeEdge(i);
+  } else assert(false);
 }

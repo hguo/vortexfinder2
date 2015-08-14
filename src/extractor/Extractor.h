@@ -16,6 +16,8 @@ public:
   VortexExtractor(); 
   ~VortexExtractor(); 
 
+  void SetNumberOfThreads(int);
+
   void SetGaugeTransformation(bool);
   void SetArchive(bool); // archive intermediate results for data reuse
   
@@ -74,6 +76,12 @@ protected:
   const GLDatasetBase *_dataset;
   bool _gauge; 
   bool _archive;
+
+private:
+  static void *execute_thread_helper(void *ctx);
+  void execute_thread(int nthreads, int tid, int type, int slot);
+
+  int _nthreads;
 }; 
 
 #endif
