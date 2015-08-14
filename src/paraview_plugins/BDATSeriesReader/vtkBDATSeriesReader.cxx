@@ -64,44 +64,33 @@ int vtkBDATSeriesReader::RequestInformation(
   TimeSteps.clear();
   TimeStepsMap.clear();
 
-  int ndims; 
-  int dims[3];
-  bool pbc[3];
-  double origins[3], lengths[3], cellLengths[3], B[3];
-  double time, Jxext, Kx, V;
+  GLHeader h;
 
   for (int fidx=0; fidx<nfiles; fidx++) {
     bool succ = false;
     if (!succ) {
       succ = GLGPU_IO_Helper_ReadBDAT(
-          FileNames[fidx], ndims, dims, lengths, pbc, 
-          time, B, Jxext, Kx, V, NULL, NULL, true); // header only
+          FileNames[fidx], h, NULL, true);
     } 
     if (!succ) {
       succ = GLGPU_IO_Helper_ReadLegacy(
-          FileNames[fidx], ndims, dims, lengths, pbc, 
-          time, B, Jxext, Kx, V, NULL, NULL, true);
+          FileNames[fidx], h, NULL, true);
     }
     if (!succ) {
       fprintf(stderr, "cannot open file: %s\n", FileNames[fidx].c_str());
       assert(false); // TODO
     }
 
-    TimeSteps.push_back(time);
-    TimeStepsMap[time] = fidx;
+    TimeSteps.push_back(h.time);
+    TimeStepsMap[h.time] = fidx;
     // fprintf(stderr, "fidx=%d, time=%f\n", fidx, time);
  
     if (fidx == 0) {
-      for (int i=0; i<ndims; i++) {
-        origins[i] = -0.5*lengths[i];
-        cellLengths[i] = lengths[i] / (dims[i]-1);
-      }
-
-      int ext[6] = {0, dims[0]-1, 0, dims[1]-1, 0, dims[2]-1};
+      int ext[6] = {0, h.dims[0]-1, 0, h.dims[1]-1, 0, h.dims[2]-1};
 
       outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), ext, 6);
-      outInfo->Set(vtkDataObject::SPACING(), cellLengths, 3);
-      outInfo->Set(vtkDataObject::ORIGIN(), origins, 3);
+      outInfo->Set(vtkDataObject::SPACING(), h.cell_lengths, 3);
+      outInfo->Set(vtkDataObject::ORIGIN(), h.origins, 3);
       // vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_DOUBLE, 1);
     }
   }
@@ -124,52 +113,40 @@ int vtkBDATSeriesReader::RequestData(
 
   fprintf(stderr, "uptime=%f, timestep=%d\n", upTime, upTimeStep);
 
-  // load the data
-  int ndims; 
-  int dims[3];
-  bool pbc[3];
-  double origins[3], lengths[3], cellLengths[3], B[3];
-  double time, Jxext, Kx, V;
-  double *re=NULL, *im=NULL;
+  GLHeader h;
   double *rho=NULL, *phi=NULL;
+  double *psi;
 
   bool succ = false;
   if (!succ) {
     succ = GLGPU_IO_Helper_ReadBDAT(
-        filename.c_str(), ndims, dims, lengths, pbc, 
-        time, B, Jxext, Kx, V, &re, &im);
+        filename.c_str(), h, &psi);
   }
   if (!succ) {
     succ = GLGPU_IO_Helper_ReadLegacy(
-        filename.c_str(), ndims, dims, lengths, pbc, 
-        time, B, Jxext, Kx, V, &re, &im);
+        filename.c_str(), h, &psi);
   }
-  if (!succ || ndims!=3)
+  if (!succ)
   {
     vtkErrorMacro("Error opening file " << filename);
     return 0;
-  }
-
-  for (int i=0; i<ndims; i++) {
-    origins[i] = -0.5*lengths[i];
-    cellLengths[i] = lengths[i] / (dims[i]-1);
   }
     
   // vtk data structures
   vtkImageData *imageData = 
     vtkImageData::SafeDownCast(outInfo->Get(vtkDataObject::DATA_OBJECT()));
-  imageData->SetDimensions(dims[0], dims[1], dims[2]);
+  imageData->SetDimensions(h.dims[0], h.dims[1], h.dims[2]);
   // imageData->AllocateScalars(VTK_DOUBLE, 1);
 
   // copy data
-  const int arraySize = dims[0]*dims[1]*dims[2];
+  const int arraySize = h.dims[0]*h.dims[1]*h.dims[2];
   vtkSmartPointer<vtkDataArray> dataArrayRe, dataArrayIm, dataArrayRho, dataArrayPhi;
 
   rho = (double*)malloc(sizeof(double)*arraySize);
   phi = (double*)malloc(sizeof(double)*arraySize);
   for (int i=0; i<arraySize; i++) {
-    rho[i] = sqrt(re[i]*re[i] + im[i]*im[i]);
-    phi[i] = atan2(im[i], re[i]);
+    rho[i] = psi[i*2];
+    phi[i] = psi[i*2+1];
   }
   
   dataArrayRho.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
@@ -184,6 +161,7 @@ int vtkBDATSeriesReader::RequestData(
   dataArrayPhi->SetName("phi");
   memcpy(dataArrayPhi->GetVoidPointer(0), phi, sizeof(double)*arraySize);
 
+#if 0
   dataArrayRe.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
   dataArrayRe->SetNumberOfComponents(1); 
   dataArrayRe->SetNumberOfTuples(arraySize);
@@ -195,6 +173,7 @@ int vtkBDATSeriesReader::RequestData(
   dataArrayIm->SetNumberOfTuples(arraySize);
   dataArrayIm->SetName("im");
   memcpy(dataArrayIm->GetVoidPointer(0), im, sizeof(double)*arraySize);
+#endif
 
   imageData->GetPointData()->AddArray(dataArrayRho);
   imageData->GetPointData()->AddArray(dataArrayPhi);
@@ -208,31 +187,31 @@ int vtkBDATSeriesReader::RequestData(
   dataArrayB->SetNumberOfComponents(3);
   dataArrayB->SetNumberOfTuples(1);
   dataArrayB->SetName("B");
-  dataArrayB->SetTuple(0, B);
+  dataArrayB->SetTuple(0, h.B);
  
   dataArrayPBC.TakeReference(vtkDataArray::CreateDataArray(VTK_UNSIGNED_CHAR));
   dataArrayPBC->SetNumberOfComponents(3);
   dataArrayPBC->SetNumberOfTuples(1);
   dataArrayPBC->SetName("pbc");
-  dataArrayPBC->SetTuple3(0, pbc[0], pbc[1], pbc[2]);
+  dataArrayPBC->SetTuple3(0, h.pbc[0], h.pbc[1], h.pbc[2]);
 
   dataArrayJxext.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
   dataArrayJxext->SetNumberOfComponents(1);
   dataArrayJxext->SetNumberOfTuples(1);
   dataArrayJxext->SetName("Jxext");
-  dataArrayJxext->SetTuple1(0, Jxext);
+  dataArrayJxext->SetTuple1(0, h.Jxext);
   
   dataArrayKx.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
   dataArrayKx->SetNumberOfComponents(1);
   dataArrayKx->SetNumberOfTuples(1);
   dataArrayKx->SetName("Kx");
-  dataArrayKx->SetTuple1(0, Kx);
+  dataArrayKx->SetTuple1(0, h.Kex);
   
   dataArrayV.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
   dataArrayV->SetNumberOfComponents(1);
   dataArrayV->SetNumberOfTuples(1);
   dataArrayV->SetName("V");
-  dataArrayV->SetTuple1(0, V);
+  dataArrayV->SetTuple1(0, h.V);
   
   imageData->GetFieldData()->AddArray(dataArrayB);
   imageData->GetFieldData()->AddArray(dataArrayPBC);
@@ -242,8 +221,6 @@ int vtkBDATSeriesReader::RequestData(
 
   free(rho);
   free(phi);
-  free(re);
-  free(im);
 
   return 1;
 }

@@ -691,6 +691,9 @@ void VortexExtractor::ExtractFaces(int slot)
     }
 
     execute_thread(nthreads, 0, 0, slot); // main thread
+
+    for (int i=0; i<nthreads-1; i++) 
+      pthread_join(threads[i], NULL);
  
 #if 0 // serial version
     for (FaceIdType i=0; i<mg->NFaces(); i++) 
@@ -726,6 +729,9 @@ void VortexExtractor::ExtractEdges()
     }
 
     execute_thread(nthreads, 0, 1, 0); // main thread
+    
+    for (int i=0; i<nthreads-1; i++) 
+      pthread_join(threads[i], NULL);
     
 #if 0 // serial version
     for (EdgeIdType i=0; i<mg->NEdges(); i++) 

@@ -16,8 +16,8 @@ GLGPUDataset::GLGPUDataset() :
 
 GLGPUDataset::~GLGPUDataset()
 {
-  if (_psi[0] != NULL) delete _psi[0]; 
-  if (_psi[1] != NULL) delete _psi[1];
+  if (_psi[0] != NULL) free(_psi[0]); 
+  if (_psi[1] != NULL) free(_psi[1]);
 }
 
 void GLGPUDataset::PrintInfo(int slot) const
@@ -134,44 +134,18 @@ void GLGPUDataset::LoadTimeStep(int timestep, int slot)
   SetTimeStep(timestep, slot);
 }
 
-#if 0
-bool GLGPUDataset::BuildDataFromArray(
-      int ndims, 
-      const int *dims, 
-      const double *lengths,
-      const bool *pbc,
-      double time,
-      const double *B,
-      double Jxext, 
-      double Kx, 
-      double V,
-      const double *re,
-      const double *im)
+bool GLGPUDataset::BuildDataFromArray(const GLHeader& h, const double *psi)
 {
-  memcpy(_dims, dims, sizeof(int)*3);
-  memcpy(_lengths, lengths, sizeof(double)*3);
-  memcpy(_pbc, pbc, sizeof(bool)*3);
-  _time = time;
-  memcpy(_B, B, sizeof(double)*3);
-  _Jxext = Jxext;
-  _Kex = Kx; 
-  _V = V;
+  memcpy(&_h[0], &h, sizeof(GLHeader));
+
+  const int count = h.dims[0]*h.dims[1]*h.dims[2];
+  // _psi[0] = (double*)realloc(_psi[0], sizeof(double)*count*2);
+  _psi[0] = (double*)malloc(sizeof(double)*count*2);
+
+  memcpy(_psi[0], psi, sizeof(double)*count*2);
   
-  for (int i=0; i<Dimensions(); i++) {
-    _origins[i] = -0.5*_lengths[i];
-    if (_pbc[i]) _cell_lengths[i] = _lengths[i] / _dims[i];  
-    else _cell_lengths[i] = _lengths[i] / (_dims[i]-1); 
-  }
-
-  int count = _dims[0]*_dims[1]*_dims[2];
-  _re = (double*)malloc(sizeof(double)*count);
-  _im = (double*)malloc(sizeof(double)*count);
-  memcpy(_re, re, sizeof(double)*count);
-  memcpy(_im, im, sizeof(double)*count);
-
   return true;
 }
-#endif
 
 #if 0
 void GLGPUDataset::ModulateKex(int slot)
