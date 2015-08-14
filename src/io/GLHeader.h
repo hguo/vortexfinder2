@@ -1,6 +1,11 @@
 #ifndef _GLHEADER_H
 #define _GLHEADER_H
 
+enum {
+  DTYPE_BDAT, 
+  DTYPE_CA02
+};
+
 typedef struct {
   int ndims; 
   int dims[3];
@@ -10,6 +15,7 @@ typedef struct {
   double B[3];
   double Jxext, Kex, Kex_dot, V;
   double fluctuation_amp;
+  int dtype;
 } GLHeader;
 
 #endif
