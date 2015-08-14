@@ -148,6 +148,7 @@ int vtkBDATSeriesReader::RequestData(
     rho[i] = psi[i*2];
     phi[i] = psi[i*2+1];
   }
+  free(psi);
   
   dataArrayRho.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
   dataArrayRho->SetNumberOfComponents(1); 

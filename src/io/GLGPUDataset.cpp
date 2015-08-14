@@ -183,6 +183,12 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string& filename, int slot)
 {
   int ndims;
   _h[slot].dtype = DTYPE_CA02;
+  
+  if (_psi[slot] != NULL) {
+    free(_psi[slot]);
+    _psi[slot] = NULL;
+  }
+
   if (!::GLGPU_IO_Helper_ReadLegacy(
         filename, _h[slot], &_psi[slot]))
     return false;
@@ -194,6 +200,12 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
 {
   int ndims;
   _h[slot].dtype = DTYPE_BDAT;
+
+  if (_psi[slot] != NULL) {
+    free(_psi[slot]);
+    _psi[slot] = NULL;
+  }
+
   if (!::GLGPU_IO_Helper_ReadBDAT(
         filename, _h[slot], &_psi[slot]))
     return false;
