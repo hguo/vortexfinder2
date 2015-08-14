@@ -41,11 +41,12 @@ bool GLGPU_IO_Helper_ReadBDAT(
     unsigned int type = reader->RecType(), 
                  recID = reader->RedID(); 
     float f; // temp var
-    
+
     if (name != "psi")
       reader->ReadNextRecordData(&buf);
     else if (!header_only)
       reader->ReadNextRecordData(&buf);
+    else break;
     void *p = (void*)buf.data();
 
     if (name == "dim") {
@@ -117,7 +118,7 @@ bool GLGPU_IO_Helper_ReadBDAT(
         int count = buf.size()/sizeof(float)/2;
         int optype = recID == 2000 ? 0 : 1;
         float *data = (float*)p;
-      
+
         *psi = (double*)realloc(*psi, sizeof(double)*count*2);
 
         if (optype == 0) { // re, im
@@ -138,6 +139,14 @@ bool GLGPU_IO_Helper_ReadBDAT(
       } else 
         assert(false);
     }
+  }
+  
+  for (int i=0; i<3; i++) {
+    h.origins[i] = -0.5 * h.lengths[i];
+    if (h.pbc[i]) 
+      h.cell_lengths[i] = h.lengths[i] / h.dims[i];
+    else 
+      h.cell_lengths[i] = h.lengths[i] / (h.dims[i] - 1);
   }
 
   delete reader;

@@ -24,6 +24,7 @@ void GLGPUDataset::PrintInfo(int slot) const
 {
   const GLHeader &h = _h[slot];
 
+  fprintf(stderr, "dtype=%d\n", h.dtype);
   fprintf(stderr, "dims={%d, %d, %d}\n", h.dims[0], h.dims[1], h.dims[2]); 
   fprintf(stderr, "pbc={%d, %d, %d}\n", h.pbc[0], h.pbc[1], h.pbc[2]); 
   fprintf(stderr, "origins={%f, %f, %f}\n", h.origins[0], h.origins[1], h.origins[2]);
@@ -181,6 +182,7 @@ void GLGPUDataset::RotateTimeSteps()
 bool GLGPUDataset::OpenLegacyDataFile(const std::string& filename, int slot)
 {
   int ndims;
+  _h[slot].dtype = DTYPE_CA02;
   if (!::GLGPU_IO_Helper_ReadLegacy(
         filename, _h[slot], &_psi[slot]))
     return false;
@@ -191,6 +193,7 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string& filename, int slot)
 bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
 {
   int ndims;
+  _h[slot].dtype = DTYPE_BDAT;
   if (!::GLGPU_IO_Helper_ReadBDAT(
         filename, _h[slot], &_psi[slot]))
     return false;
