@@ -21,19 +21,8 @@ public:
   int NTimeSteps() const {return _filenames.size();}
 
   void PrintInfo(int slot=0) const;
-  
-  bool BuildDataFromArray(
-      int ndims, 
-      const int *dims, 
-      const double *lengths,
-      const bool *pbc,
-      double time,
-      const double *B,
-      double Jxext, 
-      double Kx, 
-      double V,
-      const double *rho,
-      const double *phi);
+ 
+  bool BuildDataFromArray(const GLHeader&, const double *psi);
 
 private:
   bool OpenBDATDataFile(const std::string& filename, int slot=0);

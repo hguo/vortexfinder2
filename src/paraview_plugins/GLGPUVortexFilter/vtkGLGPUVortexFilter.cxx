@@ -48,58 +48,56 @@ int vtkGLGPUVortexFilter::RequestData(
 int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData* polyData)
 {
   // TODO: check compatability
-  vtkSmartPointer<vtkDataArray> dataArrayRe, dataArrayIm;
+  vtkSmartPointer<vtkDataArray> dataArrayRho, dataArrayPhi;
   vtkSmartPointer<vtkDataArray> dataArrayB, dataArrayPBC, dataArrayJxext, dataArrayKx, dataArrayV;
   int index;
 
-  dataArrayRe = imageData->GetPointData()->GetArray("re", index);
-  dataArrayIm = imageData->GetPointData()->GetArray("im", index);
+  dataArrayRho = imageData->GetPointData()->GetArray("rho", index);
+  dataArrayPhi = imageData->GetPointData()->GetArray("phi", index);
   dataArrayB = imageData->GetFieldData()->GetArray("B", index);
   dataArrayPBC = imageData->GetFieldData()->GetArray("pbc", index);
   dataArrayJxext = imageData->GetFieldData()->GetArray("Jxext", index);
   dataArrayKx = imageData->GetFieldData()->GetArray("Kx", index);
   dataArrayV = imageData->GetFieldData()->GetArray("V", index);
 
-  const int ndims = 3;
-  int dims[3];
-  imageData->GetDimensions(dims);
-
-  double origins[3];
-  imageData->GetOrigin(origins);
-
-  double cellLengths[3];
-  imageData->GetSpacing(cellLengths);
-
-  double lengths[3];
+  GLHeader h;
+  h.ndims = 3;
+  imageData->GetDimensions(h.dims);
+  imageData->GetOrigin(h.origins);
+  imageData->GetSpacing(h.cell_lengths);
   for (int i=0; i<3; i++) 
-    lengths[i] = cellLengths[i] * dims[i];
+    h.lengths[i] = h.cell_lengths[i] * h.dims[i];
 
-  bool pbc[3];
+  dataArrayB->GetTuple(0, h.B);
+  
   double pbc1[3];
-  double time = 0; // FIXME
-  double B[3];
-  double Jxext;
-  double Kx;
-  double V;
-
-  dataArrayB->GetTuple(0, B);
   dataArrayPBC->GetTuple(0, pbc1);
   for (int i=0; i<3; i++)
-    pbc[i] = (pbc1[i]>0);
-  Jxext = dataArrayJxext->GetTuple1(0);
-  Kx = dataArrayKx->GetTuple1(0);
-  V = dataArrayV->GetTuple1(0);
+    // h.pbc[i] = (pbc1[i]>0);
+    h.pbc[i] = 0; 
+
+  h.Jxext = dataArrayJxext->GetTuple1(0);
+  h.Kex = dataArrayKx->GetTuple1(0);
+  h.V = dataArrayV->GetTuple1(0);
 
   // fprintf(stderr, "B={%f, %f, %f}, pbc={%d, %d, %d}, Jxext=%f, Kx=%f, V=%f\n", 
   //     B[0], B[1], B[2], pbc[0], pbc[1], pbc[2], Jxext, Kx, V);
 
+  const int count = h.dims[0]*h.dims[1]*h.dims[2];
+  double *psi = (double*)malloc(sizeof(double)*count*2);
+  double *rho = (double*)dataArrayRho->GetVoidPointer(0), 
+         *phi = (double*)dataArrayPhi->GetVoidPointer(0);
+  
+  for (int i=0; i<count; i++) {
+    psi[i*2] = rho[i];
+    psi[i*2+1] = phi[i];
+  }
+
   // build data
   GLGPU3DDataset *ds = new GLGPU3DDataset;
-  ds->BuildDataFromArray(
-      ndims, dims, lengths, pbc, time, B, Jxext, Kx, V, 
-      (double*)dataArrayRe->GetVoidPointer(0),
-      (double*)dataArrayIm->GetVoidPointer(0));
+  ds->BuildDataFromArray(h, psi);
   ds->BuildMeshGraph();
+  free(psi);
 
   GLGPUVortexExtractor *ex = new GLGPUVortexExtractor;
   ex->SetDataset(ds);
