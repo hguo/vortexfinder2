@@ -743,7 +743,7 @@ void VortexExtractor::ExtractEdges()
 void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
 {
   const GLDataset *ds = (GLDataset*)_dataset;
-  const CEdge& e = _dataset->MeshGraph()->Edge(id);
+  const CEdge& e = _dataset->MeshGraph()->Edge(id, true);
 
   if (!e.Valid()) {
     // fprintf(stderr, "invalid edge\n");
@@ -810,7 +810,7 @@ void VortexExtractor::ExtractFace(FaceIdType id, int slot)
 {
   const GLDataset *ds = (GLDataset*)_dataset;
   const int nnodes = ds->NrNodesPerFace();
-  const CFace& f = ds->MeshGraph()->Face(id);
+  const CFace& f = ds->MeshGraph()->Face(id, true);
 
   if (!f.Valid()) return;
 

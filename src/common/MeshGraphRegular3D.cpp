@@ -9,7 +9,7 @@ MeshGraphRegular3D::MeshGraphRegular3D(int d_[3], bool pbc_[3])
   // memset(pbc, 0, sizeof(bool)*3);
 }
 
-CCell MeshGraphRegular3D::Cell(CellIdType id) const
+CCell MeshGraphRegular3D::Cell(CellIdType id, bool nodes_only) const
 {
   CCell cell;
   int idx[3];
@@ -24,6 +24,7 @@ CCell MeshGraphRegular3D::Cell(CellIdType id) const
     {i, j, k+1}, {i+1, j, k+1}, {i+1, j+1, k+1}, {i, j+1, k+1}};
   for (int p=0; p<8; p++) // don't worry about modIdx here. automatically done in idx2id()
     cell.nodes.push_back(nidx2nid(nodes_idx[p]));
+  if (nodes_only) return cell;
 
   // faces
   const int faces_fidx[6][4] = {
@@ -59,7 +60,7 @@ CCell MeshGraphRegular3D::Cell(CellIdType id) const
   return cell;
 }
 
-CFace MeshGraphRegular3D::Face(FaceIdType id) const
+CFace MeshGraphRegular3D::Face(FaceIdType id, bool nodes_only) const
 {
   CFace face;
   int fidx[4];
@@ -75,6 +76,7 @@ CFace MeshGraphRegular3D::Face(FaceIdType id) const
     {{i, j, k}, {i+1, j, k}, {i+1, j+1, k}, {i, j+1, k}}};
   for (int p=0; p<4; p++)
     face.nodes.push_back(nidx2nid(nodes_idx[t][p]));
+  if (nodes_only) return face;
 
   // edges
   const int edges_idx[3][4][4] = {
@@ -111,7 +113,7 @@ CFace MeshGraphRegular3D::Face(FaceIdType id) const
   return face;
 }
 
-CEdge MeshGraphRegular3D::Edge(EdgeIdType id) const
+CEdge MeshGraphRegular3D::Edge(EdgeIdType id, bool nodes_only) const
 {
   CEdge edge;
   int eidx[4];
@@ -128,6 +130,7 @@ CEdge MeshGraphRegular3D::Edge(EdgeIdType id) const
 
   edge.node0 = nidx2nid(nodes_idx[t][0]);
   edge.node1 = nidx2nid(nodes_idx[t][1]);
+  if (nodes_only) return edge;
 
   // contained faces
   const int contained_faces_fidx[3][4][4] = {
