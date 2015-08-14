@@ -16,10 +16,14 @@ set (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 set (CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # enable c++11
-list(APPEND CMAKE_CXX_FLAGS "-std=c++0x -stdlib=libc++")
-# ${CMAKE_CXX_FLAGS}")
+list (APPEND CMAKE_CXX_FLAGS "-std=c++11")
 
 find_package (Protobuf REQUIRED)
+# find_package (OpenMP)
+
+if (OPENMP_FOUND)
+  list (APPEND CMAKE_CXX_FLAGS ${OpenMP_CXX_FLAGS})
+endif ()
 
 include_directories (
   ${PROTOBUF_INCLUDE_DIR})
