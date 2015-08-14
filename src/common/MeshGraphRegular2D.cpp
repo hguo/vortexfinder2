@@ -9,7 +9,7 @@ MeshGraphRegular2D::MeshGraphRegular2D(int d_[2], bool pbc_[2])
   // pbc[0] = pbc[1] = 0; // disable pbc in the test
 }
 
-CCell MeshGraphRegular2D::Cell(CellIdType id) const
+CCell MeshGraphRegular2D::Cell(CellIdType id, bool nodes_only) const
 {
   CCell cell;
   int idx[2];
@@ -22,6 +22,7 @@ CCell MeshGraphRegular2D::Cell(CellIdType id) const
   const int nodes_idx[4][2] = {{i, j}, {i+1, j}, {i+1, j+1}, {i, j+1}};
   for (int p=0; p<4; p++) // don't worry about modIdx here. automatically done in idx2id()
     cell.nodes.push_back(nidx2nid(nodes_idx[i]));
+  if (nodes_only) return cell;
 
   // faces
   const int face_fidx[2] = {i, j}; // only one face in the cell
@@ -35,7 +36,7 @@ CCell MeshGraphRegular2D::Cell(CellIdType id) const
   return cell;
 }
 
-CFace MeshGraphRegular2D::Face(FaceIdType id) const
+CFace MeshGraphRegular2D::Face(FaceIdType id, bool nodes_only) const
 {
   CFace face;
   int fidx[3];
@@ -48,6 +49,7 @@ CFace MeshGraphRegular2D::Face(FaceIdType id) const
   const int nodes_idx[4][2] = {{i, j}, {i+1, j}, {i+1, j+1}, {i, j+1}};
   for (int p=0; p<4; p++) // don't worry about modIdx here. automatically done in idx2id()
     face.nodes.push_back(nidx2nid(nodes_idx[p]));
+  if (nodes_only) return face;
 
   // edges
   const int edges_idx[4][3] = {{i, j, 0}, {i+1, j, 1}, {i, j+1, 0}, {i, j, 1}};
@@ -68,7 +70,7 @@ CFace MeshGraphRegular2D::Face(FaceIdType id) const
   return face;
 }
 
-CEdge MeshGraphRegular2D::Edge(EdgeIdType id) const
+CEdge MeshGraphRegular2D::Edge(EdgeIdType id, bool nodes_only) const
 {
   CEdge edge;
   int eidx[3];
@@ -84,6 +86,7 @@ CEdge MeshGraphRegular2D::Edge(EdgeIdType id) const
 
   edge.node0 = nidx2nid(nodes_idx[t][0]); // id; // nidx2nid(node_idx[t][0]);
   edge.node1 = nidx2nid(nodes_idx[t][1]);
+  if (nodes_only) return edge;
 
   // contained faces
   const int contained_faces_fidx[2][2][2] = {

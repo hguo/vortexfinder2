@@ -112,9 +112,9 @@ public:
   virtual FaceIdType NFaces() const {return faces.size();}
   virtual CellIdType NCells() const {return cells.size();}
 
-  virtual CEdge Edge(EdgeIdType i) const {return edges[i];}
-  virtual CFace Face(FaceIdType i) const {return faces[i];}
-  virtual CCell Cell(CellIdType i) const {return cells[i];}
+  virtual CEdge Edge(EdgeIdType i, bool nodes_only=false) const {return edges[i];}
+  virtual CFace Face(FaceIdType i, bool nodes_only=false) const {return faces[i];} // second arg for acceleration
+  virtual CCell Cell(CellIdType i, bool nodes_only=false) const {return cells[i];}
 
   void SerializeToString(std::string &str) const;
   bool ParseFromString(const std::string &str);
