@@ -10,7 +10,7 @@ class vtkGLGPUVortexFilter : public vtkImageAlgorithm
 {
 public:
   static vtkGLGPUVortexFilter *New();
-  vtkTypeRevisionMacro(vtkGLGPUVortexFilter, vtkImageAlgorithm);
+  vtkTypeMacro(vtkGLGPUVortexFilter, vtkImageAlgorithm);
 
 protected:
   vtkGLGPUVortexFilter();
