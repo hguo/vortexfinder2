@@ -9,7 +9,7 @@ if (WITH_LIBMESH)
 endif ()
 
 add_library (glextractor ${extractor_sources})
-link_libraries (glextractor glcommon glio)
+link_libraries (glextractor glcommon glio ${CMAKE_THREAD_LIBS_INIT})
 
 if (WITH_LIBMESH)
   add_executable (extractor_condor2 ex_condor2.cpp)
