@@ -3,6 +3,7 @@
 
 #include <set>
 #include <list>
+#include <climits>
 #include "def.h"
 
 struct VortexObject {

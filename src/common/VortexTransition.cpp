@@ -2,7 +2,9 @@
 #include <sstream>
 #include <fstream>
 #include <set>
+#include <tuple>
 #include <cassert>
+#include <cstring>
 #include "random_color.h"
 #include "graph_color.h"
 #include "def.h"

@@ -4,10 +4,11 @@
 #include "io/GLGPU3DDataset.h"
 #include "extractor/GLGPUExtractor.h"
 
-static std::string filename_in, filename_out;
+static std::string filename_in;
 static int nogauge = 0,  
            verbose = 0, 
-           benchmark = 0; 
+           benchmark = 0, 
+           nthreads = 0; 
 static int T0=0, T=1; // start and length of timesteps
 static int span=1;
 
@@ -20,6 +21,7 @@ static struct option longopts[] = {
   {"time", required_argument, 0, 't'}, 
   {"length", required_argument, 0, 'l'},
   {"span", required_argument, 0, 's'},
+  {"concurrent", required_argument, 0, 'c'},
   {0, 0, 0, 0} 
 };
 
@@ -29,15 +31,15 @@ static bool parse_arg(int argc, char **argv)
 
   while (1) {
     int option_index = 0;
-    c = getopt_long(argc, argv, "i:o:t:l:s", longopts, &option_index); 
+    c = getopt_long(argc, argv, "i:t:l:s:c", longopts, &option_index); 
     if (c == -1) break;
 
     switch (c) {
     case 'i': filename_in = optarg; break;
-    case 'o': filename_out = optarg; break;
     case 't': T0 = atoi(optarg); break;
     case 'l': T = atoi(optarg); break;
     case 's': span = atoi(optarg); break;
+    case 'c': nthreads = atoi(optarg); break;
     default: break; 
     }
   }
@@ -51,14 +53,10 @@ static bool parse_arg(int argc, char **argv)
     fprintf(stderr, "FATAL: input filename not given.\n"); 
     return false;
   }
-  
-  if (filename_out.empty()) 
-    filename_out = filename_in + ".vortex"; 
 
   if (verbose) {
     fprintf(stderr, "---- Argument Summary ----\n"); 
     fprintf(stderr, "filename_in=%s\n", filename_in.c_str()); 
-    fprintf(stderr, "filename_out=%s\n", filename_out.c_str()); 
     fprintf(stderr, "nogauge=%d\n", nogauge);
     fprintf(stderr, "--------------------------\n"); 
   }
@@ -94,7 +92,10 @@ int main(int argc, char **argv)
   GLGPUVortexExtractor extractor;
   extractor.SetDataset(&ds);
   extractor.SetGaugeTransformation(!nogauge);
-  
+
+  if (nthreads != 0) 
+    extractor.SetNumberOfThreads(nthreads);
+ 
   extractor.ExtractFaces(0);
   extractor.TraceOverSpace(0);
   extractor.SaveVortexLines(0);

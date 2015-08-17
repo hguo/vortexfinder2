@@ -5,13 +5,11 @@
 #include <pthread.h>
 #include <set>
 #include <thread>
+#include <chrono>
 #include <climits>
 #include <cstdlib>
 #include <cassert>
 #include <cstring>
-
-#include <mach/mach.h>
-#include <mach/mach_time.h>
 
 typedef struct {
   VortexExtractor *extractor;
@@ -32,11 +30,18 @@ VortexExtractor::VortexExtractor() :
 
   // probe number of cores
   _nthreads = std::thread::hardware_concurrency();
+  if (_nthreads == 0) _nthreads = 1;
 }
 
 VortexExtractor::~VortexExtractor()
 {
   pthread_mutex_destroy(&mutex);
+}
+
+void VortexExtractor::SetNumberOfThreads(int n)
+{
+  if (n<1) _nthreads = 1;
+  else _nthreads = n;
 }
 
 void VortexExtractor::SetDataset(const GLDatasetBase* ds)
@@ -672,7 +677,8 @@ void VortexExtractor::RotateTimeSteps()
 
 void VortexExtractor::ExtractFaces(int slot) 
 {
-  uint64_t t0 = mach_absolute_time();
+  typedef std::chrono::high_resolution_clock clock;
+  auto t0 = clock::now();
 
   if (!LoadPuncturedFaces(slot)) {
     // running in threads
@@ -703,14 +709,15 @@ void VortexExtractor::ExtractFaces(int slot)
     if (_archive) SavePuncturedFaces(slot);
   }
  
-  uint64_t t1 = mach_absolute_time();
-  double elapsed = (t1 - t0) / 1000000000.0;
+  auto t1 = clock::now();
+  double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
   fprintf(stderr, "t_f=%f\n", elapsed);
 }
 
 void VortexExtractor::ExtractEdges() 
 {
-  uint64_t t0 = mach_absolute_time();
+  typedef std::chrono::high_resolution_clock clock;
+  auto t0 = clock::now();
 
   if (!LoadPuncturedEdges()) {
     // running in threads
@@ -741,8 +748,8 @@ void VortexExtractor::ExtractEdges()
     if (_archive) SavePuncturedEdges();
   }
   
-  uint64_t t1 = mach_absolute_time();
-  double elapsed = (t1 - t0) / 1000000000.0;
+  auto t1 = clock::now();
+  double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
   fprintf(stderr, "t_e=%f\n", elapsed);
 }
 

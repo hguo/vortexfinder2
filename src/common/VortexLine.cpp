@@ -2,6 +2,7 @@
 #include "VortexLine.pb.h"
 #include "common/Utils.hpp"
 #include "fitCurves/fitCurves.hpp"
+#include <climits>
 
 VortexLine::VortexLine() : 
   id(INT_MAX), gid(INT_MAX), timestep(0), is_bezier(false)
