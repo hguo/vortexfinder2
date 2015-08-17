@@ -8,6 +8,7 @@ static std::string filename_in;
 static int nogauge = 0,  
            verbose = 0, 
            benchmark = 0, 
+           archive = 0,
            nthreads = 0; 
 static int T0=0, T=1; // start and length of timesteps
 static int span=1;
@@ -16,6 +17,7 @@ static struct option longopts[] = {
   {"verbose", no_argument, &verbose, 1},  
   {"nogauge", no_argument, &nogauge, 1},
   {"benchmark", no_argument, &benchmark, 1}, 
+  {"archive", no_argument, &archive, 1}, 
   {"input", required_argument, 0, 'i'},
   {"output", required_argument, 0, 'o'},
   {"time", required_argument, 0, 't'}, 
@@ -95,6 +97,9 @@ int main(int argc, char **argv)
 
   if (nthreads != 0) 
     extractor.SetNumberOfThreads(nthreads);
+
+  if (archive)
+    extractor.SetArchive(true);
  
   extractor.ExtractFaces(0);
   extractor.TraceOverSpace(0);
