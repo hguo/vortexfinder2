@@ -3,6 +3,7 @@
 
 #include "common/VortexTransitionMatrix.h"
 #include "common/VortexSequence.h"
+#include <tuple>
 
 class VortexTransition 
 {

@@ -22,6 +22,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   list (APPEND CMAKE_CXX_FLAGS "-std=c++0x")
 endif ()
 
+find_package (Threads REQUIRED)
 find_package (Protobuf REQUIRED)
 # find_package (OpenMP)
 
