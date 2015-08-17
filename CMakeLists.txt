@@ -16,7 +16,11 @@ set (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 set (CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # enable c++11
-list (APPEND CMAKE_CXX_FLAGS "-std=c++11")
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  list (APPEND CMAKE_CXX_FLAGS "-std=c++11")
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  list (APPEND CMAKE_CXX_FLAGS "-std=c++0x")
+endif ()
 
 find_package (Protobuf REQUIRED)
 # find_package (OpenMP)

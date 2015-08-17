@@ -1,6 +1,7 @@
 #include "VortexTransitionMatrix.h"
 #include <sstream>
 #include <cstdio>
+#include <climits>
 
 VortexTransitionMatrix::VortexTransitionMatrix() :
   _t0(INT_MAX), _t1(INT_MAX),

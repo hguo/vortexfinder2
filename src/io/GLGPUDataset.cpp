@@ -4,6 +4,7 @@
 #include "common/DataInfo.pb.h"
 #include <cassert>
 #include <cmath>
+#include <climits>
 #include <iostream>
 #include <fstream>
 #include <glob.h>

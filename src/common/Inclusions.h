@@ -2,6 +2,7 @@
 #define _INCLUSIONS_H
 
 #include <vector>
+#include <string>
 
 class Inclusions {
 public:
