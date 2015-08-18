@@ -4,11 +4,11 @@
 #include "common/MeshGraph.h"
 
 class MeshGraphRegular3D : public MeshGraph {
-private:
+protected:
   int d[3];
   bool pbc[3];
 
-private:
+protected:
   void nid2nidx(NodeIdType id, int nidx[3]) const;
   NodeIdType nidx2nid(const int nidx[3]) const; // modIdx'ed
 
