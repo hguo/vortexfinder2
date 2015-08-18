@@ -28,13 +28,13 @@ struct CEdge {
   std::vector<ChiralityType> contained_faces_chirality;
   std::vector<int> contained_faces_eid; // the edge id in the corresponding face
 
-  CEdge() {
-    contained_faces.reserve(12);
-    contained_faces_chirality.reserve(12);
-    contained_faces_eid.reserve(12);
+  CEdge() : node0(0), node1(0) {
+    // contained_faces.reserve(12);
+    // contained_faces_chirality.reserve(12);
+    // contained_faces_eid.reserve(12);
   }
 
-  bool Valid() const {return !contained_faces.empty();}
+  bool Valid() const {return node0 != node1;}
 };
 
 struct CFace {
@@ -55,11 +55,11 @@ struct CFace {
   // utils
   // bool on_boundary() const {return contained_cell0 == NULL || contained_cell1 == NULL;}
   CFace() {
-    nodes.reserve(3);
-    edges.reserve(6);
-    edges_chirality.reserve(6);
-    contained_cells.reserve(2);
-    contained_cells_chirality.reserve(2);
+    // nodes.reserve(3);
+    // edges.reserve(6);
+    // edges_chirality.reserve(6);
+    // contained_cells.reserve(2);
+    // contained_cells_chirality.reserve(2);
   }
 
   bool Valid() const {return nodes.size()>0;}
@@ -77,10 +77,10 @@ struct CCell {
   std::vector<CellIdType> neighbor_cells;
 
   CCell() {
-    nodes.reserve(4);
-    faces.reserve(4);
-    faces_chirality.reserve(4);
-    neighbor_cells.reserve(4);
+    // nodes.reserve(4);
+    // faces.reserve(4);
+    // faces_chirality.reserve(4);
+    // neighbor_cells.reserve(4);
   }
 
   bool Valid() const {return faces.size()>0;}
