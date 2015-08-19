@@ -1,2 +1,3 @@
-set(CMAKE_INSTALL_NAME_DIR "@executable_path/../Libraries")
-subdirs (BDATReader BDATSeriesReader GLGPUVortexFilter)
+add_subdirectory (BDATReader)
+add_subdirectory (BDATSeriesReader)
+add_subdirectory (GLGPUVortexFilter)

@@ -5,17 +5,19 @@ include_directories (
 
 configure_file (def.h.cmake def.h)
 
-# subdirs (common io extractor tracer)
-subdirs (common io extractor)
+add_subdirectory (common)
+add_subdirectory (io)
+add_subdirectory (extractor)
+# add_subdirectory (tracer)
 
 if (WITH_PARAVIEW)
-  subdirs (paraview_plugins)
+  add_subdirectory (paraview_plugins)
 endif ()
 
 if (WITH_QT)
-  subdirs (viewer)
+  add_subdirectory (viewer)
 endif ()
 
 if (WITH_TESTS)
-  subdirs (tests)
+  add_subdirectory (tests)
 endif ()
