@@ -9,30 +9,41 @@ option (WITH_QT "Build with Qt" OFF)
 option (WITH_CUDA "Build with CUDA" OFF)
 option (WITH_VTK "Build with VTK" OFF)
 option (WITH_PARAVIEW "Build paraview plugins" OFF)
+option (WITH_CXX11 "Build with C++11" ON)
 
 set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake-modules)
 set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 set (CMAKE_INCLUDE_CURRENT_DIR ON)
 
-# enable c++11
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  list (APPEND CMAKE_CXX_FLAGS "-std=c++11")
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  list (APPEND CMAKE_CXX_FLAGS "-std=c++0x")
+# C++11/Boost
+if (WITH_CXX11)
+  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    list (APPEND CMAKE_CXX_FLAGS "-std=c++11")
+  elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    list (APPEND CMAKE_CXX_FLAGS "-std=c++0x")
+  endif ()
+else ()
+  # find_package (Boost REQUIRED COMPONENTS thread)
+  find_package (Boost REQUIRED COMPONENTS)
+  include_directories (${Boost_INCLUDE_DIR})
 endif ()
 
-find_package (Threads REQUIRED)
+# protobuf
 find_package (Protobuf REQUIRED)
-# find_package (OpenMP)
+include_directories (${PROTOBUF_INCLUDE_DIR})
 
+# openmp
+# find_package (OpenMP)
 if (OPENMP_FOUND)
   list (APPEND CMAKE_CXX_FLAGS ${OpenMP_CXX_FLAGS})
 endif ()
 
-include_directories (
-  ${PROTOBUF_INCLUDE_DIR})
+# threads
+find_package (Threads REQUIRED)
+set (CMAKE_THREAD_PREFER_PTHREAD)
 
+# libMesh
 if (WITH_LIBMESH)
   find_package (MPI REQUIRED)
   
@@ -58,6 +69,7 @@ if (WITH_LIBMESH)
     ${MPI_INCLUDE_PATH})
 endif ()
 
+# Qt
 if (WITH_QT)
   find_package (OpenGL REQUIRED)
   find_package (GLEW REQUIRED)
@@ -65,15 +77,21 @@ if (WITH_QT)
   find_package (Qt4 REQUIRED COMPONENTS QtCore QtGui QtOpenGL)
 endif ()
 
+
+# ParaView
 if (WITH_PARAVIEW)
   find_package (ParaView REQUIRED)
   include (${PARAVIEW_USE_FILE})
 endif ()
 
+
+# VTK
 if (WITH_VTK)
   find_package (VTK REQUIRED)
 endif ()
 
+
+# CUDA
 if (WITH_CUDA)
   find_package (CUDA REQUIRED)
 endif ()

@@ -255,7 +255,7 @@ void VortexExtractor::RelateOverTime()
     faces_to_visit_time.push_back(0);
       
     std::map<FaceIdType, FaceIdType> parent_map;
-    std::map<FaceIdType, std::tuple<EdgeIdType, double> > parent_edge_map;
+    std::map<FaceIdType, std::pair<EdgeIdType, double> > parent_edge_map;
 
     while (!faces_to_visit.empty()) {
       FaceIdType current = faces_to_visit.front();
@@ -332,7 +332,7 @@ void VortexExtractor::RelateOverTime()
                 // faces_to_visit_chirality.push_front(edge.contained_faces_chirality[j]);
                 faces_to_visit_time.push_front(pe.t);
                 parent_map[edge.contained_faces[j]] = current;
-                parent_edge_map[edge.contained_faces[j]] = std::make_tuple(e, pe.t);
+                parent_edge_map[edge.contained_faces[j]] = std::make_pair(e, pe.t);
               }
             }
           }

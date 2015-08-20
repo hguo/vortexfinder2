@@ -2,7 +2,6 @@
 #include <sstream>
 #include <fstream>
 #include <set>
-#include <tuple>
 #include <cassert>
 #include <cstring>
 #include "random_color.h"
@@ -186,8 +185,8 @@ int VortexTransition::NewVortexSequence(int ts)
 
 int VortexTransition::SequenceIdx(int t, int lid) const
 {
-  std::tuple<int, int> key = std::make_tuple(t, lid);
-  std::map<std::tuple<int,int>,int>::const_iterator it = _seqmap.find(key);
+  std::pair<int, int> key = std::make_pair(t, lid);
+  std::map<std::pair<int,int>,int>::const_iterator it = _seqmap.find(key);
   if (it == _seqmap.end())
     return -1;
   else 
@@ -214,7 +213,7 @@ void VortexTransition::ConstructSequence()
         int gid = NewVortexSequence(i);
         _seqs[gid].tl ++;
         _seqs[gid].lids.push_back(k);
-        _seqmap[std::make_tuple(i, k)] = gid;
+        _seqmap[std::make_pair(i, k)] = gid;
       }
     }
 
@@ -225,17 +224,17 @@ void VortexTransition::ConstructSequence()
 
       if (lhs.size() == 1 && rhs.size() == 1) { // ordinary case
         int l = *lhs.begin(), r = *rhs.begin();
-        int gid = _seqmap[std::make_tuple(i, l)];
+        int gid = _seqmap[std::make_pair(i, l)];
         _seqs[gid].tl ++;
         _seqs[gid].lids.push_back(r);
-        _seqmap[std::make_tuple(i+1, r)] = gid;
+        _seqmap[std::make_pair(i+1, r)] = gid;
       } else { // some events, need re-ID
         for (std::set<int>::iterator it=rhs.begin(); it!=rhs.end(); it++) {
           int r = *it; 
           int gid = NewVortexSequence(i+1);
           _seqs[gid].tl ++;
           _seqs[gid].lids.push_back(r);
-          _seqmap[std::make_tuple(i+1, r)] = gid;
+          _seqmap[std::make_pair(i+1, r)] = gid;
         }
       }
 
@@ -335,7 +334,7 @@ void VortexTransition::SequenceGraphColoring()
     for (int k=0; k<_matrices[t].n1(); k++) {
       if (_matrices[t](lhs_lid, k)) {
         int rhs_lid = k;
-        int rgid = _seqmap[std::make_tuple(t+1, k)];
+        int rgid = _seqmap[std::make_pair(t+1, k)];
         M[i][rgid] = M[rgid][i] = true;
       }
     }

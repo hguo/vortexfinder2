@@ -3,18 +3,24 @@
 #include <google/protobuf/io/coded_stream.h> // for parsing large message
 #include <cassert>
 
+#ifdef WITH_CXX11
+using std::make_tuple;
+using std::get;
+#else
+using boost::make_tuple;
+using boost::get;
+#endif
+
 EdgeIdType2 AlternateEdge(EdgeIdType2 e, ChiralityType chirality)
 {
   if (chirality>0)
     return e;
   else 
-    return std::make_tuple(std::get<1>(e), std::get<0>(e));
+    return make_tuple(get<1>(e), get<0>(e));
 }
 
 FaceIdType3 AlternateFace(FaceIdType3 f, int rotation, ChiralityType chirality)
 {
-  using namespace std;
-
   if (chirality>0) {
     switch (rotation) {
     case 0: return f; 
@@ -264,8 +270,8 @@ EdgeIdType MeshGraphBuilder_Tet::AddEdge(EdgeIdType2 e2, ChiralityType &chiralit
     _edge_map.insert(std::pair<EdgeIdType2, EdgeIdType>(e2, e));
     
     CEdge edge1;
-    edge1.node0 = std::get<0>(e2);
-    edge1.node1 = std::get<1>(e2);
+    edge1.node0 = get<0>(e2);
+    edge1.node1 = get<1>(e2);
     
     _mg.edges.push_back(edge1);
     chirality = 1;
@@ -289,14 +295,14 @@ FaceIdType MeshGraphBuilder_Tet::AddFace(FaceIdType3 f3, ChiralityType &chiralit
     _face_map.insert(std::pair<FaceIdType3, FaceIdType>(f3, f));
     
     CFace face1;
-    face1.nodes.push_back(std::get<0>(f3));
-    face1.nodes.push_back(std::get<1>(f3));
-    face1.nodes.push_back(std::get<2>(f3));
+    face1.nodes.push_back(get<0>(f3));
+    face1.nodes.push_back(get<1>(f3));
+    face1.nodes.push_back(get<2>(f3));
 
     EdgeIdType2 e2[3] = {
-      std::make_tuple(std::get<0>(f3), std::get<1>(f3)),
-      std::make_tuple(std::get<1>(f3), std::get<2>(f3)),
-      std::make_tuple(std::get<2>(f3), std::get<0>(f3))};
+      make_tuple(get<0>(f3), get<1>(f3)),
+      make_tuple(get<1>(f3), get<2>(f3)),
+      make_tuple(get<2>(f3), get<0>(f3))};
 
     for (int i=0; i<3; i++) {
       EdgeIdType e = AddEdge(e2[i], chirality, f, i);
