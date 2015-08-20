@@ -1,6 +1,7 @@
 #include "Extractor.h"
 #include "common/Utils.hpp"
 #include "common/VortexTransition.h"
+#include "common/MeshGraphRegular3DTets.h"
 #include "io/GLDataset.h"
 #include <pthread.h>
 #include <set>
@@ -156,7 +157,7 @@ bool VortexExtractor::LoadPuncturedFaces(int slot)
 void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType chirality, const double pos[])
 {
   pthread_mutex_lock(&mutex);
-  
+ 
   // face
   PuncturedFace pf;
 
@@ -186,8 +187,15 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType ch
 
     PuncturedCell &c = slot == 0 ? _punctured_cells[cid] : _punctured_cells1[cid];
     c.SetChirality(fid, chirality * fchirality);
-
   }
+ 
+#if 0
+  int fidx[4];
+  const MeshGraphRegular3DTets *mgt = (const MeshGraphRegular3DTets*)(mg);
+  mgt->fid2fidx(id, fidx);
+  fprintf(stderr, "fidx={%d, %d, %d, %d}, chi=%d, pos={%f, %f, %f}\n", 
+      fidx[0], fidx[1], fidx[2], fidx[3], chirality, pos[0], pos[1], pos[2]);
+#endif
     
   pthread_mutex_unlock(&mutex);
 }
@@ -415,8 +423,10 @@ void VortexExtractor::TraceOverSpace(int slot)
       const PuncturedCell &pcell = pcs[c];
       const CCell &cell = mg->Cell(c);
 
-      if (pcell.IsSpecial()) 
+      if (pcell.IsSpecial()) {
+        fprintf(stderr, "cid=%d, deg=%d\n", c, pcell.Degree());
         special_pcells[c] = pcell;
+      }
       else 
         ordinary_pcells[c] = pcell;
       visited.insert(c);
@@ -438,8 +448,8 @@ void VortexExtractor::TraceOverSpace(int slot)
     visited.clear();
 
     // fprintf(stderr, "#ordinary=%ld, #special=%ld\n", ordinary_pcells.size(), special_pcells.size());
-    if (special_pcells.size()>0) 
-      fprintf(stderr, "SPECIAL\n");
+    // if (special_pcells.size()>0) 
+    //   fprintf(stderr, "SPECIAL\n");
 
     /// 2. trace vortex lines
     VortexObject vobj; 

@@ -6,7 +6,8 @@
 #include "InverseInterpolation.h"
 
 GLGPUVortexExtractor::GLGPUVortexExtractor() :
-  _interpolation_mode(INTERPOLATION_BILINEAR)
+  // _interpolation_mode(INTERPOLATION_BILINEAR)
+  _interpolation_mode(INTERPOLATION_CENTER)
 {
 }
 

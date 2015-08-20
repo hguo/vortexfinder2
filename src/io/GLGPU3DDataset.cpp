@@ -7,6 +7,7 @@
 #include "common/Utils.hpp"
 #include "common/Lerp.hpp"
 #include "common/MeshGraphRegular3D.h"
+#include "common/MeshGraphRegular3DTets.h"
 #include "GLGPU3DDataset.h"
 
 GLGPU3DDataset::GLGPU3DDataset()
@@ -24,7 +25,8 @@ void GLGPU3DDataset::Reset()
 
 void GLGPU3DDataset::BuildMeshGraph()
 {
-  _mg = new class MeshGraphRegular3D(_h[0].dims, _h[0].pbc);
+  // _mg = new class MeshGraphRegular3D(_h[0].dims, _h[0].pbc);
+  _mg = new class MeshGraphRegular3DTets(_h[0].dims, _h[0].pbc);
 }
 
 #if 0
