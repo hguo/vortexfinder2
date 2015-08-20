@@ -8,6 +8,7 @@
 #cmakedefine WITH_VTK 1
 #cmakedefine WITH_CUDA 1
 #cmakedefine WITH_PARAVIEW 1
+#cmakedefine WITH_CXX11 1
 
 // define ElemIdType
 #if WITH_LIBMESH

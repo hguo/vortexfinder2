@@ -3,7 +3,7 @@
 
 #include "common/VortexTransitionMatrix.h"
 #include "common/VortexSequence.h"
-#include <tuple>
+#include <utility>
 
 class VortexTransition 
 {
@@ -42,7 +42,7 @@ private:
   int _ts, _tl;
   std::map<int, VortexTransitionMatrix> _matrices;
   std::vector<struct VortexSequence> _seqs;
-  std::map<std::tuple<int, int>, int> _seqmap; // <time, lid>, gid
+  std::map<std::pair<int, int>, int> _seqmap; // <time, lid>, gid
   std::map<int, int> _nvortices_per_frame;
   int _max_nvortices_per_frame;
 
