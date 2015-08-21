@@ -6,7 +6,7 @@ MeshGraphRegular3D::MeshGraphRegular3D(int d_[3], bool pbc_[3])
 {
   memcpy(d, d_, sizeof(int)*3);
   memcpy(pbc, pbc_, sizeof(bool)*3);
-  // memset(pbc, 0, sizeof(bool)*3);
+  memset(pbc, 0, sizeof(bool)*3);
 }
 
 CCell MeshGraphRegular3D::Cell(CellIdType id, bool nodes_only) const

@@ -6,8 +6,8 @@
 #include "InverseInterpolation.h"
 
 GLGPUVortexExtractor::GLGPUVortexExtractor() :
-  // _interpolation_mode(INTERPOLATION_BILINEAR)
-  _interpolation_mode(INTERPOLATION_CENTER)
+  // _interpolation_mode(INTERPOLATION_QUAD_BILINEAR)
+  _interpolation_mode(INTERPOLATION_TRI_BARYCENTRIC)
 {
 }
 
@@ -32,6 +32,7 @@ bool GLGPUVortexExtractor::FindFaceZero(const double X_[][3], const double re[],
     for (int j=0; j<3; j++)
       X[i][j] = X_[i][j];
 
+#if 0
   // QP
   for (int i=1; i<4; i++) {
     for (int k=0; k<3; k++) 
@@ -39,17 +40,18 @@ bool GLGPUVortexExtractor::FindFaceZero(const double X_[][3], const double re[],
         X[i][k] += ds->Lengths()[k];
       }
   }
+#endif
 
   switch (_interpolation_mode) {
-  case INTERPOLATION_CENTER: 
+  case INTERPOLATION_QUAD_CENTER: 
     succ = find_zero_quad_center(re, im, X, pos);
     break;
 
-  case INTERPOLATION_BARYCENTRIC: 
+  case INTERPOLATION_QUAD_BARYCENTRIC: 
     succ = find_zero_quad_barycentric(re, im, X, pos, epsilon); 
     break;
 
-  case INTERPOLATION_BILINEAR: 
+  case INTERPOLATION_QUAD_BILINEAR: 
     succ = find_zero_quad_bilinear(re, im, X, pos, epsilon);
     if (!succ)
       succ = find_zero_quad_barycentric(re, im, X, pos, epsilon); 
@@ -57,11 +59,19 @@ bool GLGPUVortexExtractor::FindFaceZero(const double X_[][3], const double re[],
       succ = find_zero_quad_center(re, im, X, pos);
     break;
   
-  case INTERPOLATION_LINECROSS: // TODO
+  case INTERPOLATION_QUAD_LINECROSS: // TODO
     fprintf(stderr, "FATAL: line cross not yet implemented. exiting.\n"); 
     assert(false);
     break;
     // return find_zero_quad_line_cross(re, im, X, pos, epsilon);
+
+  case INTERPOLATION_TRI_BARYCENTRIC:
+    succ = find_zero_triangle(re, im, X, pos, 0.05);
+    break;
+  
+  case INTERPOLATION_TRI_CENTER:
+    succ = find_zero_tri_center(re, im, X, pos);
+    break;
 
   default:
     return false;

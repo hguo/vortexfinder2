@@ -1,7 +1,6 @@
 #include "Extractor.h"
 #include "common/Utils.hpp"
 #include "common/VortexTransition.h"
-#include "common/MeshGraphRegular3DTets.h"
 #include "io/GLDataset.h"
 #include <pthread.h>
 #include <set>
@@ -168,9 +167,11 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType ch
   else _punctured_faces1[id] = pf;
 
   // vcell
+#if 0
   PuncturedCell &vc = _punctured_vcells[id];
   if (slot == 0) vc.SetChirality(0, -chirality);
   else vc.SetChirality(1, chirality);
+#endif
 
   // cell
   const MeshGraph *mg = _dataset->MeshGraph();
@@ -212,6 +213,7 @@ void VortexExtractor::AddPuncturedEdge(EdgeIdType id, ChiralityType chirality, d
 
   _punctured_edges[id] = pe;
 
+#if 0
   // vface
   const MeshGraph *mg = _dataset->MeshGraph();
   const CEdge &edge = mg->Edge(id);
@@ -219,9 +221,10 @@ void VortexExtractor::AddPuncturedEdge(EdgeIdType id, ChiralityType chirality, d
     int echirality = edge.contained_faces_chirality[i];
     int eid = edge.contained_faces_eid[i]; 
     
-    PuncturedCell &vc = _punctured_vcells[edge.contained_faces[i]];
-    vc.SetChirality(eid+2, chirality * echirality);
+    // PuncturedCell &vc = _punctured_vcells[edge.contained_faces[i]];
+    // vc.SetChirality(eid+2, chirality * echirality);
   }
+#endif
     
   pthread_mutex_unlock(&mutex);
 }
@@ -365,6 +368,7 @@ void VortexExtractor::RelateOverTime()
   }
 }
 
+#if 0
 void VortexExtractor::TraceVirtualCells()
 {
   int n_self = 0, n_pure = 0, n_cross = 0, n_invalid = 0;
@@ -392,6 +396,7 @@ void VortexExtractor::TraceVirtualCells()
   fprintf(stderr, "n_self=%d, n_pure=%d, n_cross=%d, n_invalid=%d\n", 
       n_self, n_pure, n_cross, n_invalid);
 }
+#endif
 
 void VortexExtractor::TraceOverSpace(int slot)
 {
@@ -406,7 +411,18 @@ void VortexExtractor::TraceOverSpace(int slot)
   const MeshGraph *mg = _dataset->MeshGraph();
   
   fprintf(stderr, "tracing over space, #pcs=%ld, #pfs=%ld.\n", pcs.size(), pfs.size());
-  
+
+#if 0 // dump data for debug purposes
+  FILE *fp = fopen("dump", "wb");
+  int n = pfs.size(); 
+  fwrite(&n, sizeof(int), 1, fp);
+  for (std::map<FaceIdType, PuncturedFace>::iterator it = pfs.begin(); it != pfs.end(); it ++) {
+    // fprintf(stderr, "fid=%d, pos={%f, %f, %f}\n", it->first, it->second.pos[0], it->second.pos[1], it->second.pos[2]);
+    fwrite(it->second.pos, sizeof(double), 3, fp);
+  }
+  return;
+#endif
+
   vobjs.clear();
   while (!pcs.empty()) {
     /// 1. sort punctured cells into connected ordinary/special ones
@@ -424,7 +440,7 @@ void VortexExtractor::TraceOverSpace(int slot)
       const CCell &cell = mg->Cell(c);
 
       if (pcell.IsSpecial()) {
-        fprintf(stderr, "cid=%d, deg=%d\n", c, pcell.Degree());
+        // fprintf(stderr, "cid=%d, deg=%d\n", c, pcell.Degree());
         special_pcells[c] = pcell;
       }
       else 
@@ -448,8 +464,8 @@ void VortexExtractor::TraceOverSpace(int slot)
     visited.clear();
 
     // fprintf(stderr, "#ordinary=%ld, #special=%ld\n", ordinary_pcells.size(), special_pcells.size());
-    // if (special_pcells.size()>0) 
-    //   fprintf(stderr, "SPECIAL\n");
+    if (special_pcells.size()>0) 
+      fprintf(stderr, "SPECIAL\n");
 
     /// 2. trace vortex lines
     VortexObject vobj; 
@@ -676,7 +692,7 @@ void VortexExtractor::RotateTimeSteps()
   _vortex_lines.clear();
 
   _punctured_edges.clear();
-  _punctured_vcells.clear();
+  // _punctured_vcells.clear();
   _related_faces.clear();
 
   _punctured_faces.swap( _punctured_faces1 );
@@ -832,8 +848,8 @@ void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
 void VortexExtractor::ExtractFace(FaceIdType id, int slot)
 {
   const GLDataset *ds = (GLDataset*)_dataset;
-  const int nnodes = ds->NrNodesPerFace();
   const CFace& f = ds->MeshGraph()->Face(id, true);
+  const int nnodes = f.nodes.size();
 
   if (!f.Valid()) return;
 
@@ -898,8 +914,9 @@ void VortexExtractor::execute_thread(int nthreads, int tid, int type, int slot)
 
   // fprintf(stderr, "nthreads=%d, tid=%d, type=%d\n", nthreads, tid, type);
   if (type == 0) {
-    for (FaceIdType i=tid; i<mg->NFaces(); i+=nthreads) 
+    for (FaceIdType i=tid; i<mg->NFaces(); i+=nthreads) {
       ExtractFace(i, slot);
+    }
   } else if (type == 1) { // TODO
     for (EdgeIdType i=tid; i<mg->NEdges(); i+=nthreads) 
       ExtractSpaceTimeEdge(i);

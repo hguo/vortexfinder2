@@ -17,7 +17,7 @@ CCell MeshGraphRegular3DTets::Cell(CellIdType id, bool nodes_only) const
   const int i = idx[0], j = idx[1], k = idx[2], t = idx[3];
 
   const int nodes_idx[6][4][3] = {
-    {{i, j, k}, {i+1, j, k}, {i, j+1, k}, {i+1, j, k+1}}, 
+    {{i, j, k}, {i+1, j, k}, {i+1, j+1, k}, {i+1, j, k+1}}, 
     {{i, j+1, k}, {i, j, k+1}, {i+1, j+1, k+1}, {i, j+1, k+1}}, 
     {{i, j, k}, {i, j+1, k}, {i, j, k+1}, {i+1, j, k+1}}, 
     {{i+1, j+1, k}, {i, j+1, k}, {i+1, j, k+1}, {i+1, j+1, k+1}}, 
@@ -58,9 +58,9 @@ CCell MeshGraphRegular3DTets::Cell(CellIdType id, bool nodes_only) const
     {{i-1, j, k, 0}, {i, j, k, 5}, {i, j, k, 4}, {i, j-1, k, 1}}, 
     {{i, j, k, 5}, {i, j+1, k, 0}, {i, j, k, 4}, {i+1, j, k, 1}}, 
     {{i, j, k, 2}, {i, j, k, 1}, {i, j, k+1, 0}, {i, j, k, 3}},
-    {{i, j, k-1, 1}, {i, j, k, 0}, {i, j, k, 3}, {i, j, k, 4}}
+    {{i, j, k-1, 1}, {i, j, k, 0}, {i, j, k, 3}, {i, j, k, 2}}
   }; 
-  for (int p=0; p<6; p++)
+  for (int p=0; p<4; p++)
     cell.neighbor_cells.push_back(cidx2cid(neighbors_cidx[t][p]));
 
   return cell;
@@ -94,18 +94,39 @@ CFace MeshGraphRegular3DTets::Face(FaceIdType id, bool nodes_only) const
     face.nodes.push_back(nidx2nid(nodes_idx[t][p]));
   if (nodes_only) return face;
 
-#if 0
   // edges
-  const int edges_idx[3][4][4] = {
-    {{i, j, k, 1}, {i, j+1, k, 2}, {i, j, k+1, 1}, {i, j, k, 2}},
-    {{i, j, k, 2}, {i, j, k+1, 0}, {i+1, j, k, 2}, {i, j, k, 0}},
-    {{i, j, k, 0}, {i+1, j, k, 1}, {i, j+1, k, 0}, {i, j, k, 1}}};
-  const ChiralityType edges_chi[4] = {1, 1, -1, -1};
-  for (int p=0; p<4; p++) {
+  const int edges_idx[12][3][4] = {
+    {{i, j, k, 0}, {i+1, j, k, 2}, {i, j, k, 1}}, 
+    {{i, j, k, 1}, {i, j+1, k, 0}, {i, j, k, 2}}, 
+    {{i, j, k, 0}, {i+1, j, k, 3}, {i, j, k, 4}}, 
+    {{i, j, k, 3}, {i, j, k+1, 0}, {i, j, k, 4}}, 
+    {{i, j, k, 2}, {i, j, k, 5}, {i, j, k, 3}}, 
+    {{i, j, k, 5}, {i, j, k, 2}, {i, j+1, k, 3}}, 
+    {{i, j, k, 2}, {i, j, k, 6}, {i, j, k, 4}}, 
+    {{i, j, k, 6}, {i+1, j, k+1, 2}, {i, j+1, k, 4}}, 
+    {{i, j, k, 5}, {i, j, k+1, 0}, {i, j, k, 6}}, 
+    {{i, j+1, k, 0}, {i, j, k, 6}, {i+1, j, k, 5}}, 
+    {{i, j, k, 1}, {i+1, j, k, 5}, {i, j, k, 4}}, 
+    {{i, j, k, 5}, {i, j, k+1, 1}, {i, j+1, k, 4}}
+  }; 
+  const ChiralityType edges_chi[12][3] = {
+    {1, 1, -1}, 
+    {1, -1, -1}, 
+    {1, 1, -1}, 
+    {1, 1, -1}, 
+    {1, 1, -1}, 
+    {1, 1, -1}, 
+    {1, 1, -1}, 
+    {1, 1, -1}, 
+    {-1, 1, -1},
+    {1, -1, -1}, 
+    {1, 1, -1}
+  };
+    
+  for (int p=0; p<3; p++) {
     face.edges.push_back(eidx2eid(edges_idx[t][p]));
-    face.edges_chirality.push_back(edges_chi[p]);
+    face.edges_chirality.push_back(edges_chi[t][p]);
   }
-#endif
 
   // contained cells
   const int contained_cells_cidx[12][2][4] = {
@@ -156,11 +177,12 @@ CFace MeshGraphRegular3DTets::Face(FaceIdType id, bool nodes_only) const
     face.contained_cells_chirality.push_back(contained_cells_chi[t][p]);
     face.contained_cells_fid.push_back(contained_cells_fid[t][p]);
   }
- 
+
 #if 0
-  fprintf(stderr, "fid=%u, fidx={%d, %d, %d, %d}, contained_cell0=%u, contained_cell1=%u\n", 
+  fprintf(stderr, "fid=%u, fidx={%d, %d, %d, %d}, cid0=%u={%d, %d, %d, %d}, fid0=%d, cid1=%u={%d, %d, %d, %d}, fid1=%d\n", 
       id, i, j, k, t, 
-      face.contained_cells[0], face.contained_cells[1]);
+      face.contained_cells[0], contained_cells_cidx[t][0][0], contained_cells_cidx[t][0][1], contained_cells_cidx[t][0][2], contained_cells_cidx[t][0][3], contained_cells_fid[t][0], 
+      face.contained_cells[1], contained_cells_cidx[t][1][0], contained_cells_cidx[t][1][1], contained_cells_cidx[t][1][2], contained_cells_cidx[t][1][3], contained_cells_fid[t][1]);
 #endif
 
   return face;
@@ -191,8 +213,12 @@ CEdge MeshGraphRegular3DTets::Edge(EdgeIdType id, bool nodes_only) const
   if (nodes_only) return edge;
 
 #if 0
-  // contained faces
-  const int contained_faces_fidx[3][4][4] = {
+  // contained faces (each edge can connectt to more than 4 faces)
+  const int contained_faces_fidx[7][4][4] = {
+    {{i, j, k, 0}, {i, j, k, 2}, {i, j-1, k, 1}, {i, j, k-1, 3}}, 
+    {{i, j, k, 0}, {i, j, k, 10}, {i, j, k, 1}, {i, j, k-1, 11}}, 
+    {{
+
     {{i, j, k, 2}, {i, j, k, 1}, {i, j-1, k, 2}, {i, j, k-1, 1}}, 
     {{i, j, k, 2}, {i, j, k, 0}, {i-1, j, k, 2}, {i, j, k-1, 0}},
     {{i, j, k, 1}, {i, j, k, 0}, {i-1, j, k, 1}, {i, j-1, k, 0}}};
@@ -218,7 +244,7 @@ EdgeIdType MeshGraphRegular3DTets::NEdges() const
 
 EdgeIdType MeshGraphRegular3DTets::NFaces() const
 {
-  return NCells()*10;
+  return NCells()*12;
 }
 
 EdgeIdType MeshGraphRegular3DTets::NCells() const
@@ -265,13 +291,29 @@ unsigned int MeshGraphRegular3DTets::cidx2cid(const int idx[4]) const
 bool MeshGraphRegular3DTets::valid_eidx(const int eidx[4]) const
 {
   if (eidx[3]<0 || eidx[3]>=7) return false;
-  else return valid_cidx(eidx);
+  else {
+    for (int i=0; i<3; i++)
+      if (pbc[i]) {
+        if (eidx[i] >= d[i]) return false;
+      } else {
+        if (eidx[i] >= d[i]-1) return false;
+      }
+    return true;
+  }
 }
 
 bool MeshGraphRegular3DTets::valid_fidx(const int fidx[4]) const
 {
-  if (fidx[3]<0 || fidx[3]>=10) return false;
-  else return valid_cidx(fidx);
+  if (fidx[3]<0 || fidx[3]>=12) return false;
+  else {
+    for (int i=0; i<3; i++)
+      if (pbc[i]) {
+        if (fidx[i] >= d[i]) return false;
+      } else {
+        if (fidx[i] >= d[i]-1) return false;
+      }
+    return true;
+  }
 }
 
 bool MeshGraphRegular3DTets::valid_cidx(const int idx[4]) const

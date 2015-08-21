@@ -66,6 +66,7 @@ protected:
 
   void renderVortexIds();
   void renderVortexLines(); 
+  void renderVortexPoints(); 
   void renderVortexTubes();
   void renderVortexArrows();
   void renderInclusions();
