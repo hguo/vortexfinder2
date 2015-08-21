@@ -11,7 +11,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
 #include "io/GLGPU3DDataset.h"
-#include "extractor/GLGPUExtractor.h"
+#include "extractor/Extractor.h"
 
 vtkStandardNewMacro(vtkGLGPUVortexFilter);
 
@@ -99,7 +99,7 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   ds->BuildMeshGraph();
   free(psi);
 
-  GLGPUVortexExtractor *ex = new GLGPUVortexExtractor;
+  VortexExtractor *ex = new VortexExtractor;
   ex->SetDataset(ds);
   ex->SetArchive(false);
   ex->SetGaugeTransformation(true); 
