@@ -24,7 +24,8 @@ pthread_mutex_t mutex;
 VortexExtractor::VortexExtractor() :
   _dataset(NULL), 
   _gauge(false), 
-  _archive(false)
+  _archive(false), 
+  _interpolation_mode(INTERPOLATION_TRI_BARYCENTRIC | INTERPOLATION_QUAD_BILINEAR)
 {
   pthread_mutex_init(&mutex, NULL);
 
@@ -891,7 +892,7 @@ void VortexExtractor::ExtractFace(FaceIdType id, int slot)
 
   // find zero
   double pos[3];
-  if (FindFaceZero(X, re, im, pos)) {
+  if (FindFaceZero(nnodes, X, re, im, pos)) {
     AddPuncturedFace(id, slot, chirality, pos);
     // fprintf(stderr, "pos={%f, %f, %f}, chi=%d\n", pos[0], pos[1], pos[2], chirality);
   } else {
@@ -921,4 +922,56 @@ void VortexExtractor::execute_thread(int nthreads, int tid, int type, int slot)
     for (EdgeIdType i=tid; i<mg->NEdges(); i+=nthreads) 
       ExtractSpaceTimeEdge(i);
   } else assert(false);
+}
+
+bool VortexExtractor::FindFaceZero(int n, const double X_[][3], const double re[], const double im[], double pos[3]) const
+{
+  const double epsilon = 0.05;
+  bool succ = false;
+
+  double X[4][3];
+  for (int i=0; i<4; i++)
+    for (int j=0; j<3; j++)
+      X[i][j] = X_[i][j];
+
+#if 0 // pbc
+  for (int i=1; i<4; i++) {
+    for (int k=0; k<3; k++) 
+      if (X[i][k] - X[0][k] < 0) { // -ds->Lengths()[k]/2) 
+        X[i][k] += ds->Lengths()[k];
+      }
+  }
+#endif
+
+  if (n == 3) {
+    if (_interpolation_mode & INTERPOLATION_TRI_BARYCENTRIC) {
+      if (find_zero_triangle(re, im, X, pos, epsilon))
+        succ = true; 
+      else 
+        succ = find_tri_center(X, pos);
+    } else if (_interpolation_mode & INTERPOLATION_TRI_CENTER) {
+      succ = find_tri_center(X, pos);
+    }
+  } else if (n == 4) {
+    if (_interpolation_mode & INTERPOLATION_QUAD_LINECROSS)
+      succ = false; // TODO: line cross not implemented yet
+    else if (_interpolation_mode & INTERPOLATION_QUAD_BILINEAR) {
+      if (find_zero_quad_bilinear(re, im, X, pos, epsilon))
+        succ = true; 
+      else if (find_zero_quad_barycentric(re, im, X, pos, epsilon))
+        succ = true;
+      else 
+        succ = find_quad_center(X, pos);
+    }
+    else if (_interpolation_mode & INTERPOLATION_QUAD_BILINEAR) {
+      if (find_zero_quad_barycentric(re, im, X, pos, epsilon))
+        succ = true;
+      else 
+        succ = find_quad_center(X, pos);
+    }
+    else if (_interpolation_mode & INTERPOLATION_QUAD_CENTER) 
+      succ = find_quad_center(X, pos);
+  }
+
+  return succ;
 }

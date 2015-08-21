@@ -107,7 +107,7 @@ static inline bool find_zero_unit_quad_bilinear(const T re[4], const T im[4], T 
 }
 
 template <typename T>
-static inline bool find_zero_quad_center(const T re[4], const T im[4], const T X[4][3], T pos[3])
+static inline bool find_quad_center(const T X[4][3], T pos[3])
 {
   pos[0] = 0.25*(X[0][0] + X[1][0] + X[2][0] + X[3][0]);
   pos[1] = 0.25*(X[0][1] + X[1][1] + X[2][0] + X[3][1]);
@@ -117,7 +117,7 @@ static inline bool find_zero_quad_center(const T re[4], const T im[4], const T X
 }
 
 template <typename T>
-static inline bool find_zero_tri_center(const T re[3], const T im[3], const T X[3][3], T pos[3])
+static inline bool find_tri_center(const T X[3][3], T pos[3])
 {
   pos[0] = (X[0][0] + X[1][0] + X[2][0]) / 3;
   pos[1] = (X[0][1] + X[1][1] + X[2][0]) / 3;

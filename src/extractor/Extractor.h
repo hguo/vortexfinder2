@@ -11,12 +11,22 @@
 class GLDataset;
 class GLDatasetBase;
 
+enum {
+  INTERPOLATION_TRI_CENTER = 0x1,
+  INTERPOLATION_TRI_BARYCENTRIC = 0x10, 
+  INTERPOLATION_QUAD_CENTER = 0x100,
+  INTERPOLATION_QUAD_BARYCENTRIC = 0x1000,
+  INTERPOLATION_QUAD_BILINEAR = 0x1000, 
+  INTERPOLATION_QUAD_LINECROSS = 0x10000
+}; 
+
 class VortexExtractor {
 public: 
   VortexExtractor(); 
   ~VortexExtractor(); 
 
   void SetNumberOfThreads(int);
+  void SetInterpolationMode(unsigned int);
 
   void SetGaugeTransformation(bool);
   void SetArchive(bool); // archive intermediate results for data reuse
@@ -52,12 +62,13 @@ protected:
 protected:
   void VortexObjectsToVortexLines(const std::map<FaceIdType, PuncturedFace>& pfs, const std::vector<VortexObject>& vobjs, std::vector<VortexLine>& vlines, bool bezier=false);
   int NewGlobalVortexId();
+  void ResetGlobalVortexId();
 
 protected:
   void AddPuncturedFace(FaceIdType, int slot, ChiralityType chirality, const double pos[3]);
   void AddPuncturedEdge(EdgeIdType, ChiralityType chirality, double t);
 
-  virtual bool FindFaceZero(const double X[][3], const double re[], const double im[], double pos[3]) const {return false;}
+  bool FindFaceZero(int n, const double X[][3], const double re[], const double im[], double pos[3]) const;
   bool FindSpaceTimeEdgeZero(const double re[], const double im[], double &t) const;
 
 protected:
@@ -76,6 +87,7 @@ protected:
   const GLDatasetBase *_dataset;
   bool _gauge; 
   bool _archive;
+  unsigned int _interpolation_mode;
 
 private:
   static void *execute_thread_helper(void *ctx);
