@@ -16,8 +16,6 @@ public: // data I/O
 
 public: // mesh info
   int Dimensions() const {return 3;}
-  int NrFacesPerCell() const {return 6;}
-  int NrNodesPerFace() const {return 4;}
   
 public: // mesh utils
   CellIdType Pos2CellId(const double X[]) const; 

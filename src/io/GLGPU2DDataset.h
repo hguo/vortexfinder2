@@ -15,8 +15,6 @@ public:
 
 public:
   int Dimensions() const {return 2;}
-  int NrFacesPerCell() const {return 1;}
-  int NrNodesPerFace() const {return 4;}
 
 public:
   CellIdType Pos2CellId(const double X[]) const; 
