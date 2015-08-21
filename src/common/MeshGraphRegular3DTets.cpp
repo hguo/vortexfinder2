@@ -212,27 +212,42 @@ CEdge MeshGraphRegular3DTets::Edge(EdgeIdType id, bool nodes_only) const
   edge.node1 = nidx2nid(nodes_idx[t][1]);
   if (nodes_only) return edge;
 
-#if 0
-  // contained faces (each edge can connectt to more than 4 faces)
-  const int contained_faces_fidx[7][4][4] = {
-    {{i, j, k, 0}, {i, j, k, 2}, {i, j-1, k, 1}, {i, j, k-1, 3}}, 
-    {{i, j, k, 0}, {i, j, k, 10}, {i, j, k, 1}, {i, j, k-1, 11}}, 
-    {{
+  // contained faces (each edge connects to 4 or 6 faces)
+  const int contained_faces_fidx[7][6][4] = {
+    {{i, j, k, 0}, {i, j, k, 2}, {i, j-1, k, 9}, {i, j-1, k, 1}, {i, j, k-1, 8}, {i, j, k-1, 3}}, 
+    {{i, j, k, 0}, {i, j, k, 1}, {i, j, k, 10}, {i, j, k-1, 11}, {0, 0, 0, -1}, {0, 0, 0, -1}}, 
+    {{i, j, k, 1}, {i, j, k, 6}, {i, j, k, 4}, {i-1, j, k, 0}, {i, j, k-1, 5}, {i-1, j, k-1, 7}}, 
+    {{i, j, k, 3}, {i, j, k, 4}, {i-1, j, k, 2}, {i, j-1, k, 5}, {0, 0, 0, -1}, {0, 0, 0, -1}}, 
+    {{i, j, k, 2}, {i, j, k, 10}, {i, j, k, 6}, {i, j, k, 3}, {i, j-1, k, 11}, {i, j-1, k, 7}}, 
+    {{i, j, k, 8}, {i, j, k, 11}, {i, j, k, 5}, {i, j, k, 4}, {i-1, j, k, 10}, {i-1, j, k, 9}}, 
+    {{i, j, k, 6}, {i, j, k, 8}, {i, j, k, 7}, {i, j, k, 9}, {0, 0, 0, -1}, {0, 0, 0, -1}}
+  };
+  const ChiralityType contained_faces_chi[7][6] = {
+    {1, 1, -1, -1, 1, 1}, 
+    {-1, 1, 1, 1, 0, 0}, 
+    {1, 1, 1, 1, 1, 1},
+    {1, -1, 1, -1, 0, 0}, 
+    {-1, -1, -1, -1, -1, -1}, 
+    {1, 1, 1, 1, 1, -1}, 
+    {1, -1, 1, 1, 0, 0}
+  };
+  const int contained_faces_eid[7][6] = {
+    {0, 0, 0, 1, 1, 1}, 
+    {0, 0, 0, 1, -1, -1}, 
+    {2, 0, 0, 1, 1, 1}, 
+    {0, 2, 1, 2, -1, -1}, 
+    {2, 2, 2, 2, 2, 2}, 
+    {0, 0, 0, 1, 1, 2}, 
+    {1, 2, 0, 1, -1, -1}
+  }; 
 
-    {{i, j, k, 2}, {i, j, k, 1}, {i, j-1, k, 2}, {i, j, k-1, 1}}, 
-    {{i, j, k, 2}, {i, j, k, 0}, {i-1, j, k, 2}, {i, j, k-1, 0}},
-    {{i, j, k, 1}, {i, j, k, 0}, {i-1, j, k, 1}, {i, j-1, k, 0}}};
-  const ChiralityType contained_faces_chi[3][4] = {
-    {1, -1, -1, 1}, {-1, 1, 1, -1}, {1, -1, -1, 1}};
-  const int contained_faces_eid[3][4] = {
-    {0, 3, 2, 1}, {3, 0, 1, 2}, {0, 3, 2, 1}};
-
-  for (int p=0; p<4; p++) {
-    edge.contained_faces.push_back(fidx2fid(contained_faces_fidx[t][p]));
-    edge.contained_faces_chirality.push_back(contained_faces_chi[t][p]);
-    edge.contained_faces_eid.push_back(contained_faces_eid[t][p]);
+  for (int p=0; p<6; p++) {
+    if (contained_faces_chi[t][p] != 0) {
+      edge.contained_faces.push_back(fidx2fid(contained_faces_fidx[t][p]));
+      edge.contained_faces_chirality.push_back(contained_faces_chi[t][p]);
+      edge.contained_faces_eid.push_back(contained_faces_eid[t][p]);
+    }
   }
-#endif
 
   return edge;
 }
