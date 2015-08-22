@@ -10,7 +10,8 @@
 #include "common/MeshGraphRegular3DTets.h"
 #include "GLGPU3DDataset.h"
 
-GLGPU3DDataset::GLGPU3DDataset()
+GLGPU3DDataset::GLGPU3DDataset() :
+  _mesh_type(GLGPU3D_MESH_TET)
 {
   Reset();
 }
@@ -23,10 +24,18 @@ void GLGPU3DDataset::Reset()
 {
 }
 
+void GLGPU3DDataset::SetMeshType(int t)
+{
+  _mesh_type = t;
+}
+
 void GLGPU3DDataset::BuildMeshGraph()
 {
-  // _mg = new class MeshGraphRegular3D(_h[0].dims, _h[0].pbc);
-  _mg = new class MeshGraphRegular3DTets(_h[0].dims, _h[0].pbc);
+  if (_mesh_type == GLGPU3D_MESH_TET)
+    _mg = new class MeshGraphRegular3DTets(_h[0].dims, _h[0].pbc);
+  else if (_mesh_type == GLGPU3D_MESH_HEX)
+    _mg = new class MeshGraphRegular3D(_h[0].dims, _h[0].pbc);
+  else assert(false);
 }
 
 #if 0

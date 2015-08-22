@@ -5,13 +5,19 @@
 #include "GLGPUDataset.h"
 #include "common/Texel.hpp"
 
+enum {
+  GLGPU3D_MESH_HEX,
+  GLGPU3D_MESH_TET
+};
+
 class GLGPU3DDataset : public GLGPUDataset
 {
 public: 
   GLGPU3DDataset(); 
   ~GLGPU3DDataset();
 
-public: // data I/O
+public: // mesh graph
+  void SetMeshType(int); // hex or tet
   void BuildMeshGraph();
 
 public: // mesh info
@@ -37,6 +43,9 @@ public: // data access
 protected:
   void Reset();
   void ComputeSupercurrentField();
+
+private:
+  bool _mesh_type;
 }; 
 
 #endif
