@@ -1,6 +1,7 @@
 #include "Extractor.h"
 #include "common/Utils.hpp"
 #include "common/VortexTransition.h"
+#include "common/MeshGraphRegular3DTets.h"
 #include "io/GLDataset.h"
 #include <pthread.h>
 #include <set>
@@ -157,7 +158,7 @@ bool VortexExtractor::LoadPuncturedFaces(int slot)
 void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType chirality, const double pos[])
 {
   pthread_mutex_lock(&mutex);
- 
+  
   // face
   PuncturedFace pf;
 
@@ -178,7 +179,7 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType ch
   const MeshGraph *mg = _dataset->MeshGraph();
   const CFace &face = mg->Face(id);
   for (int i=0; i<face.contained_cells.size(); i++) {
-    CellIdType cid = face.contained_cells[i]; 
+    CellIdType cid = face.contained_cells[i];
     if (cid == UINT_MAX) continue;
 
     int fchirality = face.contained_cells_chirality[i];
@@ -198,7 +199,7 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType ch
   fprintf(stderr, "fidx={%d, %d, %d, %d}, chi=%d, pos={%f, %f, %f}\n", 
       fidx[0], fidx[1], fidx[2], fidx[3], chirality, pos[0], pos[1], pos[2]);
 #endif
-    
+  
   pthread_mutex_unlock(&mutex);
 }
 
@@ -226,12 +227,13 @@ void VortexExtractor::AddPuncturedEdge(EdgeIdType id, ChiralityType chirality, d
     // vc.SetChirality(eid+2, chirality * echirality);
   }
 #endif
-    
   pthread_mutex_unlock(&mutex);
 }
   
 bool VortexExtractor::FindSpaceTimeEdgeZero(const double re[], const double im[], double &t) const
 {
+  return true; // save time
+
   double p[2];
   if (!find_zero_unit_quad_bilinear(re, im, p))
     if (!find_zero_unit_quad_barycentric(re, im, p))
@@ -412,16 +414,18 @@ void VortexExtractor::TraceOverSpace(int slot)
   const MeshGraph *mg = _dataset->MeshGraph();
   
   fprintf(stderr, "tracing over space, #pcs=%ld, #pfs=%ld.\n", pcs.size(), pfs.size());
-
-#if 0 // dump data for debug purposes
-  FILE *fp = fopen("dump", "wb");
-  int n = pfs.size(); 
-  fwrite(&n, sizeof(int), 1, fp);
-  for (std::map<FaceIdType, PuncturedFace>::iterator it = pfs.begin(); it != pfs.end(); it ++) {
-    // fprintf(stderr, "fid=%d, pos={%f, %f, %f}\n", it->first, it->second.pos[0], it->second.pos[1], it->second.pos[2]);
-    fwrite(it->second.pos, sizeof(double), 3, fp);
+ 
+#if 0
+  for (std::map<CellIdType, PuncturedCell>::iterator it = pcs.begin(); it != pcs.end(); it ++) {
+    if (it->second.Degree() != 2) {
+      const int cid = it->first;
+      int cidx[4];
+      const MeshGraphRegular3DTets* tmg = (const MeshGraphRegular3DTets*)mg;
+      tmg->cid2cidx(cid, cidx);
+      fprintf(stderr, "cid=%d={%d, %d, %d, %d}, deg=%d\n", 
+          cid, cidx[0], cidx[1], cidx[2], cidx[3], it->second.Degree());
+    }
   }
-  return;
 #endif
 
   vobjs.clear();

@@ -172,7 +172,7 @@ CFace MeshGraphRegular3DTets::Face(FaceIdType id, bool nodes_only) const
     {0, 1}
   };
   for (int p=0; p<2; p++) {
-    // if (!valid_cidx(contained_cells_cidx[t][p])) continue;
+    if (!valid_cidx(contained_cells_cidx[t][p])) continue;
     face.contained_cells.push_back(cidx2cid(contained_cells_cidx[t][p]));
     face.contained_cells_chirality.push_back(contained_cells_chi[t][p]);
     face.contained_cells_fid.push_back(contained_cells_fid[t][p]);
@@ -309,9 +309,9 @@ bool MeshGraphRegular3DTets::valid_eidx(const int eidx[4]) const
   else {
     for (int i=0; i<3; i++)
       if (pbc[i]) {
-        if (eidx[i] >= d[i]) return false;
+        if (eidx[i] < 0 || eidx[i] >= d[i]) return false;
       } else {
-        if (eidx[i] >= d[i]-1) return false;
+        if (eidx[i] < 0 || eidx[i] >= d[i]-1) return false;
       }
     return true;
   }
@@ -321,13 +321,25 @@ bool MeshGraphRegular3DTets::valid_fidx(const int fidx[4]) const
 {
   if (fidx[3]<0 || fidx[3]>=12) return false;
   else {
+    int o[3] = {0};
     for (int i=0; i<3; i++)
       if (pbc[i]) {
-        if (fidx[i] >= d[i]) return false;
+        if (fidx[i] < 0 || fidx[i] >= d[i]) return false;
       } else {
-        if (fidx[i] >= d[i]-1) return false;
+        if (fidx[i] < 0 || fidx[i] > d[i]-1) return false;
+        else if (fidx[i] == d[i]-1) o[i] = 1;
       }
-    return true;
+    
+    const int sum = o[0] + o[1] + o[2];
+    // if (sum > 1) fprintf(stderr, "sum=%d, fidx={%d, %d, %d, %d}\n", sum, fidx[0], fidx[1], fidx[2], fidx[3]);
+    // if (sum != 0) return false;
+
+    if (sum == 0) return true;
+    else if (o[0] + o[1] + o[2] > 1) return false;
+    else if (o[0] && (fidx[3] == 4 || fidx[3] == 5)) return true;
+    else if (o[1] && (fidx[3] == 2 || fidx[3] == 3)) return true; 
+    else if (o[2] && (fidx[3] == 0 || fidx[3] == 1)) return true;
+    else return false;
   }
 }
 
@@ -337,9 +349,9 @@ bool MeshGraphRegular3DTets::valid_cidx(const int idx[4]) const
 
   for (int i=0; i<3; i++)
     if (pbc[i]) {
-      if (idx[i] >= d[i]) return false;
+      if (idx[i] < 0 || idx[i] >= d[i]) return false;
     } else {
-      if (idx[i] >= d[i]-1) return false;
+      if (idx[i] < 0 || idx[i] >= d[i]-1) return false;
     }
   return true;
 }
