@@ -10,7 +10,7 @@ static int nogauge = 0,
            benchmark = 0, 
            archive = 0,
            nthreads = 0, 
-           hex = 0;
+           tet = 0;
 static int T0=0, T=1; // start and length of timesteps
 static int span=1;
 
@@ -19,7 +19,7 @@ static struct option longopts[] = {
   {"nogauge", no_argument, &nogauge, 1},
   {"benchmark", no_argument, &benchmark, 1}, 
   {"archive", no_argument, &archive, 1}, 
-  {"hex", no_argument, &hex, 1},
+  {"tet", no_argument, &tet, 1},
   {"input", required_argument, 0, 'i'},
   {"output", required_argument, 0, 'o'},
   {"time", required_argument, 0, 't'}, 
@@ -90,8 +90,8 @@ int main(int argc, char **argv)
   GLGPU3DDataset ds;
   ds.OpenDataFile(filename_in);
   ds.LoadTimeStep(T0, 0);
-  if (hex) ds.SetMeshType(GLGPU3D_MESH_HEX);
-  else ds.SetMeshType(GLGPU3D_MESH_TET);
+  if (tet) ds.SetMeshType(GLGPU3D_MESH_TET);
+  else ds.SetMeshType(GLGPU3D_MESH_HEX);
   ds.BuildMeshGraph();
   ds.PrintInfo();
  
