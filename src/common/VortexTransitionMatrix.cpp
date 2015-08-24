@@ -173,6 +173,7 @@ void VortexTransitionMatrix::Modularize()
     if (lhs.size() == 1 && rhs.size() == 1) {
       event = VORTEX_EVENT_DUMMY;
     } else if (lhs.size() == 0 && rhs.size() == 1) {
+      fprintf(stderr, "FUCK\n");
       event = VORTEX_EVENT_BIRTH;
     } else if (lhs.size() == 1 && rhs.size() == 0) {
       event = VORTEX_EVENT_DEATH;

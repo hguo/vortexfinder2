@@ -24,6 +24,7 @@ public:
   std::map<int, VortexTransitionMatrix>& Matrices() {return _matrices;}
 
   void ConstructSequence();
+  void PrintSequence() const;
   int SequenceIdx(int t, int lid) const;
   void SequenceGraphColoring();
   void SequenceColor(int gid, unsigned char &r, unsigned char &g, unsigned char &b) const;

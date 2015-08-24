@@ -6,7 +6,7 @@ include_directories (
 configure_file (def.h.cmake def.h)
 
 # subdirs (common io extractor tracer)
-subdirs (common io extractor)
+subdirs (common io extractor analysis)
 
 if (WITH_PARAVIEW)
   subdirs (paraview_plugins)

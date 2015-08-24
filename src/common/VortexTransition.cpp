@@ -1,5 +1,6 @@
 #include "VortexTransition.h"
 #include <sstream>
+#include <iostream>
 #include <fstream>
 #include <set>
 #include <tuple>
@@ -240,10 +241,11 @@ void VortexTransition::ConstructSequence()
       }
 
       // build events
-      if (event >= VORTEX_EVENT_MERGE) {
+      // if (event >= VORTEX_EVENT_MERGE) {
+      if (event > VORTEX_EVENT_DUMMY) {
         VortexEvent e;
-        e.t = i;
-        e.event = event;
+        e.frame = i;
+        e.type = event;
         e.lhs = lhs;
         e.rhs = rhs;
         _events.push_back(e);
@@ -253,11 +255,43 @@ void VortexTransition::ConstructSequence()
 
   // RandomColorSchemes();
   SequenceGraphColoring(); 
+}
 
-#if 0
-  for (int i=0; i<_events.size(); i++) 
-    fprintf(stderr, "e=%d, #l=%d, #r=%d\n", _events[i].event, _events[i].lhs.size(), _events[i].rhs.size());
-#endif
+void VortexTransition::PrintSequence() const
+{
+  for (int i=0; i<_events.size(); i++) {
+    const VortexEvent& e = _events[i];
+    std::stringstream ss;
+    ss << "frame=" << e.frame << ", ";
+    ss << "type=" << VortexEvent::TypeToString(e.type) << ", ";
+    ss << "lhs={";
+
+    int j = 0;
+    if (e.lhs.empty()) ss << "}, "; 
+    else 
+      for (std::set<int>::iterator it = e.lhs.begin(); it != e.lhs.end(); it++, j++) {
+        const int vid = SequenceIdx(e.frame, *it);
+        if (j<e.lhs.size()-1) 
+          ss << vid << ", ";
+        else 
+          ss << vid << "}, ";
+      }
+    
+    ss << "rhs={";
+   
+    j = 0;
+    if (e.rhs.empty()) ss << "}";
+    else 
+      for (std::set<int>::iterator it = e.rhs.begin(); it != e.rhs.end(); it++, j++) {
+        const int vid = SequenceIdx(e.frame+1, *it);
+        if (j<e.rhs.size()-1) 
+          ss << vid << ", ";
+        else 
+          ss << vid << "}";
+      }
+    
+    std::cout << ss.str() << std::endl;
+  }
 }
 
 
@@ -346,7 +380,7 @@ void VortexTransition::SequenceGraphColoring()
   int nc = welsh_powell(n, M, cids);
 
   // 3. generate colors
-  fprintf(stderr, "#color=%d\n", nc);
+  // fprintf(stderr, "#color=%d\n", nc);
   vector<unsigned char> colors;
   generate_random_colors(nc, colors);
 
