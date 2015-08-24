@@ -26,6 +26,7 @@ struct VortexLine : public std::vector<double>
   int id, gid;
   int timestep;
   bool is_bezier;
+  bool is_loop;
 
   unsigned char r, g, b;
 };

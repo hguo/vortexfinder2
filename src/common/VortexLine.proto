@@ -3,6 +3,7 @@ message PBVortexLine {
   optional uint32 id = 2;
   optional uint32 timestep = 3;
   optional bool bezier = 4 [ default = false ];
+  optional bool loop = 5 [ default = false ];
 };
 
 message PBVortexLines {
