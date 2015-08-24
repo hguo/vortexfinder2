@@ -18,6 +18,3 @@ target_link_libraries (extractor_glgpu2D glextractor)
 
 add_executable (extractor_presave ex_presave.cpp)
 target_link_libraries (extractor_presave glextractor)
-
-add_executable (extractor_events ex_events.cpp)
-target_link_libraries (extractor_events glcommon)

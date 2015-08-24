@@ -123,7 +123,7 @@ void CGLWidget::LoadVortexLines2D()
       _data_info.ParseFromString(info_bytes);
 
     for (int i=0; i<vortex_liness.size(); i++) {
-      const int gid = _vt->SequenceIdx(t, vortex_liness[i].id);
+      const int gid = _vt->lvid2gvid(t, vortex_liness[i].id);
       unsigned char r, g, b;
       _vt->SequenceColor(gid, r, g, b);
       lines[gid] << *(vortex_liness[i].begin())
@@ -811,7 +811,7 @@ void CGLWidget::LoadVortexLines()
     _data_info.ParseFromString(info_bytes);
   
   for (int i=0; i<vortex_liness.size(); i++) {
-    vortex_liness[i].gid = _vt->SequenceIdx(_timestep, vortex_liness[i].id);
+    vortex_liness[i].gid = _vt->lvid2gvid(_timestep, vortex_liness[i].id);
     _vt->SequenceColor(vortex_liness[i].gid, vortex_liness[i].r, vortex_liness[i].g, vortex_liness[i].b);
     // fprintf(stderr, "t=%d, lid=%d, gid=%d\n", _timestep, vortex_liness[i].id, vortex_liness[i].gid);
   }

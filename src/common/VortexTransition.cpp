@@ -135,7 +135,7 @@ void VortexTransition::SaveToDotFile(const std::string& filename) const
     const int n = it->second;
     for (int k=0; k<n; k++) {
       const int nc = 6;
-      int vid = SequenceIdx(t, k);
+      int vid = lvid2gvid(t, k);
       int c = vid % nc;
       std::string color;
       
@@ -185,11 +185,21 @@ int VortexTransition::NewVortexSequence(int ts)
   return _seqs.size() - 1;
 }
 
-int VortexTransition::SequenceIdx(int t, int lid) const
+int VortexTransition::lvid2gvid(int t, int lid) const
 {
   std::tuple<int, int> key = std::make_tuple(t, lid);
   std::map<std::tuple<int,int>,int>::const_iterator it = _seqmap.find(key);
   if (it == _seqmap.end())
+    return -1;
+  else 
+    return it->second;
+}
+
+int VortexTransition::gvid2lvid(int frame, int gvid) const
+{
+  std::tuple<int, int> key = std::make_tuple(frame, gvid);
+  std::map<std::tuple<int, int>,int>::const_iterator it = _invseqmap.find(key);
+  if (it == _invseqmap.end())
     return -1;
   else 
     return it->second;
@@ -216,6 +226,7 @@ void VortexTransition::ConstructSequence()
         _seqs[gid].tl ++;
         _seqs[gid].lids.push_back(k);
         _seqmap[std::make_tuple(i, k)] = gid;
+        _invseqmap[std::make_tuple(i, gid)] = k;
       }
     }
 
@@ -230,6 +241,7 @@ void VortexTransition::ConstructSequence()
         _seqs[gid].tl ++;
         _seqs[gid].lids.push_back(r);
         _seqmap[std::make_tuple(i+1, r)] = gid;
+        _invseqmap[std::make_tuple(i+1, gid)] = r;
       } else { // some events, need re-ID
         for (std::set<int>::iterator it=rhs.begin(); it!=rhs.end(); it++) {
           int r = *it; 
@@ -237,6 +249,7 @@ void VortexTransition::ConstructSequence()
           _seqs[gid].tl ++;
           _seqs[gid].lids.push_back(r);
           _seqmap[std::make_tuple(i+1, r)] = gid;
+          _invseqmap[std::make_tuple(i+1, gid)] = r;
         }
       }
 
@@ -270,11 +283,11 @@ void VortexTransition::PrintSequence() const
     if (e.lhs.empty()) ss << "}, "; 
     else 
       for (std::set<int>::iterator it = e.lhs.begin(); it != e.lhs.end(); it++, j++) {
-        const int vid = SequenceIdx(e.frame, *it);
+        const int gvid = lvid2gvid(e.frame, *it);
         if (j<e.lhs.size()-1) 
-          ss << vid << ", ";
+          ss << gvid << ", ";
         else 
-          ss << vid << "}, ";
+          ss << gvid << "}, ";
       }
     
     ss << "rhs={";
@@ -283,11 +296,11 @@ void VortexTransition::PrintSequence() const
     if (e.rhs.empty()) ss << "}";
     else 
       for (std::set<int>::iterator it = e.rhs.begin(); it != e.rhs.end(); it++, j++) {
-        const int vid = SequenceIdx(e.frame+1, *it);
+        const int gvid = lvid2gvid(e.frame+1, *it);
         if (j<e.rhs.size()-1) 
-          ss << vid << ", ";
+          ss << gvid << ", ";
         else 
-          ss << vid << "}";
+          ss << gvid << "}";
       }
     
     std::cout << ss.str() << std::endl;
