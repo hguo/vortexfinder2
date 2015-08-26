@@ -13,10 +13,12 @@ if (WITH_LIBMESH)
     Condor2Dataset.cpp)
 endif ()
 
-add_library (glio ${io_sources})
+add_library (glio STATIC ${io_sources})
 
 if (WITH_LIBMESH)
-  target_link_libraries (glio glcommon ${LIBMESH_LIBRARY} ${NETCDF_LIBRARY})
+  target_link_libraries (glio PUBLIC glcommon ${LIBMESH_LIBRARY} ${NETCDF_LIBRARY})
 else ()
-  target_link_libraries (glio glcommon)
+  target_link_libraries (glio PUBLIC glcommon)
 endif ()
+
+#install (TARGETS glio DESTINATION ${VTK_INSTALL_LIBRARY_DIR})
