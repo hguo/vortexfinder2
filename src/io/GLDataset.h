@@ -21,8 +21,6 @@ public: // data I/O
 
 public: // mesh info
   virtual int Dimensions() const = 0;
-  virtual int NrFacesPerCell() const = 0;
-  virtual int NrNodesPerFace() const = 0;
 
   virtual void BuildMeshGraph() = 0;
 

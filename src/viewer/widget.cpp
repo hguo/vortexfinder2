@@ -123,7 +123,7 @@ void CGLWidget::LoadVortexLines2D()
       _data_info.ParseFromString(info_bytes);
 
     for (int i=0; i<vortex_liness.size(); i++) {
-      const int gid = _vt->SequenceIdx(t, vortex_liness[i].id);
+      const int gid = _vt->lvid2gvid(t, vortex_liness[i].id);
       unsigned char r, g, b;
       _vt->SequenceColor(gid, r, g, b);
       lines[gid] << *(vortex_liness[i].begin())
@@ -211,7 +211,10 @@ void CGLWidget::keyPressEvent(QKeyEvent* e)
     break;
 
   case Qt::Key_L:
-    _vortex_render_mode = 1;
+    if (e->modifiers() == Qt::ShiftModifier) 
+      _vortex_render_mode = 3; // points
+    else 
+      _vortex_render_mode = 1;
     updateGL();
     break;
 
@@ -538,6 +541,25 @@ void CGLWidget::renderVortexArrows()
   glPopAttrib();
 }
 
+void CGLWidget::renderVortexPoints()
+{
+  glEnableClientState(GL_VERTEX_ARRAY); 
+  glEnableClientState(GL_COLOR_ARRAY); 
+  glVertexPointer(3, GL_FLOAT, 0, v_line_vertices.data()); 
+  glColorPointer(4, GL_UNSIGNED_BYTE, 4*sizeof(GLubyte), v_line_colors.data());
+
+  glMultiDrawArrays(
+      GL_POINTS, 
+      v_line_indices.data(), 
+      v_line_vert_count.data(), 
+      v_line_vert_count.size());
+
+  glDisableClientState(GL_COLOR_ARRAY); 
+  glDisableClientState(GL_VERTEX_ARRAY);
+
+  CHECK_GLERROR();
+}
+
 void CGLWidget::renderVortexLines()
 {
   glEnableClientState(GL_VERTEX_ARRAY); 
@@ -695,7 +717,8 @@ void CGLWidget::paintGL()
   else if (_vortex_render_mode == 2) {
     // renderVortexTubes();
     renderIsosurfaces();
-  }
+  } else if (_vortex_render_mode == 3) 
+    renderVortexPoints();
 
   if (_toggle_inclusions)
     renderInclusions();
@@ -788,7 +811,7 @@ void CGLWidget::LoadVortexLines()
     _data_info.ParseFromString(info_bytes);
   
   for (int i=0; i<vortex_liness.size(); i++) {
-    vortex_liness[i].gid = _vt->SequenceIdx(_timestep, vortex_liness[i].id);
+    vortex_liness[i].gid = _vt->lvid2gvid(_timestep, vortex_liness[i].id);
     _vt->SequenceColor(vortex_liness[i].gid, vortex_liness[i].r, vortex_liness[i].g, vortex_liness[i].b);
     // fprintf(stderr, "t=%d, lid=%d, gid=%d\n", _timestep, vortex_liness[i].id, vortex_liness[i].gid);
   }

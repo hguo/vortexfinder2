@@ -18,8 +18,6 @@ public:
   ~Condor2Dataset(); 
 
   int Dimensions() const {return 3;}
-  int NrFacesPerCell() const {return 4;}
-  int NrNodesPerFace() const {return 3;}
 
 public: 
   bool OpenDataFile(const std::string& filename);

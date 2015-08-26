@@ -1,6 +1,7 @@
 #include "Extractor.h"
 #include "common/Utils.hpp"
 #include "common/VortexTransition.h"
+#include "common/MeshGraphRegular3DTets.h"
 #include "io/GLDataset.h"
 #include <pthread.h>
 #include <set>
@@ -24,7 +25,8 @@ pthread_mutex_t mutex;
 VortexExtractor::VortexExtractor() :
   _dataset(NULL), 
   _gauge(false), 
-  _archive(false)
+  _archive(false), 
+  _interpolation_mode(INTERPOLATION_TRI_BARYCENTRIC | INTERPOLATION_QUAD_BILINEAR)
 {
   pthread_mutex_init(&mutex, NULL);
 
@@ -167,15 +169,17 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType ch
   else _punctured_faces1[id] = pf;
 
   // vcell
+#if 0
   PuncturedCell &vc = _punctured_vcells[id];
   if (slot == 0) vc.SetChirality(0, -chirality);
   else vc.SetChirality(1, chirality);
+#endif
 
   // cell
   const MeshGraph *mg = _dataset->MeshGraph();
   const CFace &face = mg->Face(id);
   for (int i=0; i<face.contained_cells.size(); i++) {
-    CellIdType cid = face.contained_cells[i]; 
+    CellIdType cid = face.contained_cells[i];
     if (cid == UINT_MAX) continue;
 
     int fchirality = face.contained_cells_chirality[i];
@@ -186,9 +190,16 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType ch
 
     PuncturedCell &c = slot == 0 ? _punctured_cells[cid] : _punctured_cells1[cid];
     c.SetChirality(fid, chirality * fchirality);
-
   }
-    
+ 
+#if 0
+  int fidx[4];
+  const MeshGraphRegular3DTets *mgt = (const MeshGraphRegular3DTets*)(mg);
+  mgt->fid2fidx(id, fidx);
+  fprintf(stderr, "fidx={%d, %d, %d, %d}, chi=%d, pos={%f, %f, %f}\n", 
+      fidx[0], fidx[1], fidx[2], fidx[3], chirality, pos[0], pos[1], pos[2]);
+#endif
+  
   pthread_mutex_unlock(&mutex);
 }
 
@@ -204,6 +215,7 @@ void VortexExtractor::AddPuncturedEdge(EdgeIdType id, ChiralityType chirality, d
 
   _punctured_edges[id] = pe;
 
+#if 0
   // vface
   const MeshGraph *mg = _dataset->MeshGraph();
   const CEdge &edge = mg->Edge(id);
@@ -211,15 +223,17 @@ void VortexExtractor::AddPuncturedEdge(EdgeIdType id, ChiralityType chirality, d
     int echirality = edge.contained_faces_chirality[i];
     int eid = edge.contained_faces_eid[i]; 
     
-    PuncturedCell &vc = _punctured_vcells[edge.contained_faces[i]];
-    vc.SetChirality(eid+2, chirality * echirality);
+    // PuncturedCell &vc = _punctured_vcells[edge.contained_faces[i]];
+    // vc.SetChirality(eid+2, chirality * echirality);
   }
-    
+#endif
   pthread_mutex_unlock(&mutex);
 }
   
 bool VortexExtractor::FindSpaceTimeEdgeZero(const double re[], const double im[], double &t) const
 {
+  return true; // save time
+
   double p[2];
   if (!find_zero_unit_quad_bilinear(re, im, p))
     if (!find_zero_unit_quad_barycentric(re, im, p))
@@ -357,6 +371,7 @@ void VortexExtractor::RelateOverTime()
   }
 }
 
+#if 0
 void VortexExtractor::TraceVirtualCells()
 {
   int n_self = 0, n_pure = 0, n_cross = 0, n_invalid = 0;
@@ -384,6 +399,7 @@ void VortexExtractor::TraceVirtualCells()
   fprintf(stderr, "n_self=%d, n_pure=%d, n_cross=%d, n_invalid=%d\n", 
       n_self, n_pure, n_cross, n_invalid);
 }
+#endif
 
 void VortexExtractor::TraceOverSpace(int slot)
 {
@@ -398,7 +414,20 @@ void VortexExtractor::TraceOverSpace(int slot)
   const MeshGraph *mg = _dataset->MeshGraph();
   
   fprintf(stderr, "tracing over space, #pcs=%ld, #pfs=%ld.\n", pcs.size(), pfs.size());
-  
+ 
+#if 0
+  for (std::map<CellIdType, PuncturedCell>::iterator it = pcs.begin(); it != pcs.end(); it ++) {
+    if (it->second.Degree() != 2) {
+      const int cid = it->first;
+      int cidx[4];
+      const MeshGraphRegular3DTets* tmg = (const MeshGraphRegular3DTets*)mg;
+      tmg->cid2cidx(cid, cidx);
+      fprintf(stderr, "cid=%d={%d, %d, %d, %d}, deg=%d\n", 
+          cid, cidx[0], cidx[1], cidx[2], cidx[3], it->second.Degree());
+    }
+  }
+#endif
+
   vobjs.clear();
   while (!pcs.empty()) {
     /// 1. sort punctured cells into connected ordinary/special ones
@@ -415,8 +444,10 @@ void VortexExtractor::TraceOverSpace(int slot)
       const PuncturedCell &pcell = pcs[c];
       const CCell &cell = mg->Cell(c);
 
-      if (pcell.IsSpecial()) 
+      if (pcell.IsSpecial()) {
+        // fprintf(stderr, "cid=%d, deg=%d\n", c, pcell.Degree());
         special_pcells[c] = pcell;
+      }
       else 
         ordinary_pcells[c] = pcell;
       visited.insert(c);
@@ -666,7 +697,7 @@ void VortexExtractor::RotateTimeSteps()
   _vortex_lines.clear();
 
   _punctured_edges.clear();
-  _punctured_vcells.clear();
+  // _punctured_vcells.clear();
   _related_faces.clear();
 
   _punctured_faces.swap( _punctured_faces1 );
@@ -822,8 +853,8 @@ void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
 void VortexExtractor::ExtractFace(FaceIdType id, int slot)
 {
   const GLDataset *ds = (GLDataset*)_dataset;
-  const int nnodes = ds->NrNodesPerFace();
   const CFace& f = ds->MeshGraph()->Face(id, true);
+  const int nnodes = f.nodes.size();
 
   if (!f.Valid()) return;
 
@@ -865,7 +896,7 @@ void VortexExtractor::ExtractFace(FaceIdType id, int slot)
 
   // find zero
   double pos[3];
-  if (FindFaceZero(X, re, im, pos)) {
+  if (FindFaceZero(nnodes, X, re, im, pos)) {
     AddPuncturedFace(id, slot, chirality, pos);
     // fprintf(stderr, "pos={%f, %f, %f}, chi=%d\n", pos[0], pos[1], pos[2], chirality);
   } else {
@@ -888,10 +919,63 @@ void VortexExtractor::execute_thread(int nthreads, int tid, int type, int slot)
 
   // fprintf(stderr, "nthreads=%d, tid=%d, type=%d\n", nthreads, tid, type);
   if (type == 0) {
-    for (FaceIdType i=tid; i<mg->NFaces(); i+=nthreads) 
+    for (FaceIdType i=tid; i<mg->NFaces(); i+=nthreads) {
       ExtractFace(i, slot);
+    }
   } else if (type == 1) { // TODO
     for (EdgeIdType i=tid; i<mg->NEdges(); i+=nthreads) 
       ExtractSpaceTimeEdge(i);
   } else assert(false);
+}
+
+bool VortexExtractor::FindFaceZero(int n, const double X_[][3], const double re[], const double im[], double pos[3]) const
+{
+  const double epsilon = 0.05;
+  bool succ = false;
+
+  double X[4][3];
+  for (int i=0; i<4; i++)
+    for (int j=0; j<3; j++)
+      X[i][j] = X_[i][j];
+
+#if 0 // pbc
+  for (int i=1; i<4; i++) {
+    for (int k=0; k<3; k++) 
+      if (X[i][k] - X[0][k] < 0) { // -ds->Lengths()[k]/2) 
+        X[i][k] += ds->Lengths()[k];
+      }
+  }
+#endif
+
+  if (n == 3) {
+    if (_interpolation_mode & INTERPOLATION_TRI_BARYCENTRIC) {
+      if (find_zero_triangle(re, im, X, pos, epsilon))
+        succ = true; 
+      else 
+        succ = find_tri_center(X, pos);
+    } else if (_interpolation_mode & INTERPOLATION_TRI_CENTER) {
+      succ = find_tri_center(X, pos);
+    }
+  } else if (n == 4) {
+    if (_interpolation_mode & INTERPOLATION_QUAD_LINECROSS)
+      succ = false; // TODO: line cross not implemented yet
+    else if (_interpolation_mode & INTERPOLATION_QUAD_BILINEAR) {
+      if (find_zero_quad_bilinear(re, im, X, pos, epsilon))
+        succ = true; 
+      else if (find_zero_quad_barycentric(re, im, X, pos, epsilon))
+        succ = true;
+      else 
+        succ = find_quad_center(X, pos);
+    }
+    else if (_interpolation_mode & INTERPOLATION_QUAD_BILINEAR) {
+      if (find_zero_quad_barycentric(re, im, X, pos, epsilon))
+        succ = true;
+      else 
+        succ = find_quad_center(X, pos);
+    }
+    else if (_interpolation_mode & INTERPOLATION_QUAD_CENTER) 
+      succ = find_quad_center(X, pos);
+  }
+
+  return succ;
 }

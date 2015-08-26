@@ -2,14 +2,15 @@
 #include <vector>
 #include <getopt.h>
 #include "io/GLGPU3DDataset.h"
-#include "extractor/GLGPUExtractor.h"
+#include "extractor/Extractor.h"
 
 static std::string filename_in;
 static int nogauge = 0,  
            verbose = 0, 
            benchmark = 0, 
            archive = 0,
-           nthreads = 0; 
+           nthreads = 0, 
+           tet = 0;
 static int T0=0, T=1; // start and length of timesteps
 static int span=1;
 
@@ -18,6 +19,7 @@ static struct option longopts[] = {
   {"nogauge", no_argument, &nogauge, 1},
   {"benchmark", no_argument, &benchmark, 1}, 
   {"archive", no_argument, &archive, 1}, 
+  {"tet", no_argument, &tet, 1},
   {"input", required_argument, 0, 'i'},
   {"output", required_argument, 0, 'o'},
   {"time", required_argument, 0, 't'}, 
@@ -88,10 +90,12 @@ int main(int argc, char **argv)
   GLGPU3DDataset ds;
   ds.OpenDataFile(filename_in);
   ds.LoadTimeStep(T0, 0);
+  if (tet) ds.SetMeshType(GLGPU3D_MESH_TET);
+  else ds.SetMeshType(GLGPU3D_MESH_HEX);
   ds.BuildMeshGraph();
   ds.PrintInfo();
  
-  GLGPUVortexExtractor extractor;
+  VortexExtractor extractor;
   extractor.SetDataset(&ds);
   extractor.SetGaugeTransformation(!nogauge);
 
@@ -106,7 +110,7 @@ int main(int argc, char **argv)
   extractor.SaveVortexLines(0);
   for (int t=T0+span; t<T0+T; t+=span){
     ds.LoadTimeStep(t, 1);
-    ds.PrintInfo(1);
+    // ds.PrintInfo(1);
     extractor.ExtractFaces(1);
     extractor.TraceOverSpace(1);
     extractor.ExtractEdges();

@@ -14,9 +14,15 @@ enum {
 };
 
 struct VortexEvent {
-  int t, event;
+  int frame, type;
   std::set<int> lhs, rhs; // local ids.
   // std::vector<int> lhs_gids, rhs_gids;
+
+  static const char* TypeToString(int e) {
+    static const char* strs[7] = {
+      "dummy", "birth", "death", "merge", "split", "recombination", "compound"};
+    return strs[e];
+  }
 };
 
 #endif

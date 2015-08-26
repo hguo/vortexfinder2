@@ -3,9 +3,14 @@
 #include "common/Utils.hpp"
 #include "fitCurves/fitCurves.hpp"
 #include <climits>
+#include <cfloat>
 
 VortexLine::VortexLine() : 
-  id(INT_MAX), gid(INT_MAX), timestep(0), is_bezier(false)
+  id(INT_MAX), 
+  gid(INT_MAX), 
+  timestep(0), 
+  is_bezier(false), 
+  is_loop(false)
 {
 }
 
@@ -198,3 +203,17 @@ bool LoadVortexLines(std::vector<VortexLine>& lines, std::string& info, const st
   return UnserializeVortexLines(lines, info, buf);
 }
 
+double MinimumDist(const VortexLine& l0, const VortexLine& l1)
+{
+  double minDist = DBL_MAX;
+  const int n0 = l0.size()/3, n1 = l1.size()/3;
+
+  for (int i=0; i<n0; i++) 
+    for (int j=0; j<n1; j++) {
+      const double d[3] = {l0[i*3] - l1[j*3], l0[i*3+1] - l1[j*3+1], l0[i*3+2] - l1[j*3+2]};
+      const double dist = sqrt(d[0]*d[0] + d[1]*d[1] + d[2]*d[2]);
+      minDist = std::min(minDist, dist);
+    }
+
+  return minDist;
+}

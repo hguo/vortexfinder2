@@ -23,9 +23,12 @@ struct VortexLine : public std::vector<double>
   void Flattern(const double O[3], const double L[3]);
   void Unflattern(const double O[3], const double L[3]);
 
+  friend double MinimumDist(const VortexLine& l0, const VortexLine& l1);
+
   int id, gid;
   int timestep;
   bool is_bezier;
+  bool is_loop;
 
   unsigned char r, g, b;
 };

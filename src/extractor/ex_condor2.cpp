@@ -2,7 +2,7 @@
 #include <vector>
 #include <getopt.h>
 #include "io/Condor2Dataset.h"
-#include "extractor/Condor2Extractor.h"
+#include "extractor/Extractor.h"
 
 static std::string filename_in, filename_out;
 static int nogauge = 0,  
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }
   
-  Condor2VortexExtractor extractor;
+  VortexExtractor extractor;
   extractor.SetDataset(&ds);
   extractor.SetGaugeTransformation(!nogauge);
 

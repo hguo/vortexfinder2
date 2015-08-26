@@ -24,9 +24,12 @@ public:
   std::map<int, VortexTransitionMatrix>& Matrices() {return _matrices;}
 
   void ConstructSequence();
-  int SequenceIdx(int t, int lid) const;
+  void PrintSequence() const;
   void SequenceGraphColoring();
   void SequenceColor(int gid, unsigned char &r, unsigned char &g, unsigned char &b) const;
+
+  int lvid2gvid(int frame, int lvid) const;
+  int gvid2lvid(int frame, int gvid) const;
 
   int MaxNVorticesPerFrame() const {return _max_nvortices_per_frame;}
 
@@ -43,6 +46,7 @@ private:
   std::map<int, VortexTransitionMatrix> _matrices;
   std::vector<struct VortexSequence> _seqs;
   std::map<std::pair<int, int>, int> _seqmap; // <time, lid>, gid
+  std::map<std::pair<int, int>, int> _invseqmap; // <time, gid>, lid
   std::map<int, int> _nvortices_per_frame;
   int _max_nvortices_per_frame;
 

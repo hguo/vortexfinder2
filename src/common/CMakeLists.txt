@@ -2,6 +2,7 @@ set (common_sources
   MeshGraph.cpp
   MeshGraphRegular2D.cpp
   MeshGraphRegular3D.cpp
+  MeshGraphRegular3DTets.cpp
   VortexLine.cpp
   VortexTransitionMatrix.cpp
   VortexTransition.cpp

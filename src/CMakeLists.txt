@@ -8,7 +8,7 @@ configure_file (def.h.cmake def.h)
 add_subdirectory (common)
 add_subdirectory (io)
 add_subdirectory (extractor)
-# add_subdirectory (tracer)
+add_subdirectory (analysis)
 
 if (WITH_PARAVIEW)
   add_subdirectory (paraview_plugins)

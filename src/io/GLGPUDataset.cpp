@@ -116,8 +116,6 @@ void GLGPUDataset::LoadTimeStep(int timestep, int slot)
   bool succ = false;
   const std::string &filename = _filenames[timestep];
 
-  fprintf(stderr, "loading time step %d, %s\n", timestep, _filenames[timestep].c_str());
-
   // load
   if (OpenBDATDataFile(filename, slot)) succ = true; 
   else if (OpenLegacyDataFile(filename, slot)) succ = true;
@@ -132,6 +130,7 @@ void GLGPUDataset::LoadTimeStep(int timestep, int slot)
 #endif
 
   // ModulateKex(slot);
+  fprintf(stderr, "loaded time step %d, %s\n", timestep, _filenames[timestep].c_str());
 
   SetTimeStep(timestep, slot);
 }

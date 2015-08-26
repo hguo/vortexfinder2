@@ -1,5 +1,6 @@
 #include "VortexTransition.h"
 #include <sstream>
+#include <iostream>
 #include <fstream>
 #include <set>
 #include <cassert>
@@ -133,7 +134,7 @@ void VortexTransition::SaveToDotFile(const std::string& filename) const
     const int n = it->second;
     for (int k=0; k<n; k++) {
       const int nc = 6;
-      int vid = SequenceIdx(t, k);
+      int vid = lvid2gvid(t, k);
       int c = vid % nc;
       std::string color;
       
@@ -183,11 +184,21 @@ int VortexTransition::NewVortexSequence(int ts)
   return _seqs.size() - 1;
 }
 
-int VortexTransition::SequenceIdx(int t, int lid) const
+int VortexTransition::lvid2gvid(int t, int lid) const
 {
   std::pair<int, int> key = std::make_pair(t, lid);
   std::map<std::pair<int,int>,int>::const_iterator it = _seqmap.find(key);
   if (it == _seqmap.end())
+    return -1;
+  else 
+    return it->second;
+}
+
+int VortexTransition::gvid2lvid(int frame, int gvid) const
+{
+  std::pair<int, int> key = std::make_pair(frame, gvid);
+  std::map<std::pair<int, int>,int>::const_iterator it = _invseqmap.find(key);
+  if (it == _invseqmap.end())
     return -1;
   else 
     return it->second;
@@ -214,6 +225,7 @@ void VortexTransition::ConstructSequence()
         _seqs[gid].tl ++;
         _seqs[gid].lids.push_back(k);
         _seqmap[std::make_pair(i, k)] = gid;
+        _invseqmap[std::make_pair(i, gid)] = k;
       }
     }
 
@@ -228,6 +240,7 @@ void VortexTransition::ConstructSequence()
         _seqs[gid].tl ++;
         _seqs[gid].lids.push_back(r);
         _seqmap[std::make_pair(i+1, r)] = gid;
+        _invseqmap[std::make_pair(i+1, gid)] = r;
       } else { // some events, need re-ID
         for (std::set<int>::iterator it=rhs.begin(); it!=rhs.end(); it++) {
           int r = *it; 
@@ -235,14 +248,16 @@ void VortexTransition::ConstructSequence()
           _seqs[gid].tl ++;
           _seqs[gid].lids.push_back(r);
           _seqmap[std::make_pair(i+1, r)] = gid;
+          _invseqmap[std::make_pair(i+1, gid)] = r;
         }
       }
 
       // build events
-      if (event >= VORTEX_EVENT_MERGE) {
+      // if (event >= VORTEX_EVENT_MERGE) {
+      if (event > VORTEX_EVENT_DUMMY) {
         VortexEvent e;
-        e.t = i;
-        e.event = event;
+        e.frame = i;
+        e.type = event;
         e.lhs = lhs;
         e.rhs = rhs;
         _events.push_back(e);
@@ -252,11 +267,43 @@ void VortexTransition::ConstructSequence()
 
   // RandomColorSchemes();
   SequenceGraphColoring(); 
+}
 
-#if 0
-  for (int i=0; i<_events.size(); i++) 
-    fprintf(stderr, "e=%d, #l=%d, #r=%d\n", _events[i].event, _events[i].lhs.size(), _events[i].rhs.size());
-#endif
+void VortexTransition::PrintSequence() const
+{
+  for (int i=0; i<_events.size(); i++) {
+    const VortexEvent& e = _events[i];
+    std::stringstream ss;
+    ss << "frame=" << e.frame << ", ";
+    ss << "type=" << VortexEvent::TypeToString(e.type) << ", ";
+    ss << "lhs={";
+
+    int j = 0;
+    if (e.lhs.empty()) ss << "}, "; 
+    else 
+      for (std::set<int>::iterator it = e.lhs.begin(); it != e.lhs.end(); it++, j++) {
+        const int gvid = lvid2gvid(e.frame, *it);
+        if (j<e.lhs.size()-1) 
+          ss << gvid << ", ";
+        else 
+          ss << gvid << "}, ";
+      }
+    
+    ss << "rhs={";
+   
+    j = 0;
+    if (e.rhs.empty()) ss << "}";
+    else 
+      for (std::set<int>::iterator it = e.rhs.begin(); it != e.rhs.end(); it++, j++) {
+        const int gvid = lvid2gvid(e.frame+1, *it);
+        if (j<e.rhs.size()-1) 
+          ss << gvid << ", ";
+        else 
+          ss << gvid << "}";
+      }
+    
+    std::cout << ss.str() << std::endl;
+  }
 }
 
 
@@ -345,7 +392,7 @@ void VortexTransition::SequenceGraphColoring()
   int nc = welsh_powell(n, M, cids);
 
   // 3. generate colors
-  fprintf(stderr, "#color=%d\n", nc);
+  // fprintf(stderr, "#color=%d\n", nc);
   vector<unsigned char> colors;
   generate_random_colors(nc, colors);
 

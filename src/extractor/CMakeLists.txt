@@ -1,12 +1,6 @@
 set (extractor_sources
   Extractor.cpp
-  GLGPUExtractor.cpp
 )
-
-if (WITH_LIBMESH)
-  set (extractor_sources ${extractor_sources}
-    Condor2Extractor.cpp)
-endif ()
 
 add_library (glextractor STATIC ${extractor_sources})
 target_link_libraries (glextractor PUBLIC glcommon glio ${CMAKE_THREAD_LIBS_INIT})
@@ -25,6 +19,3 @@ target_link_libraries (extractor_glgpu2D PUBLIC glextractor)
 
 add_executable (extractor_presave ex_presave.cpp)
 target_link_libraries (extractor_presave PUBLIC glextractor)
-
-add_executable (extractor_events ex_events.cpp)
-target_link_libraries (extractor_events PUBLIC glcommon)
