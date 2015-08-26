@@ -96,6 +96,8 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   // build data
   GLGPU3DDataset *ds = new GLGPU3DDataset;
   ds->BuildDataFromArray(h, psi);
+  // ds->SetMeshType(GLGPU3D_MESH_TET);
+  ds->SetMeshType(GLGPU3D_MESH_HEX);
   ds->BuildMeshGraph();
   free(psi);
 

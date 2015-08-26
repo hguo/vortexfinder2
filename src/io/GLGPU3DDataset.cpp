@@ -11,7 +11,7 @@
 #include "GLGPU3DDataset.h"
 
 GLGPU3DDataset::GLGPU3DDataset() :
-  _mesh_type(GLGPU3D_MESH_TET)
+  _mesh_type(GLGPU3D_MESH_HEX)
 {
   Reset();
 }
