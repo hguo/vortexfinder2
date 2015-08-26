@@ -331,9 +331,6 @@ bool MeshGraphRegular3DTets::valid_fidx(const int fidx[4]) const
       }
     
     const int sum = o[0] + o[1] + o[2];
-    // if (sum > 1) fprintf(stderr, "sum=%d, fidx={%d, %d, %d, %d}\n", sum, fidx[0], fidx[1], fidx[2], fidx[3]);
-    // if (sum != 0) return false;
-
     if (sum == 0) return true;
     else if (o[0] + o[1] + o[2] > 1) return false;
     else if (o[0] && (fidx[3] == 4 || fidx[3] == 5)) return true;

@@ -232,22 +232,47 @@ bool MeshGraphRegular3D::valid_nidx(const int idx[3]) const
 bool MeshGraphRegular3D::valid_eidx(const int eidx[4]) const
 {
   if (eidx[3]<0 || eidx[3]>=3) return false;
-  else return valid_cidx(eidx);
+  else {
+    for (int i=0; i<3; i++) 
+      if (pbc[i]) {
+        if (eidx[i]<0 || eidx[i]>=d[i]) return false;
+      } else {
+        if (eidx[i]<0 || eidx[i]>=d[i]-1) return false;
+      }
+    return true;
+  }
 }
 
 bool MeshGraphRegular3D::valid_fidx(const int fidx[4]) const
 {
   if (fidx[3]<0 || fidx[3]>=3) return false;
-  else return valid_cidx(fidx);
+  else {
+    int o[3] = {0}; 
+    for (int i=0; i<3; i++) 
+      if (pbc[i]) {
+        if (fidx[i]<0 || fidx[i]>=d[i]) return false;
+      } else {
+        if (fidx[i]<0 || fidx[i]>d[i]-1) return false;
+        else if (fidx[i] == d[i]-1) o[i] = 1;
+      }
+
+    const int sum = o[0] + o[1] + o[2];
+    if (sum == 0) return true;
+    else if (o[0] + o[1] + o[2] > 1) return false;
+    else if (o[0] && fidx[3] == 0) return true; 
+    else if (o[1] && fidx[3] == 1) return true;
+    else if (o[2] && fidx[3] == 2) return true;
+    else return false;
+  }
 }
 
 bool MeshGraphRegular3D::valid_cidx(const int idx[3]) const
 {
   for (int i=0; i<3; i++)
     if (pbc[i]) {
-      if (idx[i] >= d[i]) return false;
+      if (idx[i] < 0 || idx[i] >= d[i]) return false;
     } else {
-      if (idx[i] >= d[i]-1) return false;
+      if (idx[i] < 0 || idx[i] >= d[i]-1) return false;
     }
   return true;
 }
