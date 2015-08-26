@@ -4,4 +4,4 @@ add_paraview_plugin (
   SERVER_MANAGER_SOURCES vtkGLGPUVortexFilter.cxx
 )
 
-target_link_libraries (GLGPUVortexFilter glextractor glcommon glio)
+target_link_libraries (GLGPUVortexFilter PRIVATE glextractor glcommon glio)

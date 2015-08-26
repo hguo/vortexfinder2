@@ -25,9 +25,10 @@ set (common_protos
 
 protobuf_generate_cpp (common_proto_sources common_proto_headers ${common_protos})
 
-add_library (glcommon ${common_sources} ${common_proto_sources})
+add_library (glcommon STATIC ${common_sources} ${common_proto_sources})
+target_include_directories(glcommon PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 if (WITH_CXX11)
-  target_link_libraries (glcommon ${PROTOBUF_LIBRARY})
+  target_link_libraries (glcommon PUBLIC ${PROTOBUF_LIBRARY})
 else ()
-  target_link_libraries (glcommon ${PROTOBUF_LIBRARY} ${Boost_LIBRARIES})
+  target_link_libraries (glcommon PUBLIC ${PROTOBUF_LIBRARY} ${Boost_LIBRARIES})
 endif ()
