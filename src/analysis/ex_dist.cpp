@@ -2,6 +2,7 @@
 #include "common/VortexTransition.h"
 #include "common/VortexLine.h"
 #include <cfloat>
+#include <cstdio>
 
 static double Dist(const std::string& dataname, int frame, int lvid0, int lvid1)
 {

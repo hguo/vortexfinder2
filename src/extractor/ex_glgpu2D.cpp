@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdio>
 #include <vector>
 #include <getopt.h>
 #include "io/GLGPU2DDataset.h"

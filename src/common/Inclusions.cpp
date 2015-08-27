@@ -25,7 +25,7 @@ void Inclusions::Clear()
 
 bool Inclusions::ParseFromTextFile(const std::string& filename)
 {
-  std::ifstream ifs(filename);
+  std::ifstream ifs(filename.c_str());
   if (!ifs.is_open()) return false;
 
   int n = 0;

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdio>
 #include "io/GLDatasetBase.h"
 #include "extractor/Extractor.h"
 
