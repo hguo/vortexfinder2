@@ -14,7 +14,7 @@ if (CMAKE_PROJECT_NAME STREQUAL "ParaView")
   endif()
 
   # use Boost, since C++11 is not supported by ParaView
-  find_package (Boost REQUIRED COMPONENTS)
+  find_package (Boost REQUIRED COMPONENTS thread system)
   include_directories (${Boost_INCLUDE_DIR})
 
   # Set Protobuf flags to point to ParaView's Protobuf
@@ -67,7 +67,7 @@ else()
       set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
     endif ()
   else ()
-    find_package (Boost REQUIRED COMPONENTS)
+    find_package (Boost REQUIRED COMPONENTS thread system)
     include_directories (${Boost_INCLUDE_DIR})
   endif ()
 
@@ -137,6 +137,11 @@ endif()
 
 find_package (Protobuf REQUIRED)
 include_directories (${PROTOBUF_INCLUDE_DIR})
+
+# boost options
+set (Boost_USE_STATIC_LIBS ON)
+set (Boost_USE_MULTITHREADED ON)
+set (Boost_USE_STATIC_RUNTIME OFF)
 
 # openmp
 # find_package (OpenMP)

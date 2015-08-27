@@ -5,13 +5,18 @@
 #include "io/GLDataset.h"
 #include <pthread.h>
 #include <set>
-#include <thread>
-#include <chrono>
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
 #include <cassert>
 #include <cstring>
+
+#if WITH_CXX11
+#include <thread>
+#include <chrono>
+#else
+#include <boost/thread.hpp>
+#endif
 
 typedef struct {
   VortexExtractor *extractor;
@@ -32,7 +37,11 @@ VortexExtractor::VortexExtractor() :
   pthread_mutex_init(&mutex, NULL);
 
   // probe number of cores
+#if WITH_CXX11
   _nthreads = std::thread::hardware_concurrency();
+#else
+  _nthreads = boost::thread::hardware_concurrency();
+#endif
   if (_nthreads == 0) _nthreads = 1;
 }
 
@@ -709,8 +718,10 @@ void VortexExtractor::RotateTimeSteps()
 
 void VortexExtractor::ExtractFaces(int slot) 
 {
+#if WITH_CXX11
   typedef std::chrono::high_resolution_clock clock;
   auto t0 = clock::now();
+#endif
 
   if (!LoadPuncturedFaces(slot)) {
     // running in threads
@@ -741,15 +752,19 @@ void VortexExtractor::ExtractFaces(int slot)
     if (_archive) SavePuncturedFaces(slot);
   }
  
+#if WITH_CXX11
   auto t1 = clock::now();
   double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
   fprintf(stderr, "t_f=%f\n", elapsed);
+#endif
 }
 
 void VortexExtractor::ExtractEdges() 
 {
+#if WITH_CXX11
   typedef std::chrono::high_resolution_clock clock;
   auto t0 = clock::now();
+#endif
 
   if (!LoadPuncturedEdges()) {
     // running in threads
@@ -780,9 +795,11 @@ void VortexExtractor::ExtractEdges()
     if (_archive) SavePuncturedEdges();
   }
   
+#if WITH_CXX11
   auto t1 = clock::now();
   double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
   fprintf(stderr, "t_e=%f\n", elapsed);
+#endif
 }
 
 void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
