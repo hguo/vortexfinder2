@@ -24,7 +24,7 @@ static const char GLGPU_LEGACY_TAG[] = "CA02";
 bool GLGPU_IO_Helper_ReadBDAT(
     const std::string& filename, 
     GLHeader &h,
-    double **psi, 
+    double **rho, double **phi, double **re, double **im, 
     bool header_only)
 {
   BDATReader *reader = new BDATReader(filename); 
@@ -119,19 +119,28 @@ bool GLGPU_IO_Helper_ReadBDAT(
         int optype = recID == 2000 ? 0 : 1;
         float *data = (float*)p;
 
-        // *psi = (double*)realloc(*psi, sizeof(double)*count*2);
-        *psi = (double*)malloc(sizeof(double)*count*2);
+        *rho = (double*)malloc(sizeof(double)*count);
+        *phi = (double*)malloc(sizeof(double)*count);
+        *re = (double*)malloc(sizeof(double)*count);
+        *im = (double*)malloc(sizeof(double)*count);
 
         if (optype == 0) { // re, im
+#pragma omp parallel for
           for (int i=0; i<count; i++) {
-            double re = data[i*2], im = data[i*2+1];
-            (*psi)[i*2] = sqrt(re*re + im*im);
-            (*psi)[i*2+1] = atan2(im, re);
+            const double R = data[i*2], I = data[i*2+1];
+            (*rho)[i] = sqrt(R*R + I*I);
+            (*phi)[i] = atan2(I, R);
+            (*re)[i] = R;
+            (*im)[i] = I;
           }
         } else { // rho^2, phi
+#pragma omp parallel for
           for (int i=0; i<count; i++) {
-            (*psi)[i*2] = sqrt(data[i*2]);
-            (*psi)[i*2+1] = data[i*2+1];
+            const double Rho = sqrt(data[i*2]), Phi = data[i*2+1];
+            (*rho)[i] = Rho; 
+            (*phi)[i] = Phi;
+            (*re)[i] = Rho * cos(Phi);
+            (*im)[i] = Rho * sin(Phi);
           }
         }
       } else if (type == BDAT_DOUBLE) {
@@ -157,7 +166,7 @@ bool GLGPU_IO_Helper_ReadBDAT(
 bool GLGPU_IO_Helper_ReadLegacy(
     const std::string& filename, 
     GLHeader& h,
-    double **psi, 
+    double **rho, double **phi, double **re, double **im, 
     bool header_only)
 {
   FILE *fp = fopen(filename.c_str(), "rb");
@@ -267,8 +276,10 @@ bool GLGPU_IO_Helper_ReadLegacy(
   int offset = ftell(fp);
 
   // mem allocation 
-  // *psi = (double*)realloc(*psi, sizeof(double)*count*2);
-  *psi = (double*)malloc(sizeof(double)*count*2);
+  *rho = (double*)malloc(sizeof(double)*count);
+  *phi = (double*)malloc(sizeof(double)*count);
+  *re = (double*)malloc(sizeof(double)*count);
+  *im = (double*)malloc(sizeof(double)*count);
 
   if (datatype == GLGPU_TYPE_FLOAT) {
     // raw data
@@ -276,67 +287,28 @@ bool GLGPU_IO_Helper_ReadLegacy(
     fread(buf, sizeof(float), count*2, fp);
     
     if (optype == 0) { // re, im
+#pragma omp parallel for
       for (int i=0; i<count; i++) {
-        float re = buf[i*2], im = buf[i*2+1]; 
-        (*psi)[i*2] = sqrt(re*re + im*im);
-        (*psi)[i*2+1] = atan2(im, re);
+        const double R = buf[i*2], I = buf[i*2+1]; 
+        (*rho)[i] = sqrt(R*R + I*I);
+        (*phi)[i] = atan2(I, R);
+        (*re)[i] = R;
+        (*im)[i] = I;
       }
     } else { // rho, phi
+#pragma omp parallel for
       for (int i=0; i<count; i++) {
-        (*psi)[i*2] = buf[i*2]; 
-        (*psi)[i*2+1] = buf[i*2+1];
+        const double Rho = buf[i*2], Phi = buf[i*2+1];
+        (*rho)[i] = Rho; 
+        (*phi)[i] = Phi;
+        (*re)[i] = Rho * cos(Phi);
+        (*im)[i] = Rho * sin(Phi);
       }
     }
 
     free(buf);
   } else if (datatype == GLGPU_TYPE_DOUBLE) {
     assert(false);
-    // The following lines are copied from legacy code. To be reorganized later
-#if 0
-    // raw data
-    double *buf = (double*)malloc(sizeof(double)*count*2); // complex
-    fread(buf, sizeof(double), count, fp);
-
-    // separation of ch1 and ch2
-    double *ct1 = (double*)malloc(sizeof(double)*count), 
-           *ct2 = (double*)malloc(sizeof(double)*count);
-    for (int i=0; i<count; i++) {
-      ct1[i] = buf[i*2]; 
-      ct2[i] = buf[i*2+1];
-    }
-    free(buf); 
-
-    // transpose
-    double *ch1 = (double*)malloc(sizeof(double)*count), 
-           *ch2 = (double*)malloc(sizeof(double)*count);
-    int dims1[] = {_dims[2], _dims[1], _dims[0]}; 
-    for (int i=0; i<_dims[0]; i++) 
-      for (int j=0; j<_dims[1]; j++) 
-        for (int k=0; k<_dims[2]; k++) {
-          texel3D(ch1, _dims, i, j, k) = texel3D(ct1, dims1, k, j, i);
-          texel3D(ch2, _dims, i, j, k) = texel3D(ct2, dims1, k, j, i); 
-        }
-
-    if (optype == 0) {
-      _re = ch1; 
-      _im = ch2;
-      _rho = (double*)malloc(sizeof(double)*count);
-      _phi = (double*)malloc(sizeof(double)*count); 
-      for (int i=0; i<count; i++) {
-        _rho[i] = sqrt(_re[i]*_re[i] + _im[i]*_im[i]);
-        _phi[i] = atan2(_im[i], _re[i]); 
-      }
-    } else if (optype == 1) {
-      _rho = ch1; 
-      _phi = ch2;
-      _re = (double*)malloc(sizeof(double)*count); 
-      _im = (double*)malloc(sizeof(double)*count); 
-      for (int i=0; i<count; i++) {
-        _re[i] = _rho[i] * cos(_phi[i]); 
-        _im[i] = _rho[i] * sin(_phi[i]); 
-      }
-    } else assert(false);
-#endif
   }
 
   fclose(fp);

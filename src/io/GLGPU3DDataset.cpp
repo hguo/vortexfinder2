@@ -13,14 +13,9 @@
 GLGPU3DDataset::GLGPU3DDataset() :
   _mesh_type(GLGPU3D_MESH_HEX)
 {
-  Reset();
 }
 
 GLGPU3DDataset::~GLGPU3DDataset()
-{
-}
-
-void GLGPU3DDataset::Reset()
 {
 }
 
@@ -112,9 +107,9 @@ std::vector<ElemIdType> GLGPU3DDataset::GetNeighborIds(ElemIdType elem_id) const
 }
 #endif
 
-#if 0
-void GLGPU3DDataset::ComputeSupercurrentField()
+void GLGPU3DDataset::ComputeSupercurrentField(int slot)
 {
+#if 0
   const int nvoxels = dims()[0]*dims()[1]*dims()[2];
 
   if (_Jx != NULL) free(_Jx);
@@ -170,8 +165,9 @@ void GLGPU3DDataset::ComputeSupercurrentField()
       }
     }
   }
-}
 #endif
+}
+
 
 bool GLGPU3DDataset::Psi(const double X[3], double &re, double &im) const
 {
@@ -179,6 +175,7 @@ bool GLGPU3DDataset::Psi(const double X[3], double &re, double &im) const
   return false;
 }
 
+#if 0
 bool GLGPU3DDataset::Supercurrent(const double X[3], double J[3]) const
 {
   static const int st[3] = {0};
@@ -194,6 +191,7 @@ bool GLGPU3DDataset::Supercurrent(const double X[3], double J[3]) const
     return false;
   else return true;
 }
+#endif
 
 CellIdType GLGPU3DDataset::Pos2CellId(const double X[]) const
 {

@@ -13,6 +13,8 @@ public:
 
   void BuildMeshGraph();
 
+  void ComputeSupercurrentField(int slot) {}
+
 public:
   int Dimensions() const {return 2;}
 

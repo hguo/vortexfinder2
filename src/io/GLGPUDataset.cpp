@@ -9,16 +9,33 @@
 #include <fstream>
 #include <glob.h>
 
-GLGPUDataset::GLGPUDataset() :
-  _Jx(NULL), _Jy(NULL), _Jz(NULL)
+template <typename T>
+void free1(T *p)
 {
-  _psi[0] = _psi[1] = NULL;
+  if (p != NULL) {
+    free(p);
+    p = NULL;
+  }
+}
+
+GLGPUDataset::GLGPUDataset()
+{
+  memset(_rho, 0, sizeof(double*)*2);
+  memset(_phi, 0, sizeof(double*)*2);
+  memset(_re, 0, sizeof(double*)*2);
+  memset(_im, 0, sizeof(double*)*2);
+  memset(_J, 0, sizeof(double*)*2);
 }
 
 GLGPUDataset::~GLGPUDataset()
 {
-  if (_psi[0] != NULL) free(_psi[0]); 
-  if (_psi[1] != NULL) free(_psi[1]);
+  for (int i=0; i<2; i++) {
+    free1(_rho[i]);
+    free1(_phi[i]);
+    free1(_re[i]);
+    free1(_im[i]);
+    free1(_J[i]);
+  }
 }
 
 void GLGPUDataset::PrintInfo(int slot) const
@@ -135,15 +152,21 @@ void GLGPUDataset::LoadTimeStep(int timestep, int slot)
   SetTimeStep(timestep, slot);
 }
 
-bool GLGPUDataset::BuildDataFromArray(const GLHeader& h, const double *psi)
+bool GLGPUDataset::BuildDataFromArray(const GLHeader& h, const double *rho, const double *phi, const double *re, const double *im)
 {
   memcpy(&_h[0], &h, sizeof(GLHeader));
 
   const int count = h.dims[0]*h.dims[1]*h.dims[2];
   // _psi[0] = (double*)realloc(_psi[0], sizeof(double)*count*2);
-  _psi[0] = (double*)malloc(sizeof(double)*count*2);
+  _rho[0] = (double*)malloc(sizeof(double)*count); 
+  _phi[0] = (double*)malloc(sizeof(double)*count); 
+  _re[0] = (double*)malloc(sizeof(double)*count); 
+  _im[0] = (double*)malloc(sizeof(double)*count); 
 
-  memcpy(_psi[0], psi, sizeof(double)*count*2);
+  memcpy(_rho[0], rho, sizeof(double));
+  memcpy(_phi[0], phi, sizeof(double));
+  memcpy(_re[0], re, sizeof(double));
+  memcpy(_im[0], im, sizeof(double));
   
   return true;
 }
@@ -174,7 +197,10 @@ void GLGPUDataset::ModulateKex(int slot)
 
 void GLGPUDataset::RotateTimeSteps()
 {
-  std::swap(_psi[0], _psi[1]);
+  std::swap(_rho[0], _rho[1]);
+  std::swap(_phi[0], _phi[1]);
+  std::swap(_re[0], _re[1]);
+  std::swap(_im[0], _im[1]);
 
   GLDataset::RotateTimeSteps();
 }
@@ -183,14 +209,14 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string& filename, int slot)
 {
   int ndims;
   _h[slot].dtype = DTYPE_CA02;
-  
-  if (_psi[slot] != NULL) {
-    free(_psi[slot]);
-    _psi[slot] = NULL;
-  }
+
+  free1(_rho[slot]); 
+  free1(_phi[slot]); 
+  free1(_re[slot]); 
+  free1(_im[slot]); 
 
   if (!::GLGPU_IO_Helper_ReadLegacy(
-        filename, _h[slot], &_psi[slot]))
+        filename, _h[slot], &_rho[slot], &_phi[slot], &_re[slot], &_im[slot]))
     return false;
   else 
     return true;
@@ -200,14 +226,14 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
 {
   int ndims;
   _h[slot].dtype = DTYPE_BDAT;
-
-  if (_psi[slot] != NULL) {
-    free(_psi[slot]);
-    _psi[slot] = NULL;
-  }
+  
+  free1(_rho[slot]); 
+  free1(_phi[slot]); 
+  free1(_re[slot]); 
+  free1(_im[slot]); 
 
   if (!::GLGPU_IO_Helper_ReadBDAT(
-        filename, _h[slot], &_psi[slot]))
+        filename, _h[slot], &_rho[slot], &_phi[slot], &_re[slot], &_im[slot]))
     return false;
   else 
     return true;

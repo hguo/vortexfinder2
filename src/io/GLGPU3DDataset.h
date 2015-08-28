@@ -15,6 +15,8 @@ class GLGPU3DDataset : public GLGPUDataset
 public: 
   GLGPU3DDataset(); 
   ~GLGPU3DDataset();
+  
+  void ComputeSupercurrentField(int slot);
 
 public: // mesh graph
   void SetMeshType(int); // hex or tet
@@ -39,10 +41,6 @@ public: // data access
 
   // Supercurrent field
   bool Supercurrent(const double X[3], double J[3]) const;
-
-protected:
-  void Reset();
-  void ComputeSupercurrentField();
 
 private:
   bool _mesh_type;
