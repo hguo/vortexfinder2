@@ -2,6 +2,7 @@
 #include "MeshGraph.pb.h"
 #include <google/protobuf/io/coded_stream.h> // for parsing large message
 #include <cassert>
+#include <cstdio>
 
 #ifdef WITH_CXX11
 using std::make_tuple;

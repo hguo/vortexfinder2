@@ -61,7 +61,7 @@ std::string VortexTransition::NodeToString(int i, int j) const
 void VortexTransition::SaveToDotFile(const std::string& filename) const
 {
   using namespace std;
-  ofstream ofs(filename);
+  ofstream ofs(filename.c_str());
   if (!ofs.is_open()) return;
 
   ofs << "digraph {" << endl;

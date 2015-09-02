@@ -1,6 +1,7 @@
 #include "def.h"
 #include "common/DataInfo.pb.h"
 #include "common/VortexTransition.h"
+#include <cstdio>
 
 int main(int argc, char **argv)
 {

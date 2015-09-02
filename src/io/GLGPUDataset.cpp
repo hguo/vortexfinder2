@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cmath>
 #include <climits>
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <glob.h>
@@ -75,7 +76,7 @@ void GLGPUDataset::SerializeDataInfoToString(std::string& buf) const
 bool GLGPUDataset::OpenDataFile(const std::string &filename)
 {
   std::ifstream ifs;
-  ifs.open(filename, std::ifstream::in);
+  ifs.open(filename.c_str(), std::ifstream::in);
   if (!ifs.is_open()) return false;
 
   char fname[1024];
