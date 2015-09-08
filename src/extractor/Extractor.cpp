@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <set>
 #include <climits>
+#include <cstdio>
 #include <cstdlib>
 #include <cassert>
 #include <cstring>

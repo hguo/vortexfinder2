@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <cfloat>
+#include <cstdio>
 
 static std::vector<double> timesteps;
 static std::vector<std::string> filenames;

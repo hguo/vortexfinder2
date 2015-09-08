@@ -1,5 +1,6 @@
 #include "FieldLine.h"
 #include "FieldLine.pb.h"
+#include <cstdio>
 
 FieldLine::FieldLine()
 {

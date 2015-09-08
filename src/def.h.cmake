@@ -10,6 +10,9 @@
 #cmakedefine WITH_PARAVIEW 1
 #cmakedefine WITH_CXX11 1
 
+// needed for malloc
+#include <cstdlib>
+
 // define ElemIdType
 #if WITH_LIBMESH
 #include <libmesh/id_types.h>

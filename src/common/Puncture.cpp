@@ -1,5 +1,6 @@
 #include "Puncture.h"
 #include "common/Puncture.pb.h"
+#include <cstdio>
 
 bool SerializePuncturedFaces(const std::map<FaceIdType, PuncturedFace> m, std::string &buf)
 {
