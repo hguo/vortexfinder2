@@ -43,7 +43,8 @@ int main(int argc, char **argv)
     }
     else {
       double dist = Dist(dataname, frame, lvid0, lvid1);
-      fprintf(stderr, "frame=%d, dist=%f\n", frame, dist);
+      // fprintf(stderr, "frame=%d, dist=%f\n", frame, dist);
+      fprintf(stderr, "%d, %f\n", frame, dist);
     }
   }
 

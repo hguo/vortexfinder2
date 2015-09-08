@@ -144,6 +144,7 @@ bool SerializeVortexLines(const std::vector<VortexLine>& lines, const std::strin
       pline->add_vertices( lines[i][j] );
     pline->set_id( lines[i].id );
     pline->set_timestep( lines[i].timestep );
+    pline->set_time( lines[i].time );
     pline->set_bezier( lines[i].is_bezier );
   }
   if (info.length()>0) {
@@ -163,6 +164,7 @@ bool UnserializeVortexLines(std::vector<VortexLine>& lines, std::string& info, c
       line.push_back(plines.lines(i).vertices(j));
     line.id = plines.lines(i).id();
     line.timestep = plines.lines(i).timestep();
+    line.time = plines.lines(i).time();
     line.is_bezier = plines.lines(i).bezier();
     lines.push_back(line);
   }
