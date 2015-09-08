@@ -581,6 +581,7 @@ void VortexExtractor::VortexObjectsToVortexLines(
     line.id = vobj.id;
     line.gid = vobj.gid;
     line.timestep = vobj.timestep;
+    // line.time = vobj.time; // FIXME
     
     for (int j=0; j<vobj.traces.size(); j++) {
       const std::list<FaceIdType> &trace = vobj.traces[j];
