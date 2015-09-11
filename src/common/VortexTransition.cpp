@@ -409,3 +409,13 @@ void VortexTransition::SequenceGraphColoring()
   free(M);
   free(cids);
 }
+
+int VortexTransition::NVortices(int frame)
+{
+  std::map<int, int>::iterator it = _nvortices_per_frame.find(frame);
+
+  if (it != _nvortices_per_frame.end())
+    return it->second;
+  else 
+    return 0;
+}
