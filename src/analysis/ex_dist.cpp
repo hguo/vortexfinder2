@@ -15,7 +15,7 @@ static std::vector<std::string> filenames;
 static bool LoadTimesteps(const std::string& dataname)
 {
   std::ifstream ifs; 
-  ifs.open(dataname, std::ifstream::in); 
+  ifs.open(dataname.c_str(), std::ifstream::in); 
   if (!ifs.is_open()) return false;
   
   filenames.clear();

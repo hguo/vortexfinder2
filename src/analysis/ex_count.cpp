@@ -15,7 +15,7 @@ static std::vector<double> Bz;
 static bool LoadTimesteps(const std::string& dataname)
 {
   std::ifstream ifs; 
-  ifs.open(dataname, std::ifstream::in); 
+  ifs.open(dataname.c_str(), std::ifstream::in); 
   if (!ifs.is_open()) return false;
   
   filenames.clear();
@@ -42,7 +42,7 @@ static bool LoadTimesteps(const std::string& dataname)
     }
 
     timesteps.push_back(h.time);
-    timesteps.push_back(h.B[2]);
+    Bz.push_back(h.B[2]);
   }
 
   ifs.close();
@@ -50,7 +50,7 @@ static bool LoadTimesteps(const std::string& dataname)
 
 int main(int argc, char **argv)
 {
-  if (argc < 8) {
+  if (argc < 4) {
     fprintf(stderr, "Usage: %s <dataname> <ts> <tl>\n", argv[0]);
     return EXIT_FAILURE;
   }
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
   // vt.PrintSequence();
 
   for (int frame=ts; frame<ts+tl; frame++) {
-      fprintf(stderr, "%d, %f, %f\n", frame, timesteps[frame], Bz[frame]);
+      fprintf(stderr, "%d, %f, %f, %d\n", frame, timesteps[frame], Bz[frame], vt.NVortices(frame));
   }
 
   return 0;
