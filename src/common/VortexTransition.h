@@ -32,6 +32,7 @@ public:
   int gvid2lvid(int frame, int gvid) const;
 
   int MaxNVorticesPerFrame() const {return _max_nvortices_per_frame;}
+  int NVortices(int frame) const {return _nvortices_per_frame[frame];}
 
   const std::vector<struct VortexSequence> Sequences() const {return _seqs;}
   void RandomColorSchemes();
