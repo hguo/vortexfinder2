@@ -11,11 +11,11 @@
 #include <glob.h>
 
 template <typename T>
-void free1(T *p)
+void free1(T **p)
 {
-  if (p != NULL) {
-    free(p);
-    p = NULL;
+  if (*p != NULL) {
+    free(*p);
+    *p = NULL;
   }
 }
 
@@ -31,11 +31,11 @@ GLGPUDataset::GLGPUDataset()
 GLGPUDataset::~GLGPUDataset()
 {
   for (int i=0; i<2; i++) {
-    free1(_rho[i]);
-    free1(_phi[i]);
-    free1(_re[i]);
-    free1(_im[i]);
-    free1(_J[i]);
+    free1(&_rho[i]);
+    free1(&_phi[i]);
+    free1(&_re[i]);
+    free1(&_im[i]);
+    free1(&_J[i]);
   }
 }
 
@@ -211,10 +211,10 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string& filename, int slot)
   int ndims;
   _h[slot].dtype = DTYPE_CA02;
 
-  free1(_rho[slot]); 
-  free1(_phi[slot]); 
-  free1(_re[slot]); 
-  free1(_im[slot]); 
+  free1(&_rho[slot]); 
+  free1(&_phi[slot]); 
+  free1(&_re[slot]); 
+  free1(&_im[slot]); 
 
   if (!::GLGPU_IO_Helper_ReadLegacy(
         filename, _h[slot], &_rho[slot], &_phi[slot], &_re[slot], &_im[slot]))
@@ -228,10 +228,10 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
   int ndims;
   _h[slot].dtype = DTYPE_BDAT;
   
-  free1(_rho[slot]); 
-  free1(_phi[slot]); 
-  free1(_re[slot]); 
-  free1(_im[slot]); 
+  free1(&_rho[slot]); 
+  free1(&_phi[slot]); 
+  free1(&_re[slot]); 
+  free1(&_im[slot]); 
 
   if (!::GLGPU_IO_Helper_ReadBDAT(
         filename, _h[slot], &_rho[slot], &_phi[slot], &_re[slot], &_im[slot]))
