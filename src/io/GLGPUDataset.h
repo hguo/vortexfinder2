@@ -59,6 +59,8 @@ public: // rectilinear grid
 
   inline double Rho(NodeIdType i, int slot=0) const {return _rho[slot][i];}
   inline double Phi(NodeIdType i, int slot=0) const {return _phi[slot][i];}
+  inline double Re(NodeIdType i, int slot=0) const {return _re[slot][i];}
+  inline double Im(NodeIdType i, int slot=0) const {return _im[slot][i];}
   
   bool Pos(NodeIdType, double X[3]) const;
   bool Supercurrent(const double X[3], double J[3], int slot=0) const;

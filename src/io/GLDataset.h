@@ -59,8 +59,8 @@ public: // properties
 
   virtual double Rho(NodeIdType i, int slot=0) const = 0;
   virtual double Phi(NodeIdType i, int slot=0) const = 0;
-  inline double Re(NodeIdType i, int slot=0) const {return Rho(i, slot) * cos(Phi(i, slot));}
-  inline double Im(NodeIdType i, int slot=0) const {return Rho(i, slot) * sin(Phi(i, slot));}
+  virtual double Re(NodeIdType i, int slot=0) const {return Rho(i, slot) * cos(Phi(i, slot));}
+  virtual double Im(NodeIdType i, int slot=0) const {return Rho(i, slot) * sin(Phi(i, slot));}
   
   inline void RhoPhi(NodeIdType i, double &rho, double &phi, int slot=0) const {rho = Rho(i, slot); phi = Phi(i, slot);}
   inline void ReIm(NodeIdType i, double &re, double &im, int slot=0) const {re = Re(i, slot); im = Im(i, slot);}
