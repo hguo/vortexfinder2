@@ -46,6 +46,7 @@ static bool LoadTimesteps(const std::string& dataname)
   }
 
   ifs.close();
+  return true;
 }
 
 int main(int argc, char **argv)

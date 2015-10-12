@@ -869,13 +869,13 @@ void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
   }
 }
 
-void VortexExtractor::ExtractFace(FaceIdType id, int slot)
+int VortexExtractor::ExtractFace(FaceIdType id, int slot)
 {
   const GLDataset *ds = (GLDataset*)_dataset;
   const CFace& f = ds->MeshGraph()->Face(id, true);
   const int nnodes = f.nodes.size();
 
-  if (!f.Valid()) return;
+  if (!f.Valid()) return 0;
 
   double X[nnodes][3], A[nnodes][3];
   double rho[nnodes], phi[nnodes];
@@ -898,7 +898,7 @@ void VortexExtractor::ExtractFace(FaceIdType id, int slot)
 
   // check if punctured
   double critera = phase_shift / (2*M_PI);
-  if (fabs(critera)<0.5) return; // not punctured
+  if (fabs(critera)<0.5) return 0; // not punctured
 
   // chirality
   ChiralityType chirality = critera>0 ? 1 : -1;
@@ -923,6 +923,8 @@ void VortexExtractor::ExtractFace(FaceIdType id, int slot)
     pos[0] = pos[1] = pos[2] = NAN;
     AddPuncturedFace(id, slot, chirality, pos);
   }
+
+  return chirality;
 }
 
 void *VortexExtractor::execute_thread_helper(void *ctx_)

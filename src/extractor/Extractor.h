@@ -35,6 +35,7 @@ public:
   const GLDataset* Dataset() const {return (GLDataset*)_dataset;}
 
   void ExtractFaces(int slot=0);
+  void ExtractFaces(std::vector<FaceIdType> faces, int slot=0);
   void ExtractEdges();
 
   bool SavePuncturedEdges() const;
@@ -55,8 +56,8 @@ public:
 
   void RotateTimeSteps();
 
-protected:
-  void ExtractFace(FaceIdType, int slot=0); // time=0 or 1
+public:
+  int ExtractFace(FaceIdType, int slot=0); // returns chirality
   void ExtractSpaceTimeEdge(EdgeIdType);
 
 protected:

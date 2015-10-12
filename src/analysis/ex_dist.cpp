@@ -46,6 +46,7 @@ static bool LoadTimesteps(const std::string& dataname)
   }
 
   ifs.close();
+  return true;
 }
 
 static double Dist(const std::string& dataname, int frame, int lvid0, int lvid1)
