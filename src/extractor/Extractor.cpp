@@ -814,8 +814,8 @@ void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
   }
 
   double X[4][3], A[4][3];
-  double rho[4], phi[4];
-  ds->GetSpaceTimeEdgeValues(e, X, A, rho, phi);
+  double rho[4], phi[4], re[4], im[4];
+  ds->GetSpaceTimeEdgeValues(e, X, A, rho, phi, re, im);
 
   const double dt = ds->Time(1) - ds->Time(0);
   double li[4] = {
@@ -848,7 +848,6 @@ void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
   else return;
 
   // gauge transformation
-  double re[4], im[4];
   if (_gauge) {
     for (int i=0; i<4; i++) {
       if (i!=0) phi[i] = phi[i-1] + delta[i-1];
@@ -878,8 +877,8 @@ int VortexExtractor::ExtractFace(FaceIdType id, int slot)
   if (!f.Valid()) return 0;
 
   double X[nnodes][3], A[nnodes][3];
-  double rho[nnodes], phi[nnodes];
-  ds->GetFaceValues(f, slot, X, A, rho, phi);
+  double rho[nnodes], phi[nnodes], re[nnodes], im[nnodes];
+  ds->GetFaceValues(f, slot, X, A, rho, phi, re, im);
 
   // calculating phase shift
   double delta[nnodes], phase_shift = 0;
@@ -904,7 +903,6 @@ int VortexExtractor::ExtractFace(FaceIdType id, int slot)
   ChiralityType chirality = critera>0 ? 1 : -1;
 
   // gauge transformation
-  double re[nnodes], im[nnodes]; 
   if (_gauge) {
     for (int i=0; i<nnodes; i++) {
       if (i!=0) phi[i] = phi[i-1] + delta[i-1];

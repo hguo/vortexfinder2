@@ -25,8 +25,8 @@ public: // mesh info
   virtual void BuildMeshGraph() = 0;
 
 public: // mesh utils
-  virtual void GetFaceValues(const CFace&, int timeslot, double X[][3], double A[][3], double rho[], double phi[]) const;
-  virtual void GetSpaceTimeEdgeValues(const CEdge&, double X[][3], double A[][3], double rho[], double phi[]) const;
+  virtual void GetFaceValues(const CFace&, int timeslot, double X[][3], double A[][3], double rho[], double phi[], double re[], double im[]) const;
+  virtual void GetSpaceTimeEdgeValues(const CEdge&, double X[][3], double A[][3], double rho[], double phi[], double re[], double im[]) const;
   
   virtual CellIdType Pos2CellId(const double X[]) const = 0; //!< returns the elemId for a given position
   // virtual bool OnBoundary(ElemIdType id) const = 0;
@@ -64,6 +64,7 @@ public: // properties
   
   inline void RhoPhi(NodeIdType i, double &rho, double &phi, int slot=0) const {rho = Rho(i, slot); phi = Phi(i, slot);}
   inline void ReIm(NodeIdType i, double &re, double &im, int slot=0) const {re = Re(i, slot); im = Im(i, slot);}
+  inline void RhoPhiReIm(NodeIdType i, double &rho, double &phi, double &re, double &im, int slot=0) const {rho = Rho(i, slot); phi = Phi(i, slot); re = Re(i, slot); im = Im(i, slot);}
   
   // Magnetic potential
   virtual bool A(const double X[3], double A[3], int slot=0) const = 0; //!< the vector potential at given position
