@@ -7,12 +7,18 @@
 #include "common/Utils.hpp"
 
 GLDataset::GLDataset() : 
-  _valid(false)
+  _valid(false),
+  _precompute_supercurrent(false)
 {
 }
 
 GLDataset::~GLDataset()
 {
+}
+
+void GLDataset::SetPrecomputeSupercurrent(bool b)
+{
+  _precompute_supercurrent = b;
 }
 
 void GLDataset::RotateTimeSteps()

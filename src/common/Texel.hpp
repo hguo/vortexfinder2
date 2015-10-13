@@ -14,6 +14,12 @@ template <typename T>
 T& texel3D(T* p, const int* sz, int x, int y, int z); 
 
 template <typename T>
+const T& texel3Dv(const T* p, const int* sz, int nv, int x, int y, int z, int v); 
+
+template <typename T>
+T& texel3Dv(T* p, const int* sz, int nv, int x, int y, int z, int v); 
+
+template <typename T>
 const T& texel4D(const T* p, const int* sz, int x, int y, int z, int t); 
 
 template <typename T>
@@ -44,6 +50,18 @@ template <typename T>
 T& texel3D(T* p, const int* sz, int x, int y, int z)
 {
   return p[x + sz[0]*(y + sz[1]*z)]; 
+}
+
+template <typename T>
+const T& texel3Dv(const T* p, const int* sz, int nv, int x, int y, int z, int v)
+{
+  return p[(x + sz[0]*(y + sz[1]*z))*nv + v]; 
+}
+
+template <typename T>
+T& texel3Dv(T* p, const int* sz, int nv, int x, int y, int z, int v)
+{
+  return p[(x + sz[0]*(y + sz[1]*z))*nv + v]; 
 }
 
 template <typename T>

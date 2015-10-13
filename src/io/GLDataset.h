@@ -14,6 +14,8 @@ public:
   virtual void PrintInfo(int slot=0) const = 0;
 
 public: // data I/O
+  void SetPrecomputeSupercurrent(bool);
+  
   virtual bool OpenDataFile(const std::string& filename); 
   virtual void LoadTimeStep(int timestep, int slot) = 0;
   virtual void CloseDataFile();
@@ -77,6 +79,7 @@ public: // properties
 protected:
   std::vector<double> _time_stamps; 
   bool _valid;
+  bool _precompute_supercurrent;
 }; 
 
 #endif

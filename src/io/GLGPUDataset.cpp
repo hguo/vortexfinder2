@@ -139,13 +139,9 @@ void GLGPUDataset::LoadTimeStep(int timestep, int slot)
   else if (OpenLegacyDataFile(filename, slot)) succ = true;
 
   if (!succ) return;
-#if 0 
-  for (int i=0; i<Dimensions(); i++) {
-    _origins[i] = -0.5*_lengths[i];
-    if (_pbc[i]) _cell_lengths[i] = _lengths[i] / _dims[i];  
-    else _cell_lengths[i] = _lengths[i] / (_dims[i]-1); 
-  }
-#endif
+
+  if (_precompute_supercurrent) 
+    ComputeSupercurrentField(slot);
 
   // ModulateKex(slot);
   fprintf(stderr, "loaded time step %d, %s\n", timestep, _filenames[timestep].c_str());
@@ -202,6 +198,7 @@ void GLGPUDataset::RotateTimeSteps()
   std::swap(_phi[0], _phi[1]);
   std::swap(_re[0], _re[1]);
   std::swap(_im[0], _im[1]);
+  std::swap(_J[0], _J[1]);
 
   GLDataset::RotateTimeSteps();
 }
@@ -214,7 +211,8 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string& filename, int slot)
   free1(&_rho[slot]); 
   free1(&_phi[slot]); 
   free1(&_re[slot]); 
-  free1(&_im[slot]); 
+  free1(&_im[slot]);
+  free1(&_J[slot]);
 
   if (!::GLGPU_IO_Helper_ReadLegacy(
         filename, _h[slot], &_rho[slot], &_phi[slot], &_re[slot], &_im[slot]))
@@ -232,6 +230,7 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
   free1(&_phi[slot]); 
   free1(&_re[slot]); 
   free1(&_im[slot]); 
+  free1(&_J[slot]);
 
   if (!::GLGPU_IO_Helper_ReadBDAT(
         filename, _h[slot], &_rho[slot], &_phi[slot], &_re[slot], &_im[slot]))
@@ -246,6 +245,34 @@ double Ax(const double X[3], int slot=0) const {if (By()>0) return -Kex(slot); e
 double Ay(const double X[3], int slot=0) const {if (By()>0) return X[0]*Bz(); else return 0;}
 double Az(const double X[3], int slot=0) const {if (By()>0) return -X[0]*By(); else return X[1]*Bx();}
 #endif
+
+double GLGPUDataset::Rho(int i, int j, int k, int slot) const
+{
+  int idx[3] = {i, j, k};
+  NodeIdType nid = Idx2Nid(idx);
+  return Rho(nid, slot);
+}
+
+double GLGPUDataset::Phi(int i, int j, int k, int slot) const
+{
+  int idx[3] = {i, j, k};
+  NodeIdType nid = Idx2Nid(idx);
+  return Phi(nid, slot);
+}
+
+double GLGPUDataset::Re(int i, int j, int k, int slot) const
+{
+  int idx[3] = {i, j, k};
+  NodeIdType nid = Idx2Nid(idx);
+  return Re(nid, slot);
+}
+
+double GLGPUDataset::Im(int i, int j, int k, int slot) const
+{
+  int idx[3] = {i, j, k};
+  NodeIdType nid = Idx2Nid(idx);
+  return Im(nid, slot);
+}
 
 bool GLGPUDataset::A(const double X[3], double A[3], int slot) const
 {

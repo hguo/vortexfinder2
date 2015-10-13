@@ -109,17 +109,16 @@ std::vector<ElemIdType> GLGPU3DDataset::GetNeighborIds(ElemIdType elem_id) const
 
 void GLGPU3DDataset::ComputeSupercurrentField(int slot)
 {
-#if 0
   const int nvoxels = dims()[0]*dims()[1]*dims()[2];
 
-  if (_Jx != NULL) free(_Jx);
-  _Jx = (double*)malloc(3*sizeof(double)*nvoxels);
-  _Jy = _Jx + nvoxels; 
-  _Jz = _Jy + nvoxels;
-  memset(_Jx, 0, 3*sizeof(double)*nvoxels);
+  if (_J[slot] != NULL) free(_J[slot]);
+  _J[slot] = (double*)malloc(3*sizeof(double)*nvoxels);
+
+  double *J = _J[slot];
+  memset(J, 0, 3*sizeof(double)*nvoxels);
  
   double u, v, rho2;
-  double du[3], dv[3], dphi[3], J[3];
+  double du[3], dv[3], A[3];
 
   // central difference
   for (int x=1; x<dims()[0]-1; x++) {
@@ -129,45 +128,27 @@ void GLGPU3DDataset::ComputeSupercurrentField(int slot)
         double pos[3]; 
         Idx2Pos(idx, pos);
 
-#if 1 // gradient estimation by \grad\psi or \grad\theta
-        du[0] = 0.5 * (Re(x+1, y, z) - Re(x-1, y, z)) / dx();
-        du[1] = 0.5 * (Re(x, y+1, z) - Re(x, y-1, z)) / dy();
-        du[2] = 0.5 * (Re(x, y, z+1) - Re(x, y, z-1)) / dz();
+        du[0] = 0.5 * (Re(x+1, y, z, slot) - Re(x-1, y, z, slot)) / dx();
+        du[1] = 0.5 * (Re(x, y+1, z, slot) - Re(x, y-1, z, slot)) / dy();
+        du[2] = 0.5 * (Re(x, y, z+1, slot) - Re(x, y, z-1, slot)) / dz();
         
-        dv[0] = 0.5 * (Im(x+1, y, z) - Im(x-1, y, z)) / dx();
-        dv[1] = 0.5 * (Im(x, y+1, z) - Im(x, y-1, z)) / dy();
-        dv[2] = 0.5 * (Im(x, y, z+1) - Im(x, y, z-1)) / dz();
+        dv[0] = 0.5 * (Im(x+1, y, z, slot) - Im(x-1, y, z, slot)) / dx();
+        dv[1] = 0.5 * (Im(x, y+1, z, slot) - Im(x, y-1, z, slot)) / dy();
+        dv[2] = 0.5 * (Im(x, y, z+1, slot) - Im(x, y, z-1, slot)) / dz();
 
-        u = Re(x, y, z); 
-        v = Im(x, y, z);
+        this->A(pos, A, slot);
+
+        u = Re(x, y, z, slot); 
+        v = Im(x, y, z, slot);
         rho2 = u*u + v*v;
 
-        J[0] = (u*dv[0] - v*du[0]) / rho2 - Ax(pos); // + Kex();
-        J[1] = (u*dv[1] - v*du[1]) / rho2 - Ay(pos);
-        J[2] = (u*dv[2] - v*du[2]) / rho2 - Az(pos);
-// #else
-        dphi[0] = 0.5 * (mod2pi(Phi(x+1, y, z) - Phi(x-1, y, z) + M_PI) - M_PI) / dx();
-        dphi[1] = 0.5 * (mod2pi(Phi(x, y+1, z) - Phi(x, y-1, z) + M_PI) - M_PI) / dy();
-        dphi[2] = 0.5 * (mod2pi(Phi(x, y, z+1) - Phi(x, y, z-1) + M_PI) - M_PI) / dz();
-
-        fprintf(stderr, "J={%f, %f, %f}, ", J[0], J[1], J[2]);
-
-        J[0] = dphi[0] - Ax(pos);
-        J[1] = dphi[1] - Ay(pos);
-        J[2] = dphi[2] - Az(pos);
-        
-        fprintf(stderr, "J'={%f, %f, %f}\n", J[0], J[1], J[2]);
-#endif
-
-        texel3D(_Jx, dims(), x, y, z) = J[0]; 
-        texel3D(_Jy, dims(), x, y, z) = J[1];
-        texel3D(_Jz, dims(), x, y, z) = J[2];
+        texel3Dv(J, dims(), 3, x, y, z, 0) = (u*dv[0] - v*du[0]) / rho2 - A[0]; // + Kex(); 
+        texel3Dv(J, dims(), 3, x, y, z, 1) = (u*dv[1] - v*du[1]) / rho2 - A[1];
+        texel3Dv(J, dims(), 3, x, y, z, 2) = (u*dv[2] - v*du[2]) / rho2 - A[2];
       }
     }
   }
-#endif
 }
-
 
 bool GLGPU3DDataset::Psi(const double X[3], double &re, double &im) const
 {

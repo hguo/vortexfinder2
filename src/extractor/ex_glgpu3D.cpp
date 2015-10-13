@@ -90,6 +90,7 @@ int main(int argc, char **argv)
 
   GLGPU3DDataset ds;
   ds.OpenDataFile(filename_in);
+  // ds.SetPrecomputeSupercurrent(true);
   ds.LoadTimeStep(T0, 0);
   if (tet) ds.SetMeshType(GLGPU3D_MESH_TET);
   else ds.SetMeshType(GLGPU3D_MESH_HEX);
