@@ -11,7 +11,7 @@
 #include "vtkStreamingDemandDrivenPipeline.h"
 #include "vtkBDATReader.h"
 #include "io/GLGPU_IO_Helper.h"
-#include "io/GLGPUDataset.h"
+#include "io/GLGPU3DDataset.h"
 
 vtkStandardNewMacro(vtkBDATReader);
 
@@ -61,7 +61,7 @@ int vtkBDATReader::RequestData(
     vtkInformationVector**, 
     vtkInformationVector* outVec)
 {
-  GLGPUDataset *ds;
+  GLGPU3DDataset *ds = new GLGPU3DDataset;
   bool succ; 
 
   ds->OpenDataFileByPattern(FileName);
