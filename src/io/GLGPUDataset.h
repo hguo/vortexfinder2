@@ -24,6 +24,7 @@ public:
  
   bool BuildDataFromArray(const GLHeader&, const double *rho, const double *phi, const double *re, const double *im);
   void GetDataArray(GLHeader& h, double **rho, double **phi, double **re, double **im, double **J);
+  double *GetSupercurrentDataArray() const;
   
 private:
   bool OpenBDATDataFile(const std::string& filename, int slot=0);

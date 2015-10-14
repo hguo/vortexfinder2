@@ -65,7 +65,7 @@ int vtkBDATReader::RequestData(
   bool succ; 
 
   ds->OpenDataFileByPattern(FileName);
-  ds->SetPrecomputeSupercurrent(true);
+  // ds->SetPrecomputeSupercurrent(true);
   succ = ds->LoadTimeStep(0, 0);
 
   if (!succ) {
@@ -112,17 +112,19 @@ int vtkBDATReader::RequestData(
   dataArrayIm->SetName("im");
   memcpy(dataArrayIm->GetVoidPointer(0), im, sizeof(double)*arraySize);
 
+#if 0
   dataArrayJ.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
   dataArrayJ->SetNumberOfComponents(3);
   dataArrayJ->SetNumberOfTuples(arraySize);
   dataArrayJ->SetName("J");
   memcpy(dataArrayJ->GetVoidPointer(0), J, sizeof(double)*arraySize*3);
+#endif
 
   imageData->GetPointData()->AddArray(dataArrayRho);
   imageData->GetPointData()->AddArray(dataArrayPhi);
   imageData->GetPointData()->AddArray(dataArrayRe);
   imageData->GetPointData()->AddArray(dataArrayIm);
-  imageData->GetPointData()->AddArray(dataArrayJ);
+  // imageData->GetPointData()->AddArray(dataArrayJ);
 
   // global attributes
   vtkSmartPointer<vtkDataArray> dataArrayB, dataArrayPBC, dataArrayJxext, dataArrayKx, dataArrayV;
