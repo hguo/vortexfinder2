@@ -70,11 +70,11 @@ int vtkBDATSeriesReader::RequestInformation(
     bool succ = false;
     if (!succ) {
       succ = GLGPU_IO_Helper_ReadBDAT(
-          FileNames[fidx], h, NULL, true);
+          FileNames[fidx], h, NULL, NULL, NULL, NULL, true);
     } 
     if (!succ) {
       succ = GLGPU_IO_Helper_ReadLegacy(
-          FileNames[fidx], h, NULL, true);
+          FileNames[fidx], h, NULL, NULL, NULL, NULL, true);
     }
     if (!succ) {
       fprintf(stderr, "cannot open file: %s\n", FileNames[fidx].c_str());
@@ -114,17 +114,17 @@ int vtkBDATSeriesReader::RequestData(
   fprintf(stderr, "uptime=%f, timestep=%d\n", upTime, upTimeStep);
 
   GLHeader h;
-  double *rho=NULL, *phi=NULL;
-  double *psi;
+  double *rho=NULL, *phi=NULL, *re=NULL, *im=NULL;
+  // FIXME
 
   bool succ = false;
   if (!succ) {
     succ = GLGPU_IO_Helper_ReadBDAT(
-        filename.c_str(), h, &psi);
+        filename.c_str(), h, &rho, &phi, &re, &im);
   }
   if (!succ) {
     succ = GLGPU_IO_Helper_ReadLegacy(
-        filename.c_str(), h, &psi);
+        filename.c_str(), h, &rho, &phi, &re, &im);
   }
   if (!succ)
   {
@@ -141,14 +141,6 @@ int vtkBDATSeriesReader::RequestData(
   // copy data
   const int arraySize = h.dims[0]*h.dims[1]*h.dims[2];
   vtkSmartPointer<vtkDataArray> dataArrayRe, dataArrayIm, dataArrayRho, dataArrayPhi;
-
-  rho = (double*)malloc(sizeof(double)*arraySize);
-  phi = (double*)malloc(sizeof(double)*arraySize);
-  for (int i=0; i<arraySize; i++) {
-    rho[i] = psi[i*2];
-    phi[i] = psi[i*2+1];
-  }
-  free(psi);
   
   dataArrayRho.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
   dataArrayRho->SetNumberOfComponents(1); 

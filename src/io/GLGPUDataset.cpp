@@ -128,7 +128,7 @@ void GLGPUDataset::CloseDataFile()
   _filenames.clear();
 }
 
-void GLGPUDataset::LoadTimeStep(int timestep, int slot)
+bool GLGPUDataset::LoadTimeStep(int timestep, int slot)
 {
   assert(timestep>=0 && timestep<=_filenames.size());
   bool succ = false;
@@ -138,7 +138,7 @@ void GLGPUDataset::LoadTimeStep(int timestep, int slot)
   if (OpenBDATDataFile(filename, slot)) succ = true; 
   else if (OpenLegacyDataFile(filename, slot)) succ = true;
 
-  if (!succ) return;
+  if (!succ) return false;
 
   if (_precompute_supercurrent) 
     ComputeSupercurrentField(slot);
@@ -147,6 +147,17 @@ void GLGPUDataset::LoadTimeStep(int timestep, int slot)
   fprintf(stderr, "loaded time step %d, %s\n", timestep, _filenames[timestep].c_str());
 
   SetTimeStep(timestep, slot);
+  return true;
+}
+
+void GLGPUDataset::GetDataArray(GLHeader& h, double **rho, double **phi, double **re, double **im, double **J)
+{
+  h = _h[0];
+  *rho = _rho[0];
+  *phi = _phi[0];
+  *re = _re[0]; 
+  *im = _im[0];
+  *J = _J[0];
 }
 
 bool GLGPUDataset::BuildDataFromArray(const GLHeader& h, const double *rho, const double *phi, const double *re, const double *im)

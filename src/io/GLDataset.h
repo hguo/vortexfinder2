@@ -17,7 +17,7 @@ public: // data I/O
   void SetPrecomputeSupercurrent(bool);
   
   virtual bool OpenDataFile(const std::string& filename); 
-  virtual void LoadTimeStep(int timestep, int slot) = 0;
+  virtual bool LoadTimeStep(int timestep, int slot) = 0;
   virtual void CloseDataFile();
   void RotateTimeSteps();
 

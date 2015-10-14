@@ -21,7 +21,7 @@ public:
 
 public: 
   bool OpenDataFile(const std::string& filename);
-  void LoadTimeStep(int timestep, int slot);
+  bool LoadTimeStep(int timestep, int slot);
   void CloseDataFile();
 
   void BuildMeshGraph();

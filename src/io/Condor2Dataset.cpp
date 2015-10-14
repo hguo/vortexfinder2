@@ -202,6 +202,8 @@ void Condor2Dataset::LoadTimeStep(int timestep, int slot)
 
     GLDatasetBase::RotateTimeSteps();
   }
+
+  return true; // FIXME
 }
 
 #if 0

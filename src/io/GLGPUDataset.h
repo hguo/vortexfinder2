@@ -14,7 +14,7 @@ public:
 public:
   bool OpenDataFile(const std::string& filename); // file list
   bool OpenDataFileByPattern(const std::string& pattern); 
-  void LoadTimeStep(int timestep, int slot=0);
+  bool LoadTimeStep(int timestep, int slot=0);
   void RotateTimeSteps();
   void CloseDataFile();
 
@@ -23,7 +23,8 @@ public:
   void PrintInfo(int slot=0) const;
  
   bool BuildDataFromArray(const GLHeader&, const double *rho, const double *phi, const double *re, const double *im);
-
+  void GetDataArray(GLHeader& h, double **rho, double **phi, double **re, double **im, double **J);
+  
 private:
   bool OpenBDATDataFile(const std::string& filename, int slot=0);
   bool OpenLegacyDataFile(const std::string& filename, int slot=0);
