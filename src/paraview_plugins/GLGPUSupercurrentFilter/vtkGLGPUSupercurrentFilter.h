@@ -15,11 +15,12 @@ protected:
   vtkGLGPUSupercurrentFilter();
   ~vtkGLGPUSupercurrentFilter();
 
-  int FillOutputPortInformation(int, vtkInformation *info)
   virtual int RequestData(vtkInformation*, vtkInformationVector**, vtkInformationVector*);
+  
+  int FillOutputPortInformation(int, vtkInformation *info);
 
 private:
-  int ComputerSupercurrent();
+  int ComputeSupercurrent(vtkImageData*, vtkImageData*);
 
 private:
   vtkGLGPUSupercurrentFilter(const vtkGLGPUSupercurrentFilter&);

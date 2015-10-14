@@ -2,6 +2,8 @@
 #include "vtkInformation.h"
 #include "vtkSmartPointer.h"
 #include "vtkImageData.h"
+#include "vtkPointData.h"
+#include "vtkDataArray.h"
 #include "vtkInformationVector.h"
 #include "vtkObjectFactory.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
@@ -34,10 +36,9 @@ int vtkGLGPUSupercurrentFilter::RequestData(
   vtkInformation *outInfo = outputVector->GetInformationObject(0);
 
   vtkImageData *input = vtkImageData::SafeDownCast(inInfo->Get(vtkDataObject::DATA_OBJECT()));
-  vtkPolyData *output = vtkPolyData::SafeDownCast(outInfo->Get(vtkDataObject::DATA_OBJECT()));
+  vtkImageData *output = vtkImageData::SafeDownCast(outInfo->Get(vtkDataObject::DATA_OBJECT()));
 
-  // return ExtractVorticies(input, output);
-  return 1;
+  return ComputeSupercurrent(input, output);
 }
 
 int vtkGLGPUSupercurrentFilter::ComputeSupercurrent(vtkImageData* inputData, vtkImageData* outputData)
@@ -89,14 +90,14 @@ int vtkGLGPUSupercurrentFilter::ComputeSupercurrent(vtkImageData* inputData, vtk
   // build data
   GLGPU3DDataset *ds = new GLGPU3DDataset;
   ds->BuildDataFromArray(h, rho, phi, re, im);
-  ds->ComputeSupercurrent();
+  ds->ComputeSupercurrentField();
   const double *J = ds->GetSupercurrentDataArray();
 
   vtkSmartPointer<vtkDataArray> dataArrayJ; 
   dataArrayJ.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
-  dataArrayJ.SetNumberOfComponents(3); 
-  dataArrayJ.SetNumberOfTuples(arraySize);
-  dataArrayJ.SetName("J");
+  dataArrayJ->SetNumberOfComponents(3); 
+  dataArrayJ->SetNumberOfTuples(arraySize);
+  dataArrayJ->SetName("J");
   memcpy(dataArrayJ->GetVoidPointer(0), J, sizeof(double)*arraySize);
 
   delete ds;
