@@ -85,9 +85,9 @@ bool FieldLineTracer::RK1(double *X, double h)
   double J[3]; 
   if (!Supercurrent(X, J)) return false;
 
-  X[0] = X[0] + 0.5*h*J[0]; 
-  X[1] = X[1] + 0.5*h*J[1]; 
-  X[2] = X[2] + 0.5*h*J[2];
+  X[0] = X[0] + h*J[0]; 
+  X[1] = X[1] + h*J[1]; 
+  X[2] = X[2] + h*J[2];
 
   return true; 
 }
