@@ -15,9 +15,8 @@ protected:
   vtkGLGPUSupercurrentFilter();
   ~vtkGLGPUSupercurrentFilter();
 
-  virtual int RequestData(vtkInformation*, vtkInformationVector**, vtkInformationVector*);
-  
-  int FillOutputPortInformation(int, vtkInformation *info);
+  int RequestUpdateExtent(vtkInformation*, vtkInformationVector**, vtkInformationVector*);
+  int RequestData(vtkInformation*, vtkInformationVector**, vtkInformationVector*);
 
 private:
   int ComputeSupercurrent(vtkImageData*, vtkImageData*);
