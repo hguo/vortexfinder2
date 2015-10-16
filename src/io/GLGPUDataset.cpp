@@ -176,10 +176,10 @@ bool GLGPUDataset::BuildDataFromArray(const GLHeader& h, const double *rho, cons
   _re[0] = (double*)malloc(sizeof(double)*count); 
   _im[0] = (double*)malloc(sizeof(double)*count); 
 
-  memcpy(_rho[0], rho, sizeof(double));
-  memcpy(_phi[0], phi, sizeof(double));
-  memcpy(_re[0], re, sizeof(double));
-  memcpy(_im[0], im, sizeof(double));
+  memcpy(_rho[0], rho, sizeof(double)*count);
+  memcpy(_phi[0], phi, sizeof(double)*count);
+  memcpy(_re[0], re, sizeof(double)*count);
+  memcpy(_im[0], im, sizeof(double)*count);
   
   return true;
 }

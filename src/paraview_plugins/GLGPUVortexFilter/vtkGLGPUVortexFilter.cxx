@@ -83,7 +83,7 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   h.V = dataArrayV->GetTuple1(0);
 
   // fprintf(stderr, "B={%f, %f, %f}, pbc={%d, %d, %d}, Jxext=%f, Kx=%f, V=%f\n", 
-  //     B[0], B[1], B[2], pbc[0], pbc[1], pbc[2], Jxext, Kx, V);
+  //     h.B[0], h.B[1], h.B[2], h.pbc[0], h.pbc[1], h.pbc[2], h.Jxext, h.Kex, h.V);
 
   const int count = h.dims[0]*h.dims[1]*h.dims[2];
   double *rho = (double*)dataArrayRho->GetVoidPointer(0), 

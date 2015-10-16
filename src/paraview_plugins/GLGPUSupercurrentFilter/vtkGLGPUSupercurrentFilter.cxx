@@ -88,8 +88,8 @@ int vtkGLGPUSupercurrentFilter::ComputeSupercurrent(vtkImageData* inputData, vtk
   h.Kex = dataArrayKx->GetTuple1(0);
   h.V = dataArrayV->GetTuple1(0);
 
-  fprintf(stderr, "B={%f, %f, %f}, pbc={%d, %d, %d}, Jxext=%f, Kx=%f, V=%f\n", 
-      h.B[0], h.B[1], h.B[2], h.pbc[0], h.pbc[1], h.pbc[2], h.Jxext, h.Kex, h.V);
+  // fprintf(stderr, "B={%f, %f, %f}, pbc={%d, %d, %d}, Jxext=%f, Kx=%f, V=%f\n", 
+  //     h.B[0], h.B[1], h.B[2], h.pbc[0], h.pbc[1], h.pbc[2], h.Jxext, h.Kex, h.V);
 
   const int arraySize = h.dims[0]*h.dims[1]*h.dims[2];
   double *rho = (double*)dataArrayRho->GetVoidPointer(0), 
@@ -108,7 +108,7 @@ int vtkGLGPUSupercurrentFilter::ComputeSupercurrent(vtkImageData* inputData, vtk
   dataArrayJ->SetNumberOfComponents(3); 
   dataArrayJ->SetNumberOfTuples(arraySize);
   dataArrayJ->SetName("J");
-  memcpy(dataArrayJ->GetVoidPointer(0), J, sizeof(double)*arraySize);
+  memcpy(dataArrayJ->GetVoidPointer(0), J, sizeof(double)*arraySize*3);
 
   outputData->SetDimensions(h.dims[0], h.dims[1], h.dims[2]);
   outputData->GetPointData()->AddArray(dataArrayJ);
