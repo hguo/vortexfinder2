@@ -113,7 +113,7 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   for (int i=0; i<vlines.size(); i++) {
     int vertCount = 0;
     const int nv = vlines[i].size()/3;
-    if (nv==0) continue;
+    // if (nv<2) continue;
     double p0[3];
     for (int j=0; j<nv; j++) {
       double p[3] = {vlines[i][j*3], vlines[i][j*3+1], vlines[i][j*3+2]};

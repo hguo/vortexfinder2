@@ -124,7 +124,7 @@ bool GLGPUDataset::OpenDataFileByPattern(const std::string &pattern)
   for (int i=0; i<results.gl_pathc; i++) 
     _filenames.push_back(results.gl_pathv[i]);
 
-  fprintf(stderr, "found %lu files\n", _filenames.size());
+  // fprintf(stderr, "found %lu files\n", _filenames.size());
   return _filenames.size()>0;
 }
 
@@ -149,7 +149,7 @@ bool GLGPUDataset::LoadTimeStep(int timestep, int slot)
     ComputeSupercurrentField(slot);
 
   // ModulateKex(slot);
-  fprintf(stderr, "loaded time step %d, %s\n", timestep, _filenames[timestep].c_str());
+  // fprintf(stderr, "loaded time step %d, %s\n", timestep, _filenames[timestep].c_str());
 
   SetTimeStep(timestep, slot);
   return true;

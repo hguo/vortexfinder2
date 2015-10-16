@@ -43,6 +43,7 @@ VortexExtractor::VortexExtractor() :
   _nthreads = boost::thread::hardware_concurrency();
 #endif
   if (_nthreads == 0) _nthreads = 1;
+  // fprintf(stderr, "nthreads=%d\n", _nthreads);
 }
 
 VortexExtractor::~VortexExtractor()
