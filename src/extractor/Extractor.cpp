@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <set>
 #include <climits>
+#include <cstdio>
 #include <cstdlib>
 #include <cassert>
 #include <cstring>
@@ -581,6 +582,7 @@ void VortexExtractor::VortexObjectsToVortexLines(
     line.id = vobj.id;
     line.gid = vobj.gid;
     line.timestep = vobj.timestep;
+    // line.time = vobj.time; // FIXME
     
     for (int j=0; j<vobj.traces.size(); j++) {
       const std::list<FaceIdType> &trace = vobj.traces[j];
@@ -812,8 +814,8 @@ void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
   }
 
   double X[4][3], A[4][3];
-  double rho[4], phi[4];
-  ds->GetSpaceTimeEdgeValues(e, X, A, rho, phi);
+  double rho[4], phi[4], re[4], im[4];
+  ds->GetSpaceTimeEdgeValues(e, X, A, rho, phi, re, im);
 
   const double dt = ds->Time(1) - ds->Time(0);
   double li[4] = {
@@ -846,7 +848,6 @@ void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
   else return;
 
   // gauge transformation
-  double re[4], im[4];
   if (_gauge) {
     for (int i=0; i<4; i++) {
       if (i!=0) phi[i] = phi[i-1] + delta[i-1];
@@ -867,17 +868,17 @@ void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
   }
 }
 
-void VortexExtractor::ExtractFace(FaceIdType id, int slot)
+int VortexExtractor::ExtractFace(FaceIdType id, int slot)
 {
   const GLDataset *ds = (GLDataset*)_dataset;
   const CFace& f = ds->MeshGraph()->Face(id, true);
   const int nnodes = f.nodes.size();
 
-  if (!f.Valid()) return;
+  if (!f.Valid()) return 0;
 
   double X[nnodes][3], A[nnodes][3];
-  double rho[nnodes], phi[nnodes];
-  ds->GetFaceValues(f, slot, X, A, rho, phi);
+  double rho[nnodes], phi[nnodes], re[nnodes], im[nnodes];
+  ds->GetFaceValues(f, slot, X, A, rho, phi, re, im);
 
   // calculating phase shift
   double delta[nnodes], phase_shift = 0;
@@ -896,13 +897,12 @@ void VortexExtractor::ExtractFace(FaceIdType id, int slot)
 
   // check if punctured
   double critera = phase_shift / (2*M_PI);
-  if (fabs(critera)<0.5) return; // not punctured
+  if (fabs(critera)<0.5) return 0; // not punctured
 
   // chirality
   ChiralityType chirality = critera>0 ? 1 : -1;
 
   // gauge transformation
-  double re[nnodes], im[nnodes]; 
   if (_gauge) {
     for (int i=0; i<nnodes; i++) {
       if (i!=0) phi[i] = phi[i-1] + delta[i-1];
@@ -921,6 +921,8 @@ void VortexExtractor::ExtractFace(FaceIdType id, int slot)
     pos[0] = pos[1] = pos[2] = NAN;
     AddPuncturedFace(id, slot, chirality, pos);
   }
+
+  return chirality;
 }
 
 void *VortexExtractor::execute_thread_helper(void *ctx_)

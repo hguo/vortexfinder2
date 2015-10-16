@@ -1,5 +1,6 @@
 #include "BDATReader.h"
 #include <cassert>
+#include <cstdio>
 #include <limits.h>
 
 static const char BDATTypeNames[] = {

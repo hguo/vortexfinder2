@@ -1,7 +1,11 @@
 #include "MeshGraph.h"
+#include <cassert>
+#include <cstdio>
+
+#if WITH_PROTOBUF
 #include "MeshGraph.pb.h"
 #include <google/protobuf/io/coded_stream.h> // for parsing large message
-#include <cassert>
+#endif
 
 #ifdef WITH_CXX11
 using std::make_tuple;
@@ -80,6 +84,7 @@ void MeshGraph::Clear()
 
 void MeshGraph::SerializeToString(std::string &str) const
 {
+#if WITH_PROTOBUF
   PBMeshGraph pmg;
 
   for (int i=0; i<edges.size(); i++) {
@@ -126,10 +131,12 @@ void MeshGraph::SerializeToString(std::string &str) const
   }
 
   pmg.SerializeToString(&str);
+#endif
 }
 
 bool MeshGraph::ParseFromString(const std::string& str)
 {
+#if WITH_PROTOBUF
   PBMeshGraph pmg;
 
   google::protobuf::io::CodedInputStream stream((uint8_t*)str.data(), str.size());
@@ -194,8 +201,10 @@ bool MeshGraph::ParseFromString(const std::string& str)
 
     cells.push_back(cell);
   }
-
   return true;
+#else
+  return false;
+#endif
 }
 
 void MeshGraph::SerializeToFile(const std::string& filename) const

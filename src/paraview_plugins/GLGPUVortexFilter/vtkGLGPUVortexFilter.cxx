@@ -48,12 +48,14 @@ int vtkGLGPUVortexFilter::RequestData(
 int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData* polyData)
 {
   // TODO: check compatability
-  vtkSmartPointer<vtkDataArray> dataArrayRho, dataArrayPhi;
+  vtkSmartPointer<vtkDataArray> dataArrayRho, dataArrayPhi, dataArrayRe, dataArrayIm;
   vtkSmartPointer<vtkDataArray> dataArrayB, dataArrayPBC, dataArrayJxext, dataArrayKx, dataArrayV;
   int index;
 
   dataArrayRho = imageData->GetPointData()->GetArray("rho", index);
   dataArrayPhi = imageData->GetPointData()->GetArray("phi", index);
+  dataArrayRe = imageData->GetPointData()->GetArray("re", index);
+  dataArrayIm = imageData->GetPointData()->GetArray("im", index);
   dataArrayB = imageData->GetFieldData()->GetArray("B", index);
   dataArrayPBC = imageData->GetFieldData()->GetArray("pbc", index);
   dataArrayJxext = imageData->GetFieldData()->GetArray("Jxext", index);
@@ -81,25 +83,20 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   h.V = dataArrayV->GetTuple1(0);
 
   // fprintf(stderr, "B={%f, %f, %f}, pbc={%d, %d, %d}, Jxext=%f, Kx=%f, V=%f\n", 
-  //     B[0], B[1], B[2], pbc[0], pbc[1], pbc[2], Jxext, Kx, V);
+  //     h.B[0], h.B[1], h.B[2], h.pbc[0], h.pbc[1], h.pbc[2], h.Jxext, h.Kex, h.V);
 
   const int count = h.dims[0]*h.dims[1]*h.dims[2];
-  double *psi = (double*)malloc(sizeof(double)*count*2);
   double *rho = (double*)dataArrayRho->GetVoidPointer(0), 
-         *phi = (double*)dataArrayPhi->GetVoidPointer(0);
-  
-  for (int i=0; i<count; i++) {
-    psi[i*2] = rho[i];
-    psi[i*2+1] = phi[i];
-  }
+         *phi = (double*)dataArrayPhi->GetVoidPointer(0), 
+         *re = (double*)dataArrayRe->GetVoidPointer(0), 
+         *im = (double*)dataArrayIm->GetVoidPointer(0);
 
   // build data
   GLGPU3DDataset *ds = new GLGPU3DDataset;
-  ds->BuildDataFromArray(h, psi);
+  ds->BuildDataFromArray(h, rho, phi, re, im); // FIXME
   // ds->SetMeshType(GLGPU3D_MESH_TET);
   ds->SetMeshType(GLGPU3D_MESH_HEX);
   ds->BuildMeshGraph();
-  free(psi);
 
   VortexExtractor *ex = new VortexExtractor;
   ex->SetDataset(ds);

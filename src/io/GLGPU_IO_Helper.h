@@ -6,14 +6,14 @@
 
 bool GLGPU_IO_Helper_ReadBDAT(
     const std::string& filename, 
-    GLHeader &hdr, 
-    double **psi, 
+    GLHeader &hdr,
+    double **rho, double **phi, double **re, double **im, 
     bool header_only=false);
 
 bool GLGPU_IO_Helper_ReadLegacy(
     const std::string& filename, 
     GLHeader &hdr, 
-    double **psi, 
+    double **rho, double **phi, double **re, double **im, 
     bool header_only=false);
 
 bool GLGPU_IO_Helper_ReadNetCDF(

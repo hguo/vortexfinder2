@@ -1,5 +1,11 @@
 #include "FieldLine.h"
+#include <cstdio>
+#include <cstring>
+#include <cassert>
+
+#if WITH_PROTOBUF
 #include "FieldLine.pb.h"
+#endif
 
 FieldLine::FieldLine()
 {
@@ -17,14 +23,17 @@ FieldLine::~FieldLine()
 
 void FieldLine::SerializeToString(std::string& buf) const
 {
+#if WITH_PROTOBUF
   PBFieldLine fobj; 
   for (int i=0; i<size(); i++) 
     fobj.add_vertices(at(i));
   fobj.SerializeToString(&buf);
+#endif
 }
 
 bool FieldLine::UnserializeFromString(const std::string& buf) 
 {
+#if WITH_PROTOBUF
   PBFieldLine fobj; 
   if (!fobj.ParseFromString(buf)) 
     return false; 
@@ -35,6 +44,9 @@ bool FieldLine::UnserializeFromString(const std::string& buf)
     push_back(fobj.vertices(i)); 
 
   return true;
+#else
+  return false;
+#endif
 }
 
 ////////////

@@ -1,24 +1,45 @@
 #include "GLGPUDataset.h"
 #include "GLGPU_IO_Helper.h"
 #include "common/Utils.hpp"
-#include "common/DataInfo.pb.h"
 #include <cassert>
 #include <cmath>
 #include <climits>
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <glob.h>
 
-GLGPUDataset::GLGPUDataset() :
-  _Jx(NULL), _Jy(NULL), _Jz(NULL)
+#if WITH_PROTOBUF
+#include "common/DataInfo.pb.h"
+#endif
+
+template <typename T>
+void free1(T **p)
 {
-  _psi[0] = _psi[1] = NULL;
+  if (*p != NULL) {
+    free(*p);
+    *p = NULL;
+  }
+}
+
+GLGPUDataset::GLGPUDataset()
+{
+  memset(_rho, 0, sizeof(double*)*2);
+  memset(_phi, 0, sizeof(double*)*2);
+  memset(_re, 0, sizeof(double*)*2);
+  memset(_im, 0, sizeof(double*)*2);
+  memset(_J, 0, sizeof(double*)*2);
 }
 
 GLGPUDataset::~GLGPUDataset()
 {
-  if (_psi[0] != NULL) free(_psi[0]); 
-  if (_psi[1] != NULL) free(_psi[1]);
+  for (int i=0; i<2; i++) {
+    free1(&_rho[i]);
+    free1(&_phi[i]);
+    free1(&_re[i]);
+    free1(&_im[i]);
+    free1(&_J[i]);
+  }
 }
 
 void GLGPUDataset::PrintInfo(int slot) const
@@ -41,6 +62,7 @@ void GLGPUDataset::PrintInfo(int slot) const
 
 void GLGPUDataset::SerializeDataInfoToString(std::string& buf) const
 {
+#if WITH_PROTOBUF
   PBDataInfo pb;
 
   pb.set_model(PBDataInfo::GLGPU);
@@ -70,12 +92,13 @@ void GLGPUDataset::SerializeDataInfoToString(std::string& buf) const
   pb.set_pbc_z(pbc()[0]);
 
   pb.SerializeToString(&buf);
+#endif
 }
 
 bool GLGPUDataset::OpenDataFile(const std::string &filename)
 {
   std::ifstream ifs;
-  ifs.open(filename, std::ifstream::in);
+  ifs.open(filename.c_str(), std::ifstream::in);
   if (!ifs.is_open()) return false;
 
   char fname[1024];
@@ -110,7 +133,7 @@ void GLGPUDataset::CloseDataFile()
   _filenames.clear();
 }
 
-void GLGPUDataset::LoadTimeStep(int timestep, int slot)
+bool GLGPUDataset::LoadTimeStep(int timestep, int slot)
 {
   assert(timestep>=0 && timestep<=_filenames.size());
   bool succ = false;
@@ -120,30 +143,43 @@ void GLGPUDataset::LoadTimeStep(int timestep, int slot)
   if (OpenBDATDataFile(filename, slot)) succ = true; 
   else if (OpenLegacyDataFile(filename, slot)) succ = true;
 
-  if (!succ) return;
-#if 0 
-  for (int i=0; i<Dimensions(); i++) {
-    _origins[i] = -0.5*_lengths[i];
-    if (_pbc[i]) _cell_lengths[i] = _lengths[i] / _dims[i];  
-    else _cell_lengths[i] = _lengths[i] / (_dims[i]-1); 
-  }
-#endif
+  if (!succ) return false;
+
+  if (_precompute_supercurrent) 
+    ComputeSupercurrentField(slot);
 
   // ModulateKex(slot);
   fprintf(stderr, "loaded time step %d, %s\n", timestep, _filenames[timestep].c_str());
 
   SetTimeStep(timestep, slot);
+  return true;
 }
 
-bool GLGPUDataset::BuildDataFromArray(const GLHeader& h, const double *psi)
+void GLGPUDataset::GetDataArray(GLHeader& h, double **rho, double **phi, double **re, double **im, double **J)
+{
+  h = _h[0];
+  *rho = _rho[0];
+  *phi = _phi[0];
+  *re = _re[0]; 
+  *im = _im[0];
+  *J = _J[0];
+}
+
+bool GLGPUDataset::BuildDataFromArray(const GLHeader& h, const double *rho, const double *phi, const double *re, const double *im)
 {
   memcpy(&_h[0], &h, sizeof(GLHeader));
 
   const int count = h.dims[0]*h.dims[1]*h.dims[2];
   // _psi[0] = (double*)realloc(_psi[0], sizeof(double)*count*2);
-  _psi[0] = (double*)malloc(sizeof(double)*count*2);
+  _rho[0] = (double*)malloc(sizeof(double)*count); 
+  _phi[0] = (double*)malloc(sizeof(double)*count); 
+  _re[0] = (double*)malloc(sizeof(double)*count); 
+  _im[0] = (double*)malloc(sizeof(double)*count); 
 
-  memcpy(_psi[0], psi, sizeof(double)*count*2);
+  memcpy(_rho[0], rho, sizeof(double)*count);
+  memcpy(_phi[0], phi, sizeof(double)*count);
+  memcpy(_re[0], re, sizeof(double)*count);
+  memcpy(_im[0], im, sizeof(double)*count);
   
   return true;
 }
@@ -174,7 +210,11 @@ void GLGPUDataset::ModulateKex(int slot)
 
 void GLGPUDataset::RotateTimeSteps()
 {
-  std::swap(_psi[0], _psi[1]);
+  std::swap(_rho[0], _rho[1]);
+  std::swap(_phi[0], _phi[1]);
+  std::swap(_re[0], _re[1]);
+  std::swap(_im[0], _im[1]);
+  std::swap(_J[0], _J[1]);
 
   GLDataset::RotateTimeSteps();
 }
@@ -183,14 +223,15 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string& filename, int slot)
 {
   int ndims;
   _h[slot].dtype = DTYPE_CA02;
-  
-  if (_psi[slot] != NULL) {
-    free(_psi[slot]);
-    _psi[slot] = NULL;
-  }
+
+  free1(&_rho[slot]); 
+  free1(&_phi[slot]); 
+  free1(&_re[slot]); 
+  free1(&_im[slot]);
+  free1(&_J[slot]);
 
   if (!::GLGPU_IO_Helper_ReadLegacy(
-        filename, _h[slot], &_psi[slot]))
+        filename, _h[slot], &_rho[slot], &_phi[slot], &_re[slot], &_im[slot]))
     return false;
   else 
     return true;
@@ -200,14 +241,15 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
 {
   int ndims;
   _h[slot].dtype = DTYPE_BDAT;
-
-  if (_psi[slot] != NULL) {
-    free(_psi[slot]);
-    _psi[slot] = NULL;
-  }
+  
+  free1(&_rho[slot]); 
+  free1(&_phi[slot]); 
+  free1(&_re[slot]); 
+  free1(&_im[slot]); 
+  free1(&_J[slot]);
 
   if (!::GLGPU_IO_Helper_ReadBDAT(
-        filename, _h[slot], &_psi[slot]))
+        filename, _h[slot], &_rho[slot], &_phi[slot], &_re[slot], &_im[slot]))
     return false;
   else 
     return true;
@@ -219,6 +261,34 @@ double Ax(const double X[3], int slot=0) const {if (By()>0) return -Kex(slot); e
 double Ay(const double X[3], int slot=0) const {if (By()>0) return X[0]*Bz(); else return 0;}
 double Az(const double X[3], int slot=0) const {if (By()>0) return -X[0]*By(); else return X[1]*Bx();}
 #endif
+
+double GLGPUDataset::Rho(int i, int j, int k, int slot) const
+{
+  int idx[3] = {i, j, k};
+  NodeIdType nid = Idx2Nid(idx);
+  return Rho(nid, slot);
+}
+
+double GLGPUDataset::Phi(int i, int j, int k, int slot) const
+{
+  int idx[3] = {i, j, k};
+  NodeIdType nid = Idx2Nid(idx);
+  return Phi(nid, slot);
+}
+
+double GLGPUDataset::Re(int i, int j, int k, int slot) const
+{
+  int idx[3] = {i, j, k};
+  NodeIdType nid = Idx2Nid(idx);
+  return Re(nid, slot);
+}
+
+double GLGPUDataset::Im(int i, int j, int k, int slot) const
+{
+  int idx[3] = {i, j, k};
+  NodeIdType nid = Idx2Nid(idx);
+  return Im(nid, slot);
+}
 
 bool GLGPUDataset::A(const double X[3], double A[3], int slot) const
 {

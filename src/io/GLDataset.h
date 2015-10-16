@@ -14,8 +14,10 @@ public:
   virtual void PrintInfo(int slot=0) const = 0;
 
 public: // data I/O
+  void SetPrecomputeSupercurrent(bool);
+  
   virtual bool OpenDataFile(const std::string& filename); 
-  virtual void LoadTimeStep(int timestep, int slot) = 0;
+  virtual bool LoadTimeStep(int timestep, int slot) = 0;
   virtual void CloseDataFile();
   void RotateTimeSteps();
 
@@ -25,8 +27,8 @@ public: // mesh info
   virtual void BuildMeshGraph() = 0;
 
 public: // mesh utils
-  virtual void GetFaceValues(const CFace&, int timeslot, double X[][3], double A[][3], double rho[], double phi[]) const;
-  virtual void GetSpaceTimeEdgeValues(const CEdge&, double X[][3], double A[][3], double rho[], double phi[]) const;
+  virtual void GetFaceValues(const CFace&, int timeslot, double X[][3], double A[][3], double rho[], double phi[], double re[], double im[]) const;
+  virtual void GetSpaceTimeEdgeValues(const CEdge&, double X[][3], double A[][3], double rho[], double phi[], double re[], double im[]) const;
   
   virtual CellIdType Pos2CellId(const double X[]) const = 0; //!< returns the elemId for a given position
   // virtual bool OnBoundary(ElemIdType id) const = 0;
@@ -59,11 +61,12 @@ public: // properties
 
   virtual double Rho(NodeIdType i, int slot=0) const = 0;
   virtual double Phi(NodeIdType i, int slot=0) const = 0;
-  inline double Re(NodeIdType i, int slot=0) const {return Rho(i, slot) * cos(Phi(i, slot));}
-  inline double Im(NodeIdType i, int slot=0) const {return Rho(i, slot) * sin(Phi(i, slot));}
+  virtual double Re(NodeIdType i, int slot=0) const {return Rho(i, slot) * cos(Phi(i, slot));}
+  virtual double Im(NodeIdType i, int slot=0) const {return Rho(i, slot) * sin(Phi(i, slot));}
   
   inline void RhoPhi(NodeIdType i, double &rho, double &phi, int slot=0) const {rho = Rho(i, slot); phi = Phi(i, slot);}
   inline void ReIm(NodeIdType i, double &re, double &im, int slot=0) const {re = Re(i, slot); im = Im(i, slot);}
+  inline void RhoPhiReIm(NodeIdType i, double &rho, double &phi, double &re, double &im, int slot=0) const {rho = Rho(i, slot); phi = Phi(i, slot); re = Re(i, slot); im = Im(i, slot);}
   
   // Magnetic potential
   virtual bool A(const double X[3], double A[3], int slot=0) const = 0; //!< the vector potential at given position
@@ -76,6 +79,7 @@ public: // properties
 protected:
   std::vector<double> _time_stamps; 
   bool _valid;
+  bool _precompute_supercurrent;
 }; 
 
 #endif

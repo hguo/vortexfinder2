@@ -61,7 +61,7 @@ std::string VortexTransition::NodeToString(int i, int j) const
 void VortexTransition::SaveToDotFile(const std::string& filename) const
 {
   using namespace std;
-  ofstream ofs(filename);
+  ofstream ofs(filename.c_str());
   if (!ofs.is_open()) return;
 
   ofs << "digraph {" << endl;
@@ -408,4 +408,14 @@ void VortexTransition::SequenceGraphColoring()
   free(M[0]);
   free(M);
   free(cids);
+}
+
+int VortexTransition::NVortices(int frame) const
+{
+  std::map<int, int>::const_iterator it = _nvortices_per_frame.find(frame);
+
+  if (it != _nvortices_per_frame.end())
+    return it->second;
+  else 
+    return 0;
 }

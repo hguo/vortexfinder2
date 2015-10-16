@@ -18,18 +18,19 @@ if (CMAKE_PROJECT_NAME STREQUAL "ParaView")
   include_directories (${Boost_INCLUDE_DIR})
 
   # Set Protobuf flags to point to ParaView's Protobuf
-  FIND_PACKAGE(Protobuf REQUIRED)
-  set (PROTOBUF_INCLUDE_DIR ${ParaView_SOURCE_DIR}/ThirdParty/protobuf/vtkprotobuf/src)
-  set (PROTOBUF_LIBRARY ${ParaView_BINARY_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}protobuf${CMAKE_SHARED_LIBRARY_SUFFIX})
-  set (PROTOBUF_PROTOC_EXECUTABLE ${ParaView_BINARY_DIR}/bin/protoc)
+  # FIND_PACKAGE(Protobuf REQUIRED)
+  # set (PROTOBUF_INCLUDE_DIR ${ParaView_SOURCE_DIR}/ThirdParty/protobuf/vtkprotobuf/src)
+  # set (PROTOBUF_LIBRARY ${ParaView_BINARY_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}protobuf${CMAKE_SHARED_LIBRARY_SUFFIX})
+  # set (PROTOBUF_PROTOC_EXECUTABLE ${ParaView_BINARY_DIR}/bin/protoc)
 
-  set (WITH_VTK ON)
+  set (WITH_PROTOBUF OFF)
   set (WITH_PARAVIEW ON)
 
 else()
 
   # Standalone build
 
+  option (WITH_PROTOBUF ON)
   option (WITH_TESTS "Build the tests" OFF)
   option (WITH_CUDA "Build with CUDA" OFF)
   option (WITH_LIBMESH "Build with libMesh" OFF) 

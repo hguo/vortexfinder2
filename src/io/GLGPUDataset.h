@@ -14,7 +14,7 @@ public:
 public:
   bool OpenDataFile(const std::string& filename); // file list
   bool OpenDataFileByPattern(const std::string& pattern); 
-  void LoadTimeStep(int timestep, int slot=0);
+  bool LoadTimeStep(int timestep, int slot=0);
   void RotateTimeSteps();
   void CloseDataFile();
 
@@ -22,13 +22,15 @@ public:
 
   void PrintInfo(int slot=0) const;
  
-  bool BuildDataFromArray(const GLHeader&, const double *psi);
-
+  bool BuildDataFromArray(const GLHeader&, const double *rho, const double *phi, const double *re, const double *im);
+  void GetDataArray(GLHeader& h, double **rho, double **phi, double **re, double **im, double **J);
+  double *GetSupercurrentDataArray() const {return _J[0];} // FIXME
+  
 private:
   bool OpenBDATDataFile(const std::string& filename, int slot=0);
   bool OpenLegacyDataFile(const std::string& filename, int slot=0);
-  
-  void ModulateKex(int slot=0);
+
+  virtual void ComputeSupercurrentField(int slot=0) = 0;
 
 protected:
   void Nid2Idx(NodeIdType id, int *idx) const; 
@@ -57,8 +59,15 @@ public: // rectilinear grid
   // bool Psi(NodeIdType, double &rho, double &phi, int slot=0) const;
   // bool Psi(const double X[3], double &rho, double &phi, int slot=0) const;
 
-  inline double Rho(NodeIdType i, int slot=0) const {return _psi[slot][i*2];}
-  inline double Phi(NodeIdType i, int slot=0) const {return _psi[slot][i*2+1];}
+  inline double Rho(NodeIdType i, int slot=0) const {return _rho[slot][i];}
+  inline double Phi(NodeIdType i, int slot=0) const {return _phi[slot][i];}
+  inline double Re(NodeIdType i, int slot=0) const {return _re[slot][i];}
+  inline double Im(NodeIdType i, int slot=0) const {return _im[slot][i];}
+
+  double Rho(int i, int j, int k, int slot=0) const; 
+  double Phi(int i, int j, int k, int slot=0) const;
+  double Re(int i, int j, int k, int slot=0) const; 
+  double Im(int i, int j, int k, int slot=0) const;
   
   bool Pos(NodeIdType, double X[3]) const;
   bool Supercurrent(const double X[3], double J[3], int slot=0) const;
@@ -68,8 +77,8 @@ public:
   double QP(const double X0[], const double X1[], int slot=0) const;
 
 protected:
-  double *_psi[2]; // (rho, phi)
-  double *_Jx, *_Jy, *_Jz; // only for timestep 0
+  double *_rho[2], *_phi[2], *_re[2], *_im[2];
+  double *_J[2]; // supercurrent
 
   std::vector<std::string> _filenames; // filenames for different timesteps
 };
