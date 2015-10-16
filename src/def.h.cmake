@@ -1,6 +1,7 @@
 #ifndef _DEF_H
 #define _DEF_H
 
+#cmakedefine WITH_PROTOBUF 1
 #cmakedefine WITH_CUDA 1
 #cmakedefine WITH_LIBMESH 1
 #cmakedefine WITH_PNETCDF 1

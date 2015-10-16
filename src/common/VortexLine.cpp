@@ -1,9 +1,12 @@
 #include "VortexLine.h"
-#include "VortexLine.pb.h"
 #include "common/Utils.hpp"
 #include "fitCurves/fitCurves.hpp"
 #include <climits>
 #include <cfloat>
+
+#if WITH_PROTOBUF
+#include "VortexLine.pb.h"
+#endif
 
 VortexLine::VortexLine() : 
   id(INT_MAX), 
@@ -137,6 +140,7 @@ void VortexLine::Unflattern(const double O[3], const double L[3])
 ///////
 bool SerializeVortexLines(const std::vector<VortexLine>& lines, const std::string& info, std::string& buf)
 {
+#if WITH_PROTOBUF
   PBVortexLines plines;
   for (int i=0; i<lines.size(); i++) {
     PBVortexLine *pline = plines.add_lines();
@@ -151,10 +155,14 @@ bool SerializeVortexLines(const std::vector<VortexLine>& lines, const std::strin
     plines.set_info_bytes(info);
   }
   return plines.SerializeToString(&buf);
+#else
+  return false;
+#endif
 }
 
 bool UnserializeVortexLines(std::vector<VortexLine>& lines, std::string& info, const std::string& buf)
 {
+#if WITH_PROTOBUF
   PBVortexLines plines;
   if (!plines.ParseFromString(buf)) return false;
 
@@ -173,6 +181,9 @@ bool UnserializeVortexLines(std::vector<VortexLine>& lines, std::string& info, c
     info = plines.info_bytes();
 
   return true;
+#else
+  return false;
+#endif
 }
 
 bool SaveVortexLines(const std::vector<VortexLine>& lines, const std::string& info, const std::string& filename)

@@ -24,7 +24,9 @@ set (common_protos
   Puncture.proto
 )
 
-protobuf_generate_cpp (common_proto_sources common_proto_headers ${common_protos})
+if (WITH_PROTOBUF)
+  protobuf_generate_cpp (common_proto_sources common_proto_headers ${common_protos})
+endif ()
 
 add_library (glcommon STATIC ${common_sources} ${common_proto_sources})
 target_include_directories(glcommon PUBLIC ${CMAKE_CURRENT_BINARY_DIR})

@@ -1,9 +1,13 @@
 #include "Puncture.h"
-#include "common/Puncture.pb.h"
 #include <cstdio>
+
+#if WITH_PROTOBUF
+#include "common/Puncture.pb.h"
+#endif
 
 bool SerializePuncturedFaces(const std::map<FaceIdType, PuncturedFace> m, std::string &buf)
 {
+#if WITH_PROTOBUF
   PBPuncturedFaces pfaces;
   for (std::map<FaceIdType, PuncturedFace>::const_iterator it = m.begin(); it != m.end(); it ++) {
     PBPuncturedFace *pface = pfaces.add_faces();
@@ -14,10 +18,14 @@ bool SerializePuncturedFaces(const std::map<FaceIdType, PuncturedFace> m, std::s
     pface->set_z( it->second.pos[2] );
   }
   return pfaces.SerializeToString(&buf);
+#else
+  return false;
+#endif
 }
 
 bool UnserializePuncturedFaces(std::map<FaceIdType, PuncturedFace> &m, const std::string &buf)
 {
+#if WITH_PROTOBUF
   PBPuncturedFaces pfaces;
   if (!pfaces.ParseFromString(buf)) return false;
 
@@ -32,6 +40,9 @@ bool UnserializePuncturedFaces(std::map<FaceIdType, PuncturedFace> &m, const std
     m[pfaces.faces(i).id()] = face;
   }
   return true;
+#else 
+  return false;
+#endif
 }
 
 bool SavePuncturedFaces(const std::map<FaceIdType, PuncturedFace> m, const std::string &filename)
@@ -68,6 +79,7 @@ bool LoadPuncturedFaces(std::map<FaceIdType, PuncturedFace> &m, const std::strin
 //////// I/O for edges
 bool SerializePuncturedEdges(const std::map<EdgeIdType, PuncturedEdge> m, std::string &buf)
 {
+#if WITH_PROTOBUF
   PBPuncturedEdges pedges;
   for (std::map<EdgeIdType, PuncturedEdge>::const_iterator it = m.begin(); it != m.end(); it ++) {
     PBPuncturedEdge *pedge = pedges.add_edges();
@@ -76,10 +88,14 @@ bool SerializePuncturedEdges(const std::map<EdgeIdType, PuncturedEdge> m, std::s
     pedge->set_t( it->second.t );
   }
   return pedges.SerializeToString(&buf);
+#else
+  return false;
+#endif
 }
 
 bool UnserializePuncturedEdges(std::map<EdgeIdType, PuncturedEdge> &m, const std::string &buf)
 {
+#if WITH_PROTOBUF
   PBPuncturedEdges pedges;
   if (!pedges.ParseFromString(buf)) return false;
 
@@ -92,6 +108,9 @@ bool UnserializePuncturedEdges(std::map<EdgeIdType, PuncturedEdge> &m, const std
     m[pedges.edges(i).id()] = edge;
   }
   return true;
+#else
+  return false;
+#endif
 }
 
 bool SavePuncturedEdges(const std::map<EdgeIdType, PuncturedEdge> m, const std::string &filename)

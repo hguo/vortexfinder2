@@ -1,7 +1,6 @@
 #include "GLGPUDataset.h"
 #include "GLGPU_IO_Helper.h"
 #include "common/Utils.hpp"
-#include "common/DataInfo.pb.h"
 #include <cassert>
 #include <cmath>
 #include <climits>
@@ -9,6 +8,10 @@
 #include <iostream>
 #include <fstream>
 #include <glob.h>
+
+#if WITH_PROTOBUF
+#include "common/DataInfo.pb.h"
+#endif
 
 template <typename T>
 void free1(T **p)
@@ -59,6 +62,7 @@ void GLGPUDataset::PrintInfo(int slot) const
 
 void GLGPUDataset::SerializeDataInfoToString(std::string& buf) const
 {
+#if WITH_PROTOBUF
   PBDataInfo pb;
 
   pb.set_model(PBDataInfo::GLGPU);
@@ -88,6 +92,7 @@ void GLGPUDataset::SerializeDataInfoToString(std::string& buf) const
   pb.set_pbc_z(pbc()[0]);
 
   pb.SerializeToString(&buf);
+#endif
 }
 
 bool GLGPUDataset::OpenDataFile(const std::string &filename)
