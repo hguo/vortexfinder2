@@ -277,3 +277,45 @@ bool MeshGraphRegular3D::valid_cidx(const int idx[3]) const
   return true;
 }
 
+std::vector<FaceIdType> MeshGraphRegular3D::GetBoundaryFaceIds(int type) const
+{
+  std::vector<FaceIdType> fids;
+  int i, j, k;
+
+  switch (type) {
+  case 0: // YZ
+    for (j=0; j<=d[1]; j++) 
+      for (k=0; k<d[2]; k++) {
+        i=0;
+        const int fidx[4] = {i, j, k, type};
+        if (valid_fidx(fidx)) {
+          fids.push_back(fidx2fid(fidx));
+        }
+      }
+
+  case 1: // ZX
+    for (k=0; k<d[2]; k++) 
+      for (i=0; i<d[0]; i++) {
+        j=0;
+        const int fidx[4] = {i, j, k, type};
+        if (valid_fidx(fidx)) {
+          fids.push_back(fidx2fid(fidx));
+        }
+      }
+
+  case 2: // XY
+    for (i=0; i<=d[0]; i++) 
+      for (j=0; j<d[1]; j++) {
+        k=0;
+        const int fidx[4] = {i, j, k, type};
+        if (valid_fidx(fidx)) {
+          fids.push_back(fidx2fid(fidx));
+        }
+      }
+
+  default: 
+    break;
+  }
+
+  return fids;
+}

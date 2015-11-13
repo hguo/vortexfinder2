@@ -33,6 +33,16 @@ void GLGPU3DDataset::BuildMeshGraph()
   else assert(false);
 }
 
+std::vector<FaceIdType> GLGPU3DDataset::GetBoundaryFaceIds(int type) const
+{
+  if (_mesh_type == GLGPU3D_MESH_HEX) {
+    const struct MeshGraphRegular3D *mg = (const MeshGraphRegular3D*)_mg;
+    return mg->GetBoundaryFaceIds(type);
+  }
+  else 
+    return std::vector<FaceIdType>();
+}
+
 #if 0
 double GLGPU3DDataset::Flux(int face) const
 {

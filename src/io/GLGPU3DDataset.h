@@ -21,6 +21,8 @@ public:
 public: // mesh graph
   void SetMeshType(int); // hex or tet
   void BuildMeshGraph();
+  
+  std::vector<FaceIdType> GetBoundaryFaceIds(int type) const; // 0: YZ, 1: ZX, 2: XY
 
 public: // mesh info
   int Dimensions() const {return 3;}

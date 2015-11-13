@@ -761,6 +761,14 @@ void VortexExtractor::ExtractFaces(int slot)
 #endif
 }
 
+void VortexExtractor::ExtractFaces(std::vector<FaceIdType> faces, int slot)
+{
+  for (int i=0; i<faces.size(); i++) 
+    ExtractFace(faces[i], slot);
+
+  fprintf(stderr, "%d\n", slot==0 ? _punctured_faces.size() : _punctured_faces1.size());
+}
+
 void VortexExtractor::ExtractEdges() 
 {
 #if WITH_CXX11
