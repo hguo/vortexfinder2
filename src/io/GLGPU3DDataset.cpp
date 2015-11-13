@@ -142,9 +142,9 @@ void GLGPU3DDataset::ComputeSupercurrentField(int slot)
         v = Im(x, y, z, slot);
         rho2 = u*u + v*v;
 
-        texel3Dv(J, dims(), 3, x, y, z, 0) = j[0] = (u*dv[0] - v*du[0]) / rho2 - A[0]; // + Kex(); 
-        texel3Dv(J, dims(), 3, x, y, z, 1) = j[1] = (u*dv[1] - v*du[1]) / rho2 - A[1];
-        texel3Dv(J, dims(), 3, x, y, z, 2) = j[2] = (u*dv[2] - v*du[2]) / rho2 - A[2];
+        texel3Dv(J, dims(), 3, x, y, z, 0) = j[0] = (u*dv[0] - v*du[0]) - A[0]; // + Kex(); 
+        texel3Dv(J, dims(), 3, x, y, z, 1) = j[1] = (u*dv[1] - v*du[1]) - A[1];
+        texel3Dv(J, dims(), 3, x, y, z, 2) = j[2] = (u*dv[2] - v*du[2]) - A[2];
 
         // fprintf(stderr, "J={%f, %f, %f}\n", j[0], j[1], j[2]);
       }

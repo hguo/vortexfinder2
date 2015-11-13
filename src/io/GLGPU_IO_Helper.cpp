@@ -83,7 +83,10 @@ bool GLGPU_IO_Helper_ReadBDAT(
       h.pbc[0] = ((btype & 0x0000ff) == 0x01);
       h.pbc[1] = ((btype & 0x00ff00) == 0x0100);
       h.pbc[2] = ((btype & 0xff0000) == 0x010000); 
+    } else if (name == "u") {
+      // TODO
     } else if (name == "zaniso") {
+      // TODO, z anisotropic
       assert(type == BDAT_FLOAT);
     } else if (name == "t") {
       assert(type == BDAT_FLOAT);
