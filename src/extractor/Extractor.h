@@ -35,7 +35,7 @@ public:
   const GLDataset* Dataset() const {return (GLDataset*)_dataset;}
 
   void ExtractFaces(int slot=0);
-  void ExtractFaces(std::vector<FaceIdType> faces, int slot=0);
+  void ExtractFaces(std::vector<FaceIdType> faces, int slot, int &positive, int &negative);
   void ExtractEdges();
 
   bool SavePuncturedEdges() const;

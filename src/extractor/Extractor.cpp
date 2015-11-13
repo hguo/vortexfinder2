@@ -761,12 +761,22 @@ void VortexExtractor::ExtractFaces(int slot)
 #endif
 }
 
-void VortexExtractor::ExtractFaces(std::vector<FaceIdType> faces, int slot)
+void VortexExtractor::ExtractFaces(std::vector<FaceIdType> faces, int slot, int &positive, int &negative)
 {
   for (int i=0; i<faces.size(); i++) 
     ExtractFace(faces[i], slot);
 
-  fprintf(stderr, "%d\n", slot==0 ? _punctured_faces.size() : _punctured_faces1.size());
+  const std::map<FaceIdType, PuncturedFace> &pfs = slot==0 ? _punctured_faces : _punctured_faces1;
+
+  positive=0, negative=0; 
+  for (std::map<FaceIdType, PuncturedFace>::const_iterator it = pfs.begin(); it != pfs.end(); it ++) {
+    if (it->second.chirality>0) positive ++; 
+    else if (it->second.chirality<0) negative ++;
+  }
+
+  _punctured_faces.clear();
+  _punctured_faces1.clear();
+  // fprintf(stderr, "%d, %d\n", positive, negative);
 }
 
 void VortexExtractor::ExtractEdges() 
