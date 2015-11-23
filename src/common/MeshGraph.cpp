@@ -1,5 +1,6 @@
 #include "MeshGraph.h"
 #include <cassert>
+#include <climits>
 #include <cstdio>
 #include <climits>
 
