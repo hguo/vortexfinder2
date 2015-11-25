@@ -31,6 +31,7 @@ else()
   # Standalone build
 
   option (WITH_PROTOBUF ON)
+  option (WITH_ARMA "Build with Armadillo" OFF)
   option (WITH_TESTS "Build the tests" OFF)
   option (WITH_CUDA "Build with CUDA" OFF)
   option (WITH_LIBMESH "Build with libMesh" OFF) 
