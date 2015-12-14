@@ -62,6 +62,8 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   dataArrayKx = imageData->GetFieldData()->GetArray("Kx", index);
   dataArrayV = imageData->GetFieldData()->GetArray("V", index);
 
+  // fprintf(stderr, "dataType=%d\n", dataArrayRho->GetDataType());
+
   GLHeader h;
   h.ndims = 3;
   imageData->GetDimensions(h.dims);

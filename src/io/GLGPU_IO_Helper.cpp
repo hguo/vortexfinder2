@@ -86,8 +86,9 @@ bool GLGPU_IO_Helper_ReadBDAT(
     } else if (name == "u") {
       // TODO
     } else if (name == "zaniso") {
-      // TODO, z anisotropic
       assert(type == BDAT_FLOAT);
+      memcpy(&f, p, sizeof(float));
+      // h.zaniso = p;
     } else if (name == "t") {
       assert(type == BDAT_FLOAT);
       memcpy(&f, p, sizeof(float));

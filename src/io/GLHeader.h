@@ -10,6 +10,7 @@ typedef struct {
   int ndims; 
   int dims[3];
   bool pbc[3];
+  double zaniso;
   double lengths[3], origins[3], cell_lengths[3];
   double time;
   double B[3];
