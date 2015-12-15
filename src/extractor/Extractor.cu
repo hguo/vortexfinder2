@@ -1,3 +1,6 @@
+#include "Extractor.cuh"
+#include <cstdio>
+
 __constant__ int d[3];
 __constant__ int pbc[3];
 __constant__ float origins[3];
@@ -366,5 +369,7 @@ void vfgpu_extract_faces_tet()
   const int nThreadsPerBlock = 256;
   int nBlocks = idivup(count, nThreadsPerBlock);
 
+  fprintf(stderr, "extracting...\n");
   extract_faces_tet_kernel<<<nBlocks, nThreadsPerBlock>>>(d_re, d_im, d_rho, d_phi);
+  fprintf(stderr, "finished.\n");
 }
