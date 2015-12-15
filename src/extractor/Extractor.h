@@ -30,6 +30,7 @@ public:
 
   void SetGaugeTransformation(bool);
   void SetArchive(bool); // archive intermediate results for data reuse
+  void SetGPU(bool);
   
   virtual void SetDataset(const GLDatasetBase* ds);
   const GLDataset* Dataset() const {return (GLDataset*)_dataset;}
@@ -37,6 +38,8 @@ public:
   void ExtractFaces(int slot=0);
   void ExtractFaces(std::vector<FaceIdType> faces, int slot, int &positive, int &negative);
   void ExtractEdges();
+  
+  void ExtractFaces_GPU(int slot=0);
 
   bool SavePuncturedEdges() const;
   bool LoadPuncturedEdges();
@@ -88,6 +91,7 @@ protected:
   const GLDatasetBase *_dataset;
   bool _gauge; 
   bool _archive;
+  bool _gpu;
   unsigned int _interpolation_mode;
 
 private:

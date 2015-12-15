@@ -2,7 +2,7 @@
 #include <cstdio>
 
 __constant__ int d[3];
-__constant__ int pbc[3];
+__constant__ bool pbc[3];
 __constant__ float origins[3];
 __constant__ float lengths[3];
 __constant__ float cell_lengths[3];
@@ -327,7 +327,7 @@ void vfgpu_destroy_data()
 
 void vfgpu_upload_data(
     const int d_[3], 
-    const int pbc_[3], 
+    const bool pbc_[3], 
     const float origins_[3],
     const float lengths_[3], 
     const float cell_lengths_[3],
@@ -340,7 +340,7 @@ void vfgpu_upload_data(
   memcpy(dims, d_, sizeof(int)*3);
   
   cudaMemcpyToSymbol(d, d_, sizeof(int)*3);
-  cudaMemcpyToSymbol(pbc, pbc_, sizeof(int)*3);
+  cudaMemcpyToSymbol(pbc, pbc_, sizeof(bool)*3);
   cudaMemcpyToSymbol(origins, origins_, sizeof(float)*3);
   cudaMemcpyToSymbol(lengths, lengths_, sizeof(float)*3);
   cudaMemcpyToSymbol(cell_lengths, cell_lengths_, sizeof(float)*3);

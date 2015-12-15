@@ -19,6 +19,8 @@ public:
   void SetDataName(const std::string& dn);
   std::string DataName() const {return _data_name;}
 
+  const GLHeader& GetHeader(int slot=0) const {return _h[slot];}
+
   void SetTimeStep(int timestep, int slot=0);
   int TimeStep(int slot=0) const;
   virtual int NTimeSteps() const {return 0;}

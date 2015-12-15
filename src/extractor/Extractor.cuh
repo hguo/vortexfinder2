@@ -8,7 +8,7 @@ typedef struct {
 
 void vfgpu_upload_data(
     const int d_[3], 
-    const int pbc_[3], 
+    const bool pbc_[3], 
     const float origins_[3],
     const float lengths_[3], 
     const float cell_lengths_[3],

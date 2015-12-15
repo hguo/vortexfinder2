@@ -3,6 +3,7 @@
 #include "common/VortexTransition.h"
 #include "common/MeshGraphRegular3DTets.h"
 #include "io/GLDataset.h"
+#include "io/GLGPUDataset.h"
 #include <pthread.h>
 #include <set>
 #include <climits>
@@ -10,6 +11,10 @@
 #include <cstdlib>
 #include <cassert>
 #include <cstring>
+
+#if WITH_CUDA
+#include "Extractor.cuh"
+#endif
 
 #if WITH_CXX11
 #include <thread>
@@ -32,6 +37,7 @@ VortexExtractor::VortexExtractor() :
   _dataset(NULL), 
   _gauge(false), 
   _archive(false), 
+  _gpu(false),
   _interpolation_mode(INTERPOLATION_TRI_BARYCENTRIC | INTERPOLATION_QUAD_BILINEAR)
 {
   pthread_mutex_init(&mutex, NULL);
@@ -70,6 +76,11 @@ void VortexExtractor::SetGaugeTransformation(bool g)
 void VortexExtractor::SetArchive(bool a)
 {
   _archive = a;
+}
+
+void VortexExtractor::SetGPU(bool g)
+{
+  _gpu = g;
 }
 
 void VortexExtractor::SaveVortexLines(int slot)
@@ -718,8 +729,52 @@ void VortexExtractor::RotateTimeSteps()
   _vortex_lines.swap( _vortex_lines1 );
 }
 
+void VortexExtractor::ExtractFaces_GPU(int slot)
+{
+#if WITH_CUDA
+  GLGPUDataset *ds = (GLGPUDataset*)_dataset;
+  GLHeader h;
+  double *rho, *phi, *re, *im, *J;
+  ds->GetDataArray(h, &rho, &phi, &re, &im, &J);
+
+  float origins[3], lengths[3], cell_lengths[3], B[3], Kx;
+  for (int i=0; i<3; i++) {
+    origins[i] = h.origins[i];
+    lengths[i] = h.lengths[i]; 
+    cell_lengths[i] = h.cell_lengths[i];
+    B[i] = h.B[i];
+    Kx = h.Kex;
+  }
+
+  const int count = h.dims[0] * h.dims[1] * h.dims[2];
+  float *re1 = (float*)malloc(sizeof(float)*count), 
+        *im1 = (float*)malloc(sizeof(float)*count);
+
+  for (int i=0; i<count; i++) {
+    re1[i] = re[i];
+    im1[i] = im[i];
+  }
+
+  vfgpu_upload_data(
+    h.dims,
+    h.pbc,
+    origins,
+    lengths,
+    cell_lengths, 
+    B, 
+    Kx,
+    re1, 
+    im1);
+#endif
+}
+
 void VortexExtractor::ExtractFaces(int slot) 
 {
+  if (_gpu) {
+    ExtractFaces_GPU(slot);
+    return;
+  }
+
 #if WITH_CXX11
   typedef std::chrono::high_resolution_clock clock;
   auto t0 = clock::now();
