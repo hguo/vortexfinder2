@@ -755,9 +755,11 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
     im1[i] = im[i];
   }
 
+  bool pbc[3] = {0};
+
   vfgpu_upload_data(
     h.dims,
-    h.pbc,
+    pbc, // h.pbc,
     origins,
     lengths,
     cell_lengths, 

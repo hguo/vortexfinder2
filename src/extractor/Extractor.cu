@@ -11,6 +11,10 @@ __constant__ float Kx;
 
 static int dims[3];
 static float *d_rho=NULL, *d_phi=NULL, *d_re=NULL, *d_im=NULL;
+static unsigned int *d_pfcount;
+static gpu_pf_t *d_pfoutput=NULL;
+static unsigned int pfcount;
+static gpu_pf_t *pfoutput=NULL;
 
 inline void checkCuda(cudaError_t e, const char *situation) {
   if (e != cudaSuccess) {
@@ -25,6 +29,44 @@ inline void checkLastCudaError(const char *situation) {
 static inline int idivup(int a, int b)
 {
   return (a%b!=0) ? (a/b+1) : (a/b); 
+}
+
+template <typename T>
+__device__
+inline bool find_zero_barycentric(const T re[3], const T im[3], T lambda[3], T epsilon=0)
+{
+  T D = re[0]*im[1] + re[1]*im[2] + re[2]*im[0] - re[2]*im[1] - re[1]*im[0] - re[0]*im[2]; // TODO: check if D=0?
+  T det[3] = {
+    re[1]*im[2] - re[2]*im[1], 
+    re[2]*im[0] - re[0]*im[2], 
+    re[0]*im[1] - re[1]*im[0]
+  };
+
+  lambda[0] = det[0]/D; 
+  lambda[1] = det[1]/D; 
+  lambda[2] = det[2]/D; 
+  
+  // if (lambda[0]>=0 && lambda[1]>=0 && lambda[2]>=0) return true; 
+  if (lambda[0]>=-epsilon && lambda[1]>=-epsilon && lambda[2]>=-epsilon) return true; 
+  else return false; 
+}
+
+template <typename T>
+__device__
+inline bool find_zero_triangle(const T re[3], const T im[3], const T X[3][3], T pos[3], T epsilon=0)
+{
+  T lambda[3]; 
+  bool succ = find_zero_barycentric(re, im, lambda, epsilon);
+
+  T R[3][2] = {{X[0][0]-X[2][0], X[1][0]-X[2][0]}, 
+               {X[0][1]-X[2][1], X[1][1]-X[2][1]}, 
+               {X[0][2]-X[2][2], X[1][2]-X[2][2]}}; 
+
+  pos[0] = R[0][0]*lambda[0] + R[0][1]*lambda[1] + X[2][0]; 
+  pos[1] = R[1][0]*lambda[0] + R[1][1]*lambda[1] + X[2][1]; 
+  pos[2] = R[2][0]*lambda[0] + R[2][1]*lambda[1] + X[2][2]; 
+
+  return succ; 
 }
 
 template <typename T>
@@ -261,6 +303,8 @@ inline bool get_face_values_tet(
 __device__
 inline int extract_face_tet(
     int fid,
+    unsigned int *pfcount,
+    gpu_pf_t *pfoutput, 
     const float *rho_, 
     const float *phi_,
     const float *re_,
@@ -270,7 +314,8 @@ inline int extract_face_tet(
 
   float X[nnodes][3], A[nnodes][3], rho[nnodes], phi[nnodes], re[nnodes], im[nnodes];
   
-  get_face_values_tet(fid, X, A, rho, phi, re, im, rho_, phi_, re_, im_);
+  bool valid = get_face_values_tet(fid, X, A, rho, phi, re, im, rho_, phi_, re_, im_);
+  if (!valid) return 0;
   // printf("id=%d, phi={%f, %f, %f}\n", fid, phi[0], phi[1], phi[2]);
 
   // compute face shift
@@ -288,8 +333,7 @@ inline int extract_face_tet(
   if (fabs(critera)<0.5) return 0; // not punctured
 
   int chirality = critera>0 ? 1 : -1;
-  return chirality;
-#if 0
+  
   // gauge transformation
   for (int i=1; i<nnodes; i++) {
     phi[i] = phi[i-1] + delta[i-1];
@@ -298,7 +342,16 @@ inline int extract_face_tet(
   }
 
   // TODO: find zero
-#endif
+  gpu_pf_t pf; 
+  pf.fid = chirality * fid;
+
+  const float eps = 0.05f;
+  find_zero_triangle(re, im, X, pf.pos, eps);
+  
+  unsigned int idx = atomicInc(pfcount, 0xffffffff);
+  pfoutput[idx] = pf;
+
+  return chirality;
 }
 
 __global__
@@ -318,6 +371,8 @@ static void compute_rho_phi_kernel(
 
 __global__
 static void extract_faces_tet_kernel(
+    unsigned int *pfcount,
+    gpu_pf_t *pfoutput,
     const float *rho, 
     const float *phi, 
     const float *re,
@@ -327,7 +382,7 @@ static void extract_faces_tet_kernel(
   // unsigned int fid = blockIdx.x * blockDim.x + threadIdx.x;
   if (fid>d[0]*d[1]*d[2]*12) return;
 
-  extract_face_tet(fid, rho, phi, re, im);
+  extract_face_tet(fid, pfcount, pfoutput, rho, phi, re, im);
 }
 
 void vfgpu_destroy_data()
@@ -336,6 +391,9 @@ void vfgpu_destroy_data()
   cudaFree(&d_phi);
   cudaFree(&d_re);
   cudaFree(&d_im);
+  cudaFree(&d_pfoutput);
+
+  free(pfoutput);
 
   d_rho = d_phi = d_re = d_im = NULL;
 }
@@ -352,6 +410,7 @@ void vfgpu_upload_data(
     const float *im)
 {
   const int count = d_[0]*d_[1]*d_[2];
+  const int max_pf_count = count*12*0.1;
   memcpy(dims, d_, sizeof(int)*3);
   
   cudaMemcpyToSymbol(d, d_, sizeof(int)*3);
@@ -369,6 +428,10 @@ void vfgpu_upload_data(
     cudaMalloc((void**)&d_im, sizeof(float)*count);
     cudaMalloc((void**)&d_rho, sizeof(float)*count);
     cudaMalloc((void**)&d_phi, sizeof(float)*count);
+    cudaMalloc((void**)&d_pfcount, sizeof(unsigned int));
+    cudaMalloc((void**)&d_pfoutput, sizeof(gpu_pf_t)*max_pf_count);
+
+    pfoutput = (gpu_pf_t*)malloc(max_pf_count*sizeof(gpu_pf_t));
   }
 
   cudaMemcpy(d_re, re, sizeof(float)*count, cudaMemcpyHostToDevice);
@@ -390,11 +453,15 @@ void vfgpu_extract_faces_tet()
   const int nThreadsPerBlock = 256;
   int nBlocks = idivup(count, nThreadsPerBlock);
   
+  fprintf(stderr, "extracting... nblocks=%d\n", nBlocks);
+  cudaMemset(d_pfcount, 0, sizeof(unsigned int));
   checkLastCudaError("[0]");
-
-  fprintf(stderr, "extracting..., nblocks=%d\n", nBlocks);
-  extract_faces_tet_kernel<<<nBlocks, nThreadsPerBlock>>>(d_rho, d_phi, d_re, d_im);
+  extract_faces_tet_kernel<<<nBlocks, nThreadsPerBlock>>>(d_pfcount, d_pfoutput, d_rho, d_phi, d_re, d_im);
   checkLastCudaError("[1]");
+ 
+  cudaMemcpy((void*)&pfcount, d_pfcount, sizeof(unsigned int), cudaMemcpyDeviceToHost);
+  cudaMemcpy(pfoutput, d_pfoutput, sizeof(gpu_pf_t)*pfcount, cudaMemcpyDeviceToHost);
+  
   cudaDeviceSynchronize();
-  fprintf(stderr, "finished.\n");
+  fprintf(stderr, "finished, pfcount=%d\n", pfcount);
 }
