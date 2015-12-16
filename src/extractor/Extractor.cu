@@ -12,6 +12,16 @@ __constant__ float Kx;
 static int dims[3];
 static float *d_rho=NULL, *d_phi=NULL, *d_re=NULL, *d_im=NULL;
 
+inline void checkCuda(cudaError_t e, const char *situation) {
+  if (e != cudaSuccess) {
+    printf("CUDA Error: %s: %s\n", situation, cudaGetErrorString(e));
+  }
+}
+
+inline void checkLastCudaError(const char *situation) {
+  checkCuda(cudaGetLastError(), situation);
+}
+
 static inline int idivup(int a, int b)
 {
   return (a%b!=0) ? (a/b+1) : (a/b); 
@@ -259,19 +269,22 @@ inline int extract_face_tet(
   const int nnodes = 3;
 
   float X[nnodes][3], A[nnodes][3], rho[nnodes], phi[nnodes], re[nnodes], im[nnodes];
-  get_face_values_tet(fid, X, A, rho, phi, re, im, rho_, phi_, re_, im);
+  
+  get_face_values_tet(fid, X, A, rho, phi, re, im, rho_, phi_, re_, im_);
+  // printf("id=%d, phi={%f, %f, %f}\n", fid, phi[0], phi[1], phi[2]);
 
   // compute face shift
-  double delta[nnodes], phase_shift = 0;
+  float delta[nnodes], phase_shift = 0;
   for (int i=0; i<nnodes; i++) {
-    int j = i % nnodes;
+    int j = (i+1) % nnodes;
     delta[i] = phi[j] - phi[i]; 
-    double li = line_integral(X[i], X[j], A[i], A[j]), 
+    float li = line_integral(X[i], X[j], A[i], A[j]), 
            qp = 0; // TODO
     delta[i] = mod2pi1(delta[i] - li + qp);
+    phase_shift -= delta[i];
   }
 
-  double critera = phase_shift / (2*M_PI);
+  float critera = phase_shift / (2*M_PI);
   if (fabs(critera)<0.5) return 0; // not punctured
 
   int chirality = critera>0 ? 1 : -1;
@@ -290,12 +303,13 @@ inline int extract_face_tet(
 
 __global__
 static void compute_rho_phi_kernel(
-    const float *re,
-    const float *im,
     float *rho, 
-    float *phi)
+    float *phi,
+    const float *re,
+    const float *im)
 {
   unsigned int i = __umul24(blockIdx.x, blockDim.x) + threadIdx.x;
+  
   if (i>d[0]*d[1]*d[2]) return;
 
   rho[i] = sqrt(re[i]*re[i] + im[i]*im[i]);
@@ -310,6 +324,7 @@ static void extract_faces_tet_kernel(
     const float *im)
 {
   unsigned int fid = __umul24(blockIdx.x, blockDim.x) + threadIdx.x;
+  // unsigned int fid = blockIdx.x * blockDim.x + threadIdx.x;
   if (fid>d[0]*d[1]*d[2]*12) return;
 
   extract_face_tet(fid, rho, phi, re, im);
@@ -345,22 +360,28 @@ void vfgpu_upload_data(
   cudaMemcpyToSymbol(lengths, lengths_, sizeof(float)*3);
   cudaMemcpyToSymbol(cell_lengths, cell_lengths_, sizeof(float)*3);
   cudaMemcpyToSymbol(B, B_, sizeof(float)*3);
-  cudaMemcpyToSymbol(&Kx, &Kx_, sizeof(float));
+  cudaMemcpyToSymbol(Kx, &Kx_, sizeof(float));
+
+  checkLastCudaError("copy to symbols");
 
   if (d_rho == NULL) { // FIXME
-    cudaMalloc((void**)&d_rho, sizeof(float)*count);
-    cudaMalloc((void**)&d_phi, sizeof(float)*count);
     cudaMalloc((void**)&d_re, sizeof(float)*count);
     cudaMalloc((void**)&d_im, sizeof(float)*count);
+    cudaMalloc((void**)&d_rho, sizeof(float)*count);
+    cudaMalloc((void**)&d_phi, sizeof(float)*count);
   }
 
   cudaMemcpy(d_re, re, sizeof(float)*count, cudaMemcpyHostToDevice);
   cudaMemcpy(d_im, im, sizeof(float)*count, cudaMemcpyHostToDevice);
+  
+  checkLastCudaError("copy data to device");
 
-  const int nThreadsPerBlock = 256;
+  const int nThreadsPerBlock = 128;
   int nBlocks = idivup(count, nThreadsPerBlock);
 
-  compute_rho_phi_kernel<<<nBlocks, nThreadsPerBlock>>>(d_re, d_im, d_rho, d_phi);
+  compute_rho_phi_kernel<<<nBlocks, nThreadsPerBlock>>>(d_rho, d_phi, d_re, d_im);
+  cudaDeviceSynchronize();
+  checkLastCudaError("compute rho and phi");
 }
 
 void vfgpu_extract_faces_tet()
@@ -368,8 +389,12 @@ void vfgpu_extract_faces_tet()
   const int count = dims[0]*dims[1]*dims[2]*12; // face counts
   const int nThreadsPerBlock = 256;
   int nBlocks = idivup(count, nThreadsPerBlock);
+  
+  checkLastCudaError("[0]");
 
-  fprintf(stderr, "extracting...\n");
-  extract_faces_tet_kernel<<<nBlocks, nThreadsPerBlock>>>(d_re, d_im, d_rho, d_phi);
+  fprintf(stderr, "extracting..., nblocks=%d\n", nBlocks);
+  extract_faces_tet_kernel<<<nBlocks, nThreadsPerBlock>>>(d_rho, d_phi, d_re, d_im);
+  checkLastCudaError("[1]");
+  cudaDeviceSynchronize();
   fprintf(stderr, "finished.\n");
 }

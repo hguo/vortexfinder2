@@ -765,6 +765,9 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
     Kx,
     re1, 
     im1);
+  
+  vfgpu_extract_faces_tet();
+  vfgpu_destroy_data();
 #endif
 }
 

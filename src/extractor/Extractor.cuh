@@ -17,6 +17,8 @@ void vfgpu_upload_data(
     const float *re, 
     const float *im);
 
+void vfgpu_destroy_data();
+
 void vfgpu_extract_faces_tet();
 
 #endif
