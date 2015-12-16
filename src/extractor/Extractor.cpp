@@ -775,9 +775,20 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
     re1, 
     im1);
  
+#if WITH_CXX11
+  typedef std::chrono::high_resolution_clock clock;
+  auto t0 = clock::now();
+#endif
+
   int pfcount; 
   gpu_pf_t *pf; 
   vfgpu_extract_faces(&pfcount, &pf, mesh_type);
+
+#if WITH_CXX11
+  auto t1 = clock::now();
+  double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
+  fprintf(stderr, "t_fgpu=%f\n", elapsed);
+#endif
 
   for (int i=0; i<pfcount; i++) {
     double pos[3] = {pf[i].pos[0], pf[i].pos[1], pf[i].pos[2]};
