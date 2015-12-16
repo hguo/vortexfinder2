@@ -44,8 +44,8 @@ inline bool find_zero_barycentric(const T re[3], const T im[3], T lambda[3], T e
 
   lambda[0] = det[0]/D; 
   lambda[1] = det[1]/D; 
-  lambda[2] = det[2]/D; 
-  
+  lambda[2] = det[2]/D;
+
   // if (lambda[0]>=0 && lambda[1]>=0 && lambda[2]>=0) return true; 
   if (lambda[0]>=-epsilon && lambda[1]>=-epsilon && lambda[2]>=-epsilon) return true; 
   else return false; 
@@ -88,7 +88,7 @@ static inline bool find_zero_unit_quad_bilinear(const T re[4], const T im[4], T 
   // T M1[4] = {A0, C0, A1, C1}; // (yM1 - M0)v = 0, v = {x, 1}^T
 
   T detM1 = A0*C1 - A1*C0; // TODO: check if detM1==0
-  T invM1[4] = {C1/detM1, -C0/detM1, -A1/detM1, A0/detM1};  
+  T invM1[4] = {C1/detM1, -C0/detM1, -A1/detM1, A0/detM1};
 
   // Q = invM1*M0
   T Q[4] = {
@@ -162,14 +162,38 @@ static inline bool find_zero_quad_bilinear(const T re[4], const T im[4], const T
   return true; 
 }
 
+template <typename T>
+__device__
+static inline bool find_tri_center(const T X[3][3], T pos[3])
+{
+  pos[0] = (X[0][0] + X[1][0] + X[2][0]) / 3;
+  pos[1] = (X[0][1] + X[1][1] + X[2][0]) / 3;
+  pos[2] = (X[0][2] + X[1][2] + X[2][0]) / 3;
+
+  return true;
+}
+
+template <typename T>
+__device__
+static inline bool find_quad_center(const T X[4][3], T pos[3])
+{
+  pos[0] = 0.25*(X[0][0] + X[1][0] + X[2][0] + X[3][0]);
+  pos[1] = 0.25*(X[0][1] + X[1][1] + X[2][0] + X[3][1]);
+  pos[2] = 0.25*(X[0][2] + X[1][2] + X[2][0] + X[3][2]);
+
+  return true;
+}
+
 template <typename T, int nnodes>
 __device__
 static inline bool find_zero(const T re[nnodes], const T im[nnodes], const T X[nnodes][3], T pos[3], T epsilon=T(0))
 {
   if (nnodes==3) 
-    return find_zero_barycentric(re, im, X, pos, epsilon);
+    return find_zero_triangle(re, im, X, pos, epsilon);
+    // return find_tri_center(X, pos);
   else if (nnodes==4)
     return find_zero_quad_bilinear(re, im, X, pos, epsilon);
+    // return find_quad_center(X, pos);
   else
     return false;
 }
@@ -510,7 +534,7 @@ inline void gauge_transform(
   for (int i=1; i<nnodes; i++) {
     phi[i] = phi[i-1] + delta[i-1];
     re[i] = rho[i] * cos(phi[i]);
-    im[i] = phi[i] * sin(phi[i]);
+    im[i] = rho[i] * sin(phi[i]);
   }
 }
 
@@ -542,7 +566,7 @@ inline int extract_face(
   gpu_pf_t pf; 
   pf.fid = fid;
   pf.chirality = chirality;
-  find_zero_triangle(re, im, X, pf.pos, T(0.05));
+  find_zero<T, nnodes>(re, im, X, pf.pos, T(1));
   
   unsigned int idx = atomicInc(pfcount, 0xffffffff);
   pfoutput[idx] = pf;
