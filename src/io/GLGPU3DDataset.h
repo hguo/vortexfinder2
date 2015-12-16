@@ -5,11 +5,6 @@
 #include "GLGPUDataset.h"
 #include "common/Texel.hpp"
 
-enum {
-  GLGPU3D_MESH_HEX,
-  GLGPU3D_MESH_TET
-};
-
 class GLGPU3DDataset : public GLGPUDataset
 {
 public: 
@@ -20,6 +15,8 @@ public:
 
 public: // mesh graph
   void SetMeshType(int); // hex or tet
+  int MeshType() const {return _mesh_type;}
+
   void BuildMeshGraph();
   
   std::vector<FaceIdType> GetBoundaryFaceIds(int type) const; // 0: YZ, 1: ZX, 2: XY

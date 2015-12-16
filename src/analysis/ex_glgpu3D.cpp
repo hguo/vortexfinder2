@@ -94,7 +94,6 @@ int main(int argc, char **argv)
   ds.OpenDataFile(filename_in);
   // ds.SetPrecomputeSupercurrent(true);
   ds.LoadTimeStep(T0, 0);
-  if (gpu) tet = 1;
   if (tet) ds.SetMeshType(GLGPU3D_MESH_TET);
   else ds.SetMeshType(GLGPU3D_MESH_HEX);
   ds.BuildMeshGraph();

@@ -3,7 +3,7 @@
 #include "common/VortexTransition.h"
 #include "common/MeshGraphRegular3DTets.h"
 #include "io/GLDataset.h"
-#include "io/GLGPUDataset.h"
+#include "io/GLGPU3DDataset.h"
 #include <pthread.h>
 #include <set>
 #include <climits>
@@ -55,6 +55,11 @@ VortexExtractor::VortexExtractor() :
 VortexExtractor::~VortexExtractor()
 {
   pthread_mutex_destroy(&mutex);
+
+#ifdef WITH_CUDA
+  if (_gpu)
+    vfgpu_destroy_data();
+#endif
 }
 
 void VortexExtractor::SetNumberOfThreads(int n)
@@ -732,7 +737,9 @@ void VortexExtractor::RotateTimeSteps()
 void VortexExtractor::ExtractFaces_GPU(int slot)
 {
 #if WITH_CUDA
-  GLGPUDataset *ds = (GLGPUDataset*)_dataset;
+  GLGPU3DDataset *ds = (GLGPU3DDataset*)_dataset;
+  const int mesh_type = ds->MeshType();
+
   GLHeader h;
   double *rho, *phi, *re, *im, *J;
   ds->GetDataArray(h, &rho, &phi, &re, &im, &J);
@@ -767,50 +774,54 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
     Kx,
     re1, 
     im1);
-  
-  vfgpu_extract_faces_tet();
-  vfgpu_destroy_data();
+ 
+  int pfcount; 
+  gpu_pf_t *pf; 
+  vfgpu_extract_faces(&pfcount, &pf, mesh_type);
+
+  for (int i=0; i<pfcount; i++) {
+    double pos[3] = {pf[i].pos[0], pf[i].pos[1], pf[i].pos[2]};
+    AddPuncturedFace(pf[i].fid, slot, pf[i].chirality, pos);
+  }
 #endif
 }
 
 void VortexExtractor::ExtractFaces(int slot) 
 {
-  if (_gpu) {
-    ExtractFaces_GPU(slot);
-    return;
-  }
-
 #if WITH_CXX11
   typedef std::chrono::high_resolution_clock clock;
   auto t0 = clock::now();
 #endif
 
   if (!LoadPuncturedFaces(slot)) {
-    // running in threads
-    const int nthreads = _nthreads; 
-    pthread_t threads[nthreads-1]; 
-    extractor_thread_t ctx[nthreads];
+    if (_gpu) {
+      ExtractFaces_GPU(slot);
+    } else {
+      // running in threads
+      const int nthreads = _nthreads; 
+      pthread_t threads[nthreads-1]; 
+      extractor_thread_t ctx[nthreads];
+     
+      for (int i=0; i<nthreads-1; i++) {
+        ctx[i].extractor = this;
+        ctx[i].nthreads = nthreads;
+        ctx[i].tid = i+1;
+        ctx[i].type = 0; // faces
+        ctx[i].slot = slot;
+
+        pthread_create(&threads[i], NULL, &VortexExtractor::execute_thread_helper, &ctx[i]);
+      }
+
+      execute_thread(nthreads, 0, 0, slot); // main thread
+
+      for (int i=0; i<nthreads-1; i++) 
+        pthread_join(threads[i], NULL);
    
-    for (int i=0; i<nthreads-1; i++) {
-      ctx[i].extractor = this;
-      ctx[i].nthreads = nthreads;
-      ctx[i].tid = i+1;
-      ctx[i].type = 0; // faces
-      ctx[i].slot = slot;
-
-      pthread_create(&threads[i], NULL, &VortexExtractor::execute_thread_helper, &ctx[i]);
-    }
-
-    execute_thread(nthreads, 0, 0, slot); // main thread
-
-    for (int i=0; i<nthreads-1; i++) 
-      pthread_join(threads[i], NULL);
- 
 #if 0 // serial version
-    for (FaceIdType i=0; i<mg->NFaces(); i++) 
-      ExtractFace(i, slot);
+      for (FaceIdType i=0; i<mg->NFaces(); i++) 
+        ExtractFace(i, slot);
 #endif
-
+    }
     if (_archive) SavePuncturedFaces(slot);
   }
  

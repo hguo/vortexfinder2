@@ -33,6 +33,11 @@ typedef unsigned int ElemIdType;
 
 typedef signed char ChiralityType;
 
+enum {
+  GLGPU3D_MESH_HEX,
+  GLGPU3D_MESH_TET
+};
+
 // NetCDF error handling
 #define NC_SAFE_CALL(call) {\
   int retval = call;\

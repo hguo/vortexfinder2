@@ -1,8 +1,11 @@
 #ifndef _EXTRACTOR_CUH
 #define _EXTRACTOR_CUH
 
+#include "def.h"
+
 typedef struct {
-  int fid; // chirality = fid>0 ? 1 : -1;
+  int fid; 
+  int chirality;
   float pos[3];
 } gpu_pf_t; // punctured faces from GPU output, 16 bytes
 
@@ -19,6 +22,6 @@ void vfgpu_upload_data(
 
 void vfgpu_destroy_data();
 
-void vfgpu_extract_faces_tet();
+void vfgpu_extract_faces(int *pfcount, gpu_pf_t **pfbuf, int discretization=GLGPU3D_MESH_HEX);
 
 #endif
