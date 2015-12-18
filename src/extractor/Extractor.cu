@@ -1,4 +1,5 @@
 #include "Extractor.cuh"
+#include "threadIdx.cuh"
 #include <cstdio>
 
 __constant__ int d[3];
@@ -601,12 +602,29 @@ static void extract_faces_kernel(
     const T *im)
 {
   const int ntypes = nnodes == 3 ? 12 : 3;
-  unsigned int fid = __umul24(blockIdx.x, blockDim.x) + threadIdx.x;
+  int fid = getGlobalIdx_3D_1D();
   if (fid>d[0]*d[1]*d[2]*ntypes) return;
 
+#if 0 // use global memory
   extract_face<T, nnodes>(fid, pfcount, pfoutput, rho, phi, re, im);
-  
+#else // use shared memory
+  extern __shared__ char smem[];
+  unsigned int *spfcount = (unsigned int*)smem;
+  gpu_pf_t *spfoutput = (gpu_pf_t*)(smem + sizeof(int));
+ 
+  if (threadIdx.x == 0)
+    *spfcount = 0;
   __syncthreads();
+  
+  extract_face<T, nnodes>(fid, spfcount, spfoutput, rho, phi, re, im);
+  __syncthreads();
+
+  if (threadIdx.x == 0 && (*spfcount)>0) {
+    unsigned int idx = atomicAdd(pfcount, *spfcount);
+    // printf("idx=%d, count=%d\n", idx, *spfcount);
+    memcpy(pfoutput + idx, spfoutput, (*spfcount) * sizeof(gpu_pf_t));
+  }
+#endif
 }
 
 void vfgpu_destroy_data()
@@ -681,21 +699,31 @@ void vfgpu_extract_faces(int *pfcount_, gpu_pf_t **pfbuf, int discretization)
   const int nnodes = discretization == GLGPU3D_MESH_HEX ? 4 : 3;
   const int nfacetypes = nnodes == 3 ? 12 : 3;
 
-  const int count = dims[0]*dims[1]*dims[2]*nfacetypes; // face counts
-  const int nThreadsPerBlock = 256;
-  int nBlocks = idivup(count, nThreadsPerBlock);
-  
+  const int threadCount = dims[0]*dims[1]*dims[2]*nfacetypes; // face counts
+  const int maxGridDim = 1024; // 32768;
+  const int blockSize = 256;
+  const int nBlocks = idivup(threadCount, blockSize);
+  dim3 gridSize; 
+  if (nBlocks >= maxGridDim) 
+    gridSize = dim3(idivup(nBlocks, maxGridDim), maxGridDim);
+  else 
+    gridSize = dim3(nBlocks);
+  const int sharedSize = blockSize * sizeof(gpu_pf_t) + sizeof(unsigned int);
+    
   cudaMemset(d_pfcount, 0, sizeof(unsigned int));
-  checkLastCudaError("[0]");
+  checkLastCudaError("extract faces [0]");
+  fprintf(stderr, "gridSize={%d, %d, %d}, blockSize=%d\n", gridSize.x, gridSize.y, gridSize.z, blockSize);
   if (nnodes == 3)
-    extract_faces_kernel<float, 3><<<nBlocks, nThreadsPerBlock>>>(d_pfcount, d_pfoutput, d_rho, d_phi, d_re, d_im);
+    extract_faces_kernel<float, 3><<<gridSize, blockSize, sharedSize>>>(d_pfcount, d_pfoutput, d_rho, d_phi, d_re, d_im);
   else if (nnodes == 4)
-    extract_faces_kernel<float, 4><<<nBlocks, nThreadsPerBlock>>>(d_pfcount, d_pfoutput, d_rho, d_phi, d_re, d_im);
-  checkLastCudaError("[1]");
+    extract_faces_kernel<float, 4><<<gridSize, blockSize, sharedSize>>>(d_pfcount, d_pfoutput, d_rho, d_phi, d_re, d_im);
+  checkLastCudaError("extract faces [1]");
  
   cudaMemcpy((void*)&pfcount, d_pfcount, sizeof(unsigned int), cudaMemcpyDeviceToHost);
-  cudaMemcpy(pfoutput, d_pfoutput, sizeof(gpu_pf_t)*pfcount, cudaMemcpyDeviceToHost);
-  checkLastCudaError("[2]");
+  printf("pfcount=%d\n", pfcount);
+  if (pfcount>0)
+    cudaMemcpy(pfoutput, d_pfoutput, sizeof(gpu_pf_t)*pfcount, cudaMemcpyDeviceToHost);
+  checkLastCudaError("extract faces [2]");
   
   cudaDeviceSynchronize();
 
