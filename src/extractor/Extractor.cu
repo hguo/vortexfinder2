@@ -2,15 +2,18 @@
 #include "threadIdx.cuh"
 #include <cstdio>
 
-__constant__ int d[3];
-__constant__ bool pbc[3];
-__constant__ float origins[3];
-__constant__ float lengths[3];
-__constant__ float cell_lengths[3];
-__constant__ float B[3]; // TODO: time-varying data
-__constant__ float Kx;
+struct gpu_hdr_t {
+  int d[3]; 
+  bool pbc[3];
+  float origins[3];
+  float lengths[3];
+  float cell_lengths[3];
+  float B[3];
+  float Kx;
+};
 
 static int dims[3];
+static gpu_hdr_t *d_h=NULL;
 static float *d_rho=NULL, *d_phi=NULL, *d_re=NULL, *d_im=NULL;
 static unsigned int *d_pfcount;
 static gpu_pf_t *d_pfoutput=NULL;
@@ -146,7 +149,7 @@ static inline bool find_zero_quad_bilinear(const T re[4], const T im[4], const T
   bool succ = find_zero_unit_quad_bilinear(re, im, p, epsilon); 
   if (!succ) return false;
 
-  double u[3], v[3]; 
+  T u[3], v[3]; 
 
   u[0] = (1-p[0])*X[0][0] + p[0]*X[1][0];
   u[1] = (1-p[0])*X[0][1] + p[0]*X[1][1];
@@ -240,69 +243,69 @@ static inline T inner_product(const T A[3], const T B[3])
 
 template <typename T> 
 __device__
-T line_integral(const T X0[], const T X1[], const T A0[], const T A1[]) 
+T line_integral(const gpu_hdr_t& h, const T X0[], const T X1[], const T A0[], const T A1[]) 
 {
   T dX[3] = {X1[0] - X0[0], X1[1] - X0[1], X1[2] - X0[2]};
   T A[3] = {A0[0] + A1[0], A0[1] + A1[1], A0[2] + A1[2]};
 
   for (int i=0; i<3; i++)
-    if (dX[i] > lengths[i]/2) dX[i] -= lengths[i];
-    else if (dX[i] < -lengths[i]/2) dX[i] += lengths[i];
+    if (dX[i] > h.lengths[i]/2) dX[i] -= h.lengths[i];
+    else if (dX[i] < -h.lengths[i]/2) dX[i] += h.lengths[i];
 
   return 0.5 * inner_product(A, dX);
 }
 
 __device__
-inline void nid2nidx(int id, int idx[3])
+inline void nid2nidx(const gpu_hdr_t& h, int id, int idx[3])
 {
-  int s = d[0] * d[1]; 
+  int s = h.d[0] * h.d[1]; 
   int k = id / s; 
-  int j = (id - k*s) / d[0]; 
-  int i = id - k*s - j*d[0]; 
+  int j = (id - k*s) / h.d[0]; 
+  int i = id - k*s - j*h.d[0]; 
 
   idx[0] = i; idx[1] = j; idx[2] = k;
 }
 
 __device__
-inline int nidx2nid(const int idx_[3])
+inline int nidx2nid(const gpu_hdr_t& h, const int idx_[3])
 {
   int idx[3] = {idx_[0], idx_[1], idx_[2]};
   for (int i=0; i<3; i++) {
-    idx[i] = idx[i] % d[i];
+    idx[i] = idx[i] % h.d[i];
     if (idx[i] < 0)
-      idx[i] += d[i];
+      idx[i] += h.d[i];
   }
-  return idx[0] + d[0] * (idx[1] + d[1] * idx[2]); 
+  return idx[0] + h.d[0] * (idx[1] + h.d[1] * idx[2]); 
 }
 
 __device__
-inline void fid2fidx_tet(int id, int idx[4])
+inline void fid2fidx_tet(const gpu_hdr_t& h, int id, int idx[4])
 {
   int nid = id / 12;
-  nid2nidx(nid, idx);
+  nid2nidx(h, nid, idx);
   idx[3] = id % 12;
 }
 
 __device__
-inline void fid2fidx_hex(unsigned int id, int idx[4])
+inline void fid2fidx_hex(const gpu_hdr_t& h, unsigned int id, int idx[4])
 {
   unsigned int nid = id / 3;
-  nid2nidx(nid, idx);
+  nid2nidx(h, nid, idx);
   idx[3] = id % 3;
 }
 
 __device__
-bool valid_fidx_tet(const int fidx[4])
+bool valid_fidx_tet(const gpu_hdr_t& h,const int fidx[4])
 {
   if (fidx[3]<0 || fidx[3]>=12) return false;
   else {
     int o[3] = {0};
     for (int i=0; i<3; i++)
-      if (pbc[i]) {
-        if (fidx[i] < 0 || fidx[i] >= d[i]) return false;
+      if (h.pbc[i]) {
+        if (fidx[i] < 0 || fidx[i] >= h.d[i]) return false;
       } else {
-        if (fidx[i] < 0 || fidx[i] > d[i]-1) return false;
-        else if (fidx[i] == d[i]-1) o[i] = 1;
+        if (fidx[i] < 0 || fidx[i] > h.d[i]-1) return false;
+        else if (fidx[i] == h.d[i]-1) o[i] = 1;
       }
     
     const int sum = o[0] + o[1] + o[2];
@@ -316,17 +319,17 @@ bool valid_fidx_tet(const int fidx[4])
 }
 
 __device__
-bool valid_fidx_hex(const int fidx[4])
+bool valid_fidx_hex(const gpu_hdr_t& h, const int fidx[4])
 {
   if (fidx[3]<0 || fidx[3]>=3) return false;
   else {
     int o[3] = {0}; 
     for (int i=0; i<3; i++) 
-      if (pbc[i]) {
-        if (fidx[i]<0 || fidx[i]>=d[i]) return false;
+      if (h.pbc[i]) {
+        if (fidx[i]<0 || fidx[i]>=h.d[i]) return false;
       } else {
-        if (fidx[i]<0 || fidx[i]>d[i]-1) return false;
-        else if (fidx[i] == d[i]-1) o[i] = 1;
+        if (fidx[i]<0 || fidx[i]>h.d[i]-1) return false;
+        else if (fidx[i] == h.d[i]-1) o[i] = 1;
       }
 
     const int sum = o[0] + o[1] + o[2];
@@ -340,53 +343,53 @@ bool valid_fidx_hex(const int fidx[4])
 }
 
 __device__
-inline void eid2eidx_tet(int id, int idx[4])
+inline void eid2eidx_tet(const gpu_hdr_t& h, int id, int idx[4])
 {
   int nid = id / 7;
-  nid2nidx(nid, idx);
+  nid2nidx(h, nid, idx);
   idx[3] = id % 7;
 }
 
 __device__
-inline void eid2eidx_hex(unsigned int id, int idx[4]) 
+inline void eid2eidx_hex(const gpu_hdr_t& h, int id, int idx[4]) 
 {
-  unsigned int nid = id / 3;
-  nid2nidx(nid, idx);
+  int nid = id / 3;
+  nid2nidx(h, nid, idx);
   idx[3] = id % 3;
 }
 
 __device__
-inline bool valid_eidx_tet(const int eidx[4])
+inline bool valid_eidx_tet(const gpu_hdr_t& h, const int eidx[4])
 {
   if (eidx[3]<0 || eidx[3]>=7) return false;
   else {
     for (int i=0; i<3; i++)
-      if (pbc[i]) {
-        if (eidx[i] < 0 || eidx[i] >= d[i]) return false;
+      if (h.pbc[i]) {
+        if (eidx[i] < 0 || eidx[i] >= h.d[i]) return false;
       } else {
-        if (eidx[i] < 0 || eidx[i] >= d[i]-1) return false;
+        if (eidx[i] < 0 || eidx[i] >= h.d[i]-1) return false;
       }
     return true;
   }
 }
 
 __device__
-inline bool valid_eidx_hex(const int eidx[4])
+inline bool valid_eidx_hex(const gpu_hdr_t& h, const int eidx[4])
 {
   if (eidx[3]<0 || eidx[3]>=3) return false;
   else {
     for (int i=0; i<3; i++) 
-      if (pbc[i]) {
-        if (eidx[i]<0 || eidx[i]>=d[i]) return false;
+      if (h.pbc[i]) {
+        if (eidx[i]<0 || eidx[i]>=h.d[i]) return false;
       } else {
-        if (eidx[i]<0 || eidx[i]>=d[i]-1) return false;
+        if (eidx[i]<0 || eidx[i]>=h.d[i]-1) return false;
       }
     return true;
   }
 }
 
 __device__
-inline bool fid2nodes_tet(int id, int nidxs[3][3])
+inline bool fid2nodes_tet(const gpu_hdr_t& h, int id, int nidxs[3][3])
 {
   const int nodes_idx[12][3][3] = { // 12 types of faces
     {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}}, // ABC
@@ -404,9 +407,9 @@ inline bool fid2nodes_tet(int id, int nidxs[3][3])
   };
 
   int fidx[4];
-  fid2fidx_tet(id, fidx);
+  fid2fidx_tet(h, id, fidx);
 
-  if (valid_fidx_tet(fidx)) {
+  if (valid_fidx_tet(h, fidx)) {
     const int type = fidx[3];
     for (int p=0; p<3; p++) 
       for (int q=0; q<3; q++) 
@@ -418,7 +421,7 @@ inline bool fid2nodes_tet(int id, int nidxs[3][3])
 }
 
 __device__
-inline bool fid2nodes_hex(int id, int nidxs[4][3])
+inline bool fid2nodes_hex(const gpu_hdr_t &h, int id, int nidxs[4][3])
 {
   const int nodes_idx[3][4][3] = { // 3 types of faces
     {{0, 0, 0}, {0, 1, 0}, {0, 1, 1}, {0, 0, 1}}, // YZ
@@ -427,9 +430,9 @@ inline bool fid2nodes_hex(int id, int nidxs[4][3])
   };
   
   int fidx[4];
-  fid2fidx_hex(id, fidx);
+  fid2fidx_hex(h, id, fidx);
 
-  if (valid_fidx_hex(fidx)) {
+  if (valid_fidx_hex(h, fidx)) {
     const int type = fidx[3];
     for (int p=0; p<4; p++) 
       for (int q=0; q<3; q++) 
@@ -442,30 +445,31 @@ inline bool fid2nodes_hex(int id, int nidxs[4][3])
 
 template <typename T>
 __device__
-inline void nidx2pos(const int nidx[3], T X[3])
+inline void nidx2pos(const gpu_hdr_t& h, const int nidx[3], T X[3])
 {
   for (int i=0; i<3; i++) 
-    X[i] = nidx[i] * cell_lengths[i] + origins[i];
+    X[i] = nidx[i] * h.cell_lengths[i] + h.origins[i];
 }
 
 template <typename T>
 __device__
-inline void magnetic_potential(T X[3], T A[3])
+inline void magnetic_potential(const gpu_hdr_t& h, T X[3], T A[3])
 {
-  if (B[1]>0) {
-    A[0] = -Kx; 
-    A[1] = X[0] * B[2];
-    A[2] = -X[0] * B[1];
+  if (h.B[1]>0) {
+    A[0] = -h.Kx; 
+    A[1] = X[0] * h.B[2];
+    A[2] = -X[0] * h.B[1];
   } else {
-    A[0] = -X[1] * B[2] - Kx;
+    A[0] = -X[1] * h.B[2] - h.Kx;
     A[1] = 0;
-    A[2] = X[1] * B[0];
+    A[2] = X[1] * h.B[0];
   }
 }
 
 template <typename T, int nnodes>
 __device__
 inline bool get_face_values(
+    const gpu_hdr_t& h, 
     int fid, 
     T X[nnodes][3],
     T A[nnodes][3],
@@ -479,11 +483,11 @@ inline bool get_face_values(
     const T *im_)
 {
   int nidxs[nnodes][3], nids[nnodes];
-  bool valid = nnodes == 4 ? fid2nodes_hex(fid, nidxs) : fid2nodes_tet(fid, nidxs);
+  bool valid = nnodes == 4 ? fid2nodes_hex(h, fid, nidxs) : fid2nodes_tet(h, fid, nidxs);
   
   if (valid) {
     for (int i=0; i<nnodes; i++) {
-      nids[i] = nidx2nid(nidxs[i]);
+      nids[i] = nidx2nid(h, nidxs[i]);
       re[i] = re_[nids[i]];
       im[i] = im_[nids[i]];
       // rho[i] = sqrt(re[i]*re[i] + im[i]*im[i]);
@@ -491,8 +495,8 @@ inline bool get_face_values(
       rho[i] = rho_[nids[i]];
       phi[i] = phi_[nids[i]];
    
-      nidx2pos(nidxs[i], X[i]);
-      magnetic_potential(X[i], A[i]); 
+      nidx2pos(h, nidxs[i], X[i]);
+      magnetic_potential(h, X[i], A[i]); 
     }
   }
 
@@ -502,6 +506,7 @@ inline bool get_face_values(
 template <typename T>
 __device__
 inline int contour_chirality(
+    const gpu_hdr_t &h, 
     int nnodes, // nnodes <= 4
     const T phi[], 
     const T X[][3], 
@@ -512,7 +517,7 @@ inline int contour_chirality(
   for (int i=0; i<nnodes; i++) {
     int j = (i+1) % nnodes;
     delta[i] = phi[j] - phi[i]; 
-    T li = line_integral(X[i], X[j], A[i], A[j]), 
+    T li = line_integral(h, X[i], X[j], A[i], A[j]), 
       qp = 0; // TODO
     delta[i] = mod2pi1(delta[i] - li + qp);
     phase_jump -= delta[i];
@@ -542,6 +547,7 @@ inline void gauge_transform(
 template <typename T, int nnodes>
 __device__
 inline int extract_face(
+    const gpu_hdr_t& h, 
     int fid,
     unsigned int *pfcount,
     gpu_pf_t *pfoutput, 
@@ -553,11 +559,11 @@ inline int extract_face(
   T X[nnodes][3], A[nnodes][3], rho[nnodes], phi[nnodes], re[nnodes], im[nnodes];
   T delta[nnodes];
   
-  bool valid = get_face_values<T, nnodes>(fid, X, A, rho, phi, re, im, rho_, phi_, re_, im_);
+  bool valid = get_face_values<T, nnodes>(h, fid, X, A, rho, phi, re, im, rho_, phi_, re_, im_);
   if (!valid) return 0;
 
   // compute phase shift
-  int chirality = contour_chirality(nnodes, phi, X, A, delta);
+  int chirality = contour_chirality(h, nnodes, phi, X, A, delta);
   if (chirality == 0) return 0;
   
   // gauge transformation
@@ -578,6 +584,7 @@ inline int extract_face(
 template <typename T>
 __global__
 static void compute_rho_phi_kernel(
+    const gpu_hdr_t *h, 
     T *rho, 
     T *phi,
     const T *re,
@@ -585,7 +592,7 @@ static void compute_rho_phi_kernel(
 {
   unsigned int i = __umul24(blockIdx.x, blockDim.x) + threadIdx.x;
   
-  if (i>d[0]*d[1]*d[2]) return;
+  if (i>h->d[0]*h->d[1]*h->d[2]) return;
 
   rho[i] = sqrt(re[i]*re[i] + im[i]*im[i]);
   phi[i] = atan2(im[i], re[i]);
@@ -594,6 +601,7 @@ static void compute_rho_phi_kernel(
 template <typename T, int nnodes>
 __global__
 static void extract_faces_kernel(
+    const gpu_hdr_t* h, 
     unsigned int *pfcount,
     gpu_pf_t *pfoutput,
     const T *rho, 
@@ -603,10 +611,10 @@ static void extract_faces_kernel(
 {
   const int ntypes = nnodes == 3 ? 12 : 3;
   int fid = getGlobalIdx_3D_1D();
-  if (fid>d[0]*d[1]*d[2]*ntypes) return;
+  if (fid>h->d[0]*h->d[1]*h->d[2]*ntypes) return;
 
 #if 0 // use global memory
-  extract_face<T, nnodes>(fid, pfcount, pfoutput, rho, phi, re, im);
+  extract_face<T, nnodes>(h, fid, pfcount, pfoutput, rho, phi, re, im);
 #else // use shared memory
   extern __shared__ char smem[];
   unsigned int *spfcount = (unsigned int*)smem;
@@ -616,7 +624,7 @@ static void extract_faces_kernel(
     *spfcount = 0;
   __syncthreads();
   
-  extract_face<T, nnodes>(fid, spfcount, spfoutput, rho, phi, re, im);
+  extract_face<T, nnodes>(*h, fid, spfcount, spfoutput, rho, phi, re, im);
   __syncthreads();
 
   if (threadIdx.x == 0 && (*spfcount)>0) {
@@ -629,6 +637,7 @@ static void extract_faces_kernel(
 
 void vfgpu_destroy_data()
 {
+  cudaFree(d_h);
   cudaFree(d_rho);
   cudaFree(d_phi);
   cudaFree(d_re);
@@ -640,37 +649,36 @@ void vfgpu_destroy_data()
   checkLastCudaError("destroying data");
 
   d_rho = d_phi = d_re = d_im = NULL; 
+  d_h = NULL;
   d_pfoutput = NULL;
 }
 
 void vfgpu_upload_data(
-    const int d_[3], 
-    const bool pbc_[3], 
-    const float origins_[3],
-    const float lengths_[3], 
-    const float cell_lengths_[3],
-    const float B_[3],
-    float Kx_,
+    const int d[3], 
+    const bool pbc[3], 
+    const float origins[3],
+    const float lengths[3], 
+    const float cell_lengths[3],
+    const float B[3],
+    float Kx,
     const float *re, 
     const float *im)
 {
-  const int count = d_[0]*d_[1]*d_[2];
+  const int count = d[0]*d[1]*d[2];
   const int max_pf_count = count*12*0.1;
-  memcpy(dims, d_, sizeof(int)*3);
+  memcpy(dims, d, sizeof(int)*3);
+ 
+  gpu_hdr_t h;
+  memcpy(h.d, d, sizeof(int)*3);
+  memcpy(h.pbc, pbc, sizeof(bool)*3);
+  memcpy(h.origins, origins, sizeof(float)*3);
+  memcpy(h.lengths, lengths, sizeof(float)*3);
+  memcpy(h.cell_lengths, cell_lengths, sizeof(float)*3);
+  memcpy(h.B, B, sizeof(float)*3);
+  h.Kx = Kx;
   
-  checkLastCudaError("dummy");
-  
-  cudaMemcpyToSymbol(d, d_, sizeof(int)*3);
-  cudaMemcpyToSymbol(pbc, pbc_, sizeof(bool)*3);
-  cudaMemcpyToSymbol(origins, origins_, sizeof(float)*3);
-  cudaMemcpyToSymbol(lengths, lengths_, sizeof(float)*3);
-  cudaMemcpyToSymbol(cell_lengths, cell_lengths_, sizeof(float)*3);
-  cudaMemcpyToSymbol(B, B_, sizeof(float)*3);
-  cudaMemcpyToSymbol(Kx, &Kx_, sizeof(float));
-
-  checkLastCudaError("copy to symbols");
-
   if (d_rho == NULL) { // FIXME
+    cudaMalloc((void**)&d_h, sizeof(gpu_hdr_t));
     cudaMalloc((void**)&d_re, sizeof(float)*count);
     cudaMalloc((void**)&d_im, sizeof(float)*count);
     cudaMalloc((void**)&d_rho, sizeof(float)*count);
@@ -681,6 +689,7 @@ void vfgpu_upload_data(
     pfoutput = (gpu_pf_t*)malloc(max_pf_count*sizeof(gpu_pf_t));
   }
 
+  cudaMemcpy(d_h, &h, sizeof(gpu_hdr_t), cudaMemcpyHostToDevice);
   cudaMemcpy(d_re, re, sizeof(float)*count, cudaMemcpyHostToDevice);
   cudaMemcpy(d_im, im, sizeof(float)*count, cudaMemcpyHostToDevice);
   
@@ -689,7 +698,7 @@ void vfgpu_upload_data(
   const int nThreadsPerBlock = 128;
   int nBlocks = idivup(count, nThreadsPerBlock);
 
-  compute_rho_phi_kernel<<<nBlocks, nThreadsPerBlock>>>(d_rho, d_phi, d_re, d_im);
+  compute_rho_phi_kernel<<<nBlocks, nThreadsPerBlock>>>(d_h, d_rho, d_phi, d_re, d_im);
   cudaDeviceSynchronize();
   checkLastCudaError("compute rho and phi");
 }
@@ -714,9 +723,9 @@ void vfgpu_extract_faces(int *pfcount_, gpu_pf_t **pfbuf, int discretization)
   checkLastCudaError("extract faces [0]");
   fprintf(stderr, "gridSize={%d, %d, %d}, blockSize=%d\n", gridSize.x, gridSize.y, gridSize.z, blockSize);
   if (nnodes == 3)
-    extract_faces_kernel<float, 3><<<gridSize, blockSize, sharedSize>>>(d_pfcount, d_pfoutput, d_rho, d_phi, d_re, d_im);
+    extract_faces_kernel<float, 3><<<gridSize, blockSize, sharedSize>>>(d_h, d_pfcount, d_pfoutput, d_rho, d_phi, d_re, d_im);
   else if (nnodes == 4)
-    extract_faces_kernel<float, 4><<<gridSize, blockSize, sharedSize>>>(d_pfcount, d_pfoutput, d_rho, d_phi, d_re, d_im);
+    extract_faces_kernel<float, 4><<<gridSize, blockSize, sharedSize>>>(d_h, d_pfcount, d_pfoutput, d_rho, d_phi, d_re, d_im);
   checkLastCudaError("extract faces [1]");
  
   cudaMemcpy((void*)&pfcount, d_pfcount, sizeof(unsigned int), cudaMemcpyDeviceToHost);
