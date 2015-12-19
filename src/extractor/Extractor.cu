@@ -4,7 +4,8 @@
 #include <cstdio>
 
 struct gpu_hdr_t {
-  int d[3]; 
+  int d[3];
+  int count; // d[0]*d[1]*d[2];
   bool pbc[3];
   float origins[3];
   float lengths[3];
@@ -13,7 +14,7 @@ struct gpu_hdr_t {
   float Kx;
 };
 
-static int dims[3];
+gpu_hdr_t h[2];
 static gpu_hdr_t *d_h[2] = {NULL};
 static float *d_rho[2] = {NULL}, 
              *d_phi[2] = {NULL}, 
@@ -483,12 +484,8 @@ inline bool get_face_values(
     T A[nnodes][3],
     T rho[nnodes],
     T phi[nnodes],
-    T re[nnodes],
-    T im[nnodes],
     const T *rho_,
-    const T *phi_,
-    const T *re_, 
-    const T *im_)
+    const T *phi_)
 {
   int nidxs[nnodes][3], nids[nnodes];
   bool valid = nnodes == 4 ? fid2nodes_hex(h, fid, nidxs) : fid2nodes_tet(h, fid, nidxs);
@@ -496,8 +493,8 @@ inline bool get_face_values(
   if (valid) {
     for (int i=0; i<nnodes; i++) {
       nids[i] = nidx2nid(h, nidxs[i]);
-      re[i] = re_[nids[i]];
-      im[i] = im_[nids[i]];
+      // re[i] = re_[nids[i]];
+      // im[i] = im_[nids[i]];
       // rho[i] = sqrt(re[i]*re[i] + im[i]*im[i]);
       // phi[i] = atan2(im[i], re[i]);
       rho[i] = rho_[nids[i]];
@@ -598,6 +595,8 @@ inline void gauge_transform(
     T re[], 
     T im[])
 {
+  re[0] = rho[0] * cos(phi[0]);
+  im[0] = rho[0] * sin(phi[0]);
   for (int i=1; i<nnodes; i++) {
     phi[i] = phi[i-1] + delta[i-1];
     re[i] = rho[i] * cos(phi[i]);
@@ -613,14 +612,12 @@ inline int extract_face(
     unsigned int *pfcount,
     gpu_pf_t *pfoutput, 
     const T *rho_, 
-    const T *phi_,
-    const T *re_,
-    const T *im_)
+    const T *phi_)
 {
   T X[nnodes][3], A[nnodes][3], rho[nnodes], phi[nnodes], re[nnodes], im[nnodes];
   T delta[nnodes];
   
-  bool valid = get_face_values<T, nnodes>(h, fid, X, A, rho, phi, re, im, rho_, phi_, re_, im_);
+  bool valid = get_face_values<T, nnodes>(h, fid, X, A, rho, phi, rho_, phi_);
   if (!valid) return 0;
 
   // compute phase shift
@@ -670,22 +667,31 @@ inline int extract_edge(
   return chirality;
 }
 
-template <typename T>
+template <typename T, bool pertubation>
 __global__
 static void compute_rho_phi_kernel(
     const gpu_hdr_t *h, 
     T *rho, 
     T *phi,
     const T *re,
-    const T *im)
+    const T *im,
+    const T *pert=NULL)
 {
-  // unsigned int i = __umul24(blockIdx.x, blockDim.x) + threadIdx.x;
-  int i = getGlobalIdx_3D_1D();
-  
-  if (i>h->d[0]*h->d[1]*h->d[2]) return;
+  int idx = getGlobalIdx_3D_1D();
+  if (idx>h->d[0]*h->d[1]*h->d[2]) return;
 
-  rho[i] = sqrt(re[i]*re[i] + im[i]*im[i]);
-  phi[i] = atan2(im[i], re[i]);
+  T r, i;
+
+  if (pertubation) {
+    r = re[idx] + pert[idx*2];
+    i = im[idx] + pert[idx*2+1];
+  } else {
+    r = re[idx];
+    i = im[idx];
+  }
+
+  rho[idx] = sqrt(r*r + i*i);
+  phi[idx] = atan2(i, r);
 }
 
 template <typename T, int nnodes>
@@ -695,16 +701,14 @@ static void extract_faces_kernel(
     unsigned int *pfcount,
     gpu_pf_t *pfoutput,
     const T *rho, 
-    const T *phi, 
-    const T *re,
-    const T *im)
+    const T *phi)
 {
   const int ntypes = nnodes == 3 ? 12 : 3;
   int fid = getGlobalIdx_3D_1D();
   if (fid>h->d[0]*h->d[1]*h->d[2]*ntypes) return;
 
 #if 0 // use global memory
-  extract_face<T, nnodes>(h, fid, pfcount, pfoutput, rho, phi, re, im);
+  extract_face<T, nnodes>(h, fid, pfcount, pfoutput, rho, phi);
 #else // use shared memory
   extern __shared__ char smem[];
   unsigned int *spfcount = (unsigned int*)smem;
@@ -714,7 +718,7 @@ static void extract_faces_kernel(
     *spfcount = 0;
   __syncthreads();
   
-  extract_face<T, nnodes>(*h, fid, spfcount, spfoutput, rho, phi, re, im);
+  extract_face<T, nnodes>(*h, fid, spfcount, spfoutput, rho, phi);
   __syncthreads();
 
   if (threadIdx.x == 0 && (*spfcount)>0) {
@@ -747,8 +751,6 @@ void vfgpu_destroy_data()
     cudaFree(d_re[slot]);
     cudaFree(d_im[slot]);
 
-    curandDestroyGenerator(gen);
-  
     d_rho[slot] = d_phi[slot] = d_re[slot] = d_im[slot] = NULL; 
     d_h[slot] = NULL;
   }
@@ -757,6 +759,8 @@ void vfgpu_destroy_data()
   d_pfoutput = NULL;
   free(pfoutput);
   pfoutput = NULL;
+    
+  curandDestroyGenerator(gen);
   
   checkLastCudaError("destroying data");
 }
@@ -775,7 +779,6 @@ void vfgpu_upload_data(
 {
   const int count = d[0]*d[1]*d[2];
   const int max_pf_count = count*12*0.1;
-  memcpy(dims, d, sizeof(int)*3);
  
   gpu_hdr_t h;
   memcpy(h.d, d, sizeof(int)*3);
@@ -785,6 +788,9 @@ void vfgpu_upload_data(
   memcpy(h.cell_lengths, cell_lengths, sizeof(float)*3);
   memcpy(h.B, B, sizeof(float)*3);
   h.Kx = Kx;
+  h.count = count;
+
+  memcpy(&::h[slot], &h, sizeof(gpu_hdr_t));
   
   if (d_rho[slot] == NULL) { // FIXME
     cudaMalloc((void**)&d_h[slot], sizeof(gpu_hdr_t));
@@ -813,7 +819,11 @@ void vfgpu_upload_data(
   cudaMemcpy(d_im[slot], im, sizeof(float)*count, cudaMemcpyHostToDevice);
  
   checkLastCudaError("copy data to device");
+}
 
+void vfgpu_compute_rho_phi(int slot, float pertubation=0.f)
+{
+  const int count = h[slot].count;
   const int maxGridDim = 1024; // 32768;
   const int blockSize = 256;
   const int nBlocks = idivup(count, blockSize);
@@ -823,14 +833,15 @@ void vfgpu_upload_data(
   else 
     gridSize = dim3(nBlocks);
 
-  compute_rho_phi_kernel<<<gridSize, blockSize>>>(d_h[slot], d_rho[slot], d_phi[slot], d_re[slot], d_im[slot]);
+  if (pertubation>0.f) {
+    curandGenerateNormal(gen, d_pert, count*2, 0, pertubation);
+    compute_rho_phi_kernel<float, true><<<gridSize, blockSize>>>(d_h[slot], d_rho[slot], d_phi[slot], d_re[slot], d_im[slot], d_pert);
+  } else {
+    compute_rho_phi_kernel<float, false><<<gridSize, blockSize>>>(d_h[slot], d_rho[slot], d_phi[slot], d_re[slot], d_im[slot]);
+  }
+
   cudaDeviceSynchronize();
   checkLastCudaError("compute rho and phi");
-}
-
-void vfgpu_compute_rho_phi(int slot, bool pertubation)
-{
-
 }
 
 void vfgpu_extract_faces(int slot, int *pfcount_, gpu_pf_t **pfbuf, int discretization)
@@ -838,7 +849,7 @@ void vfgpu_extract_faces(int slot, int *pfcount_, gpu_pf_t **pfbuf, int discreti
   const int nnodes = discretization == GLGPU3D_MESH_HEX ? 4 : 3;
   const int nfacetypes = nnodes == 3 ? 12 : 3;
 
-  const int threadCount = dims[0]*dims[1]*dims[2]*nfacetypes; // face counts
+  const int threadCount = h[slot].count * nfacetypes;
   const int maxGridDim = 1024; // 32768;
   const int blockSize = 256;
   const int nBlocks = idivup(threadCount, blockSize);
@@ -848,14 +859,16 @@ void vfgpu_extract_faces(int slot, int *pfcount_, gpu_pf_t **pfbuf, int discreti
   else 
     gridSize = dim3(nBlocks);
   const int sharedSize = blockSize * sizeof(gpu_pf_t) + sizeof(unsigned int);
-    
+  
+  // vfgpu_compute_rho_phi(slot, 0.05);
+  vfgpu_compute_rho_phi(slot, 0.f);
+
   cudaMemset(d_pfcount, 0, sizeof(unsigned int));
   checkLastCudaError("extract faces [0]");
-  fprintf(stderr, "gridSize={%d, %d, %d}, blockSize=%d\n", gridSize.x, gridSize.y, gridSize.z, blockSize);
   if (nnodes == 3)
-    extract_faces_kernel<float, 3><<<gridSize, blockSize, sharedSize>>>(d_h[slot], d_pfcount, d_pfoutput, d_rho[slot], d_phi[slot], d_re[slot], d_im[slot]);
+    extract_faces_kernel<float, 3><<<gridSize, blockSize, sharedSize>>>(d_h[slot], d_pfcount, d_pfoutput, d_rho[slot], d_phi[slot]);
   else if (nnodes == 4)
-    extract_faces_kernel<float, 4><<<gridSize, blockSize, sharedSize>>>(d_h[slot], d_pfcount, d_pfoutput, d_rho[slot], d_phi[slot], d_re[slot], d_im[slot]);
+    extract_faces_kernel<float, 4><<<gridSize, blockSize, sharedSize>>>(d_h[slot], d_pfcount, d_pfoutput, d_rho[slot], d_phi[slot]);
   checkLastCudaError("extract faces [1]");
  
   cudaMemcpy((void*)&pfcount, d_pfcount, sizeof(unsigned int), cudaMemcpyDeviceToHost);
