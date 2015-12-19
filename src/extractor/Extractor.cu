@@ -13,11 +13,15 @@ struct gpu_hdr_t {
 };
 
 static int dims[3];
-static gpu_hdr_t *d_h=NULL;
-static float *d_rho=NULL, *d_phi=NULL, *d_re=NULL, *d_im=NULL;
-static unsigned int *d_pfcount;
+static gpu_hdr_t *d_h[2] = {NULL};
+static float *d_rho[2] = {NULL}, 
+             *d_phi[2] = {NULL}, 
+             *d_re[2] = {NULL}, 
+             *d_im[2] = {NULL};
+
+static unsigned int *d_pfcount=NULL;
 static gpu_pf_t *d_pfoutput=NULL;
-static unsigned int pfcount;
+static unsigned int pfcount=0;
 static gpu_pf_t *pfoutput=NULL;
 
 inline void checkCuda(cudaError_t e, const char *situation) {
@@ -505,6 +509,26 @@ inline bool get_face_values(
 
 template <typename T>
 __device__
+inline bool get_vface_values(
+    const gpu_hdr_t& h, 
+    const gpu_hdr_t& h1, 
+    int fid, 
+    T X[4][3],
+    T A[4][3],
+    T phi[4],
+    const T *phi_,
+    const T *phi1_)
+{
+  // const int nnodes = 4;
+  // int nidxs[nnodes][3], nids[nnodes];
+
+  // TODO
+
+  return false;
+}
+
+template <typename T>
+__device__
 inline int contour_chirality(
     const gpu_hdr_t &h, 
     int nnodes, // nnodes <= 4
@@ -582,6 +606,34 @@ inline int extract_face(
 }
 
 template <typename T>
+__device__
+inline int extract_edge(
+    const gpu_hdr_t& h, 
+    const gpu_hdr_t& h1, 
+    int eid,
+    unsigned int *pecount,
+    int *peoutput, 
+    const T *phi_,
+    const T *phi1_)
+{
+  const int nnodes = 4;
+  T X[nnodes][3], A[nnodes][3], phi[nnodes];
+  T delta[nnodes];
+  
+  bool valid = get_vface_values<T, nnodes>(h, eid, X, A, phi, phi_, phi1_);
+  if (!valid) return 0;
+
+  // compute phase shift
+  int chirality = contour_chirality(h, nnodes, phi, X, A, delta);
+  if (chirality == 0) return 0;
+  
+  unsigned int idx = atomicInc(pecount, 0xffffffff);
+  peoutput[idx] = eid;
+
+  return chirality;
+}
+
+template <typename T>
 __global__
 static void compute_rho_phi_kernel(
     const gpu_hdr_t *h, 
@@ -635,25 +687,42 @@ static void extract_faces_kernel(
 #endif
 }
 
+template <typename T, int nnodes>
+__global__
+static void extract_edges_kernel(
+    const gpu_hdr_t* h, 
+    const gpu_hdr_t* h1, 
+    unsigned int *pecount,
+    int *peoutput,
+    const T *phi, 
+    const T *phi1)
+{
+  // TODO
+}
+
 void vfgpu_destroy_data()
 {
-  cudaFree(d_h);
-  cudaFree(d_rho);
-  cudaFree(d_phi);
-  cudaFree(d_re);
-  cudaFree(d_im);
-  cudaFree(d_pfoutput);
+  for (int slot=0; slot<2; slot++) {
+    cudaFree(d_h[slot]);
+    cudaFree(d_rho[slot]);
+    cudaFree(d_phi[slot]);
+    cudaFree(d_re[slot]);
+    cudaFree(d_im[slot]);
+  
+    d_rho[slot] = d_phi[slot] = d_re[slot] = d_im[slot] = NULL; 
+    d_h[slot] = NULL;
+  }
 
+  cudaFree(d_pfoutput);
+  d_pfoutput = NULL;
   free(pfoutput);
+  pfoutput = NULL;
   
   checkLastCudaError("destroying data");
-
-  d_rho = d_phi = d_re = d_im = NULL; 
-  d_h = NULL;
-  d_pfoutput = NULL;
 }
 
 void vfgpu_upload_data(
+    int slot, 
     const int d[3], 
     const bool pbc[3], 
     const float origins[3],
@@ -677,33 +746,35 @@ void vfgpu_upload_data(
   memcpy(h.B, B, sizeof(float)*3);
   h.Kx = Kx;
   
-  if (d_rho == NULL) { // FIXME
-    cudaMalloc((void**)&d_h, sizeof(gpu_hdr_t));
-    cudaMalloc((void**)&d_re, sizeof(float)*count);
-    cudaMalloc((void**)&d_im, sizeof(float)*count);
-    cudaMalloc((void**)&d_rho, sizeof(float)*count);
-    cudaMalloc((void**)&d_phi, sizeof(float)*count);
-    cudaMalloc((void**)&d_pfcount, sizeof(unsigned int));
-    cudaMalloc((void**)&d_pfoutput, sizeof(gpu_pf_t)*max_pf_count);
-
-    pfoutput = (gpu_pf_t*)malloc(max_pf_count*sizeof(gpu_pf_t));
+  if (d_rho[slot] == NULL) { // FIXME
+    cudaMalloc((void**)&d_h[slot], sizeof(gpu_hdr_t));
+    cudaMalloc((void**)&d_re[slot], sizeof(float)*count);
+    cudaMalloc((void**)&d_im[slot], sizeof(float)*count);
+    cudaMalloc((void**)&d_rho[slot], sizeof(float)*count);
+    cudaMalloc((void**)&d_phi[slot], sizeof(float)*count);
   }
 
-  cudaMemcpy(d_h, &h, sizeof(gpu_hdr_t), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_re, re, sizeof(float)*count, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_im, im, sizeof(float)*count, cudaMemcpyHostToDevice);
-  
+  if (pfoutput == NULL) {
+    pfoutput = (gpu_pf_t*)malloc(max_pf_count*sizeof(gpu_pf_t));
+    cudaMalloc((void**)&d_pfcount, sizeof(unsigned int));
+    cudaMalloc((void**)&d_pfoutput, sizeof(gpu_pf_t)*max_pf_count);
+  }
+
+  cudaMemcpy(d_h[slot], &h, sizeof(gpu_hdr_t), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_re[slot], re, sizeof(float)*count, cudaMemcpyHostToDevice);
+  cudaMemcpy(d_im[slot], im, sizeof(float)*count, cudaMemcpyHostToDevice);
+ 
   checkLastCudaError("copy data to device");
 
   const int nThreadsPerBlock = 128;
   int nBlocks = idivup(count, nThreadsPerBlock);
 
-  compute_rho_phi_kernel<<<nBlocks, nThreadsPerBlock>>>(d_h, d_rho, d_phi, d_re, d_im);
+  compute_rho_phi_kernel<<<nBlocks, nThreadsPerBlock>>>(d_h[slot], d_rho[slot], d_phi[slot], d_re[slot], d_im[slot]);
   cudaDeviceSynchronize();
   checkLastCudaError("compute rho and phi");
 }
 
-void vfgpu_extract_faces(int *pfcount_, gpu_pf_t **pfbuf, int discretization)
+void vfgpu_extract_faces(int slot, int *pfcount_, gpu_pf_t **pfbuf, int discretization)
 {
   const int nnodes = discretization == GLGPU3D_MESH_HEX ? 4 : 3;
   const int nfacetypes = nnodes == 3 ? 12 : 3;
@@ -723,9 +794,9 @@ void vfgpu_extract_faces(int *pfcount_, gpu_pf_t **pfbuf, int discretization)
   checkLastCudaError("extract faces [0]");
   fprintf(stderr, "gridSize={%d, %d, %d}, blockSize=%d\n", gridSize.x, gridSize.y, gridSize.z, blockSize);
   if (nnodes == 3)
-    extract_faces_kernel<float, 3><<<gridSize, blockSize, sharedSize>>>(d_h, d_pfcount, d_pfoutput, d_rho, d_phi, d_re, d_im);
+    extract_faces_kernel<float, 3><<<gridSize, blockSize, sharedSize>>>(d_h[slot], d_pfcount, d_pfoutput, d_rho[slot], d_phi[slot], d_re[slot], d_im[slot]);
   else if (nnodes == 4)
-    extract_faces_kernel<float, 4><<<gridSize, blockSize, sharedSize>>>(d_h, d_pfcount, d_pfoutput, d_rho, d_phi, d_re, d_im);
+    extract_faces_kernel<float, 4><<<gridSize, blockSize, sharedSize>>>(d_h[slot], d_pfcount, d_pfoutput, d_rho[slot], d_phi[slot], d_re[slot], d_im[slot]);
   checkLastCudaError("extract faces [1]");
  
   cudaMemcpy((void*)&pfcount, d_pfcount, sizeof(unsigned int), cudaMemcpyDeviceToHost);

@@ -10,6 +10,7 @@ typedef struct {
 } gpu_pf_t; // punctured faces from GPU output, 16 bytes
 
 void vfgpu_upload_data(
+    int slot,
     const int d_[3], 
     const bool pbc_[3], 
     const float origins_[3],
@@ -22,6 +23,6 @@ void vfgpu_upload_data(
 
 void vfgpu_destroy_data();
 
-void vfgpu_extract_faces(int *pfcount, gpu_pf_t **pfbuf, int discretization=GLGPU3D_MESH_HEX);
+void vfgpu_extract_faces(int slot, int *pfcount, gpu_pf_t **pfbuf, int discretization=GLGPU3D_MESH_HEX);
 
 #endif

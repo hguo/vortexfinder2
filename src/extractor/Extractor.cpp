@@ -742,7 +742,7 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
 
   GLHeader h;
   double *rho, *phi, *re, *im, *J;
-  ds->GetDataArray(h, &rho, &phi, &re, &im, &J);
+  ds->GetDataArray(h, &rho, &phi, &re, &im, &J, slot);
 
   float origins[3], lengths[3], cell_lengths[3], B[3], Kx;
   for (int i=0; i<3; i++) {
@@ -765,6 +765,7 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
   bool pbc[3] = {0};
 
   vfgpu_upload_data(
+    slot,
     h.dims,
     pbc, // h.pbc,
     origins,
@@ -782,7 +783,7 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
 
   int pfcount; 
   gpu_pf_t *pf; 
-  vfgpu_extract_faces(&pfcount, &pf, mesh_type);
+  vfgpu_extract_faces(slot, &pfcount, &pf, mesh_type);
 
 #if WITH_CXX11
   auto t1 = clock::now();

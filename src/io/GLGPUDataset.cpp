@@ -155,14 +155,14 @@ bool GLGPUDataset::LoadTimeStep(int timestep, int slot)
   return true;
 }
 
-void GLGPUDataset::GetDataArray(GLHeader& h, double **rho, double **phi, double **re, double **im, double **J)
+void GLGPUDataset::GetDataArray(GLHeader& h, double **rho, double **phi, double **re, double **im, double **J, int slot)
 {
-  h = _h[0];
-  *rho = _rho[0];
-  *phi = _phi[0];
-  *re = _re[0]; 
-  *im = _im[0];
-  *J = _J[0];
+  h = _h[slot];
+  *rho = _rho[slot];
+  *phi = _phi[slot];
+  *re = _re[slot]; 
+  *im = _im[slot];
+  *J = _J[slot];
 }
 
 bool GLGPUDataset::BuildDataFromArray(const GLHeader& h, const double *rho, const double *phi, const double *re, const double *im)
