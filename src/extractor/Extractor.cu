@@ -507,23 +507,26 @@ inline bool get_face_values(
   return valid;
 }
 
-template <typename T>
+template <typename T, int nnodes>
 __device__
 inline bool get_vface_values(
     const gpu_hdr_t& h, 
     const gpu_hdr_t& h1, 
-    int fid, 
+    int eid, 
     T X[4][3],
     T A[4][3],
     T phi[4],
     const T *phi_,
     const T *phi1_)
 {
-  // const int nnodes = 4;
-  // int nidxs[nnodes][3], nids[nnodes];
+#if 0
+  int nidxs[2][3], nids[2];
+  bool valid = nnodes == 4 ? eid2nodes_hex(h, eid, nidxs) : eid2nodes_tet(h, eid, nidxs);
 
-  // TODO
-
+  if (valid) {
+    // TODO
+  }
+#endif
   return false;
 }
 
@@ -543,6 +546,36 @@ inline int contour_chirality(
     delta[i] = phi[j] - phi[i]; 
     T li = line_integral(h, X[i], X[j], A[i], A[j]), 
       qp = 0; // TODO
+    delta[i] = mod2pi1(delta[i] - li + qp);
+    phase_jump -= delta[i];
+  }
+  
+  if (fabs(phase_jump)<0.5) return 0; // not punctured
+  else return sgn(phase_jump);
+}
+
+// for space-time vfaces
+template <typename T>
+__device__
+inline int contour_chirality(
+    const gpu_hdr_t &h, 
+    const gpu_hdr_t &h1, 
+    const T phi[4], 
+    const T X[4][3], 
+    const T A[4][3],
+    T delta[])
+{
+  T li[4] = { // FIXME: varying B
+    line_integral(h, X[0], X[1], A[0], A[1]), 
+    0, 
+    line_integral(h, X[1], X[0], A[2], A[3]), 
+    0};
+  T qp[4] = {0, 0, 0, 0}; // FIXME
+
+  T phase_jump = 0;
+  for (int i=0; i<4; i++) {
+    int j = (i+1) % 4;
+    delta[i] = phi[j] - phi[i]; 
     delta[i] = mod2pi1(delta[i] - li + qp);
     phase_jump -= delta[i];
   }
@@ -620,11 +653,11 @@ inline int extract_edge(
   T X[nnodes][3], A[nnodes][3], phi[nnodes];
   T delta[nnodes];
   
-  bool valid = get_vface_values<T, nnodes>(h, eid, X, A, phi, phi_, phi1_);
+  bool valid = get_vface_values<T, nnodes>(h, h1, eid, X, A, phi, phi_, phi1_);
   if (!valid) return 0;
 
   // compute phase shift
-  int chirality = contour_chirality(h, nnodes, phi, X, A, delta);
+  int chirality = contour_chirality(h, h1, phi, X, A, delta);
   if (chirality == 0) return 0;
   
   unsigned int idx = atomicInc(pecount, 0xffffffff);
