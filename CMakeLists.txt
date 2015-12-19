@@ -132,6 +132,7 @@ else()
 
   if (WITH_CUDA)
     find_package (CUDA REQUIRED)
+    set (CUDA_PROPAGATE_HOST_FLAGS OFF)
   endif ()
 
 endif()
