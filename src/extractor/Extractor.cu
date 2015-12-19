@@ -679,7 +679,8 @@ static void compute_rho_phi_kernel(
     const T *re,
     const T *im)
 {
-  unsigned int i = __umul24(blockIdx.x, blockDim.x) + threadIdx.x;
+  // unsigned int i = __umul24(blockIdx.x, blockDim.x) + threadIdx.x;
+  int i = getGlobalIdx_3D_1D();
   
   if (i>h->d[0]*h->d[1]*h->d[2]) return;
 
@@ -813,10 +814,16 @@ void vfgpu_upload_data(
  
   checkLastCudaError("copy data to device");
 
-  const int nThreadsPerBlock = 128;
-  int nBlocks = idivup(count, nThreadsPerBlock);
+  const int maxGridDim = 1024; // 32768;
+  const int blockSize = 256;
+  const int nBlocks = idivup(count, blockSize);
+  dim3 gridSize; 
+  if (nBlocks >= maxGridDim) 
+    gridSize = dim3(idivup(nBlocks, maxGridDim), maxGridDim);
+  else 
+    gridSize = dim3(nBlocks);
 
-  compute_rho_phi_kernel<<<nBlocks, nThreadsPerBlock>>>(d_h[slot], d_rho[slot], d_phi[slot], d_re[slot], d_im[slot]);
+  compute_rho_phi_kernel<<<gridSize, blockSize>>>(d_h[slot], d_rho[slot], d_phi[slot], d_re[slot], d_im[slot]);
   cudaDeviceSynchronize();
   checkLastCudaError("compute rho and phi");
 }

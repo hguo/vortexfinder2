@@ -132,12 +132,15 @@ else()
 
   if (WITH_CUDA)
     find_package (CUDA REQUIRED)
+    set (CUDA_PROPAGATE_HOST_FLAGS OFF)
   endif ()
 
 endif()
 
-find_package (Protobuf REQUIRED)
-include_directories (${PROTOBUF_INCLUDE_DIR})
+if (WITH_PROTOBUF)
+  find_package (Protobuf REQUIRED)
+  include_directories (${PROTOBUF_INCLUDE_DIR})
+endif ()
 
 # boost options
 set (Boost_USE_STATIC_LIBS ON)

@@ -1,5 +1,6 @@
 #include "FieldLine.h"
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <cassert>
 
