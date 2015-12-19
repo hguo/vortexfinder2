@@ -1,6 +1,7 @@
 #include "MeshGraph.h"
 #include <cassert>
 #include <cstdio>
+#include <climits>
 
 #if WITH_PROTOBUF
 #include "MeshGraph.pb.h"
