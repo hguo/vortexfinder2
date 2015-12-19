@@ -1,5 +1,6 @@
 #include "Extractor.cuh"
 #include "threadIdx.cuh"
+#include <curand.h>
 #include <cstdio>
 
 struct gpu_hdr_t {
@@ -18,6 +19,9 @@ static float *d_rho[2] = {NULL},
              *d_phi[2] = {NULL}, 
              *d_re[2] = {NULL}, 
              *d_im[2] = {NULL};
+static float *d_pert = NULL;
+
+curandGenerator_t gen;
 
 static unsigned int *d_pfcount=NULL;
 static gpu_pf_t *d_pfoutput=NULL;
@@ -741,6 +745,8 @@ void vfgpu_destroy_data()
     cudaFree(d_phi[slot]);
     cudaFree(d_re[slot]);
     cudaFree(d_im[slot]);
+
+    curandDestroyGenerator(gen);
   
     d_rho[slot] = d_phi[slot] = d_re[slot] = d_im[slot] = NULL; 
     d_h[slot] = NULL;
@@ -792,6 +798,14 @@ void vfgpu_upload_data(
     cudaMalloc((void**)&d_pfcount, sizeof(unsigned int));
     cudaMalloc((void**)&d_pfoutput, sizeof(gpu_pf_t)*max_pf_count);
   }
+    
+  if (d_pert == NULL) {
+    cudaMalloc((void**)&d_pert, sizeof(float)*count*2); // real and imag
+
+    curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT);
+    curandSetPseudoRandomGeneratorSeed(gen, 1234ULL);
+    // curandGenerateNormal(gen, d_pert, count*2, 0, 1.0);
+  }
 
   cudaMemcpy(d_h[slot], &h, sizeof(gpu_hdr_t), cudaMemcpyHostToDevice);
   cudaMemcpy(d_re[slot], re, sizeof(float)*count, cudaMemcpyHostToDevice);
@@ -805,6 +819,11 @@ void vfgpu_upload_data(
   compute_rho_phi_kernel<<<nBlocks, nThreadsPerBlock>>>(d_h[slot], d_rho[slot], d_phi[slot], d_re[slot], d_im[slot]);
   cudaDeviceSynchronize();
   checkLastCudaError("compute rho and phi");
+}
+
+void vfgpu_compute_rho_phi(int slot, bool pertubation)
+{
+
 }
 
 void vfgpu_extract_faces(int slot, int *pfcount_, gpu_pf_t **pfbuf, int discretization)

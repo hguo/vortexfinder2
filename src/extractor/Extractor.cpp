@@ -775,6 +775,9 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
     Kx,
     re1, 
     im1);
+
+  free(re1);
+  free(im1);
  
 #if WITH_CXX11
   typedef std::chrono::high_resolution_clock clock;
