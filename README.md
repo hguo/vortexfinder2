@@ -167,7 +167,7 @@ In the viewer, use left mouse button to rotate, and wheel to zoom in/out. Press 
 ## References ##
 
 H. Guo, C. L. Phillps, T. Peterka, D. Karpeyev, and A. Glatz. 
-Extracting, Tracking and Visualizing Magnetic Flux Vortices in 3D Complex-Valued Superconductor Simulation Data. IEEE Trans. Vis. Comput. Graph. (SciVis '15), 21(12):-, 2015. (Accepted)
+Extracting, Tracking and Visualizing Magnetic Flux Vortices in 3D Complex-Valued Superconductor Simulation Data. IEEE Trans. Vis. Comput. Graph. (SciVis '15), 22(1):827-836, 2016.
 
 C. L. Phillps, T. Peterka, D. Karpeyev, and A. Glatz.
 Detecting Vortices in Superconductors: Extracting One-Dimensional Topological Singularities from a Discretized Complex Scalar Field. Physics Review E, 023331(91):1-12, 2015.
