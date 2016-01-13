@@ -9,6 +9,11 @@ typedef struct {
   float pos[3];
 } gpu_pf_t; // punctured faces from GPU output, 16 bytes
 
+typedef struct {
+  int eid;
+  int chirality;
+} gpu_pe_t;
+
 void vfgpu_upload_data(
     int slot,
     const int d_[3], 

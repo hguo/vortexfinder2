@@ -3,7 +3,7 @@
 #include <curand.h>
 #include <cstdio>
 
-struct gpu_hdr_t {
+typedef struct {
   int d[3];
   int count; // d[0]*d[1]*d[2];
   bool pbc[3];
@@ -12,7 +12,7 @@ struct gpu_hdr_t {
   float cell_lengths[3];
   float B[3];
   float Kx;
-};
+} gpu_hdr_t;
 
 gpu_hdr_t h[2];
 static gpu_hdr_t *d_h[2] = {NULL};
@@ -28,6 +28,11 @@ static unsigned int *d_pfcount=NULL;
 static gpu_pf_t *d_pfoutput=NULL;
 static unsigned int pfcount=0;
 static gpu_pf_t *pfoutput=NULL;
+
+static unsigned int *d_pecount=NULL;
+static gpu_pe_t *d_peoutput=NULL;
+static unsigned int pecount=0;
+static gpu_pe_t *peoutput=NULL;
 
 inline void checkCuda(cudaError_t e, const char *situation) {
   if (e != cudaSuccess) {
@@ -558,7 +563,7 @@ inline int contour_chirality(
 // for space-time vfaces
 template <typename T>
 __device__
-inline int contour_chirality(
+inline int contour_chirality_spt(
     const gpu_hdr_t &h, 
     const gpu_hdr_t &h1, 
     const T phi[4], 
@@ -577,7 +582,7 @@ inline int contour_chirality(
   for (int i=0; i<4; i++) {
     int j = (i+1) % 4;
     delta[i] = phi[j] - phi[i]; 
-    delta[i] = mod2pi1(delta[i] - li + qp);
+    delta[i] = mod2pi1(delta[i] - li[i] + qp[i]);
     phase_jump -= delta[i];
   }
   
@@ -646,7 +651,7 @@ inline int extract_edge(
     const gpu_hdr_t& h1, 
     int eid,
     unsigned int *pecount,
-    int *peoutput, 
+    gpu_pe_t *peoutput, 
     const T *phi_,
     const T *phi1_)
 {
@@ -658,11 +663,12 @@ inline int extract_edge(
   if (!valid) return 0;
 
   // compute phase shift
-  int chirality = contour_chirality(h, h1, phi, X, A, delta);
+  int chirality = contour_chirality_spt(h, h1, phi, X, A, delta);
   if (chirality == 0) return 0;
   
   unsigned int idx = atomicInc(pecount, 0xffffffff);
-  peoutput[idx] = eid;
+  peoutput[idx].eid = eid;
+  peoutput[idx].chirality = chirality;
 
   return chirality;
 }
@@ -708,7 +714,7 @@ static void extract_faces_kernel(
   if (fid>h->d[0]*h->d[1]*h->d[2]*ntypes) return;
 
 #if 0 // use global memory
-  extract_face<T, nnodes>(h, fid, pfcount, pfoutput, rho, phi);
+  extract_face<T, nnodes>(*h, fid, pfcount, pfoutput, rho, phi);
 #else // use shared memory
   extern __shared__ char smem[];
   unsigned int *spfcount = (unsigned int*)smem;
@@ -735,11 +741,34 @@ static void extract_edges_kernel(
     const gpu_hdr_t* h, 
     const gpu_hdr_t* h1, 
     unsigned int *pecount,
-    int *peoutput,
+    gpu_pe_t *peoutput,
     const T *phi, 
     const T *phi1)
 {
-  // TODO
+  const int ntypes = nnodes == 3 ? 7 : 3;
+  const int eid = getGlobalIdx_3D_1D();
+  if (eid>h->d[0]*h->d[1]*h->d[2]*ntypes) return;
+
+#if 0 // use global memory
+  extract_edge<T, nnodes>(*h, *h1, eid, pecount, pecount, phi, phi1);
+#else // use shared memory
+  extern __shared__ char smem[];
+  unsigned int *specount = (unsigned int*)smem;
+  gpu_pe_t *speoutput = (gpu_pe_t*)(smem + sizeof(int));
+ 
+  if (threadIdx.x == 0)
+    *specount = 0;
+  __syncthreads();
+  
+  extract_edge<T>(*h, *h1, eid, specount, speoutput, phi, phi1);
+  __syncthreads();
+
+  if (threadIdx.x == 0 && (*specount)>0) {
+    unsigned int idx = atomicAdd(pecount, *specount);
+    // printf("idx=%d, count=%d\n", idx, *specount);
+    memcpy(peoutput + idx, speoutput, (*specount) * sizeof(gpu_pe_t));
+  }
+#endif
 }
 
 void vfgpu_destroy_data()
@@ -881,4 +910,40 @@ void vfgpu_extract_faces(int slot, int *pfcount_, gpu_pf_t **pfbuf, int discreti
 
   *pfcount_ = pfcount;
   *pfbuf = pfoutput;
+}
+
+void vfgpu_extract_edges(int *pecount_, gpu_pe_t **pebuf, int discretization)
+{
+  const int nnodes = discretization == GLGPU3D_MESH_HEX ? 4 : 3;
+  const int nedgetypes = nnodes == 3 ? 7 : 3;
+
+  const int threadCount = h[0].count * nedgetypes;
+  const int maxGridDim = 1024; // 32768;
+  const int blockSize = 256;
+  const int nBlocks = idivup(threadCount, blockSize);
+  dim3 gridSize; 
+  if (nBlocks >= maxGridDim) 
+    gridSize = dim3(idivup(nBlocks, maxGridDim), maxGridDim);
+  else 
+    gridSize = dim3(nBlocks);
+  const int sharedSize = blockSize * sizeof(gpu_pe_t) + sizeof(unsigned int);
+  
+  cudaMemset(d_pecount, 0, sizeof(unsigned int));
+  checkLastCudaError("extract edges [0]");
+  if (nnodes == 3)
+    extract_edges_kernel<float, 3><<<gridSize, blockSize, sharedSize>>>(d_h[0], d_h[1], d_pecount, d_peoutput, d_phi[0], d_phi[1]);
+  else if (nnodes == 4)
+    extract_edges_kernel<float, 4><<<gridSize, blockSize, sharedSize>>>(d_h[0], d_h[1], d_pecount, d_peoutput, d_rho[0], d_phi[1]);
+  checkLastCudaError("extract edges [1]");
+ 
+  cudaMemcpy((void*)&pecount, d_pecount, sizeof(unsigned int), cudaMemcpyDeviceToHost);
+  printf("pecount=%d\n", pecount);
+  if (pecount>0)
+    cudaMemcpy(peoutput, d_peoutput, sizeof(gpu_pe_t)*pecount, cudaMemcpyDeviceToHost);
+  checkLastCudaError("extract edges [2]");
+  
+  cudaDeviceSynchronize();
+
+  *pecount_ = pecount;
+  *pebuf = peoutput;
 }
