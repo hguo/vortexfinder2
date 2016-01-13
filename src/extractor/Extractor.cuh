@@ -30,4 +30,6 @@ void vfgpu_destroy_data();
 
 void vfgpu_extract_faces(int slot, int *pfcount, gpu_pf_t **pfbuf, int discretization=GLGPU3D_MESH_HEX);
 
+void vfgpu_extract_edges(int *pecount_, gpu_pe_t **pebuf_, int discretization);
+
 #endif

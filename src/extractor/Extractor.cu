@@ -788,6 +788,11 @@ void vfgpu_destroy_data()
   d_pfbuf = NULL;
   free(pfbuf);
   pfbuf = NULL;
+
+  cudaFree(d_pebuf);
+  d_pebuf = NULL;
+  free(pebuf);
+  pebuf = NULL;
     
   curandDestroyGenerator(gen);
   
@@ -807,7 +812,8 @@ void vfgpu_upload_data(
     const float *im)
 {
   const int count = d[0]*d[1]*d[2];
-  const int max_pf_count = count*12*0.1;
+  const int max_pf_count = count*12*0.1, 
+            max_pe_count = count*7*0.1;
  
   gpu_hdr_t h;
   memcpy(h.d, d, sizeof(int)*3);
@@ -833,6 +839,12 @@ void vfgpu_upload_data(
     pfbuf = (gpu_pf_t*)malloc(max_pf_count*sizeof(gpu_pf_t));
     cudaMalloc((void**)&d_pfcount, sizeof(unsigned int));
     cudaMalloc((void**)&d_pfbuf, sizeof(gpu_pf_t)*max_pf_count);
+  }
+
+  if (pebuf == NULL) {
+    pebuf = (gpu_pe_t*)malloc(max_pe_count*sizeof(gpu_pe_t));
+    cudaMalloc((void**)&d_pecount, sizeof(unsigned int));
+    cudaMalloc((void**)&d_pebuf, sizeof(gpu_pe_t)*max_pe_count);
   }
     
   if (d_pert == NULL) {

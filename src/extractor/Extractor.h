@@ -40,6 +40,7 @@ public:
   void ExtractEdges();
   
   void ExtractFaces_GPU(int slot=0);
+  void ExtractEdges_GPU();
 
   bool SavePuncturedEdges() const;
   bool LoadPuncturedEdges();

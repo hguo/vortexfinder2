@@ -801,6 +801,49 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
 #endif
 }
 
+void VortexExtractor::ExtractEdges_GPU()
+{
+#if WITH_CUDA
+  GLGPU3DDataset *ds = (GLGPU3DDataset*)_dataset;
+  const int mesh_type = ds->MeshType();
+
+  GLHeader h;
+  double *rho[2], *phi[2], *re[2], *im[2], *J[2];
+  for (int i=0; i<2; i++) 
+    ds->GetDataArray(h, &rho[i], &phi[i], &re[i], &im[i], &J[i], i);
+
+  float origins[3], lengths[3], cell_lengths[3], B[3], Kx;
+  for (int i=0; i<3; i++) {
+    origins[i] = h.origins[i];
+    lengths[i] = h.lengths[i]; 
+    cell_lengths[i] = h.cell_lengths[i];
+    B[i] = h.B[i];
+    Kx = h.Kex;
+  }
+
+  const int count = h.dims[0] * h.dims[1] * h.dims[2];
+ 
+#if WITH_CXX11
+  typedef std::chrono::high_resolution_clock clock;
+  auto t0 = clock::now();
+#endif
+
+  int pecount; 
+  gpu_pe_t *pe; 
+  vfgpu_extract_edges(&pecount, &pe, mesh_type);
+
+#if WITH_CXX11
+  auto t1 = clock::now();
+  double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
+  fprintf(stderr, "t_fgpu=%f\n", elapsed);
+#endif
+
+  for (int i=0; i<pecount; i++) {
+    AddPuncturedEdge(pe[i].eid, pe[i].chirality, 0);
+  }
+#endif
+}
+
 void VortexExtractor::ExtractFaces(int slot) 
 {
 #if WITH_CXX11
