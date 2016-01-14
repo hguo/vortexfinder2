@@ -1,5 +1,6 @@
 #include "Extractor.cuh"
 #include "threadIdx.cuh"
+#include <algorithm>
 #include <curand.h>
 #include <cstdio>
 
@@ -867,6 +868,15 @@ void vfgpu_destroy_data()
   checkLastCudaError("destroying data");
 }
 
+void vfgpu_rotate_timesteps()
+{
+  std::swap(d_h[0], d_h[1]);
+  std::swap(d_rho[0], d_rho[1]);
+  std::swap(d_phi[0], d_phi[1]);
+  std::swap(d_re[0], d_re[1]);
+  std::swap(d_im[0], d_im[1]);
+}
+
 void vfgpu_upload_data(
     int slot, 
     const int d[3], 
@@ -1011,7 +1021,7 @@ void vfgpu_extract_edges(int *pecount_, gpu_pe_t **pebuf_, int meshtype)
   if (meshtype == GLGPU3D_MESH_TET)
     extract_edges_kernel<float, GLGPU3D_MESH_TET><<<gridSize, blockSize, sharedSize>>>(d_h[0], d_h[1], d_pecount, d_pebuf, d_phi[0], d_phi[1]);
   else if (meshtype == GLGPU3D_MESH_HEX)
-    extract_edges_kernel<float, GLGPU3D_MESH_HEX><<<gridSize, blockSize, sharedSize>>>(d_h[0], d_h[1], d_pecount, d_pebuf, d_rho[0], d_phi[1]);
+    extract_edges_kernel<float, GLGPU3D_MESH_HEX><<<gridSize, blockSize, sharedSize>>>(d_h[0], d_h[1], d_pecount, d_pebuf, d_phi[0], d_phi[1]);
   checkLastCudaError("extract edges [1]");
  
   cudaMemcpy((void*)&pecount, d_pecount, sizeof(unsigned int), cudaMemcpyDeviceToHost);

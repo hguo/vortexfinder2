@@ -732,6 +732,10 @@ void VortexExtractor::RotateTimeSteps()
   _punctured_cells.swap( _punctured_cells1 );
   _vortex_objects.swap( _vortex_objects1 );
   _vortex_lines.swap( _vortex_lines1 );
+
+#if WITH_CUDA
+  vfgpu_rotate_timesteps();
+#endif
 }
 
 void VortexExtractor::ExtractFaces_GPU(int slot)
