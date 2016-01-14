@@ -835,7 +835,7 @@ void VortexExtractor::ExtractEdges_GPU()
 #if WITH_CXX11
   auto t1 = clock::now();
   double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
-  fprintf(stderr, "t_fgpu=%f\n", elapsed);
+  fprintf(stderr, "t_egpu=%f\n", elapsed);
 #endif
 
   for (int i=0; i<pecount; i++) {
@@ -916,31 +916,34 @@ void VortexExtractor::ExtractEdges()
 #endif
 
   if (!LoadPuncturedEdges()) {
-    // running in threads
-    const int nthreads = _nthreads; 
-    pthread_t threads[nthreads-1]; 
-    extractor_thread_t ctx[nthreads];
-   
-    for (int i=0; i<nthreads-1; i++) {
-      ctx[i].extractor = this;
-      ctx[i].nthreads = nthreads;
-      ctx[i].tid = i+1;
-      ctx[i].type = 1; // edges
-      ctx[i].slot = 0;
+    if (_gpu) {
+      ExtractEdges_GPU();
+    } else {
+      // running in threads
+      const int nthreads = _nthreads; 
+      pthread_t threads[nthreads-1]; 
+      extractor_thread_t ctx[nthreads];
+     
+      for (int i=0; i<nthreads-1; i++) {
+        ctx[i].extractor = this;
+        ctx[i].nthreads = nthreads;
+        ctx[i].tid = i+1;
+        ctx[i].type = 1; // edges
+        ctx[i].slot = 0;
 
-      pthread_create(&threads[i], NULL, &VortexExtractor::execute_thread_helper, &ctx[i]);
-    }
+        pthread_create(&threads[i], NULL, &VortexExtractor::execute_thread_helper, &ctx[i]);
+      }
 
-    execute_thread(nthreads, 0, 1, 0); // main thread
-    
-    for (int i=0; i<nthreads-1; i++) 
-      pthread_join(threads[i], NULL);
-    
+      execute_thread(nthreads, 0, 1, 0); // main thread
+      
+      for (int i=0; i<nthreads-1; i++) 
+        pthread_join(threads[i], NULL);
+      
 #if 0 // serial version
-    for (EdgeIdType i=0; i<mg->NEdges(); i++) 
-      ExtractSpaceTimeEdge(i);
+      for (EdgeIdType i=0; i<mg->NEdges(); i++) 
+        ExtractSpaceTimeEdge(i);
 #endif
-    
+    }
     if (_archive) SavePuncturedEdges();
   }
   

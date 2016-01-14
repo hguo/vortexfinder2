@@ -202,14 +202,14 @@ static inline bool find_quad_center(const T X[4][3], T pos[3])
   return true;
 }
 
-template <typename T, int nnodes>
+template <typename T, int meshtype>
 __device__
-static inline bool find_zero(const T re[nnodes], const T im[nnodes], const T X[nnodes][3], T pos[3], T epsilon=T(0))
+static inline bool find_zero(const T re[], const T im[], const T X[][3], T pos[3], T epsilon=T(0))
 {
-  if (nnodes==3) 
+  if (meshtype == GLGPU3D_MESH_TET) 
     return find_zero_triangle(re, im, X, pos, epsilon);
     // return find_tri_center(X, pos);
-  else if (nnodes==4)
+  else if (meshtype == GLGPU3D_MESH_HEX)
     return find_zero_quad_bilinear(re, im, X, pos, epsilon);
     // return find_quad_center(X, pos);
   else
@@ -457,6 +457,56 @@ inline bool fid2nodes_hex(const gpu_hdr_t &h, int id, int nidxs[4][3])
     return false;
 }
 
+__device__
+inline bool eid2nodes_tet(const gpu_hdr_t& h, int eid, int nidxs[2][3])
+{
+  const int nodes_idx[7][2][3] = { // 7 types of edges
+    {{0, 0, 0}, {1, 0, 0}}, // AB
+    {{0, 0, 0}, {1, 1, 0}}, // AC
+    {{0, 0, 0}, {0, 1, 0}}, // AD
+    {{0, 0, 0}, {0, 0, 1}}, // AE
+    {{0, 0, 0}, {1, 0, 1}}, // AF
+    {{0, 1, 0}, {0, 0, 1}}, // DE
+    {{0, 1, 0}, {1, 0, 1}}, // DF
+  };
+  
+  int eidx[4];
+  eid2eidx_tet(h, eid, eidx);
+
+  if (valid_eidx_tet(h, eidx)) {
+    const int type = eidx[3];
+    for (int p=0; p<2; p++) 
+      for (int q=0; q<3; q++) 
+        nidxs[p][q] = eidx[q] + nodes_idx[type][p][q];
+    return true;
+  }
+  else
+    return false;
+}
+
+__device__
+inline bool eid2nodes_hex(const gpu_hdr_t& h, int eid, int nidxs[2][3])
+{
+  const int nodes_idx[3][2][3] = { // 3 types of edges
+    {{0, 0, 0}, {1, 0, 0}}, 
+    {{0, 0, 0}, {0, 1, 0}}, 
+    {{0, 0, 0}, {0, 0, 1}}
+  };
+
+  int eidx[4];
+  eid2eidx_hex(h, eid, eidx);
+
+  if (valid_eidx_hex(h, eidx)) {
+    const int type = eidx[3];
+    for (int p=0; p<2; p++) 
+      for (int q=0; q<3; q++) 
+        nidxs[p][q] = eidx[q] + nodes_idx[type][p][q];
+    return true;
+  }
+  else
+    return false;
+}
+
 template <typename T>
 __device__
 inline void nidx2pos(const gpu_hdr_t& h, const int nidx[3], T X[3])
@@ -480,20 +530,21 @@ inline void magnetic_potential(const gpu_hdr_t& h, T X[3], T A[3])
   }
 }
 
-template <typename T, int nnodes>
+template <typename T, int meshtype>
 __device__
 inline bool get_face_values(
     const gpu_hdr_t& h, 
     int fid, 
-    T X[nnodes][3],
-    T A[nnodes][3],
-    T rho[nnodes],
-    T phi[nnodes],
+    T X[][3],
+    T A[][3],
+    T rho[],
+    T phi[],
     const T *rho_,
     const T *phi_)
 {
+  const int nnodes = meshtype == GLGPU3D_MESH_TET ? 3 : 4;
   int nidxs[nnodes][3], nids[nnodes];
-  bool valid = nnodes == 4 ? fid2nodes_hex(h, fid, nidxs) : fid2nodes_tet(h, fid, nidxs);
+  bool valid = meshtype == GLGPU3D_MESH_TET ? fid2nodes_tet(h, fid, nidxs) : fid2nodes_hex(h, fid, nidxs);
   
   if (valid) {
     for (int i=0; i<nnodes; i++) {
@@ -513,7 +564,7 @@ inline bool get_face_values(
   return valid;
 }
 
-template <typename T, int nnodes>
+template <typename T, int meshtype>
 __device__
 inline bool get_vface_values(
     const gpu_hdr_t& h, 
@@ -525,15 +576,31 @@ inline bool get_vface_values(
     const T *phi_,
     const T *phi1_)
 {
-#if 0
   int nidxs[2][3], nids[2];
-  bool valid = nnodes == 4 ? eid2nodes_hex(h, eid, nidxs) : eid2nodes_tet(h, eid, nidxs);
+  bool valid = meshtype == GLGPU3D_MESH_TET ? eid2nodes_tet(h, eid, nidxs) : eid2nodes_hex(h, eid, nidxs);
 
   if (valid) {
-    // TODO
-  }
-#endif
-  return false;
+    nids[0] = nidx2nid(h, nidxs[0]);
+    nids[1] = nidx2nid(h, nidxs[1]);
+
+    phi[0] = phi_[nids[0]]; 
+    phi[1] = phi_[nids[1]];
+    phi[2] = phi1_[nids[1]];
+    phi[3] = phi1_[nids[0]];
+
+    nidx2pos(h, nidxs[0], X[0]);
+    nidx2pos(h, nidxs[1], X[1]);
+    nidx2pos(h1, nidxs[1], X[2]);
+    nidx2pos(h1, nidxs[0], X[3]);
+
+    magnetic_potential(h, X[0], A[0]);
+    magnetic_potential(h, X[1], A[1]);
+    magnetic_potential(h1, X[2], A[2]);
+    magnetic_potential(h1, X[3], A[3]);
+
+    return true;
+  } else 
+    return false;
 }
 
 template <typename T>
@@ -609,7 +676,7 @@ inline void gauge_transform(
   }
 }
 
-template <typename T, int nnodes>
+template <typename T, int meshtype>
 __device__
 inline int extract_face(
     const gpu_hdr_t& h, 
@@ -619,10 +686,11 @@ inline int extract_face(
     const T *rho_, 
     const T *phi_)
 {
+  const int nnodes = meshtype == GLGPU3D_MESH_TET ? 3 : 4;
   T X[nnodes][3], A[nnodes][3], rho[nnodes], phi[nnodes], re[nnodes], im[nnodes];
   T delta[nnodes];
   
-  bool valid = get_face_values<T, nnodes>(h, fid, X, A, rho, phi, rho_, phi_);
+  bool valid = get_face_values<T, meshtype>(h, fid, X, A, rho, phi, rho_, phi_);
   if (!valid) return 0;
 
   // compute phase shift
@@ -636,7 +704,7 @@ inline int extract_face(
   gpu_pf_t pf; 
   pf.fid = fid;
   pf.chirality = chirality;
-  find_zero<T, nnodes>(re, im, X, pf.pos, T(1));
+  find_zero<T, meshtype>(re, im, X, pf.pos, T(1));
   
   unsigned int idx = atomicInc(pfcount, 0xffffffff);
   pfbuf[idx] = pf;
@@ -644,7 +712,7 @@ inline int extract_face(
   return chirality;
 }
 
-template <typename T>
+template <typename T, int meshtype>
 __device__
 inline int extract_edge(
     const gpu_hdr_t& h, 
@@ -659,7 +727,7 @@ inline int extract_edge(
   T X[nnodes][3], A[nnodes][3], phi[nnodes];
   T delta[nnodes];
   
-  bool valid = get_vface_values<T, nnodes>(h, h1, eid, X, A, phi, phi_, phi1_);
+  bool valid = get_vface_values<T, meshtype>(h, h1, eid, X, A, phi, phi_, phi1_);
   if (!valid) return 0;
 
   // compute phase shift
@@ -700,7 +768,7 @@ static void compute_rho_phi_kernel(
   phi[idx] = atan2(i, r);
 }
 
-template <typename T, int nnodes>
+template <typename T, int meshtype>
 __global__
 static void extract_faces_kernel(
     const gpu_hdr_t* h, 
@@ -709,12 +777,12 @@ static void extract_faces_kernel(
     const T *rho, 
     const T *phi)
 {
-  const int ntypes = nnodes == 3 ? 12 : 3;
+  const int nfacetypes = meshtype == GLGPU3D_MESH_TET ? 12 : 3;
   int fid = getGlobalIdx_3D_1D();
-  if (fid>h->d[0]*h->d[1]*h->d[2]*ntypes) return;
+  if (fid>h->d[0]*h->d[1]*h->d[2]*nfacetypes) return;
 
 #if 0 // use global memory
-  extract_face<T, nnodes>(*h, fid, pfcount, pfbuf, rho, phi);
+  extract_face<T, meshtype>(*h, fid, pfcount, pfbuf, rho, phi);
 #else // use shared memory
   extern __shared__ char smem[];
   unsigned int *spfcount = (unsigned int*)smem;
@@ -724,7 +792,7 @@ static void extract_faces_kernel(
     *spfcount = 0;
   __syncthreads();
   
-  extract_face<T, nnodes>(*h, fid, spfcount, spfbuf, rho, phi);
+  extract_face<T, meshtype>(*h, fid, spfcount, spfbuf, rho, phi);
   __syncthreads();
 
   if (threadIdx.x == 0 && (*spfcount)>0) {
@@ -735,7 +803,7 @@ static void extract_faces_kernel(
 #endif
 }
 
-template <typename T, int nnodes>
+template <typename T, int meshtype>
 __global__
 static void extract_edges_kernel(
     const gpu_hdr_t* h, 
@@ -745,12 +813,12 @@ static void extract_edges_kernel(
     const T *phi, 
     const T *phi1)
 {
-  const int ntypes = nnodes == 3 ? 7 : 3;
+  const int nedgetypes = meshtype == GLGPU3D_MESH_TET ? 7 : 3;
   const int eid = getGlobalIdx_3D_1D();
-  if (eid>h->d[0]*h->d[1]*h->d[2]*ntypes) return;
+  if (eid>h->d[0]*h->d[1]*h->d[2]*nedgetypes) return;
 
 #if 0 // use global memory
-  extract_edge<T, nnodes>(*h, *h1, eid, pecount, pecount, phi, phi1);
+  extract_edge<T, meshtype>(*h, *h1, eid, pecount, pebuf, phi, phi1);
 #else // use shared memory
   extern __shared__ char smem[];
   unsigned int *specount = (unsigned int*)smem;
@@ -760,7 +828,7 @@ static void extract_edges_kernel(
     *specount = 0;
   __syncthreads();
   
-  extract_edge<T>(*h, *h1, eid, specount, spebuf, phi, phi1);
+  extract_edge<T, meshtype>(*h, *h1, eid, specount, spebuf, phi, phi1);
   __syncthreads();
 
   if (threadIdx.x == 0 && (*specount)>0) {
@@ -885,10 +953,9 @@ void vfgpu_compute_rho_phi(int slot, float pertubation=0.f)
   checkLastCudaError("compute rho and phi");
 }
 
-void vfgpu_extract_faces(int slot, int *pfcount_, gpu_pf_t **pfbuf_, int discretization)
+void vfgpu_extract_faces(int slot, int *pfcount_, gpu_pf_t **pfbuf_, int meshtype)
 {
-  const int nnodes = discretization == GLGPU3D_MESH_HEX ? 4 : 3;
-  const int nfacetypes = nnodes == 3 ? 12 : 3;
+  const int nfacetypes = meshtype == GLGPU3D_MESH_TET ? 12 : 3;
 
   const int threadCount = h[slot].count * nfacetypes;
   const int maxGridDim = 1024; // 32768;
@@ -906,10 +973,10 @@ void vfgpu_extract_faces(int slot, int *pfcount_, gpu_pf_t **pfbuf_, int discret
 
   cudaMemset(d_pfcount, 0, sizeof(unsigned int));
   checkLastCudaError("extract faces [0]");
-  if (nnodes == 3)
-    extract_faces_kernel<float, 3><<<gridSize, blockSize, sharedSize>>>(d_h[slot], d_pfcount, d_pfbuf, d_rho[slot], d_phi[slot]);
-  else if (nnodes == 4)
-    extract_faces_kernel<float, 4><<<gridSize, blockSize, sharedSize>>>(d_h[slot], d_pfcount, d_pfbuf, d_rho[slot], d_phi[slot]);
+  if (meshtype == GLGPU3D_MESH_TET)
+    extract_faces_kernel<float, GLGPU3D_MESH_TET><<<gridSize, blockSize, sharedSize>>>(d_h[slot], d_pfcount, d_pfbuf, d_rho[slot], d_phi[slot]);
+  else if (meshtype == GLGPU3D_MESH_HEX)
+    extract_faces_kernel<float, GLGPU3D_MESH_HEX><<<gridSize, blockSize, sharedSize>>>(d_h[slot], d_pfcount, d_pfbuf, d_rho[slot], d_phi[slot]);
   checkLastCudaError("extract faces [1]");
  
   cudaMemcpy((void*)&pfcount, d_pfcount, sizeof(unsigned int), cudaMemcpyDeviceToHost);
@@ -924,10 +991,9 @@ void vfgpu_extract_faces(int slot, int *pfcount_, gpu_pf_t **pfbuf_, int discret
   *pfbuf_ = pfbuf;
 }
 
-void vfgpu_extract_edges(int *pecount_, gpu_pe_t **pebuf_, int discretization)
+void vfgpu_extract_edges(int *pecount_, gpu_pe_t **pebuf_, int meshtype)
 {
-  const int nnodes = discretization == GLGPU3D_MESH_HEX ? 4 : 3;
-  const int nedgetypes = nnodes == 3 ? 7 : 3;
+  const int nedgetypes = meshtype == GLGPU3D_MESH_TET ? 7 : 3;
 
   const int threadCount = h[0].count * nedgetypes;
   const int maxGridDim = 1024; // 32768;
@@ -942,10 +1008,10 @@ void vfgpu_extract_edges(int *pecount_, gpu_pe_t **pebuf_, int discretization)
   
   cudaMemset(d_pecount, 0, sizeof(unsigned int));
   checkLastCudaError("extract edges [0]");
-  if (nnodes == 3)
-    extract_edges_kernel<float, 3><<<gridSize, blockSize, sharedSize>>>(d_h[0], d_h[1], d_pecount, d_pebuf, d_phi[0], d_phi[1]);
-  else if (nnodes == 4)
-    extract_edges_kernel<float, 4><<<gridSize, blockSize, sharedSize>>>(d_h[0], d_h[1], d_pecount, d_pebuf, d_rho[0], d_phi[1]);
+  if (meshtype == GLGPU3D_MESH_TET)
+    extract_edges_kernel<float, GLGPU3D_MESH_TET><<<gridSize, blockSize, sharedSize>>>(d_h[0], d_h[1], d_pecount, d_pebuf, d_phi[0], d_phi[1]);
+  else if (meshtype == GLGPU3D_MESH_HEX)
+    extract_edges_kernel<float, GLGPU3D_MESH_HEX><<<gridSize, blockSize, sharedSize>>>(d_h[0], d_h[1], d_pecount, d_pebuf, d_rho[0], d_phi[1]);
   checkLastCudaError("extract edges [1]");
  
   cudaMemcpy((void*)&pecount, d_pecount, sizeof(unsigned int), cudaMemcpyDeviceToHost);
