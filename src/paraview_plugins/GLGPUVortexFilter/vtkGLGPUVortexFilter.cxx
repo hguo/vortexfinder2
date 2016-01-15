@@ -104,7 +104,7 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   ex->SetDataset(ds);
   ex->SetArchive(false);
 #if WITH_CUDA
-  ex->SetGPU(true);
+  // ex->SetGPU(true); // FIXME: failure fallback
 #endif
   ex->SetGaugeTransformation(true); 
   ex->ExtractFaces(0);
