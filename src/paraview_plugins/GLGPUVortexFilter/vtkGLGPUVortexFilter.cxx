@@ -103,6 +103,9 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   VortexExtractor *ex = new VortexExtractor;
   ex->SetDataset(ds);
   ex->SetArchive(false);
+#if WITH_CUDA
+  ex->SetGPU(true);
+#endif
   ex->SetGaugeTransformation(true); 
   ex->ExtractFaces(0);
   ex->TraceOverSpace(0);
