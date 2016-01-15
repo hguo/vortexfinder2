@@ -1,16 +1,13 @@
 set (extractor_sources
   Extractor.cpp
 )
-
-set (extractor_sources_cu
-  Extractor.cu
-)
+  
+add_library (glextractor STATIC ${extractor_sources})
 
 if (WITH_CUDA)
-  cuda_add_library (glextractor STATIC ${extractor_sources} ${extractor_sources_cu})
-  target_link_libraries (glextractor glcommon glio ${CUDA_LIBRARIES} ${CUDA_curand_LIBRARY})
+  add_subdirectory (vfgpu)
+  target_link_libraries (glextractor PUBLIC glcommon glio vfgpu)
 else ()
-  add_library (glextractor STATIC ${extractor_sources})
   target_link_libraries (glextractor PUBLIC glcommon glio)
 endif ()
 

@@ -13,7 +13,7 @@
 #include <cstring>
 
 #if WITH_CUDA
-#include "Extractor.cuh"
+#include "vfgpu/vfgpu.h"
 #endif
 
 #if WITH_CXX11

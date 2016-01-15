@@ -1,4 +1,4 @@
-#include "Extractor.cuh"
+#include "vfgpu.h"
 #include "threadIdx.cuh"
 #include <algorithm>
 #include <curand.h>
@@ -15,7 +15,7 @@ typedef struct {
   float Kx;
 } gpu_hdr_t;
 
-gpu_hdr_t h[2];
+static gpu_hdr_t h[2];
 static gpu_hdr_t *d_h[2] = {NULL};
 static float *d_rho[2] = {NULL}, 
              *d_phi[2] = {NULL}, 
@@ -273,10 +273,10 @@ T line_integral(const gpu_hdr_t& h, const T X0[], const T X1[], const T A0[], co
 __device__
 inline void nid2nidx(const gpu_hdr_t& h, int id, int idx[3])
 {
-  int s = h.d[0] * h.d[1]; 
-  int k = id / s; 
-  int j = (id - k*s) / h.d[0]; 
-  int i = id - k*s - j*h.d[0]; 
+  const int s = h.d[0] * h.d[1]; 
+  const int k = id / s; 
+  const int j = (id - k*s) / h.d[0]; 
+  const int i = id - k*s - j*h.d[0]; 
 
   idx[0] = i; idx[1] = j; idx[2] = k;
 }
@@ -866,6 +866,12 @@ void vfgpu_destroy_data()
   curandDestroyGenerator(gen);
   
   checkLastCudaError("destroying data");
+}
+
+void vfgpu_initialize(
+    bool enable_pertubation)
+{
+
 }
 
 void vfgpu_rotate_timesteps()
