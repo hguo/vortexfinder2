@@ -943,7 +943,7 @@ void vfgpu_compute_rho_phi(int slot, float pertubation=0.f)
   checkLastCudaError("compute rho and phi");
 }
 
-void vfgpu_extract_faces(int slot, int *pfcount_, gpu_pf_t **pfbuf_, int meshtype)
+void vfgpu_extract_faces(int slot, int *pfcount_, gpu_pf_t **pfbuf_, float pert, int meshtype)
 {
   const int nfacetypes = meshtype == GLGPU3D_MESH_TET ? 12 : 3;
 
@@ -958,8 +958,7 @@ void vfgpu_extract_faces(int slot, int *pfcount_, gpu_pf_t **pfbuf_, int meshtyp
     gridSize = dim3(nBlocks);
   const int sharedSize = blockSize * sizeof(gpu_pf_t) + sizeof(unsigned int);
   
-  // vfgpu_compute_rho_phi(slot, 0.05);
-  vfgpu_compute_rho_phi(slot, 0.f);
+  vfgpu_compute_rho_phi(slot, pert);
 
   cudaMemset(d_pfcount, 0, sizeof(unsigned int));
   checkLastCudaError("extract faces [0]");

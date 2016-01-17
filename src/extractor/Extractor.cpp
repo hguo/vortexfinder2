@@ -38,6 +38,7 @@ VortexExtractor::VortexExtractor() :
   _gauge(false), 
   _archive(false), 
   _gpu(false),
+  _pertubation(0),
   _interpolation_mode(INTERPOLATION_TRI_BARYCENTRIC | INTERPOLATION_QUAD_BILINEAR)
 {
   pthread_mutex_init(&mutex, NULL);
@@ -88,6 +89,11 @@ void VortexExtractor::SetGPU(bool g)
   _gpu = g;
 }
 
+void VortexExtractor::SetPertubation(float p)
+{
+  _pertubation = p;
+}
+
 void VortexExtractor::SaveVortexLines(int slot)
 {
   const GLDatasetBase *ds = _dataset;
@@ -127,6 +133,16 @@ void VortexExtractor::ClearPuncturedObjects()
   _punctured_edges.clear();
   _punctured_faces.clear();
   _punctured_faces1.clear();
+}
+
+void VortexExtractor::Clear()
+{
+  ClearPuncturedObjects();
+
+  _vortex_objects.clear();
+  _vortex_objects1.clear();
+  _vortex_lines.clear();
+  _vortex_lines1.clear();
 }
 
 bool VortexExtractor::SavePuncturedEdges() const
@@ -786,7 +802,7 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
 
   int pfcount; 
   gpu_pf_t *pf; 
-  vfgpu_extract_faces(slot, &pfcount, &pf, mesh_type);
+  vfgpu_extract_faces(slot, &pfcount, &pf, _pertubation, mesh_type);
 
 #if WITH_CXX11
   auto t1 = clock::now();

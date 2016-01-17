@@ -31,6 +31,7 @@ public:
   void SetGaugeTransformation(bool);
   void SetArchive(bool); // archive intermediate results for data reuse
   void SetGPU(bool);
+  void SetPertubation(float);
   
   virtual void SetDataset(const GLDatasetBase* ds);
   const GLDataset* Dataset() const {return (GLDataset*)_dataset;}
@@ -47,6 +48,7 @@ public:
   bool SavePuncturedFaces(int slot=0) const; 
   bool LoadPuncturedFaces(int slot=0);
   void ClearPuncturedObjects();
+  void Clear();
   
   void SaveVortexLines(int slot=0);
   std::vector<VortexLine> GetVortexLines(int slot=0);
@@ -94,6 +96,7 @@ protected:
   bool _archive;
   bool _gpu;
   unsigned int _interpolation_mode;
+  float _pertubation; // used for stochastic analysis
 
 private:
   static void *execute_thread_helper(void *ctx);

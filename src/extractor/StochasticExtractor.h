@@ -9,8 +9,8 @@ public:
   ~StochasticVortexExtractor();
 
   void SetNumberOfRuns(int);
-  void SetNoiseAmplitude(float);
   void SetKernelSize(float);
+  void SetPertubation(float);
 
   void ExtractDeterministicVortices();
   void ExtractStochasticVortices();
@@ -19,8 +19,8 @@ public:
 
 private:
   int _nruns;
-  float _noise_amplitude;
   float _kernel_size;
+  float _pertubation;
 };
 
 #endif
