@@ -25,11 +25,6 @@ typedef struct {
   float Kx;
 } gpu_hdr_t;
 
-struct ctx_vfgpu_t;
-
-void vfgpu_create_context(ctx_vfgpu_t **ctx); // TODO: make vfgpu a standalone library for future use
-void vfgpu_destroy_context(ctx_vfgpu_t **ctx); // TODO
-
 void vfgpu_upload_data(
     int slot,
     const gpu_hdr_t &h, 

@@ -4,25 +4,6 @@
 #include <curand.h>
 #include <cstdio>
 
-struct ctx_vfgpu_t {
-  gpu_hdr_t h[2];
-  gpu_hdr_t *d_h[2];
-  float *d_rho[2], *d_phi[2], *d_re[2], *d_im[2];
-  float *d_pert;
-
-  unsigned int *d_pfcount;
-  gpu_pf_t *d_pfbuf;
-  unsigned int pfcount;
-  gpu_pf_t *pfbuf;
-
-  unsigned int *d_pecount;
-  gpu_pe_t *d_pebuf;
-  unsigned int pecount;
-  gpu_pe_t *pebuf;
-  
-  curandGenerator_t *gen;
-};
-
 static gpu_hdr_t h[2];
 static gpu_hdr_t *d_h[2] = {NULL};
 static float *d_rho[2] = {NULL}, 
@@ -897,14 +878,14 @@ void vfgpu_rotate_timesteps()
 
 void vfgpu_upload_data(
     int slot, 
-    const gpu_hdr_t &h, 
+    const gpu_hdr_t& h, 
     const float *re, 
     const float *im)
 {
-  const int count = h.d[0]*h.d[1]*h.d[2];
+  const int count = h.count;
   const int max_pf_count = count*12*0.1, 
             max_pe_count = count*7*0.1;
-
+ 
   memcpy(&::h[slot], &h, sizeof(gpu_hdr_t));
   
   if (d_rho[slot] == NULL) { // FIXME
