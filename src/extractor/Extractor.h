@@ -67,6 +67,7 @@ public:
   void ExtractSpaceTimeEdge(EdgeIdType);
 
 protected:
+  void VortexObjectsToVortexLines(int slot=0);
   void VortexObjectsToVortexLines(const std::map<FaceIdType, PuncturedFace>& pfs, const std::vector<VortexObject>& vobjs, std::vector<VortexLine>& vlines, bool bezier=false);
   int NewGlobalVortexId();
   void ResetGlobalVortexId();

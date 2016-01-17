@@ -128,6 +128,18 @@ std::vector<VortexLine> VortexExtractor::GetVortexLines(int slot)
   return vlines;
 }
 
+void VortexExtractor::VortexObjectsToVortexLines(int slot)
+{
+  std::vector<VortexObject> &vobjs = 
+    slot == 0 ? _vortex_objects : _vortex_objects1;
+  std::vector<VortexLine> &vlines = 
+    slot == 0 ? _vortex_lines : _vortex_lines1;
+  std::map<FaceIdType, PuncturedFace> &pfs =
+    slot == 0 ? _punctured_faces : _punctured_faces1;
+
+  VortexObjectsToVortexLines(pfs, vobjs, vlines);
+}
+
 void VortexExtractor::ClearPuncturedObjects()
 {
   _punctured_edges.clear();

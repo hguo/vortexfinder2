@@ -38,10 +38,25 @@ void StochasticVortexExtractor::ExtractDeterministicVortices()
 
 void StochasticVortexExtractor::ExtractStochasticVortices()
 {
+  std::vector<float> pts;
+  std::vector<int> acc;
+  int count = 0;
+  
   for (int i=0; i<_nruns; i++) {
     Clear();
     VortexExtractor::SetPertubation(_pertubation);
     ExtractFaces(0);
     TraceOverSpace(0);
+    VortexObjectsToVortexLines(0);
+
+    for (int i=0; i<_vortex_lines.size(); i++) {
+      const VortexLine& l = _vortex_lines[i];
+      count += l.size();
+      for (int j=0; j<l.size(); j++) 
+        pts.push_back(l[j]);
+      acc.push_back(count);
+    }
   }
+
+  fprintf(stderr, "npts=%d, nlines=%d\n", pts.size(), acc.size());
 }
