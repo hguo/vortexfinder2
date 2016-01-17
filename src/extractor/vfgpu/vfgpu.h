@@ -14,15 +14,25 @@ typedef struct {
   int chirality;
 } gpu_pe_t;
 
+typedef struct {
+  int d[3];
+  int count; // d[0]*d[1]*d[2];
+  bool pbc[3];
+  float origins[3];
+  float lengths[3];
+  float cell_lengths[3];
+  float B[3];
+  float Kx;
+} gpu_hdr_t;
+
+struct ctx_vfgpu_t;
+
+void vfgpu_create_context(ctx_vfgpu_t **ctx); // TODO: make vfgpu a standalone library for future use
+void vfgpu_destroy_context(ctx_vfgpu_t **ctx); // TODO
+
 void vfgpu_upload_data(
     int slot,
-    const int d_[3], 
-    const bool pbc_[3], 
-    const float origins_[3],
-    const float lengths_[3], 
-    const float cell_lengths_[3],
-    const float B_[3],
-    float Kx_,
+    const gpu_hdr_t &h, 
     const float *re, 
     const float *im);
 

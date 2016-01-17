@@ -3,12 +3,14 @@
 
 #include "Extractor.h"
 
-class StochasticVortexExtractor {
+class StochasticVortexExtractor : public VortexExtractor {
 public:
   StochasticVortexExtractor();
   ~StochasticVortexExtractor();
 
   void SetNumberOfRuns(int);
+  void SetNoiseAmplitude(float);
+  void SetKernelSize(float);
 
   void ExtractDeterministicVortices();
   void ExtractStochasticVortices();
@@ -17,6 +19,8 @@ public:
 
 private:
   int _nruns;
+  float _noise_amplitude;
+  float _kernel_size;
 };
 
 #endif

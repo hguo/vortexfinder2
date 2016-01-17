@@ -747,17 +747,21 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
   GLHeader h;
   double *rho, *phi, *re, *im, *J;
   ds->GetDataArray(h, &rho, &phi, &re, &im, &J, slot);
-
-  float origins[3], lengths[3], cell_lengths[3], B[3], Kx;
-  for (int i=0; i<3; i++) {
-    origins[i] = h.origins[i];
-    lengths[i] = h.lengths[i]; 
-    cell_lengths[i] = h.cell_lengths[i];
-    B[i] = h.B[i];
-    Kx = h.Kex;
-  }
-
   const int count = h.dims[0] * h.dims[1] * h.dims[2];
+
+  gpu_hdr_t gh;
+
+  for (int i=0; i<3; i++) {
+    gh.d[i] = h.dims[i];
+    gh.origins[i] = h.origins[i];
+    gh.lengths[i] = h.lengths[i]; 
+    gh.cell_lengths[i] = h.cell_lengths[i];
+    gh.B[i] = h.B[i];
+    gh.pbc[i] = 0; // TODO: pbc not yet supported
+  }
+  gh.count = count;
+  gh.Kx = h.Kex;
+
   float *re1 = (float*)malloc(sizeof(float)*count), 
         *im1 = (float*)malloc(sizeof(float)*count);
 
@@ -766,17 +770,9 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
     im1[i] = im[i];
   }
 
-  bool pbc[3] = {0};
-
   vfgpu_upload_data(
     slot,
-    h.dims,
-    pbc, // h.pbc,
-    origins,
-    lengths,
-    cell_lengths, 
-    B, 
-    Kx,
+    gh,
     re1, 
     im1);
 

@@ -4,16 +4,24 @@
 #include <curand.h>
 #include <cstdio>
 
-typedef struct {
-  int d[3];
-  int count; // d[0]*d[1]*d[2];
-  bool pbc[3];
-  float origins[3];
-  float lengths[3];
-  float cell_lengths[3];
-  float B[3];
-  float Kx;
-} gpu_hdr_t;
+struct ctx_vfgpu_t {
+  gpu_hdr_t h[2];
+  gpu_hdr_t *d_h[2];
+  float *d_rho[2], *d_phi[2], *d_re[2], *d_im[2];
+  float *d_pert;
+
+  unsigned int *d_pfcount;
+  gpu_pf_t *d_pfbuf;
+  unsigned int pfcount;
+  gpu_pf_t *pfbuf;
+
+  unsigned int *d_pecount;
+  gpu_pe_t *d_pebuf;
+  unsigned int pecount;
+  gpu_pe_t *pebuf;
+  
+  curandGenerator_t *gen;
+};
 
 static gpu_hdr_t h[2];
 static gpu_hdr_t *d_h[2] = {NULL};
@@ -23,7 +31,7 @@ static float *d_rho[2] = {NULL},
              *d_im[2] = {NULL};
 static float *d_pert = NULL;
 
-curandGenerator_t gen;
+static curandGenerator_t gen;
 
 static unsigned int *d_pfcount=NULL;
 static gpu_pf_t *d_pfbuf=NULL;
@@ -862,8 +870,12 @@ void vfgpu_destroy_data()
   d_pebuf = NULL;
   free(pebuf);
   pebuf = NULL;
-    
-  curandDestroyGenerator(gen);
+ 
+  if (d_pert != NULL) {
+    cudaFree(d_pert);
+    d_pert = NULL;
+    curandDestroyGenerator(gen);
+  }
   
   checkLastCudaError("destroying data");
 }
@@ -885,29 +897,13 @@ void vfgpu_rotate_timesteps()
 
 void vfgpu_upload_data(
     int slot, 
-    const int d[3], 
-    const bool pbc[3], 
-    const float origins[3],
-    const float lengths[3], 
-    const float cell_lengths[3],
-    const float B[3],
-    float Kx,
+    const gpu_hdr_t &h, 
     const float *re, 
     const float *im)
 {
-  const int count = d[0]*d[1]*d[2];
+  const int count = h.d[0]*h.d[1]*h.d[2];
   const int max_pf_count = count*12*0.1, 
             max_pe_count = count*7*0.1;
- 
-  gpu_hdr_t h;
-  memcpy(h.d, d, sizeof(int)*3);
-  memcpy(h.pbc, pbc, sizeof(bool)*3);
-  memcpy(h.origins, origins, sizeof(float)*3);
-  memcpy(h.lengths, lengths, sizeof(float)*3);
-  memcpy(h.cell_lengths, cell_lengths, sizeof(float)*3);
-  memcpy(h.B, B, sizeof(float)*3);
-  h.Kx = Kx;
-  h.count = count;
 
   memcpy(&::h[slot], &h, sizeof(gpu_hdr_t));
   
@@ -931,14 +927,6 @@ void vfgpu_upload_data(
     cudaMalloc((void**)&d_pebuf, sizeof(gpu_pe_t)*max_pe_count);
   }
     
-  if (d_pert == NULL) {
-    cudaMalloc((void**)&d_pert, sizeof(float)*count*2); // real and imag
-
-    curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT);
-    curandSetPseudoRandomGeneratorSeed(gen, 1234ULL);
-    // curandGenerateNormal(gen, d_pert, count*2, 0, 1.0);
-  }
-
   cudaMemcpy(d_h[slot], &h, sizeof(gpu_hdr_t), cudaMemcpyHostToDevice);
   cudaMemcpy(d_re[slot], re, sizeof(float)*count, cudaMemcpyHostToDevice);
   cudaMemcpy(d_im[slot], im, sizeof(float)*count, cudaMemcpyHostToDevice);
@@ -959,6 +947,11 @@ void vfgpu_compute_rho_phi(int slot, float pertubation=0.f)
     gridSize = dim3(nBlocks);
 
   if (pertubation>0.f) {
+    if (d_pert == NULL) {
+      cudaMalloc((void**)&d_pert, sizeof(float)*count*2); // real and imag
+      curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT);
+      curandSetPseudoRandomGeneratorSeed(gen, 1234ULL);
+    }
     curandGenerateNormal(gen, d_pert, count*2, 0, pertubation);
     compute_rho_phi_kernel<float, true><<<gridSize, blockSize>>>(d_h[slot], d_rho[slot], d_phi[slot], d_re[slot], d_im[slot], d_pert);
   } else {
