@@ -1,6 +1,6 @@
 set (extractor_sources
   Extractor.cpp
-  UncertainExtractor.cpp
+  StochasticExtractor.cpp
 )
   
 add_library (glextractor STATIC ${extractor_sources})

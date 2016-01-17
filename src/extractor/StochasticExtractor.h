@@ -1,12 +1,12 @@
-#ifndef _UNCERTAIN_EXTRACTOR_H
-#define _UNCERTAIN_EXTRACTOR_H
+#ifndef _STOCHASTIC_EXTRACTOR_H
+#define _STOCHASTIC_EXTRACTOR_H
 
 #include "Extractor.h"
 
-class UncertainVortexExtractor {
+class StochasticVortexExtractor {
 public:
-  UncertainVortexExtractor();
-  ~UncertainVortexExtractor();
+  StochasticVortexExtractor();
+  ~StochasticVortexExtractor();
 
   void SetNumberOfRuns(int);
 
