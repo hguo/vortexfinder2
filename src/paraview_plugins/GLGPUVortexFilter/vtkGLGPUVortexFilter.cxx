@@ -130,6 +130,7 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   ex->SetGPU(bUseGPU); // FIXME: failure fallback
 #endif
   ex->SetGaugeTransformation(true); 
+  ex->SetLoopThreshold(dLoopThreshold);
   ex->ExtractFaces(0);
   ex->TraceOverSpace(0);
 

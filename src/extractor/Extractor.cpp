@@ -39,6 +39,7 @@ VortexExtractor::VortexExtractor() :
   _archive(false), 
   _gpu(false),
   _pertubation(0),
+  _loop_threshold(0),
   _interpolation_mode(INTERPOLATION_TRI_BARYCENTRIC | INTERPOLATION_QUAD_BILINEAR)
 {
   pthread_mutex_init(&mutex, NULL);
@@ -92,6 +93,11 @@ void VortexExtractor::SetGPU(bool g)
 void VortexExtractor::SetPertubation(float p)
 {
   _pertubation = p;
+}
+
+void VortexExtractor::SetLoopThreshold(double threshold)
+{
+  _loop_threshold = threshold;
 }
 
 void VortexExtractor::SaveVortexLines(int slot)
@@ -648,7 +654,9 @@ void VortexExtractor::VortexObjectsToVortexLines(
       line.ToBezier();
     }
 
-    // fprintf(stderr, "max_extent=%f\n", line.MaxExtent());
+    if (_loop_threshold > 0)
+      if (line.MaxExtent() < _loop_threshold)
+        continue;
 
     vlines.push_back(line);
   }
