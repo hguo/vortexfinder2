@@ -19,10 +19,29 @@ vtkGLGPUVortexFilter::vtkGLGPUVortexFilter()
 {
   SetNumberOfInputPorts(1);
   SetNumberOfOutputPorts(1);
+  
+  SetUseGPU(false);
+  SetMeshType(0);
+  SetLoopThreshold(0);
 }
 
 vtkGLGPUVortexFilter::~vtkGLGPUVortexFilter()
 {
+}
+
+void vtkGLGPUVortexFilter::SetUseGPU(bool b)
+{
+  bUseGPU = b;
+}
+
+void vtkGLGPUVortexFilter::SetMeshType(int i)
+{
+  iMeshType = i;
+}
+
+void vtkGLGPUVortexFilter::SetLoopThreshold(double t)
+{
+  dLoopThreshold = t;
 }
 
 int vtkGLGPUVortexFilter::FillOutputPortInformation(int, vtkInformation *info)
@@ -96,15 +115,19 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   // build data
   GLGPU3DDataset *ds = new GLGPU3DDataset;
   ds->BuildDataFromArray(h, rho, phi, re, im); // FIXME
-  // ds->SetMeshType(GLGPU3D_MESH_TET);
-  ds->SetMeshType(GLGPU3D_MESH_HEX);
+  if (iMeshType == 0)
+    ds->SetMeshType(GLGPU3D_MESH_HEX);
+  else if (iMeshType == 1)
+    ds->SetMeshType(GLGPU3D_MESH_TET);
+  else 
+    ds->SetMeshType(GLGPU3D_MESH_HEX);
   ds->BuildMeshGraph();
 
   VortexExtractor *ex = new VortexExtractor;
   ex->SetDataset(ds);
   ex->SetArchive(false);
 #if WITH_CUDA
-  ex->SetGPU(true); // FIXME: failure fallback
+  ex->SetGPU(bUseGPU); // FIXME: failure fallback
 #endif
   ex->SetGaugeTransformation(true); 
   ex->ExtractFaces(0);
