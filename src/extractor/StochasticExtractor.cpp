@@ -1,16 +1,19 @@
 #include "StochasticExtractor.h"
+#include "vfgpu/vfgpu.h"
 
 StochasticVortexExtractor::StochasticVortexExtractor() :
-  _nruns(256), 
+  _nruns(1), 
   _kernel_size(0.5),
-  _pertubation(0.04)
+  _pertubation(0.04),
+  _density(NULL)
 {
 
 }
 
 StochasticVortexExtractor::~StochasticVortexExtractor()
 {
-
+  if (_density != NULL)
+    free(_density);
 }
 
 void StochasticVortexExtractor::SetNumberOfRuns(int n)
@@ -58,5 +61,16 @@ void StochasticVortexExtractor::ExtractStochasticVortices()
     }
   }
 
-  fprintf(stderr, "npts=%d, nlines=%d\n", pts.size(), acc.size());
+#if WITH_CXX11
+  typedef std::chrono::high_resolution_clock clock;
+  auto t0 = clock::now();
+#endif
+  
+  vfgpu_density_estimate(pts.size()/3, acc.size(), pts.data(), acc.data());
+
+#if WITH_CXX11
+  auto t1 = clock::now();
+  double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
+  fprintf(stderr, "t_density=%f\n", elapsed);
+#endif
 }

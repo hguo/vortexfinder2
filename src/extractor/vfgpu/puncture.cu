@@ -24,6 +24,9 @@ static gpu_pe_t *d_pebuf=NULL;
 static unsigned int pecount=0;
 static gpu_pe_t *pebuf=NULL;
 
+static float *d_density = NULL;
+static float *density = NULL;
+
 inline void checkCuda(cudaError_t e, const char *situation) {
   if (e != cudaSuccess) {
     printf("CUDA Error: %s: %s\n", situation, cudaGetErrorString(e));
@@ -37,6 +40,11 @@ inline void checkLastCudaError(const char *situation) {
 static inline int idivup(int a, int b)
 {
   return (a%b!=0) ? (a/b+1) : (a/b); 
+}
+
+static inline dim3 idivup(dim3 a, dim3 b)
+{
+  return dim3(idivup(a.x, b.x), idivup(a.y, b.y), idivup(a.z, b.z));
 }
 
 template <typename T>
@@ -280,6 +288,17 @@ inline int nidx2nid(const gpu_hdr_t& h, const int idx_[3])
       idx[i] += h.d[i];
   }
   return idx[0] + h.d[0] * (idx[1] + h.d[1] * idx[2]); 
+}
+
+__device__
+inline bool valid_nidx(const gpu_hdr_t& h, const int idx[3])
+{
+  bool v[3] = {
+    idx[0]>=0 && idx[0]<h.d[0],
+    idx[1]>=0 && idx[1]<h.d[1],
+    idx[2]>=0 && idx[2]<h.d[2]
+  };
+  return v[0] && v[1] && v[2];
 }
 
 __device__
@@ -857,6 +876,11 @@ void vfgpu_destroy_data()
     d_pert = NULL;
     curandDestroyGenerator(gen);
   }
+
+  if (d_density != NULL) 
+    cudaFree(d_density);
+  if (density != NULL)
+    free(density);
   
   checkLastCudaError("destroying data");
 }
@@ -1013,4 +1037,63 @@ void vfgpu_extract_edges(int *pecount_, gpu_pe_t **pebuf_, int meshtype)
 
   *pecount_ = pecount;
   *pebuf_ = pebuf;
+}
+
+////////////////////////////////////////// density estimation
+__device__
+float kernel_gaussian()
+{
+}
+
+__global__
+static void density_estimate(
+    const gpu_hdr_t *h,
+    int npts, 
+    int nlines, 
+    const float *pts, 
+    const int *acc, float *volume)
+{
+  const int nidx[3] = {
+    blockIdx.x * blockDim.x + threadIdx.x,
+    blockIdx.y * blockDim.y + threadIdx.y,
+    blockIdx.z * blockDim.z + threadIdx.z};
+  if (!valid_nidx(*h, nidx)) return;
+
+  const int nid = nidx2nid(*h, nidx);
+  float X[3];
+  nidx2pos(*h, nidx, X);
+
+  volume[nid] = inner_product(X, X);
+}
+
+void vfgpu_density_estimate(int npts, int nlines, const float *pts, const int *acc)
+{
+  fprintf(stderr, "npts=%d, nlines=%d\n", npts, nlines);
+
+  float *d_pts;
+  int *d_acc;
+
+  cudaMalloc((void**)&d_pts, sizeof(float)*npts*3);
+  cudaMalloc((void**)&d_acc, sizeof(int)*nlines);
+
+  if (density == NULL)
+    density = (float*)malloc(sizeof(float)*h[0].count);
+  if (d_density == NULL) 
+    cudaMalloc((void**)&d_density, sizeof(float)*h[0].count);
+
+  cudaMemcpy(d_pts, pts, sizeof(float)*npts*3, cudaMemcpyHostToDevice);
+  cudaMemcpy(d_acc, acc, sizeof(int)*nlines, cudaMemcpyHostToDevice);
+
+  const dim3 volumeSize = dim3(h[0].d[0], h[0].d[1], h[0].d[2]);
+  const dim3 blockSize = dim3(16, 8, 2);
+  const dim3 gridSize = idivup(volumeSize, blockSize);
+
+  density_estimate<<<gridSize, blockSize>>>(d_h[0], npts, nlines, d_pts, d_acc, d_density);
+
+  cudaMemcpy(density, d_density, sizeof(float)*h[0].count, cudaMemcpyDeviceToHost);
+
+  cudaFree(d_pts);
+  cudaFree(d_acc);
+  
+  checkLastCudaError("density estimate");
 }

@@ -39,6 +39,6 @@ void vfgpu_extract_faces(int slot, int *pfcount, gpu_pf_t **pfbuf, float pert, i
 
 void vfgpu_extract_edges(int *pecount_, gpu_pe_t **pebuf_, int meshtype=GLGPU3D_MESH_HEX);
 
-void vfgpu_density_estimate(int npts, int nlines, float *pts, float *acc);
+void vfgpu_density_estimate(int npts, int nlines, const float *pts, const int *acc);
 
 #endif

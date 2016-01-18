@@ -21,6 +21,8 @@ private:
   int _nruns;
   float _kernel_size;
   float _pertubation;
+
+  float *_density;
 };
 
 #endif
