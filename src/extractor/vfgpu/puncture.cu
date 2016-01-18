@@ -1058,6 +1058,12 @@ inline static float gaussian(float x2, float sigma2) // x^2, sigma^2
   return exp(-0.5 * x2 / sigma2);
 }
 
+__device__
+inline static float step(float x2, float h2)
+{
+  return x2 <= h2;
+}
+
 __global__
 static void density_estimate(
     const gpu_hdr_t *h,
@@ -1080,6 +1086,7 @@ static void density_estimate(
   for (int i=0; i<npts; i++) {
     float d2 = dist2(X, pts + i*3);
     density += gaussian(d2, 1);
+    // density += step(d2, 1);
   }
   density = density / npts;
 

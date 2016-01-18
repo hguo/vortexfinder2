@@ -230,3 +230,28 @@ double MinimumDist(const VortexLine& l0, const VortexLine& l1)
 
   return minDist;
 }
+
+void VortexLine::BoundingBox(double LB[3], double UB[3]) const
+{
+  LB[0] = LB[1] = LB[2] = FLT_MAX;
+  UB[0] = UB[1] = UB[2] = -FLT_MAX;
+  const VortexLine& l = *this;
+
+  for (int i=0; i<size()/3; i++) {
+    LB[0] = std::min(LB[0], l[i*3]);
+    LB[1] = std::min(LB[1], l[i*3+1]);
+    LB[2] = std::min(LB[2], l[i*3+2]);
+    UB[0] = std::max(UB[0], l[i*3]);
+    UB[1] = std::max(UB[1], l[i*3+1]);
+    UB[2] = std::max(UB[2], l[i*3+2]);
+  }
+}
+
+double VortexLine::MaxExtent() const
+{
+  double LB[3], UB[3];
+  BoundingBox(LB, UB);
+
+  double D[3] = {UB[0] - LB[0], UB[1] - LB[1], UB[2] - LB[2]};
+  return std::max(std::max(D[0], D[1]), D[2]);
+}

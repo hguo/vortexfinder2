@@ -2,7 +2,7 @@
 #include "vfgpu/vfgpu.h"
 
 StochasticVortexExtractor::StochasticVortexExtractor() :
-  _nruns(1), 
+  _nruns(16), 
   _kernel_size(0.5),
   _pertubation(0.04),
   _density(NULL)

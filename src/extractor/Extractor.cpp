@@ -648,6 +648,8 @@ void VortexExtractor::VortexObjectsToVortexLines(
       line.ToBezier();
     }
 
+    // fprintf(stderr, "max_extent=%f\n", line.MaxExtent());
+
     vlines.push_back(line);
   }
 }

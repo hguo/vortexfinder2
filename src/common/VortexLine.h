@@ -23,6 +23,9 @@ struct VortexLine : public std::vector<double>
   void Flattern(const double O[3], const double L[3]);
   void Unflattern(const double O[3], const double L[3]);
 
+  void BoundingBox(double LB[3], double UB[3]) const;
+  double MaxExtent() const;
+
   friend double MinimumDist(const VortexLine& l0, const VortexLine& l1);
 
   int id, gid;
