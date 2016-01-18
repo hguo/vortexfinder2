@@ -5,6 +5,7 @@
 #cmakedefine WITH_CUDA 1
 #cmakedefine WITH_ARMA 1
 #cmakedefine WITH_LIBMESH 1
+#cmakedefine WITH_NETCDF 1
 #cmakedefine WITH_PNETCDF 1
 #cmakedefine WITH_QT 1
 #cmakedefine WITH_VTK 1
