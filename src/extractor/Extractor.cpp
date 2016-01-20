@@ -581,7 +581,7 @@ void VortexExtractor::TraceOverSpace(int slot)
         for (int i=0; i<cell.neighbor_cells.size(); i++) {
           if (pcell.Chirality(i) == -1 && visited.find(cell.neighbor_cells[i]) != visited.end()) {
             vobj.loop = true;
-            fprintf(stderr, "LOOP\n");
+            // fprintf(stderr, "LOOP\n");
           }
         }
       }
@@ -666,11 +666,15 @@ void VortexExtractor::VortexObjectsToVortexLines(
       line.ToBezier();
     }
 
-    if (vobj.loop && _extent_threshold > 0)
-      if (line.MaxExtent() < _extent_threshold)
-        continue;
 
-    vlines.push_back(line);
+    if (vobj.loop && _extent_threshold > 0) {
+      if (line.MaxExtent() < _extent_threshold) {
+        fprintf(stderr, "loop filtered, extent=%f\n", line.MaxExtent());
+        continue;
+      }
+    }
+    else 
+      vlines.push_back(line);
   }
 }
 
