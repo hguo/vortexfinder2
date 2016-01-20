@@ -30,7 +30,7 @@ public:
 
   void SetGaugeTransformation(bool);
   void SetArchive(bool); // archive intermediate results for data reuse
-  void SetLoopThreshold(double);
+  void SetExtentThreshold(double);
   void SetGPU(bool);
   void SetPertubation(float);
   
@@ -99,7 +99,7 @@ protected:
   bool _gpu;
   unsigned int _interpolation_mode;
   float _pertubation; // used for stochastic analysis
-  double _loop_threshold;
+  double _extent_threshold;
 
 private:
   static void *execute_thread_helper(void *ctx);
