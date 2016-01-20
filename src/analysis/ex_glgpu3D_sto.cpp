@@ -101,6 +101,7 @@ int main(int argc, char **argv)
  
   StochasticVortexExtractor ex;
   ex.SetDataset(&ds);
+  ex.SetExtentThreshold(1e38);
   ex.SetGPU(true);
 
   ex.ExtractDeterministicVortices();
