@@ -9,11 +9,13 @@
 struct VortexObject {
   int gid, id; // gid: global id; id: local (time) id
   int timestep;
+  bool loop;
+
   // std::map<FaceIdType, PuncturedFace> faces;
   std::set<FaceIdType> faces;
   std::vector<std::list<FaceIdType> > traces;
 
-  VortexObject() : id(INT_MAX), gid(INT_MAX) {}
+  VortexObject() : id(INT_MAX), gid(INT_MAX), loop(false) {}
 };
 
 #endif

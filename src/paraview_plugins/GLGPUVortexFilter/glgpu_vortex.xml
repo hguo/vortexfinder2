@@ -41,8 +41,8 @@
       </IntVectorProperty>
 
       <DoubleVectorProperty
-        name="LoopThreshold"
-        command="SetLoopThreshold"
+        name="ExtentThreshold"
+        command="SetExtentThreshold"
         number_of_elements="1"
         default_values="0">
       </DoubleVectorProperty>

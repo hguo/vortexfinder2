@@ -22,7 +22,7 @@ vtkGLGPUVortexFilter::vtkGLGPUVortexFilter()
   
   SetUseGPU(false);
   SetMeshType(0);
-  SetLoopThreshold(0);
+  SetExtentThreshold(0);
 }
 
 vtkGLGPUVortexFilter::~vtkGLGPUVortexFilter()
@@ -39,9 +39,9 @@ void vtkGLGPUVortexFilter::SetMeshType(int i)
   iMeshType = i;
 }
 
-void vtkGLGPUVortexFilter::SetLoopThreshold(double t)
+void vtkGLGPUVortexFilter::SetExtentThreshold(double t)
 {
-  dLoopThreshold = t;
+  dExtentThreshold = t;
 }
 
 int vtkGLGPUVortexFilter::FillOutputPortInformation(int, vtkInformation *info)
@@ -130,7 +130,7 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   ex->SetGPU(bUseGPU); // FIXME: failure fallback
 #endif
   ex->SetGaugeTransformation(true); 
-  ex->SetLoopThreshold(dLoopThreshold);
+  ex->SetExtentThreshold(dExtentThreshold);
   ex->ExtractFaces(0);
   ex->TraceOverSpace(0);
 

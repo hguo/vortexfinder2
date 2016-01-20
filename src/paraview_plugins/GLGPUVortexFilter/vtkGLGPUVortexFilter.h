@@ -14,7 +14,7 @@ public:
 
   void SetUseGPU(bool);
   void SetMeshType(int);
-  void SetLoopThreshold(double);
+  void SetExtentThreshold(double);
 
 protected:
   vtkGLGPUVortexFilter();
@@ -34,7 +34,7 @@ private:
 private:
   bool bUseGPU;
   int iMeshType;
-  double dLoopThreshold;
+  double dExtentThreshold;
 };
 
 #endif

@@ -39,7 +39,7 @@ VortexExtractor::VortexExtractor() :
   _archive(false), 
   _gpu(false),
   _pertubation(0),
-  _loop_threshold(0),
+  _extent_threshold(0),
   _interpolation_mode(INTERPOLATION_TRI_BARYCENTRIC | INTERPOLATION_QUAD_BILINEAR)
 {
   pthread_mutex_init(&mutex, NULL);
@@ -95,9 +95,9 @@ void VortexExtractor::SetPertubation(float p)
   _pertubation = p;
 }
 
-void VortexExtractor::SetLoopThreshold(double threshold)
+void VortexExtractor::SetExtentThreshold(double threshold)
 {
-  _loop_threshold = threshold;
+  _extent_threshold = threshold;
 }
 
 void VortexExtractor::SaveVortexLines(int slot)
@@ -574,13 +574,25 @@ void VortexExtractor::TraceOverSpace(int slot)
         if (!traced) break;
       }
 
+      // loop detection
+      {
+        const PuncturedCell &pcell = ordinary_pcells[seed];
+        const CCell &cell = mg->Cell(c);
+        for (int i=0; i<cell.neighbor_cells.size(); i++) {
+          if (pcell.Chirality(i) == -1 && visited.find(cell.neighbor_cells[i]) != visited.end()) {
+            vobj.loop = true;
+            fprintf(stderr, "LOOP\n");
+          }
+        }
+      }
+
       // trace backward (chirality == -1)
       visited.erase(seed);
       c = seed;
       while (1) {
         traced = false;
-        if (ordinary_pcells.find(c) == ordinary_pcells.end() 
-            || visited.find(c) != visited.end())
+        if (ordinary_pcells.find(c) == ordinary_pcells.end() // the cell is punctured
+            || visited.find(c) != visited.end()) // the cell has not been visited
           break;
 
         const PuncturedCell &pcell = ordinary_pcells[c];
@@ -598,7 +610,7 @@ void VortexExtractor::TraceOverSpace(int slot)
               vobj.faces.insert(f);
               trace.push_front(f);
               c = cell.neighbor_cells[i]; 
-              traced = true;
+              traced = true; 
             }
           }
         }
@@ -654,8 +666,8 @@ void VortexExtractor::VortexObjectsToVortexLines(
       line.ToBezier();
     }
 
-    if (_loop_threshold > 0)
-      if (line.MaxExtent() < _loop_threshold)
+    if (vobj.loop && _extent_threshold > 0)
+      if (line.MaxExtent() < _extent_threshold)
         continue;
 
     vlines.push_back(line);
