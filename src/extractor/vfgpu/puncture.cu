@@ -8,28 +8,34 @@
 #include <netcdf.h>
 #endif
 
-static gpu_hdr_t h[2];
-static gpu_hdr_t *d_h[2] = {NULL};
-static float *d_rho[2] = {NULL}, 
-             *d_phi[2] = {NULL}, 
-             *d_re[2] = {NULL}, 
-             *d_im[2] = {NULL};
-static float *d_pert = NULL;
+struct ctx_vfgpu_t {
+  unsigned char meshtype; 
+  bool enable_density_estimate;
+  float pertubation;
+  
+  gpu_hdr_t h[2];
+  gpu_hdr_t *d_h[2];
+  float *d_rho[2], *d_phi[2], *d_re[2], *d_im[2];
+  float *d_pert;
 
-static curandGenerator_t gen;
+  curandGenerator_t gen;
 
-static unsigned int *d_pfcount=NULL;
-static gpu_pf_t *d_pflist=NULL;
-static unsigned int pfcount=0;
-static gpu_pf_t *pflist=NULL;
+  unsigned int *d_pfcount;
+  gpu_pf_t *d_pflist;
+  unsigned int pfcount;
+  gpu_pf_t *pflist;
 
-static unsigned int *d_pecount=NULL;
-static gpu_pe_t *d_pelist=NULL;
-static unsigned int pecount=0;
-static gpu_pe_t *pelist=NULL;
+  unsigned int *d_pecount;
+  gpu_pe_t *d_pelist;
+  unsigned int pecount;
+  gpu_pe_t *pelist;
 
-static float *d_density = NULL;
-static float *density = NULL;
+  bool *d_pftag;  // optional for extraction, used for density estimation, indexed by face id. 
+  bool *pftag;
+
+  int *d_density;
+  int *density;
+};
 
 inline void checkCuda(cudaError_t e, const char *situation) {
   if (e != cudaSuccess) {
@@ -860,100 +866,73 @@ static void extract_edges_kernel(
 #endif
 }
 
-void vfgpu_destroy_data()
-{
-  for (int slot=0; slot<2; slot++) {
-    cudaFree(d_h[slot]);
-    cudaFree(d_rho[slot]);
-    cudaFree(d_phi[slot]);
-    cudaFree(d_re[slot]);
-    cudaFree(d_im[slot]);
-
-    d_rho[slot] = d_phi[slot] = d_re[slot] = d_im[slot] = NULL; 
-    d_h[slot] = NULL;
-  }
-
-  cudaFree(d_pflist);
-  d_pflist = NULL;
-  free(pflist);
-  pflist = NULL;
-
-  cudaFree(d_pelist);
-  d_pelist = NULL;
-  free(pelist);
-  pelist = NULL;
- 
-  if (d_pert != NULL) {
-    cudaFree(d_pert);
-    d_pert = NULL;
-    curandDestroyGenerator(gen);
-  }
-
-  if (d_density != NULL) 
-    cudaFree(d_density);
-  if (density != NULL)
-    free(density);
-  
-  checkLastCudaError("destroying data");
-}
-
 void vfgpu_initialize(
     bool enable_pertubation)
 {
 
 }
 
-void vfgpu_rotate_timesteps()
+void vfgpu_rotate_timesteps(ctx_vfgpu_t* c)
 {
-  std::swap(d_h[0], d_h[1]);
-  std::swap(d_rho[0], d_rho[1]);
-  std::swap(d_phi[0], d_phi[1]);
-  std::swap(d_re[0], d_re[1]);
-  std::swap(d_im[0], d_im[1]);
+  std::swap(c->d_h[0], c->d_h[1]);
+  std::swap(c->d_rho[0], c->d_rho[1]);
+  std::swap(c->d_phi[0], c->d_phi[1]);
+  std::swap(c->d_re[0], c->d_re[1]);
+  std::swap(c->d_im[0], c->d_im[1]);
 }
 
 void vfgpu_upload_data(
+    ctx_vfgpu_t* c,
     int slot, 
     const gpu_hdr_t& h, 
     const float *re, 
     const float *im)
 {
   const int count = h.count;
-  const int max_pf_count = count*12*0.1, 
-            max_pe_count = count*7*0.1;
+  const int face_count = count*(c->meshtype == GLGPU3D_MESH_TET ? 12 : 3), 
+            edge_count = count*(c->meshtype == GLGPU3D_MESH_TET ? 7 : 3);
+  const int max_pf_count = face_count*0.1, // TODO
+            max_pe_count = edge_count*0.1;
  
-  memcpy(&::h[slot], &h, sizeof(gpu_hdr_t));
+  memcpy(&c->h[slot], &h, sizeof(gpu_hdr_t));
   
-  if (d_rho[slot] == NULL) { // FIXME
-    cudaMalloc((void**)&d_h[slot], sizeof(gpu_hdr_t));
-    cudaMalloc((void**)&d_re[slot], sizeof(float)*count);
-    cudaMalloc((void**)&d_im[slot], sizeof(float)*count);
-    cudaMalloc((void**)&d_rho[slot], sizeof(float)*count);
-    cudaMalloc((void**)&d_phi[slot], sizeof(float)*count);
+  if (c->d_rho[slot] == NULL) { // TODO: in-situ
+    cudaMalloc((void**)&c->d_h[slot], sizeof(gpu_hdr_t));
+    cudaMalloc((void**)&c->d_re[slot], sizeof(float)*count);
+    cudaMalloc((void**)&c->d_im[slot], sizeof(float)*count);
+    cudaMalloc((void**)&c->d_rho[slot], sizeof(float)*count);
+    cudaMalloc((void**)&c->d_phi[slot], sizeof(float)*count);
   }
 
-  if (pflist == NULL) {
-    pflist = (gpu_pf_t*)malloc(max_pf_count*sizeof(gpu_pf_t));
-    cudaMalloc((void**)&d_pfcount, sizeof(unsigned int));
-    cudaMalloc((void**)&d_pflist, sizeof(gpu_pf_t)*max_pf_count);
+  if (c->pflist == NULL) {
+    c->pflist = (gpu_pf_t*)malloc(max_pf_count*sizeof(gpu_pf_t));
+    cudaMalloc((void**)&c->d_pfcount, sizeof(unsigned int));
+    cudaMalloc((void**)&c->d_pflist, sizeof(gpu_pf_t)*max_pf_count);
   }
 
-  if (pelist == NULL) {
-    pelist = (gpu_pe_t*)malloc(max_pe_count*sizeof(gpu_pe_t));
-    cudaMalloc((void**)&d_pecount, sizeof(unsigned int));
-    cudaMalloc((void**)&d_pelist, sizeof(gpu_pe_t)*max_pe_count);
+  if (c->pelist == NULL) {
+    c->pelist = (gpu_pe_t*)malloc(max_pe_count*sizeof(gpu_pe_t));
+    cudaMalloc((void**)&c->d_pecount, sizeof(unsigned int));
+    cudaMalloc((void**)&c->d_pelist, sizeof(gpu_pe_t)*max_pe_count);
   }
-    
-  cudaMemcpy(d_h[slot], &h, sizeof(gpu_hdr_t), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_re[slot], re, sizeof(float)*count, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_im[slot], im, sizeof(float)*count, cudaMemcpyHostToDevice);
+
+  if (c->enable_density_estimate && c->pftag == NULL) {
+    c->pftag = (bool*)malloc(face_count*sizeof(bool));
+    cudaMalloc((void**)c->d_pftag, sizeof(bool)*face_count);
+    c->density = (int*)malloc(count*sizeof(int));
+    cudaMalloc((void**)c->d_density, sizeof(int)*count);
+  }
+  
+  cudaMemcpy(c->d_h[slot], &h, sizeof(gpu_hdr_t), cudaMemcpyHostToDevice);
+  cudaMemcpy(c->d_re[slot], re, sizeof(float)*count, cudaMemcpyHostToDevice);
+  cudaMemcpy(c->d_im[slot], im, sizeof(float)*count, cudaMemcpyHostToDevice);
  
-  checkLastCudaError("copy data to device");
+  checkLastCudaError("[vfgpu] copy data to device");
 }
 
-void vfgpu_compute_rho_phi(int slot, float pertubation=0.f)
+void vfgpu_compute_rho_phi(ctx_vfgpu_t* c, int slot)
 {
-  const int count = h[slot].count;
+  const int count = c->h[slot].count;
   const int maxGridDim = 1024; // 32768;
   const int blockSize = 256;
   const int nBlocks = idivup(count, blockSize);
@@ -963,27 +942,27 @@ void vfgpu_compute_rho_phi(int slot, float pertubation=0.f)
   else 
     gridSize = dim3(nBlocks);
 
-  if (pertubation>0.f) {
-    if (d_pert == NULL) {
-      cudaMalloc((void**)&d_pert, sizeof(float)*count*2); // real and imag
-      curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT);
-      curandSetPseudoRandomGeneratorSeed(gen, 1234ULL);
+  if (c->pertubation>0.f) {
+    if (c->d_pert == NULL) {
+      cudaMalloc((void**)&c->d_pert, sizeof(float)*count*2); // real and imag
+      curandCreateGenerator(&c->gen, CURAND_RNG_PSEUDO_DEFAULT);
+      curandSetPseudoRandomGeneratorSeed(c->gen, 1234ULL);
     }
-    curandGenerateNormal(gen, d_pert, count*2, 0, pertubation);
-    compute_rho_phi_kernel<float, true><<<gridSize, blockSize>>>(d_h[slot], d_rho[slot], d_phi[slot], d_re[slot], d_im[slot], d_pert);
+    curandGenerateNormal(c->gen, c->d_pert, count*2, 0, c->pertubation);
+    compute_rho_phi_kernel<float, true><<<gridSize, blockSize>>>(c->d_h[slot], c->d_rho[slot], c->d_phi[slot], c->d_re[slot], c->d_im[slot], c->d_pert);
   } else {
-    compute_rho_phi_kernel<float, false><<<gridSize, blockSize>>>(d_h[slot], d_rho[slot], d_phi[slot], d_re[slot], d_im[slot]);
+    compute_rho_phi_kernel<float, false><<<gridSize, blockSize>>>(c->d_h[slot], c->d_rho[slot], c->d_phi[slot], c->d_re[slot], c->d_im[slot], c->d_pert);
   }
 
   cudaDeviceSynchronize();
   checkLastCudaError("compute rho and phi");
 }
 
-void vfgpu_extract_faces(int slot, int *pfcount_, gpu_pf_t **pflist_, float pert, int meshtype)
+void vfgpu_extract_faces(ctx_vfgpu_t* c, int slot)
 {
-  const int nfacetypes = meshtype == GLGPU3D_MESH_TET ? 12 : 3;
+  const int nfacetypes = c->meshtype == GLGPU3D_MESH_TET ? 12 : 3;
 
-  const int threadCount = h[slot].count * nfacetypes;
+  const int threadCount = c->h[slot].count * nfacetypes;
   const int maxGridDim = 1024; // 32768;
   const int blockSize = 256;
   const int nBlocks = idivup(threadCount, blockSize);
@@ -994,33 +973,31 @@ void vfgpu_extract_faces(int slot, int *pfcount_, gpu_pf_t **pflist_, float pert
     gridSize = dim3(nBlocks);
   const int sharedSize = blockSize * sizeof(gpu_pf_t) + sizeof(unsigned int);
   
-  vfgpu_compute_rho_phi(slot, pert);
+  vfgpu_compute_rho_phi(c, slot);
 
-  cudaMemset(d_pfcount, 0, sizeof(unsigned int));
+  cudaMemset(c->d_pfcount, 0, sizeof(unsigned int));
   checkLastCudaError("extract faces [0]");
-  if (meshtype == GLGPU3D_MESH_TET)
-    extract_faces_kernel<float, GLGPU3D_MESH_TET><<<gridSize, blockSize, sharedSize>>>(d_h[slot], d_pfcount, d_pflist, d_rho[slot], d_phi[slot]);
-  else if (meshtype == GLGPU3D_MESH_HEX)
-    extract_faces_kernel<float, GLGPU3D_MESH_HEX><<<gridSize, blockSize, sharedSize>>>(d_h[slot], d_pfcount, d_pflist, d_rho[slot], d_phi[slot]);
+  if (c->meshtype == GLGPU3D_MESH_TET)
+    extract_faces_kernel<float, GLGPU3D_MESH_TET><<<gridSize, blockSize, sharedSize>>>(c->d_h[slot], c->d_pfcount, c->d_pflist, c->d_rho[slot], c->d_phi[slot]);
+  else if (c->meshtype == GLGPU3D_MESH_HEX)
+    extract_faces_kernel<float, GLGPU3D_MESH_HEX><<<gridSize, blockSize, sharedSize>>>(c->d_h[slot], c->d_pfcount, c->d_pflist, c->d_rho[slot], c->d_phi[slot]);
   checkLastCudaError("extract faces [1]");
  
-  cudaMemcpy((void*)&pfcount, d_pfcount, sizeof(unsigned int), cudaMemcpyDeviceToHost);
-  printf("pfcount=%d\n", pfcount);
-  if (pfcount>0)
-    cudaMemcpy(pflist, d_pflist, sizeof(gpu_pf_t)*pfcount, cudaMemcpyDeviceToHost);
+  cudaMemcpy((void*)&c->pfcount, c->d_pfcount, sizeof(unsigned int), cudaMemcpyDeviceToHost);
+  checkLastCudaError("extract faces [1.1]");
+  printf("pfcount=%d\n", c->pfcount);
+  if (c->pfcount>0)
+    cudaMemcpy(c->pflist, c->d_pflist, sizeof(gpu_pf_t)*c->pfcount, cudaMemcpyDeviceToHost);
   checkLastCudaError("extract faces [2]");
   
   cudaDeviceSynchronize();
-
-  *pfcount_ = pfcount;
-  *pflist_ = pflist;
 }
 
-void vfgpu_extract_edges(int *pecount_, gpu_pe_t **pelist_, int meshtype)
+void vfgpu_extract_edges(ctx_vfgpu_t* c)
 {
-  const int nedgetypes = meshtype == GLGPU3D_MESH_TET ? 7 : 3;
+  const int nedgetypes = c->meshtype == GLGPU3D_MESH_TET ? 7 : 3;
 
-  const int threadCount = h[0].count * nedgetypes;
+  const int threadCount = c->h[0].count * nedgetypes;
   const int maxGridDim = 1024; // 32768;
   const int blockSize = 256;
   const int nBlocks = idivup(threadCount, blockSize);
@@ -1031,115 +1008,86 @@ void vfgpu_extract_edges(int *pecount_, gpu_pe_t **pelist_, int meshtype)
     gridSize = dim3(nBlocks);
   const int sharedSize = blockSize * sizeof(gpu_pe_t) + sizeof(unsigned int);
   
-  cudaMemset(d_pecount, 0, sizeof(unsigned int));
+  cudaMemset(c->d_pecount, 0, sizeof(unsigned int));
   checkLastCudaError("extract edges [0]");
-  if (meshtype == GLGPU3D_MESH_TET)
-    extract_edges_kernel<float, GLGPU3D_MESH_TET><<<gridSize, blockSize, sharedSize>>>(d_h[0], d_h[1], d_pecount, d_pelist, d_phi[0], d_phi[1]);
-  else if (meshtype == GLGPU3D_MESH_HEX)
-    extract_edges_kernel<float, GLGPU3D_MESH_HEX><<<gridSize, blockSize, sharedSize>>>(d_h[0], d_h[1], d_pecount, d_pelist, d_phi[0], d_phi[1]);
+  if (c->meshtype == GLGPU3D_MESH_TET)
+    extract_edges_kernel<float, GLGPU3D_MESH_TET><<<gridSize, blockSize, sharedSize>>>(c->d_h[0], c->d_h[1], c->d_pecount, c->d_pelist, c->d_phi[0], c->d_phi[1]);
+  else if (c->meshtype == GLGPU3D_MESH_HEX)
+    extract_edges_kernel<float, GLGPU3D_MESH_HEX><<<gridSize, blockSize, sharedSize>>>(c->d_h[0], c->d_h[1], c->d_pecount, c->d_pelist, c->d_phi[0], c->d_phi[1]);
   checkLastCudaError("extract edges [1]");
  
-  cudaMemcpy((void*)&pecount, d_pecount, sizeof(unsigned int), cudaMemcpyDeviceToHost);
-  printf("pecount=%d\n", pecount);
-  if (pecount>0)
-    cudaMemcpy(pelist, d_pelist, sizeof(gpu_pe_t)*pecount, cudaMemcpyDeviceToHost);
+  cudaMemcpy((void*)&c->pecount, c->d_pecount, sizeof(unsigned int), cudaMemcpyDeviceToHost);
+  printf("pecount=%d\n", c->pecount);
+  if (c->pecount>0)
+    cudaMemcpy(c->pelist, c->d_pelist, sizeof(gpu_pe_t)*c->pecount, cudaMemcpyDeviceToHost);
   checkLastCudaError("extract edges [2]");
   
   cudaDeviceSynchronize();
-
-  *pecount_ = pecount;
-  *pelist_ = pelist;
 }
 
-////////////////////////////////////////// density estimation
-__device__
-inline static float gaussian(float x2, float sigma2) // x^2, sigma^2
+///////////////////
+
+ctx_vfgpu_t* vfgpu_create_ctx()
 {
-  return exp(-0.5 * x2 / sigma2);
+  ctx_vfgpu_t *c = (ctx_vfgpu_t*)malloc(sizeof(ctx_vfgpu_t));
+  memset(c, 0, sizeof(ctx_vfgpu_t));
+  return c;
 }
 
-__device__
-inline static float step(float x2, float h2)
+void vfgpu_destroy_ctx(ctx_vfgpu_t *c)
 {
-  return x2 <= h2;
-}
-
-__global__
-static void density_estimate(
-    const gpu_hdr_t *h,
-    int npts, 
-    int nlines, 
-    const float *pts, 
-    const int *acc, float *volume)
-{
-  const int nidx[3] = {
-    blockIdx.x * blockDim.x + threadIdx.x,
-    blockIdx.y * blockDim.y + threadIdx.y,
-    blockIdx.z * blockDim.z + threadIdx.z};
-  if (!valid_nidx(*h, nidx)) return;
-
-  const int nid = nidx2nid(*h, nidx);
-  float X[3];
-  nidx2pos(*h, nidx, X);
-
-  float density = 0;
-  for (int i=0; i<npts; i++) {
-    float d2 = dist2(X, pts + i*3);
-    density += gaussian(d2, 1);
-    // density += step(d2, 1);
+  for (int slot=0; slot<2; slot++) {
+    cudaFree(c->d_h[slot]);
+    cudaFree(c->d_rho[slot]);
+    cudaFree(c->d_phi[slot]);
+    cudaFree(c->d_re[slot]);
+    cudaFree(c->d_im[slot]);
   }
-  density = density / npts;
 
-  volume[nid] = density; 
+  cudaFree(c->d_pflist);
+  free(c->pflist);
+
+  cudaFree(c->d_pelist);
+  free(c->pelist);
+ 
+  if (c->d_pert != NULL) {
+    cudaFree(c->d_pert);
+    curandDestroyGenerator(c->gen);
+  }
+
+  if (c->d_pftag != NULL) 
+    cudaFree(c->d_pftag);
+  if (c->pftag != NULL)
+    free(c->pftag);
+
+  if (c->d_density != NULL) 
+    cudaFree(c->d_density);
+  if (c->density != NULL)
+    free(c->density);
+  
+  free(c);
+  
+  checkLastCudaError("[vfgpu] destroying ctx");
 }
 
-void vfgpu_density_estimate(int npts, int nlines, const float *pts, const int *acc)
+void vfgpu_set_meshtype(ctx_vfgpu_t* c, int meshtype)
 {
-  fprintf(stderr, "npts=%d, nlines=%d\n", npts, nlines);
+  c->meshtype = meshtype;
+}
 
-  float *d_pts;
-  int *d_acc;
+void vfgpu_set_enable_density_estimate(ctx_vfgpu_t* c, bool b)
+{
+  c->enable_density_estimate = b;
+}
 
-  cudaMalloc((void**)&d_pts, sizeof(float)*npts*3);
-  cudaMalloc((void**)&d_acc, sizeof(int)*nlines);
+void vfgpu_get_pflist(ctx_vfgpu_t* c, int *n, gpu_pf_t **pflist)
+{
+  *n = c->pfcount; 
+  *pflist = c->pflist;
+}
 
-  if (density == NULL)
-    density = (float*)malloc(sizeof(float)*h[0].count);
-  if (d_density == NULL) 
-    cudaMalloc((void**)&d_density, sizeof(float)*h[0].count);
-
-  cudaMemcpy(d_pts, pts, sizeof(float)*npts*3, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_acc, acc, sizeof(int)*nlines, cudaMemcpyHostToDevice);
-
-  const dim3 volumeSize = dim3(h[0].d[0], h[0].d[1], h[0].d[2]);
-  const dim3 blockSize = dim3(16, 8, 2);
-  const dim3 gridSize = idivup(volumeSize, blockSize);
-
-  density_estimate<<<gridSize, blockSize>>>(d_h[0], npts, nlines, d_pts, d_acc, d_density);
-
-  cudaMemcpy(density, d_density, sizeof(float)*h[0].count, cudaMemcpyDeviceToHost);
-
-#ifdef WITH_NETCDF
-  int ncid;
-  int dimids[3];
-  int varids[1];
-
-  size_t starts[3] = {0, 0, 0}, 
-         sizes[3] = {h[0].d[2], h[0].d[1], h[0].d[0]};
-
-  NC_SAFE_CALL( nc_create("density.nc", NC_CLOBBER | NC_64BIT_OFFSET, &ncid) );
-  NC_SAFE_CALL( nc_def_dim(ncid, "z", sizes[0], &dimids[0]) );
-  NC_SAFE_CALL( nc_def_dim(ncid, "y", sizes[1], &dimids[1]) );
-  NC_SAFE_CALL( nc_def_dim(ncid, "x", sizes[2], &dimids[2]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "density", NC_FLOAT, 3, dimids, &varids[0]) );
-  NC_SAFE_CALL( nc_enddef(ncid) );
-
-  NC_SAFE_CALL( nc_put_vara_float(ncid, varids[0], starts, sizes, density) );
-  NC_SAFE_CALL( nc_close(ncid) );
-#endif
-
-  cudaFree(d_pts);
-  cudaFree(d_acc);
-  
-  checkLastCudaError("density estimate");
+void vfgpu_get_pelist(ctx_vfgpu_t* c, int *n, gpu_pe_t **pelist)
+{
+  *n = c->pecount; 
+  *pelist = c->pelist;
 }

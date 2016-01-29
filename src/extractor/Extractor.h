@@ -101,6 +101,8 @@ protected:
   float _pertubation; // used for stochastic analysis
   double _extent_threshold;
 
+  struct ctx_vfgpu_t *_vfgpu_ctx;
+
 private:
   static void *execute_thread_helper(void *ctx);
   void execute_thread(int nthreads, int tid, int type, int slot);

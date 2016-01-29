@@ -36,6 +36,7 @@ pthread_mutex_t mutex;
 VortexExtractor::VortexExtractor() :
   _dataset(NULL), 
   _gauge(false), 
+  _vfgpu_ctx(NULL),
   _archive(false), 
   _gpu(false),
   _pertubation(0),
@@ -59,8 +60,8 @@ VortexExtractor::~VortexExtractor()
   pthread_mutex_destroy(&mutex);
 
 #ifdef WITH_CUDA
-  if (_gpu)
-    vfgpu_destroy_data();
+  if (_gpu && _vfgpu_ctx)
+    vfgpu_destroy_ctx(_vfgpu_ctx);
 #endif
 }
 
@@ -788,7 +789,7 @@ void VortexExtractor::RotateTimeSteps()
   _vortex_lines.swap( _vortex_lines1 );
 
 #if WITH_CUDA
-  vfgpu_rotate_timesteps();
+  vfgpu_rotate_timesteps(_vfgpu_ctx);
 #endif
 }
 
@@ -796,7 +797,12 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
 {
 #if WITH_CUDA
   GLGPU3DDataset *ds = (GLGPU3DDataset*)_dataset;
-  const int mesh_type = ds->MeshType();
+  const int meshtype = ds->MeshType();
+
+  if (_vfgpu_ctx == NULL) {
+    _vfgpu_ctx = vfgpu_create_ctx();
+    vfgpu_set_meshtype(_vfgpu_ctx, meshtype);
+  }
 
   GLHeader h;
   double *rho, *phi, *re, *im, *J;
@@ -824,11 +830,7 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
     im1[i] = im[i];
   }
 
-  vfgpu_upload_data(
-    slot,
-    gh,
-    re1, 
-    im1);
+  vfgpu_upload_data(_vfgpu_ctx, slot, gh, re1, im1);
 
   free(re1);
   free(im1);
@@ -840,7 +842,8 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
 
   int pfcount; 
   gpu_pf_t *pf; 
-  vfgpu_extract_faces(slot, &pfcount, &pf, _pertubation, mesh_type);
+  vfgpu_extract_faces(_vfgpu_ctx, slot);
+  vfgpu_get_pflist(_vfgpu_ctx, &pfcount, &pf);
 
 #if WITH_CXX11
   auto t1 = clock::now();
@@ -859,7 +862,6 @@ void VortexExtractor::ExtractEdges_GPU()
 {
 #if WITH_CUDA
   GLGPU3DDataset *ds = (GLGPU3DDataset*)_dataset;
-  const int mesh_type = ds->MeshType();
 
   GLHeader h;
   double *rho[2], *phi[2], *re[2], *im[2], *J[2];
@@ -884,7 +886,8 @@ void VortexExtractor::ExtractEdges_GPU()
 
   int pecount; 
   gpu_pe_t *pe; 
-  vfgpu_extract_edges(&pecount, &pe, mesh_type);
+  vfgpu_extract_edges(_vfgpu_ctx);
+  vfgpu_get_pelist(_vfgpu_ctx, &pecount, &pe); 
 
 #if WITH_CXX11
   auto t1 = clock::now();
