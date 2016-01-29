@@ -19,14 +19,14 @@ static float *d_pert = NULL;
 static curandGenerator_t gen;
 
 static unsigned int *d_pfcount=NULL;
-static gpu_pf_t *d_pfbuf=NULL;
+static gpu_pf_t *d_pflist=NULL;
 static unsigned int pfcount=0;
-static gpu_pf_t *pfbuf=NULL;
+static gpu_pf_t *pflist=NULL;
 
 static unsigned int *d_pecount=NULL;
-static gpu_pe_t *d_pebuf=NULL;
+static gpu_pe_t *d_pelist=NULL;
 static unsigned int pecount=0;
-static gpu_pe_t *pebuf=NULL;
+static gpu_pe_t *pelist=NULL;
 
 static float *d_density = NULL;
 static float *density = NULL;
@@ -703,7 +703,7 @@ inline int extract_face(
     const gpu_hdr_t& h, 
     int fid,
     unsigned int *pfcount,
-    gpu_pf_t *pfbuf, 
+    gpu_pf_t *pflist, 
     const T *rho_, 
     const T *phi_)
 {
@@ -728,7 +728,7 @@ inline int extract_face(
   find_zero<T, meshtype>(re, im, X, pf.pos, T(1));
   
   unsigned int idx = atomicInc(pfcount, 0xffffffff);
-  pfbuf[idx] = pf;
+  pflist[idx] = pf;
 
   return chirality;
 }
@@ -740,7 +740,7 @@ inline int extract_edge(
     const gpu_hdr_t& h1, 
     int eid,
     unsigned int *pecount,
-    gpu_pe_t *pebuf, 
+    gpu_pe_t *pelist, 
     const T *phi_,
     const T *phi1_)
 {
@@ -756,8 +756,8 @@ inline int extract_edge(
   if (chirality == 0) return 0;
   
   unsigned int idx = atomicInc(pecount, 0xffffffff);
-  pebuf[idx].eid = eid;
-  pebuf[idx].chirality = chirality;
+  pelist[idx].eid = eid;
+  pelist[idx].chirality = chirality;
 
   return chirality;
 }
@@ -794,7 +794,7 @@ __global__
 static void extract_faces_kernel(
     const gpu_hdr_t* h, 
     unsigned int *pfcount,
-    gpu_pf_t *pfbuf,
+    gpu_pf_t *pflist,
     const T *rho, 
     const T *phi)
 {
@@ -803,23 +803,23 @@ static void extract_faces_kernel(
   if (fid>h->d[0]*h->d[1]*h->d[2]*nfacetypes) return;
 
 #if 0 // use global memory
-  extract_face<T, meshtype>(*h, fid, pfcount, pfbuf, rho, phi);
+  extract_face<T, meshtype>(*h, fid, pfcount, pflist, rho, phi);
 #else // use shared memory
   extern __shared__ char smem[];
   unsigned int *spfcount = (unsigned int*)smem;
-  gpu_pf_t *spfbuf= (gpu_pf_t*)(smem + sizeof(int));
+  gpu_pf_t *spflist= (gpu_pf_t*)(smem + sizeof(int));
  
   if (threadIdx.x == 0)
     *spfcount = 0;
   __syncthreads();
   
-  extract_face<T, meshtype>(*h, fid, spfcount, spfbuf, rho, phi);
+  extract_face<T, meshtype>(*h, fid, spfcount, spflist, rho, phi);
   __syncthreads();
 
   if (threadIdx.x == 0 && (*spfcount)>0) {
     unsigned int idx = atomicAdd(pfcount, *spfcount);
     // printf("idx=%d, count=%d\n", idx, *spfcount);
-    memcpy(pfbuf + idx, spfbuf, (*spfcount) * sizeof(gpu_pf_t));
+    memcpy(pflist + idx, spflist, (*spfcount) * sizeof(gpu_pf_t));
   }
 #endif
 }
@@ -830,7 +830,7 @@ static void extract_edges_kernel(
     const gpu_hdr_t* h, 
     const gpu_hdr_t* h1, 
     unsigned int *pecount,
-    gpu_pe_t *pebuf,
+    gpu_pe_t *pelist,
     const T *phi, 
     const T *phi1)
 {
@@ -839,23 +839,23 @@ static void extract_edges_kernel(
   if (eid>h->d[0]*h->d[1]*h->d[2]*nedgetypes) return;
 
 #if 0 // use global memory
-  extract_edge<T, meshtype>(*h, *h1, eid, pecount, pebuf, phi, phi1);
+  extract_edge<T, meshtype>(*h, *h1, eid, pecount, pelist, phi, phi1);
 #else // use shared memory
   extern __shared__ char smem[];
   unsigned int *specount = (unsigned int*)smem;
-  gpu_pe_t *spebuf = (gpu_pe_t*)(smem + sizeof(int));
+  gpu_pe_t *spelist = (gpu_pe_t*)(smem + sizeof(int));
  
   if (threadIdx.x == 0)
     *specount = 0;
   __syncthreads();
   
-  extract_edge<T, meshtype>(*h, *h1, eid, specount, spebuf, phi, phi1);
+  extract_edge<T, meshtype>(*h, *h1, eid, specount, spelist, phi, phi1);
   __syncthreads();
 
   if (threadIdx.x == 0 && (*specount)>0) {
     unsigned int idx = atomicAdd(pecount, *specount);
     // printf("idx=%d, count=%d\n", idx, *specount);
-    memcpy(pebuf + idx, spebuf, (*specount) * sizeof(gpu_pe_t));
+    memcpy(pelist + idx, spelist, (*specount) * sizeof(gpu_pe_t));
   }
 #endif
 }
@@ -873,15 +873,15 @@ void vfgpu_destroy_data()
     d_h[slot] = NULL;
   }
 
-  cudaFree(d_pfbuf);
-  d_pfbuf = NULL;
-  free(pfbuf);
-  pfbuf = NULL;
+  cudaFree(d_pflist);
+  d_pflist = NULL;
+  free(pflist);
+  pflist = NULL;
 
-  cudaFree(d_pebuf);
-  d_pebuf = NULL;
-  free(pebuf);
-  pebuf = NULL;
+  cudaFree(d_pelist);
+  d_pelist = NULL;
+  free(pelist);
+  pelist = NULL;
  
   if (d_pert != NULL) {
     cudaFree(d_pert);
@@ -932,16 +932,16 @@ void vfgpu_upload_data(
     cudaMalloc((void**)&d_phi[slot], sizeof(float)*count);
   }
 
-  if (pfbuf == NULL) {
-    pfbuf = (gpu_pf_t*)malloc(max_pf_count*sizeof(gpu_pf_t));
+  if (pflist == NULL) {
+    pflist = (gpu_pf_t*)malloc(max_pf_count*sizeof(gpu_pf_t));
     cudaMalloc((void**)&d_pfcount, sizeof(unsigned int));
-    cudaMalloc((void**)&d_pfbuf, sizeof(gpu_pf_t)*max_pf_count);
+    cudaMalloc((void**)&d_pflist, sizeof(gpu_pf_t)*max_pf_count);
   }
 
-  if (pebuf == NULL) {
-    pebuf = (gpu_pe_t*)malloc(max_pe_count*sizeof(gpu_pe_t));
+  if (pelist == NULL) {
+    pelist = (gpu_pe_t*)malloc(max_pe_count*sizeof(gpu_pe_t));
     cudaMalloc((void**)&d_pecount, sizeof(unsigned int));
-    cudaMalloc((void**)&d_pebuf, sizeof(gpu_pe_t)*max_pe_count);
+    cudaMalloc((void**)&d_pelist, sizeof(gpu_pe_t)*max_pe_count);
   }
     
   cudaMemcpy(d_h[slot], &h, sizeof(gpu_hdr_t), cudaMemcpyHostToDevice);
@@ -979,7 +979,7 @@ void vfgpu_compute_rho_phi(int slot, float pertubation=0.f)
   checkLastCudaError("compute rho and phi");
 }
 
-void vfgpu_extract_faces(int slot, int *pfcount_, gpu_pf_t **pfbuf_, float pert, int meshtype)
+void vfgpu_extract_faces(int slot, int *pfcount_, gpu_pf_t **pflist_, float pert, int meshtype)
 {
   const int nfacetypes = meshtype == GLGPU3D_MESH_TET ? 12 : 3;
 
@@ -999,24 +999,24 @@ void vfgpu_extract_faces(int slot, int *pfcount_, gpu_pf_t **pfbuf_, float pert,
   cudaMemset(d_pfcount, 0, sizeof(unsigned int));
   checkLastCudaError("extract faces [0]");
   if (meshtype == GLGPU3D_MESH_TET)
-    extract_faces_kernel<float, GLGPU3D_MESH_TET><<<gridSize, blockSize, sharedSize>>>(d_h[slot], d_pfcount, d_pfbuf, d_rho[slot], d_phi[slot]);
+    extract_faces_kernel<float, GLGPU3D_MESH_TET><<<gridSize, blockSize, sharedSize>>>(d_h[slot], d_pfcount, d_pflist, d_rho[slot], d_phi[slot]);
   else if (meshtype == GLGPU3D_MESH_HEX)
-    extract_faces_kernel<float, GLGPU3D_MESH_HEX><<<gridSize, blockSize, sharedSize>>>(d_h[slot], d_pfcount, d_pfbuf, d_rho[slot], d_phi[slot]);
+    extract_faces_kernel<float, GLGPU3D_MESH_HEX><<<gridSize, blockSize, sharedSize>>>(d_h[slot], d_pfcount, d_pflist, d_rho[slot], d_phi[slot]);
   checkLastCudaError("extract faces [1]");
  
   cudaMemcpy((void*)&pfcount, d_pfcount, sizeof(unsigned int), cudaMemcpyDeviceToHost);
   printf("pfcount=%d\n", pfcount);
   if (pfcount>0)
-    cudaMemcpy(pfbuf, d_pfbuf, sizeof(gpu_pf_t)*pfcount, cudaMemcpyDeviceToHost);
+    cudaMemcpy(pflist, d_pflist, sizeof(gpu_pf_t)*pfcount, cudaMemcpyDeviceToHost);
   checkLastCudaError("extract faces [2]");
   
   cudaDeviceSynchronize();
 
   *pfcount_ = pfcount;
-  *pfbuf_ = pfbuf;
+  *pflist_ = pflist;
 }
 
-void vfgpu_extract_edges(int *pecount_, gpu_pe_t **pebuf_, int meshtype)
+void vfgpu_extract_edges(int *pecount_, gpu_pe_t **pelist_, int meshtype)
 {
   const int nedgetypes = meshtype == GLGPU3D_MESH_TET ? 7 : 3;
 
@@ -1034,21 +1034,21 @@ void vfgpu_extract_edges(int *pecount_, gpu_pe_t **pebuf_, int meshtype)
   cudaMemset(d_pecount, 0, sizeof(unsigned int));
   checkLastCudaError("extract edges [0]");
   if (meshtype == GLGPU3D_MESH_TET)
-    extract_edges_kernel<float, GLGPU3D_MESH_TET><<<gridSize, blockSize, sharedSize>>>(d_h[0], d_h[1], d_pecount, d_pebuf, d_phi[0], d_phi[1]);
+    extract_edges_kernel<float, GLGPU3D_MESH_TET><<<gridSize, blockSize, sharedSize>>>(d_h[0], d_h[1], d_pecount, d_pelist, d_phi[0], d_phi[1]);
   else if (meshtype == GLGPU3D_MESH_HEX)
-    extract_edges_kernel<float, GLGPU3D_MESH_HEX><<<gridSize, blockSize, sharedSize>>>(d_h[0], d_h[1], d_pecount, d_pebuf, d_phi[0], d_phi[1]);
+    extract_edges_kernel<float, GLGPU3D_MESH_HEX><<<gridSize, blockSize, sharedSize>>>(d_h[0], d_h[1], d_pecount, d_pelist, d_phi[0], d_phi[1]);
   checkLastCudaError("extract edges [1]");
  
   cudaMemcpy((void*)&pecount, d_pecount, sizeof(unsigned int), cudaMemcpyDeviceToHost);
   printf("pecount=%d\n", pecount);
   if (pecount>0)
-    cudaMemcpy(pebuf, d_pebuf, sizeof(gpu_pe_t)*pecount, cudaMemcpyDeviceToHost);
+    cudaMemcpy(pelist, d_pelist, sizeof(gpu_pe_t)*pecount, cudaMemcpyDeviceToHost);
   checkLastCudaError("extract edges [2]");
   
   cudaDeviceSynchronize();
 
   *pecount_ = pecount;
-  *pebuf_ = pebuf;
+  *pelist_ = pelist;
 }
 
 ////////////////////////////////////////// density estimation

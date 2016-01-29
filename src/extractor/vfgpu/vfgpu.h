@@ -35,9 +35,9 @@ void vfgpu_destroy_data();
 
 void vfgpu_rotate_timesteps();
 
-void vfgpu_extract_faces(int slot, int *pfcount, gpu_pf_t **pfbuf, float pert, int meshtype=GLGPU3D_MESH_HEX);
+void vfgpu_extract_faces(int slot, int *pfcount, gpu_pf_t **pflist, float pert, int meshtype=GLGPU3D_MESH_HEX);
 
-void vfgpu_extract_edges(int *pecount_, gpu_pe_t **pebuf_, int meshtype=GLGPU3D_MESH_HEX);
+void vfgpu_extract_edges(int *pecount_, gpu_pe_t **pelist_, int meshtype=GLGPU3D_MESH_HEX);
 
 void vfgpu_density_estimate(int npts, int nlines, const float *pts, const int *acc);
 
