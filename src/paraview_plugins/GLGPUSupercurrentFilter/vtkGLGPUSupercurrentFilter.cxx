@@ -114,7 +114,7 @@ int vtkGLGPUSupercurrentFilter::ComputeSupercurrent(vtkImageData* inputData, vtk
   dataArrayJ->SetNumberOfComponents(3); 
   dataArrayJ->SetNumberOfTuples(arraySize);
   dataArrayJ->SetName("J");
-  memcpy(dataArrayJ->GetVoidPointer(0), J, sizeof(double)*arraySize*3);
+  memcpy(dataArrayJ->GetVoidPointer(0), J, sizeof(float)*arraySize*3);
 
   outputData->SetDimensions(h.dims[0], h.dims[1], h.dims[2]);
   outputData->GetPointData()->AddArray(dataArrayJ);
