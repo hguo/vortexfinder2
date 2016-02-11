@@ -71,8 +71,8 @@ static inline bool find_zero_unit_quad_bilinear(const T re[4], const T im[4], T 
   T trace = Q[0] + Q[3];
   T det = Q[0]*Q[3] - Q[1]*Q[2];
   T lambda[2] = {
-    trace/2 + sqrt(trace*trace/4 - det), 
-    trace/2 - sqrt(trace*trace/4 - det)
+    static_cast<T>(trace/2 + sqrt(trace*trace/4 - det)), 
+    static_cast<T>(trace/2 - sqrt(trace*trace/4 - det))
   }; 
 
   T x[2] = {

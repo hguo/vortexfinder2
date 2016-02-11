@@ -823,18 +823,7 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
   gh.count = count;
   gh.Kx = h.Kex;
 
-  float *re1 = (float*)malloc(sizeof(float)*count), 
-        *im1 = (float*)malloc(sizeof(float)*count);
-
-  for (int i=0; i<count; i++) {
-    re1[i] = re[i];
-    im1[i] = im[i];
-  }
-
-  vfgpu_upload_data(_vfgpu_ctx, slot, gh, re1, im1);
-
-  free(re1);
-  free(im1);
+  vfgpu_upload_data(_vfgpu_ctx, slot, gh, re, im);
  
 #if WITH_CXX11
   typedef std::chrono::high_resolution_clock clock;

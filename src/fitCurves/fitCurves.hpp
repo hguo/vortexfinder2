@@ -34,7 +34,7 @@ inline Vector<ndims> calc_center_tangent(Point<ndims> *pts, int center)
 }
 
 template <int ndims>
-int fit_curves(int npts, Point<ndims> *pts, double error_bound, Point<ndims> *curve, double &sum_error)
+int fit_curves(int npts, Point<ndims> *pts, float error_bound, Point<ndims> *curve, float &sum_error)
 {
 	Vector<ndims> t_hat1 = calc_left_tangent(pts, 0);
 	Vector<ndims> t_hat2 = calc_right_tangent(pts, npts - 1);
@@ -42,7 +42,7 @@ int fit_curves(int npts, Point<ndims> *pts, double error_bound, Point<ndims> *cu
 }
 
 template <int ndims>
-void chord_length_parameterize(Point<ndims> *pts, int first, int last, double *u)
+void chord_length_parameterize(Point<ndims> *pts, int first, int last, float *u)
 {
 	u[0] = 0.;
 	for (int i = first + 1; i <= last; ++i)
@@ -52,7 +52,7 @@ void chord_length_parameterize(Point<ndims> *pts, int first, int last, double *u
 }
 
 template <int ndims>
-Point<ndims> bezier(int deg, Point<ndims> *V, double t)
+Point<ndims> bezier(int deg, Point<ndims> *V, float t)
 {
 	Point<ndims> *Vtemp = (Point<ndims> *)malloc((deg + 1) * sizeof(Point<ndims>));
 	for (int i = 0; i <= deg; ++i) Vtemp[i] = V[i];
@@ -73,15 +73,15 @@ Point<ndims> bezier(int deg, Point<ndims> *V, double t)
 }
 
 template <int ndims>
-double calc_max_error(Point<ndims> *pts, int first, int last, Point<ndims> *curve, double *u, int &split, double &serr)
+float calc_max_error(Point<ndims> *pts, int first, int last, Point<ndims> *curve, float *u, int &split, float &serr)
 {
 	split = (last + first + 1) / 2;
 	serr = 0;
-	double max_dist = 0.;
+	float max_dist = 0.;
 	for (int i = first + 1; i < last; ++i)
 	{
 		Point<ndims> P = bezier(3, curve, u[i - first]);
-		double dist = distance(P, pts[i]);
+		float dist = distance(P, pts[i]);
 		serr += dist * dist;
 		if (dist > max_dist)
 		{
@@ -93,12 +93,12 @@ double calc_max_error(Point<ndims> *pts, int first, int last, Point<ndims> *curv
 }
 
 template <int ndims>
-int fit_cubic(Point<ndims> *pts, int first, int last, Vector<ndims> t_hat1, Vector<ndims> t_hat2, double error_bound, Point<ndims> *curve, double &sum_error)
+int fit_cubic(Point<ndims> *pts, int first, int last, Vector<ndims> t_hat1, Vector<ndims> t_hat2, float error_bound, Point<ndims> *curve, float &sum_error)
 {
 	int npts = last - first + 1;
 	if (npts == 2)
 	{
-		double dist = distance(pts[last], pts[first]) / 3.;
+		float dist = distance(pts[last], pts[first]) / 3.;
 		curve[0] = pts[first];
 		curve[3] = pts[last];
 		curve[1] = curve[0] + t_hat1 * dist;
@@ -107,11 +107,11 @@ int fit_cubic(Point<ndims> *pts, int first, int last, Vector<ndims> t_hat1, Vect
 		return 4;
 	}
 
-	double *u = (double *)malloc(npts * sizeof(double));
+	float *u = (float *)malloc(npts * sizeof(float));
 	chord_length_parameterize(pts, first, last, u);
 	int nctrlpts = gen_bezier(pts, first, last, u, t_hat1, t_hat2, curve);
 	int split;
-	double max_error = calc_max_error(pts, first, last, curve, u, split, sum_error);
+	float max_error = calc_max_error(pts, first, last, curve, u, split, sum_error);
 	if (max_error < error_bound)
 	{
 		free(u);
@@ -123,7 +123,7 @@ int fit_cubic(Point<ndims> *pts, int first, int last, Vector<ndims> t_hat1, Vect
 	{
 		for (int i = 0; i < max_n_iters; ++i)
 		{
-			double *u_prime = (double *)malloc(npts * sizeof(double));
+			float *u_prime = (float *)malloc(npts * sizeof(float));
 			reparameterize(pts, first, last, u, curve, u_prime);
 			nctrlpts = gen_bezier(pts, first, last, u_prime, t_hat1, t_hat2, curve);
 			max_error = calc_max_error(pts, first, last, curve, u_prime, split, sum_error);
@@ -139,7 +139,7 @@ int fit_cubic(Point<ndims> *pts, int first, int last, Vector<ndims> t_hat1, Vect
 	free(u);
 
 	Vector<ndims> t_hat_center = calc_center_tangent(pts, split);
-	double serror1, serror2;
+	float serror1, serror2;
 	int nctrlpts0 = fit_cubic(pts, first, split, t_hat1, t_hat_center, error_bound, curve, serror1);
 	int nctrlpts1 = fit_cubic(pts, split, last, -t_hat_center, t_hat2, error_bound, curve + nctrlpts0, serror2);
 	sum_error = serror1 + serror2;
@@ -150,33 +150,33 @@ int fit_cubic(Point<ndims> *pts, int first, int last, Vector<ndims> t_hat1, Vect
  *  B0, B1, B2, B3 :
  *	Bezier multipliers
  */
-static double B0(double u)
+static float B0(float u)
 {
-    double tmp = 1.0 - u;
+    float tmp = 1.0 - u;
     return (tmp * tmp * tmp);
 }
 
 
-static double B1(double u)
+static float B1(float u)
 {
-    double tmp = 1.0 - u;
+    float tmp = 1.0 - u;
     return (3 * u * (tmp * tmp));
 }
 
-static double B2(double u)
+static float B2(float u)
 {
-    double tmp = 1.0 - u;
+    float tmp = 1.0 - u;
     return (3 * u * u * tmp);
 }
 
-static double B3(double u)
+static float B3(float u)
 {
     return (u * u * u);
 }
 
 
 template <int ndims>
-int gen_bezier(Point<ndims> *pts, int first, int last, double *u_prime, Vector<ndims> t_hat1, Vector<ndims> t_hat2, Point<ndims> *curve)
+int gen_bezier(Point<ndims> *pts, int first, int last, float *u_prime, Vector<ndims> t_hat1, Vector<ndims> t_hat2, Point<ndims> *curve)
 {
 	int npts = last - first + 1;
 
@@ -187,8 +187,8 @@ int gen_bezier(Point<ndims> *pts, int first, int last, double *u_prime, Vector<n
 		A[i][1] = t_hat2 * B2(u_prime[i]);
 	}
 
-	double C[2][2] = {0., 0., 0., 0., };
-	double X[2] = {0., 0., };
+	float C[2][2] = {0., 0., 0., 0., };
+	float X[2] = {0., 0., };
 
 	for (int i = 0; i < npts; ++i)
 	{
@@ -204,24 +204,24 @@ int gen_bezier(Point<ndims> *pts, int first, int last, double *u_prime, Vector<n
 	}
 
 	/* Compute the determinants of C and X	*/
-	double det_C0_C1 = C[0][0] * C[1][1] - C[1][0] * C[0][1];
-	double det_C0_X  = C[0][0] * X[1]    - C[1][0] * X[0];
-	double det_X_C1  = X[0]    * C[1][1] - X[1]    * C[0][1];
+	float det_C0_C1 = C[0][0] * C[1][1] - C[1][0] * C[0][1];
+	float det_C0_X  = C[0][0] * X[1]    - C[1][0] * X[0];
+	float det_X_C1  = X[0]    * C[1][1] - X[1]    * C[0][1];
 
 	/* Finally, derive alpha values	*/
-	double alpha_l = (det_C0_C1 == 0) ? 0.0 : det_X_C1 / det_C0_C1;
-	double alpha_r = (det_C0_C1 == 0) ? 0.0 : det_C0_X / det_C0_C1;
+	float alpha_l = (det_C0_C1 == 0) ? 0.0 : det_X_C1 / det_C0_C1;
+	float alpha_r = (det_C0_C1 == 0) ? 0.0 : det_C0_X / det_C0_C1;
 
 	/* If alpha negative, use the Wu/Barsky heuristic (see text) */
 	/* (if alpha is 0, you get coincident control points that lead to
 	 * divide by zero in any subsequent NewtonRaphsonRootFind() call. */
-	double seg_length = distance(pts[last], pts[first]);
-	double epsilon = 1.e-6 * seg_length;
+	float seg_length = distance(pts[last], pts[first]);
+	float epsilon = 1.e-6 * seg_length;
 
 	if (alpha_l < epsilon || alpha_r < epsilon)
 	{
 		/* fall back on standard (probably inaccurate) formula, and subdivide further if needed. */
-		double dist = seg_length / 3.0;
+		float dist = seg_length / 3.0;
 		curve[0] = pts[first];
 		curve[3] = pts[last];
 		curve[1] = t_hat1 * dist + curve[0];
@@ -241,7 +241,7 @@ int gen_bezier(Point<ndims> *pts, int first, int last, double *u_prime, Vector<n
 }
 
 template <int ndims>
-void reparameterize(Point<ndims> *pts, int first, int last, double *u, Point<ndims> *curve, double *u_prime)
+void reparameterize(Point<ndims> *pts, int first, int last, float *u, Point<ndims> *curve, float *u_prime)
 {
 	int npts = last - first + 1;
 	for (int i = first; i <= last; ++i)
@@ -249,7 +249,7 @@ void reparameterize(Point<ndims> *pts, int first, int last, double *u, Point<ndi
 }
 
 template <int ndims>
-double NewtonRaphsonRootFind(Point<ndims> *Q, Point<ndims> P, double u)
+float NewtonRaphsonRootFind(Point<ndims> *Q, Point<ndims> P, float u)
 {
 	/* Compute Q(u)	*/
 	Point<ndims> Q_u = bezier(3, Q, u);
@@ -267,8 +267,8 @@ double NewtonRaphsonRootFind(Point<ndims> *Q, Point<ndims> P, double u)
 	Point<ndims> Q2_u = bezier(1, Q2, u);
 
 	/* Compute f(u)/f'(u) */
-	double numerator = 0;
-	double denominator = 0;
+	float numerator = 0;
+	float denominator = 0;
 	for (int i = 0; i < ndims; ++i)
 	{
 		numerator += (Q_u[i] - P[i]) * Q1_u[i];
@@ -277,7 +277,7 @@ double NewtonRaphsonRootFind(Point<ndims> *Q, Point<ndims> P, double u)
 	if (denominator == 0.0f) return u;
 
 	/* u = u - f(u)/f'(u) */
-	double u_prime = u - (numerator/denominator);
+	float u_prime = u - (numerator/denominator);
 	return u_prime;
 }
 
