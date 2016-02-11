@@ -789,7 +789,8 @@ void VortexExtractor::RotateTimeSteps()
   _vortex_lines.swap( _vortex_lines1 );
 
 #if WITH_CUDA
-  vfgpu_rotate_timesteps(_vfgpu_ctx);
+  if (_gpu)
+    vfgpu_rotate_timesteps(_vfgpu_ctx);
 #endif
 }
 
@@ -832,7 +833,8 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
 
   int pfcount; 
   gpu_pf_t *pf; 
-  
+ 
+#if 0 // density estimate
   vfgpu_set_pertubation(_vfgpu_ctx, 0.05);
   vfgpu_clear_count_lines_in_cell(_vfgpu_ctx);
   vfgpu_set_enable_count_lines_in_cell(_vfgpu_ctx, true);
@@ -846,6 +848,10 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
   vfgpu_set_enable_count_lines_in_cell(_vfgpu_ctx, false);
   vfgpu_extract_faces(_vfgpu_ctx, slot);
   vfgpu_get_pflist(_vfgpu_ctx, &pfcount, &pf);
+#else
+  vfgpu_extract_faces(_vfgpu_ctx, slot);
+  vfgpu_get_pflist(_vfgpu_ctx, &pfcount, &pf);
+#endif
 
 #if WITH_CXX11
   auto t1 = clock::now();
