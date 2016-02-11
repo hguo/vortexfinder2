@@ -47,10 +47,12 @@ int vtkBDATReader::RequestInformation(
   }
 
   int ext[6] = {0, hdr.dims[0]-1, 0, hdr.dims[1]-1, 0, hdr.dims[2]-1};
+  double cell_lengths[3] = {hdr.cell_lengths[0], hdr.cell_lengths[1], hdr.cell_lengths[2]},
+         origins[3] = {hdr.origins[0], hdr.origins[1], hdr.origins[2]};
 
   outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), ext, 6);
-  outInfo->Set(vtkDataObject::SPACING(), hdr.cell_lengths, 3);
-  outInfo->Set(vtkDataObject::ORIGIN(), hdr.origins, 3);
+  outInfo->Set(vtkDataObject::SPACING(), cell_lengths, 3);
+  outInfo->Set(vtkDataObject::ORIGIN(), origins, 3);
   // vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_FLOAT, 1);
 
   return 1;

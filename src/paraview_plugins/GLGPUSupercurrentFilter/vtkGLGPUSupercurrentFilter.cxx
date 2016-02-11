@@ -67,22 +67,28 @@ int vtkGLGPUSupercurrentFilter::ComputeSupercurrent(vtkImageData* inputData, vtk
   dataArrayJxext = inputData->GetFieldData()->GetArray("Jxext", index);
   dataArrayKx = inputData->GetFieldData()->GetArray("Kx", index);
   dataArrayV = inputData->GetFieldData()->GetArray("V", index);
-
+  
   GLHeader h;
+  double origins[3], cell_lengths[3];
+
   h.ndims = 3;
   inputData->GetDimensions(h.dims);
-  inputData->GetOrigin(h.origins);
-  inputData->GetSpacing(h.cell_lengths);
-  for (int i=0; i<3; i++) 
+  inputData->GetOrigin(origins);
+  inputData->GetSpacing(cell_lengths);
+  for (int i=0; i<3; i++) {
+    h.origins[i] = origins[i];
+    h.cell_lengths[i] = cell_lengths[i];
     h.lengths[i] = h.cell_lengths[i] * h.dims[i];
+  }
 
-  dataArrayB->GetTuple(0, h.B);
-  
-  double pbc1[3];
+  double B[3], pbc1[3];
+  dataArrayB->GetTuple(0, B);
   dataArrayPBC->GetTuple(0, pbc1);
-  for (int i=0; i<3; i++)
+  for (int i=0; i<3; i++) {
     // h.pbc[i] = (pbc1[i]>0);
     h.pbc[i] = 0; 
+    h.B[i] = B[i];
+  }
 
   h.Jxext = dataArrayJxext->GetTuple1(0);
   h.Kex = dataArrayKx->GetTuple1(0);
@@ -92,19 +98,19 @@ int vtkGLGPUSupercurrentFilter::ComputeSupercurrent(vtkImageData* inputData, vtk
   //     h.B[0], h.B[1], h.B[2], h.pbc[0], h.pbc[1], h.pbc[2], h.Jxext, h.Kex, h.V);
 
   const int arraySize = h.dims[0]*h.dims[1]*h.dims[2];
-  double *rho = (double*)dataArrayRho->GetVoidPointer(0), 
-         *phi = (double*)dataArrayPhi->GetVoidPointer(0), 
-         *re = (double*)dataArrayRe->GetVoidPointer(0), 
-         *im = (double*)dataArrayIm->GetVoidPointer(0);
+  float *rho = (float*)dataArrayRho->GetVoidPointer(0), 
+        *phi = (float*)dataArrayPhi->GetVoidPointer(0), 
+        *re = (float*)dataArrayRe->GetVoidPointer(0), 
+        *im = (float*)dataArrayIm->GetVoidPointer(0);
 
   // build data
   GLGPU3DDataset *ds = new GLGPU3DDataset;
   ds->BuildDataFromArray(h, rho, phi, re, im);
   ds->ComputeSupercurrentField();
-  const double *J = ds->GetSupercurrentDataArray();
+  const float *J = ds->GetSupercurrentDataArray();
 
   vtkSmartPointer<vtkDataArray> dataArrayJ; 
-  dataArrayJ.TakeReference(vtkDataArray::CreateDataArray(VTK_DOUBLE));
+  dataArrayJ.TakeReference(vtkDataArray::CreateDataArray(VTK_FLOAT));
   dataArrayJ->SetNumberOfComponents(3); 
   dataArrayJ->SetNumberOfTuples(arraySize);
   dataArrayJ->SetName("J");

@@ -84,20 +84,26 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   // fprintf(stderr, "dataType=%d\n", dataArrayRho->GetDataType());
 
   GLHeader h;
+  double origins[3], cell_lengths[3];
+
   h.ndims = 3;
   imageData->GetDimensions(h.dims);
-  imageData->GetOrigin(h.origins);
-  imageData->GetSpacing(h.cell_lengths);
-  for (int i=0; i<3; i++) 
+  imageData->GetOrigin(origins);
+  imageData->GetSpacing(cell_lengths);
+  for (int i=0; i<3; i++) {
+    h.origins[i] = origins[i];
+    h.cell_lengths[i] = cell_lengths[i];
     h.lengths[i] = h.cell_lengths[i] * h.dims[i];
+  }
 
-  dataArrayB->GetTuple(0, h.B);
-  
-  double pbc1[3];
+  double B[3], pbc1[3];
+  dataArrayB->GetTuple(0, B);
   dataArrayPBC->GetTuple(0, pbc1);
-  for (int i=0; i<3; i++)
+  for (int i=0; i<3; i++) {
     // h.pbc[i] = (pbc1[i]>0);
     h.pbc[i] = 0; 
+    h.B[i] = B[i];
+  }
 
   h.Jxext = dataArrayJxext->GetTuple1(0);
   h.Kex = dataArrayKx->GetTuple1(0);
@@ -107,10 +113,10 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   //     h.B[0], h.B[1], h.B[2], h.pbc[0], h.pbc[1], h.pbc[2], h.Jxext, h.Kex, h.V);
 
   const int count = h.dims[0]*h.dims[1]*h.dims[2];
-  double *rho = (double*)dataArrayRho->GetVoidPointer(0), 
-         *phi = (double*)dataArrayPhi->GetVoidPointer(0), 
-         *re = (double*)dataArrayRe->GetVoidPointer(0), 
-         *im = (double*)dataArrayIm->GetVoidPointer(0);
+  float *rho = (float*)dataArrayRho->GetVoidPointer(0), 
+        *phi = (float*)dataArrayPhi->GetVoidPointer(0), 
+        *re = (float*)dataArrayRe->GetVoidPointer(0), 
+        *im = (float*)dataArrayIm->GetVoidPointer(0);
 
   // build data
   GLGPU3DDataset *ds = new GLGPU3DDataset;

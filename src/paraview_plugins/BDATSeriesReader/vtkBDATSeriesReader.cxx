@@ -87,10 +87,12 @@ int vtkBDATSeriesReader::RequestInformation(
  
     if (fidx == 0) {
       int ext[6] = {0, h.dims[0]-1, 0, h.dims[1]-1, 0, h.dims[2]-1};
+      double cell_lengths[3] = {h.cell_lengths[0], h.cell_lengths[1], h.cell_lengths[2]},
+             origins[3] = {h.origins[0], h.origins[1], h.origins[2]};
 
       outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), ext, 6);
-      outInfo->Set(vtkDataObject::SPACING(), h.cell_lengths, 3);
-      outInfo->Set(vtkDataObject::ORIGIN(), h.origins, 3);
+      outInfo->Set(vtkDataObject::SPACING(), cell_lengths, 3);
+      outInfo->Set(vtkDataObject::ORIGIN(), origins, 3);
       // vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_FLOAT, 1);
     }
   }

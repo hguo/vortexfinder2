@@ -28,8 +28,8 @@ public:
 
 private:
   std::vector<std::string> FileNames;
-  std::vector<float> TimeSteps;
-  std::map<float, int> TimeStepsMap;
+  std::vector<double> TimeSteps;
+  std::map<double, int> TimeStepsMap;
   vtkIdType FileIndex;
 
 protected:
