@@ -12,9 +12,9 @@ FieldLine::FieldLine()
 {
 }
   
-FieldLine::FieldLine(const std::list<double>& l)
+FieldLine::FieldLine(const std::list<float>& l)
 {
-  for (std::list<double>::const_iterator it = l.begin(); it != l.end(); it++)
+  for (std::list<float>::const_iterator it = l.begin(); it != l.end(); it++)
     push_back(*it);
 }
 

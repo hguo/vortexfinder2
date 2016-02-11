@@ -8,21 +8,21 @@ message PBDataInfo {
   optional string name = 2; 
 
   // Origin
-  optional double Ox = 60;
-  optional double Oy = 61; 
-  optional double Oz = 62; 
+  optional float Ox = 60;
+  optional float Oy = 61; 
+  optional float Oz = 62; 
 
-  optional double Lx = 10; 
-  optional double Ly = 11; 
-  optional double Lz = 12; 
+  optional float Lx = 10; 
+  optional float Ly = 11; 
+  optional float Lz = 12; 
 
   // Magnetic field
-  required double Bx = 21; 
-  required double By = 22; 
-  required double Bz = 23;
+  required float Bx = 21; 
+  required float By = 22; 
+  required float Bz = 23;
 
   // Kex
-  required double Kex = 30;
+  required float Kex = 30;
 
   // Dimensions (rectilinear grid only)
   optional int32 Dx = 40;

@@ -182,7 +182,7 @@ static inline bool find_zero_quad_bilinear(const T re[4], const T im[4], const T
   bool succ = find_zero_unit_quad_bilinear(re, im, p, epsilon); 
   if (!succ) return false;
 
-  double u[3], v[3]; 
+  T u[3], v[3]; 
 
   u[0] = (1-p[0])*X[0][0] + p[0]*X[1][0];
   u[1] = (1-p[0])*X[0][1] + p[0]*X[1][1];

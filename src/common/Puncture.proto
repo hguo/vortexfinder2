@@ -1,7 +1,7 @@
 message PBPuncturedEdge {
   required uint32 id = 1;
   required sint32 chirality = 2;
-  optional double t = 3;
+  optional float t = 3;
 };
 
 message PBPuncturedEdges {
@@ -12,9 +12,9 @@ message PBPuncturedEdges {
 message PBPuncturedFace {
   required uint32 id = 1;
   required sint32 chirality = 2;
-  optional double x = 3;
-  optional double y = 4;
-  optional double z = 5;
+  optional float x = 3;
+  optional float y = 4;
+  optional float z = 5;
 };
 
 message PBPuncturedFaces {

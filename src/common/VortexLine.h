@@ -12,25 +12,25 @@
  * \author  Hanqi Guo
  * \brief   Vortex objects
 */
-struct VortexLine : public std::vector<double>
+struct VortexLine : public std::vector<float>
 {
   VortexLine();
   ~VortexLine(); 
 
   void ToBezier();
-  void ToRegular(const double d=0.1);
+  void ToRegular(const float d=0.1);
 
-  void Flattern(const double O[3], const double L[3]);
-  void Unflattern(const double O[3], const double L[3]);
+  void Flattern(const float O[3], const float L[3]);
+  void Unflattern(const float O[3], const float L[3]);
 
-  void BoundingBox(double LB[3], double UB[3]) const;
-  double MaxExtent() const;
+  void BoundingBox(float LB[3], float UB[3]) const;
+  float MaxExtent() const;
 
-  friend double MinimumDist(const VortexLine& l0, const VortexLine& l1);
+  friend float MinimumDist(const VortexLine& l0, const VortexLine& l1);
 
   int id, gid;
   int timestep;
-  double time;
+  float time;
   bool is_bezier;
   bool is_loop;
 

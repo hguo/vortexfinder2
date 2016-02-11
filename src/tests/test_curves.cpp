@@ -15,8 +15,8 @@ int main(int argc, char **argv)
 
   Point<3> *curve = (Point<3>*)malloc(num*4*sizeof(Point<3>));
 
-  const double error_bound = 0.1;
-  double sum_error;
+  const float error_bound = 0.1;
+  float sum_error;
   size_t np = fit_curves(num, pts, error_bound, curve, sum_error);
 
   // fprintf(stderr, "np=%d\n", np);

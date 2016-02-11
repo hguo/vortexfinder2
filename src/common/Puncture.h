@@ -8,13 +8,13 @@
 struct PuncturedFace
 {
   ChiralityType chirality;
-  double pos[3];
+  float pos[3];
 };
 
 struct PuncturedEdge
 {
   ChiralityType chirality; 
-  double t; // punctured time
+  float t; // punctured time
 };
 
 struct PuncturedCell

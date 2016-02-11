@@ -45,7 +45,7 @@ std::vector<FaceIdType> GLGPU3DDataset::GetBoundaryFaceIds(int type) const
 }
 
 #if 0
-double GLGPU3DDataset::Flux(int face) const
+float GLGPU3DDataset::Flux(int face) const
 {
   // TODO: pre-compute the flux
   switch (face) {
@@ -60,13 +60,13 @@ double GLGPU3DDataset::Flux(int face) const
   return 0.0;
 }
 
-double GLGPU3DDataset::GaugeTransformation(const double X0[], const double X1[]) const
+float GLGPU3DDataset::GaugeTransformation(const float X0[], const float X1[]) const
 {
-  double gx, gy, gz; 
-  double dx = X1[0] - X0[0], 
+  float gx, gy, gz; 
+  float dx = X1[0] - X0[0], 
          dy = X1[1] - X0[1], 
          dz = X1[2] - X0[2]; 
-  double x = X0[0] + 0.5*dx, 
+  float x = X0[0] + 0.5*dx, 
          y = X0[1] + 0.5*dy, 
          z = X0[2] + 0.5*dz;
 
@@ -123,20 +123,20 @@ void GLGPU3DDataset::ComputeSupercurrentField(int slot)
   const int nvoxels = dims()[0]*dims()[1]*dims()[2];
 
   if (_J[slot] != NULL) free(_J[slot]);
-  _J[slot] = (double*)malloc(3*sizeof(double)*nvoxels);
+  _J[slot] = (float*)malloc(3*sizeof(float)*nvoxels);
 
-  double *J = _J[slot];
-  memset(J, 0, 3*sizeof(double)*nvoxels);
+  float *J = _J[slot];
+  memset(J, 0, 3*sizeof(float)*nvoxels);
  
-  double u, v, rho2;
-  double du[3], dv[3], A[3], j[3];
+  float u, v, rho2;
+  float du[3], dv[3], A[3], j[3];
 
   // central difference
   for (int x=1; x<dims()[0]-1; x++) {
     for (int y=1; y<dims()[1]-1; y++) {
       for (int z=1; z<dims()[2]-1; z++) {
         int idx[3] = {x, y, z}; 
-        double pos[3]; 
+        float pos[3]; 
         Idx2Pos(idx, pos);
 
         du[0] = 0.5 * (Re(x+1, y, z, slot) - Re(x-1, y, z, slot)) / dx();
@@ -163,18 +163,18 @@ void GLGPU3DDataset::ComputeSupercurrentField(int slot)
   }
 }
 
-bool GLGPU3DDataset::Psi(const double X[3], double &re, double &im) const
+bool GLGPU3DDataset::Psi(const float X[3], float &re, float &im) const
 {
   // TODO
   return false;
 }
 
 #if 0
-bool GLGPU3DDataset::Supercurrent(const double X[3], double J[3]) const
+bool GLGPU3DDataset::Supercurrent(const float X[3], float J[3]) const
 {
   static const int st[3] = {0};
-  double gpt[3];
-  const double *j[3] = {_Jx, _Jy, _Jz};
+  float gpt[3];
+  const float *j[3] = {_Jx, _Jy, _Jz};
   
   Pos2Grid(X, gpt);
   if (isnan(gpt[0]) || gpt[0]<=1 || gpt[0]>dims()[0]-2 || 
@@ -187,7 +187,7 @@ bool GLGPU3DDataset::Supercurrent(const double X[3], double J[3]) const
 }
 #endif
 
-CellIdType GLGPU3DDataset::Pos2CellId(const double X[]) const
+CellIdType GLGPU3DDataset::Pos2CellId(const float X[]) const
 {
   // TODO
   return false;

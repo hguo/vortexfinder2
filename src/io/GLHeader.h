@@ -10,12 +10,12 @@ typedef struct {
   int ndims; 
   int dims[3];
   bool pbc[3];
-  double zaniso;
-  double lengths[3], origins[3], cell_lengths[3];
-  double time;
-  double B[3];
-  double Jxext, Kex, Kex_dot, V;
-  double fluctuation_amp;
+  float zaniso;
+  float lengths[3], origins[3], cell_lengths[3];
+  float time;
+  float B[3];
+  float Jxext, Kex, Kex_dot, V;
+  float fluctuation_amp;
   int dtype;
 } GLHeader;
 

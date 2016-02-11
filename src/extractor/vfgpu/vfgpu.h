@@ -31,7 +31,8 @@ ctx_vfgpu_t* vfgpu_create_ctx();
 void vfgpu_destroy_ctx(ctx_vfgpu_t*);
 
 void vfgpu_set_meshtype(ctx_vfgpu_t*, int);
-void vfgpu_set_enable_density_estimate(ctx_vfgpu_t*, bool);
+void vfgpu_set_enable_count_lines_in_cell(ctx_vfgpu_t*, bool);
+void vfgpu_set_pertubation(ctx_vfgpu_t*, float);
 
 void vfgpu_upload_data(
     ctx_vfgpu_t*, 
@@ -49,5 +50,11 @@ void vfgpu_extract_edges(ctx_vfgpu_t*);
 void vfgpu_get_pflist(ctx_vfgpu_t*, int *n, gpu_pf_t **pflist);
 
 void vfgpu_get_pelist(ctx_vfgpu_t*, int *n, gpu_pe_t **pelist);
+
+void vfgpu_clear_count_lines_in_cell(ctx_vfgpu_t* c);
+
+void vfgpu_count_lines_in_cell(ctx_vfgpu_t* c, int slot);
+
+void vfgpu_dump_count_lines_in_cell(ctx_vfgpu_t* c);
 
 #endif

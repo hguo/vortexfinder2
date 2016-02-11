@@ -25,8 +25,8 @@ void VortexLine::ToBezier()
 {
   using namespace FitCurves;
   typedef Point<3> Pt;
-  const double error_bound = 0.001;
-  double tot_error;
+  const float error_bound = 0.001;
+  float tot_error;
 
   if (is_bezier) return;
 
@@ -55,7 +55,7 @@ void VortexLine::ToBezier()
   is_bezier = true;
 }
 
-void VortexLine::ToRegular(const double stepsize)
+void VortexLine::ToRegular(const float stepsize)
 {
   using namespace FitCurves;
   typedef Point<3> Pt;
@@ -74,8 +74,8 @@ void VortexLine::ToRegular(const double stepsize)
   clear();
   
   for (int i=0; i<npts; i+=4) {
-    const double tl = i<npts-5 ? 0.9999 : 1;
-    for (double t=0; t<tl; t+=stepsize) {
+    const float tl = i<npts-5 ? 0.9999 : 1;
+    for (float t=0; t<tl; t+=stepsize) {
       Pt p = bezier(3, pts+i, t);
       push_back(p[0]);
       push_back(p[1]);
@@ -85,13 +85,13 @@ void VortexLine::ToRegular(const double stepsize)
   }
 }
 
-void VortexLine::Flattern(const double O[3], const double L[3])
+void VortexLine::Flattern(const float O[3], const float L[3])
 {
   int cross[3] = {0};
   const int n = size()/3;
 
-  double p0[3], p[3];
-  std::vector<double> line;
+  float p0[3], p[3];
+  std::vector<float> line;
 
   for (int i=0; i<n; i++) {
     for (int j=0; j<3; j++) 
@@ -119,11 +119,11 @@ void VortexLine::Flattern(const double O[3], const double L[3])
   swap(line);
 }
 
-void VortexLine::Unflattern(const double O[3], const double L[3])
+void VortexLine::Unflattern(const float O[3], const float L[3])
 {
   const int n = size()/3;
-  double p[3];
-  std::vector<double> line;
+  float p[3];
+  std::vector<float> line;
 
   for (int i=0; i<n; i++) {
     for (int j=0; j<3; j++) {
@@ -216,22 +216,22 @@ bool LoadVortexLines(std::vector<VortexLine>& lines, std::string& info, const st
   return UnserializeVortexLines(lines, info, buf);
 }
 
-double MinimumDist(const VortexLine& l0, const VortexLine& l1)
+float MinimumDist(const VortexLine& l0, const VortexLine& l1)
 {
-  double minDist = DBL_MAX;
+  float minDist = DBL_MAX;
   const int n0 = l0.size()/3, n1 = l1.size()/3;
 
   for (int i=0; i<n0; i++) 
     for (int j=0; j<n1; j++) {
-      const double d[3] = {l0[i*3] - l1[j*3], l0[i*3+1] - l1[j*3+1], l0[i*3+2] - l1[j*3+2]};
-      const double dist = sqrt(d[0]*d[0] + d[1]*d[1] + d[2]*d[2]);
+      const float d[3] = {l0[i*3] - l1[j*3], l0[i*3+1] - l1[j*3+1], l0[i*3+2] - l1[j*3+2]};
+      const float dist = sqrt(d[0]*d[0] + d[1]*d[1] + d[2]*d[2]);
       minDist = std::min(minDist, dist);
     }
 
   return minDist;
 }
 
-void VortexLine::BoundingBox(double LB[3], double UB[3]) const
+void VortexLine::BoundingBox(float LB[3], float UB[3]) const
 {
   LB[0] = LB[1] = LB[2] = FLT_MAX;
   UB[0] = UB[1] = UB[2] = -FLT_MAX;
@@ -247,11 +247,11 @@ void VortexLine::BoundingBox(double LB[3], double UB[3]) const
   }
 }
 
-double VortexLine::MaxExtent() const
+float VortexLine::MaxExtent() const
 {
-  double LB[3], UB[3];
+  float LB[3], UB[3];
   BoundingBox(LB, UB);
 
-  double D[3] = {UB[0] - LB[0], UB[1] - LB[1], UB[2] - LB[2]};
+  float D[3] = {UB[0] - LB[0], UB[1] - LB[1], UB[2] - LB[2]};
   return std::max(std::max(D[0], D[1]), D[2]);
 }

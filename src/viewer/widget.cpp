@@ -105,9 +105,9 @@ void CGLWidget::LoadTimeStep(int t)
 
 void CGLWidget::LoadVortexLines2D()
 {
-  QMap<int, QVector<double> > lines;
+  QMap<int, QVector<float> > lines;
   QMap<int, QColor> colors;
-  const double delta = 0.1;
+  const float delta = 0.1;
 
   for (int t=_ts; t<_ts+_tl; t++) {
     std::stringstream ss;
@@ -133,12 +133,12 @@ void CGLWidget::LoadVortexLines2D()
     }
   }
   
-  const double O[2] = {_data_info.ox(), _data_info.oy()},
+  const float O[2] = {_data_info.ox(), _data_info.oy()},
                L[2] = {_data_info.lx(), _data_info.ly()};
   int vertCount = 0;
 
   foreach (int gid, lines.keys()) {
-    const QVector<double>& line = lines[gid];
+    const QVector<float>& line = lines[gid];
     QColor c = colors[gid];
     QVector3D p0;
     for (int i=0; i<line.size()/3; i++) {
@@ -818,7 +818,7 @@ void CGLWidget::LoadVortexLines()
   
   fprintf(stderr, "Loaded vortex line file from %s\n", filename.c_str());
 
-  const double O[3] = {_data_info.ox(), _data_info.oy(), _data_info.oz()},
+  const float O[3] = {_data_info.ox(), _data_info.oy(), _data_info.oz()},
                L[3] = {_data_info.lx(), _data_info.ly(), _data_info.lz()};
 
   int vertCount = 0; 
@@ -884,7 +884,7 @@ void CGLWidget::LoadVortexLines()
       // vl.Unflattern(O, L);
     }
     
-    std::vector<double>::iterator it = vortex_liness[k].begin();
+    std::vector<float>::iterator it = vortex_liness[k].begin();
     unsigned char c[3] = {vortex_liness[k].r, vortex_liness[k].g, vortex_liness[k].b};
     QVector3D p0;
     for (int i=0; i<vortex_liness[k].size()/3; i++) {
@@ -1063,12 +1063,12 @@ void CGLWidget::updateVortexTubes(int nPatches, float radius)
 void CGLWidget::extractIsosurfaces()
 {
 #ifdef WITH_VTK
-  const double isovalue = 0.2, 
+  const float isovalue = 0.2, 
                isovalue1 = 0.6;
-  const double *re = _ds->GetDataPointerRe(), 
+  const float *re = _ds->GetDataPointerRe(), 
                *im = _ds->GetDataPointerIm();
   const int count = _ds->dims()[0] * _ds->dims()[1] * _ds->dims()[2];
-  double *rho = (double*)malloc(sizeof(double)*count);
+  float *rho = (float*)malloc(sizeof(float)*count);
 
   for (int i=0; i<count; i++)
     rho[i] = sqrt(re[i]*re[i] + im[i]*im[i]);

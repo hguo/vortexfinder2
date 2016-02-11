@@ -30,7 +30,7 @@ public:
 
   void SetGaugeTransformation(bool);
   void SetArchive(bool); // archive intermediate results for data reuse
-  void SetExtentThreshold(double);
+  void SetExtentThreshold(float);
   void SetGPU(bool);
   void SetPertubation(float);
   
@@ -74,11 +74,11 @@ protected:
   void ResetGlobalVortexId();
 
 protected:
-  void AddPuncturedFace(FaceIdType, int slot, ChiralityType chirality, const double pos[3]);
-  void AddPuncturedEdge(EdgeIdType, ChiralityType chirality, double t);
+  void AddPuncturedFace(FaceIdType, int slot, ChiralityType chirality, const float pos[3]);
+  void AddPuncturedEdge(EdgeIdType, ChiralityType chirality, float t);
 
-  bool FindFaceZero(int n, const double X[][3], const double re[], const double im[], double pos[3]) const;
-  bool FindSpaceTimeEdgeZero(const double re[], const double im[], double &t) const;
+  bool FindFaceZero(int n, const float X[][3], const float re[], const float im[], float pos[3]) const;
+  bool FindSpaceTimeEdgeZero(const float re[], const float im[], float &t) const;
 
 protected:
   std::map<FaceIdType, PuncturedFace> _punctured_faces, _punctured_faces1; 
@@ -99,7 +99,7 @@ protected:
   bool _gpu;
   unsigned int _interpolation_mode;
   float _pertubation; // used for stochastic analysis
-  double _extent_threshold;
+  float _extent_threshold;
 
   struct ctx_vfgpu_t *_vfgpu_ctx;
 

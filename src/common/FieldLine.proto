@@ -1,5 +1,4 @@
 // super-current lines (streamlines)
 message PBFieldLine {
-  // Q: is it necessary to use double prec? maybe float is enough? 
-  repeated double vertices = 1 [ packed = true ];
+  repeated float vertices = 1 [ packed = true ];
 };

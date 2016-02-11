@@ -147,7 +147,7 @@ void Condor2Dataset::BuildMeshGraph()
 
 void Condor2Dataset::ProbeBoundingBox()
 {
-  double L[3] = {DBL_MAX, DBL_MAX, DBL_MAX}, 
+  float L[3] = {DBL_MAX, DBL_MAX, DBL_MAX}, 
          U[3] = {-DBL_MAX, -DBL_MAX, -DBL_MAX};
 
   MeshBase::const_node_iterator it = mesh()->local_nodes_begin(); 
@@ -224,7 +224,7 @@ std::vector<ElemIdType> Condor2Dataset::GetNeighborIds(ElemIdType elem_id) const
 }
 #endif
 
-CellIdType Condor2Dataset::Pos2CellId(const double X[]) const
+CellIdType Condor2Dataset::Pos2CellId(const float X[]) const
 {
   Point p(X[0], X[1], X[2]);
   
@@ -233,7 +233,7 @@ CellIdType Condor2Dataset::Pos2CellId(const double X[]) const
   else return e->id();
 }
 
-bool Condor2Dataset::A(const double X[3], double A[3], int slot) const
+bool Condor2Dataset::A(const float X[3], float A[3], int slot) const
 {
   Point p(X[0], X[1], X[2]);
 
@@ -247,20 +247,20 @@ bool Condor2Dataset::A(const double X[3], double A[3], int slot) const
   return true;
 }
 
-bool Condor2Dataset::A(NodeIdType, double A[3], int slot) const
+bool Condor2Dataset::A(NodeIdType, float A[3], int slot) const
 {
   // TODO
   return false;
 }
 
-bool Condor2Dataset::Pos(NodeIdType, double X[3]) const
+bool Condor2Dataset::Pos(NodeIdType, float X[3]) const
 {
   // TODO
   return false;
 }
 
 #if 0
-bool Condor2Dataset::Psi(const double X[3], double &re, double &im, int slot) const
+bool Condor2Dataset::Psi(const float X[3], float &re, float &im, int slot) const
 {
   if (X[0] < Origins()[0] || X[0] > Origins()[0] + Lengths()[0] ||
       X[1] < Origins()[1] || X[1] > Origins()[1] + Lengths()[1] || 
@@ -278,13 +278,13 @@ bool Condor2Dataset::Psi(const double X[3], double &re, double &im, int slot) co
 }
 #endif
 
-bool Condor2Dataset::Supercurrent(NodeIdType, double J[3], int slot) const
+bool Condor2Dataset::Supercurrent(NodeIdType, float J[3], int slot) const
 {
   // TODO
   return false;
 }
 
-bool Condor2Dataset::Supercurrent(const double X[3], double J[3], int slot) const
+bool Condor2Dataset::Supercurrent(const float X[3], float J[3], int slot) const
 {
   return false;
 #if 0
@@ -298,7 +298,7 @@ bool Condor2Dataset::Supercurrent(const double X[3], double J[3], int slot) cons
   A(1) = asys()->point_value(_Ay_var, p, e);
   A(2) = asys()->point_value(_Az_var, p, e);
 
-  double rho, phi;
+  float rho, phi;
   Gradient du, dv;
 
   rho = tsys()->point_value(_u_var, p, e);
@@ -306,7 +306,7 @@ bool Condor2Dataset::Supercurrent(const double X[3], double J[3], int slot) cons
   du = tsys()->point_gradient(_u_var, p, e);
   dv = tsys()->point_gradient(_v_var, p, e);
 
-  double amp = sqrt(u*u + v*v);
+  float amp = sqrt(u*u + v*v);
 
   NumberVectorValue Js = (u*dv - v*du)/amp - A;
 
@@ -318,7 +318,7 @@ bool Condor2Dataset::Supercurrent(const double X[3], double J[3], int slot) cons
 #endif
 }
  
-const Elem* Condor2Dataset::LocateElemCoherently(const double X[3]) const
+const Elem* Condor2Dataset::LocateElemCoherently(const float X[3]) const
 {
   static const Elem* e_last = NULL;
   
@@ -359,7 +359,7 @@ bool Condor2Dataset::OnBoundary(ElemIdType id) const
 }
 
 #if 0
-bool Condor2Dataset::GetFaceValues(const Face *f, double X[][3], double A[][3], double re[], double im[]) const
+bool Condor2Dataset::GetFaceValues(const Face *f, float X[][3], float A[][3], float re[], float im[]) const
 {
   const NumericVector<Number> &ts = *_ts;
   const NumericVector<Number> &as = *_as;
@@ -380,8 +380,8 @@ bool Condor2Dataset::GetFaceValues(const Face *f, double X[][3], double A[][3], 
   return true;
 }
 
-bool Condor2Dataset::GetFacePrismValues(const Face* f, double X[][3],
-    double A[6][3], double re[6], double im[6]) const
+bool Condor2Dataset::GetFacePrismValues(const Face* f, float X[][3],
+    float A[6][3], float re[6], float im[6]) const
 {
   const NumericVector<Number> &ts = *_ts;
   const NumericVector<Number> &ts1 = *_ts1;
@@ -410,7 +410,7 @@ bool Condor2Dataset::GetFacePrismValues(const Face* f, double X[][3],
   return true;
 }
  
-bool Condor2Dataset::GetSpaceTimeEdgeValues(const Edge* e, double X[][3], double A[][3], double re[], double im[]) const
+bool Condor2Dataset::GetSpaceTimeEdgeValues(const Edge* e, float X[][3], float A[][3], float re[], float im[]) const
 {
   const NumericVector<Number> &ts = *_ts;
   const NumericVector<Number> &ts1 = *_ts1;
@@ -455,7 +455,7 @@ bool Condor2Dataset::GetSpaceTimeEdgeValues(const Edge* e, double X[][3], double
 }
 #endif
 
-void Condor2Dataset::GetFaceValues(const CFace& f, int time, double X[][3], double A[][3], double rho[], double phi[]) const
+void Condor2Dataset::GetFaceValues(const CFace& f, int time, float X[][3], float A[][3], float rho[], float phi[]) const
 {
   const NumericVector<Number> &ts = time == 0 ? *_ts : *_ts1;
   const NumericVector<Number> &as = time == 0 ? *_as : *_as1;
@@ -479,7 +479,7 @@ void Condor2Dataset::GetFaceValues(const CFace& f, int time, double X[][3], doub
   }
 }
 
-void Condor2Dataset::GetSpaceTimeEdgeValues(const CEdge& e, double X[][3], double A[][3], double rho[], double phi[]) const
+void Condor2Dataset::GetSpaceTimeEdgeValues(const CEdge& e, float X[][3], float A[][3], float rho[], float phi[]) const
 {
   const NumericVector<Number> &ts = *_ts;
   const NumericVector<Number> &ts1 = *_ts1;
@@ -521,13 +521,13 @@ void Condor2Dataset::GetSpaceTimeEdgeValues(const CEdge& e, double X[][3], doubl
   phi[3] = ts1( node0.dof_number(tsys()->number(), _phi_var, 0) );
 }
 
-double Condor2Dataset::Rho(NodeIdType, int) const
+float Condor2Dataset::Rho(NodeIdType, int) const
 {
   // TODO
   assert(false);
 }
 
-double Condor2Dataset::Phi(NodeIdType, int) const
+float Condor2Dataset::Phi(NodeIdType, int) const
 {
   // TODO
   assert(false);

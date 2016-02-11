@@ -37,10 +37,10 @@ void GLDataset::CloseDataFile()
   // no impl
 }
 
-double GLDataset::LineIntegral(const double X0[], const double X1[], const double A0[], const double A1[]) const
+float GLDataset::LineIntegral(const float X0[], const float X1[], const float A0[], const float A1[]) const
 {
-  double dX[3] = {X1[0] - X0[0], X1[1] - X0[1], X1[2] - X0[2]};
-  double A[3] = {A0[0]+A1[0], A0[1]+A1[1], A0[2]+A1[2]};
+  float dX[3] = {X1[0] - X0[0], X1[1] - X0[1], X1[2] - X0[2]};
+  float A[3] = {A0[0]+A1[0], A0[1]+A1[1], A0[2]+A1[2]};
 
   for (int i=0; i<3; i++)
     if (dX[i] > Lengths()[i]/2) dX[i] -= Lengths()[i];
@@ -49,15 +49,15 @@ double GLDataset::LineIntegral(const double X0[], const double X1[], const doubl
   return 0.5 * inner_product(A, dX);
 }
 
-double GLDataset::QP(const double X0[], const double X1[], int slot) const
+float GLDataset::QP(const float X0[], const float X1[], int slot) const
 {
   return 0.0;
 }
 
 #if 0
-bool GLDataset::Rho(const double X[3], double &rho, int slot) const
+bool GLDataset::Rho(const float X[3], float &rho, int slot) const
 {
-  double re, im;
+  float re, im;
   bool succ = Psi(X, re, im, slot); 
   if (!succ) return false; 
   else {
@@ -66,9 +66,9 @@ bool GLDataset::Rho(const double X[3], double &rho, int slot) const
   }
 }
 
-bool GLDataset::Phi(const double X[3], double &phi, int slot) const
+bool GLDataset::Phi(const float X[3], float &phi, int slot) const
 {
-  double re, im;
+  float re, im;
   bool succ = Psi(X, re, im, slot); 
   if (!succ) return false; 
   else {
@@ -78,9 +78,9 @@ bool GLDataset::Phi(const double X[3], double &phi, int slot) const
 }
 #endif
 
-static void AverageA(int n, double A[][3])
+static void AverageA(int n, float A[][3])
 {
-  double AA[3] = {0};
+  float AA[3] = {0};
   for (int i=0; i<3; i++) {
     for (int j=0; j<n; j++) 
       AA[i] += A[j][i];
@@ -88,7 +88,7 @@ static void AverageA(int n, double A[][3])
   }
 }
 
-void GLDataset::GetFaceValues(const CFace& f, int slot, double X[][3], double A_[][3], double rho[], double phi[], double re[], double im[]) const
+void GLDataset::GetFaceValues(const CFace& f, int slot, float X[][3], float A_[][3], float rho[], float phi[], float re[], float im[]) const
 {
   for (int i=0; i<f.nodes.size(); i++) {
     Pos(f.nodes[i], X[i]);
@@ -100,7 +100,7 @@ void GLDataset::GetFaceValues(const CFace& f, int slot, double X[][3], double A_
   AverageA(f.nodes.size(), A_);
 }
 
-void GLDataset::GetSpaceTimeEdgeValues(const CEdge& e, double X[][3], double A_[][3], double rho[], double phi[], double re[], double im[]) const
+void GLDataset::GetSpaceTimeEdgeValues(const CEdge& e, float X[][3], float A_[][3], float rho[], float phi[], float re[], float im[]) const
 {
   Pos(e.node0, X[0]);
   Pos(e.node1, X[1]);

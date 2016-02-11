@@ -10,7 +10,7 @@
 
 struct ctx_vfgpu_t {
   unsigned char meshtype; 
-  bool enable_density_estimate;
+  bool enable_count_lines_in_cell;
   float pertubation;
   
   gpu_hdr_t h[2];
@@ -33,8 +33,8 @@ struct ctx_vfgpu_t {
   bool *d_pftag;  // optional for extraction, used for density estimation, indexed by face id. 
   bool *pftag;
 
-  int *d_density;
-  int *density;
+  int *d_count_lines_in_cell;
+  int *count_lines_in_cell;
 };
 
 inline void checkCuda(cudaError_t e, const char *situation) {
@@ -319,6 +319,29 @@ inline bool valid_nidx(const gpu_hdr_t& h, const int idx[3])
   return v[0] && v[1] && v[2];
 }
 
+__device__ 
+inline bool valid_cidx_hex(const gpu_hdr_t& h, const int cidx[3])
+{
+  bool v[3] = {
+    cidx[0]>=0 && (cidx[0]<h.d[0] - (!h.pbc[0])),
+    cidx[1]>=0 && (cidx[1]<h.d[1] - (!h.pbc[1])),
+    cidx[2]>=0 && (cidx[2]<h.d[2] - (!h.pbc[2]))
+  };
+  return v[0] && v[1] && v[2];
+}
+
+__device__ 
+inline int cidx2cid_hex(const gpu_hdr_t& h, const int cidx[3])
+{
+  return nidx2nid(h, cidx);
+}
+
+__device__
+inline int fidx2fid_hex(const gpu_hdr_t& h, const int fidx[4])
+{
+  return nidx2nid(h, fidx)*3 + fidx[3];
+}
+
 __device__
 inline void fid2fidx_tet(const gpu_hdr_t& h, int id, int idx[4])
 {
@@ -534,6 +557,24 @@ inline bool eid2nodes_hex(const gpu_hdr_t& h, int eid, int nidxs[2][3])
     return false;
 }
 
+__device__
+inline int hexcell_hexfaces(const gpu_hdr_t& h, const int cidx[3], int* fids)
+{
+  const int fidxs[6][4] = {
+    {cidx[0], cidx[1], cidx[2], 0},  
+    {cidx[0], cidx[1], cidx[2], 1},
+    {cidx[0], cidx[1], cidx[2], 2}, 
+    {cidx[0]+1, cidx[1], cidx[2], 0}, 
+    {cidx[0], cidx[1]+1, cidx[2], 1},
+    {cidx[0], cidx[1], cidx[2]+1, 2}};
+
+  for (int i=0; i<6; i++) 
+    fids[i] = fidx2fid_hex(h, fidxs[i]);
+
+  return 6;
+}
+
+
 template <typename T>
 __device__
 inline void nidx2pos(const gpu_hdr_t& h, const int nidx[3], T X[3])
@@ -703,13 +744,14 @@ inline void gauge_transform(
   }
 }
 
-template <typename T, int meshtype>
+template <typename T, int meshtype, bool tag>
 __device__
 inline int extract_face(
     const gpu_hdr_t& h, 
     int fid,
     unsigned int *pfcount,
     gpu_pf_t *pflist, 
+    bool *pftag, 
     const T *rho_, 
     const T *phi_)
 {
@@ -735,6 +777,9 @@ inline int extract_face(
   
   unsigned int idx = atomicInc(pfcount, 0xffffffff);
   pflist[idx] = pf;
+
+  if (tag)
+    pftag[fid] = true;
 
   return chirality;
 }
@@ -797,10 +842,36 @@ static void compute_rho_phi_kernel(
 
 template <typename T, int meshtype>
 __global__
+static void count_lines_in_cell_kernel(
+    const gpu_hdr_t* h,
+    bool *pftag,
+    int *hist)  
+{
+  const int cidx[3] = {
+    blockIdx.x * blockDim.x + threadIdx.x,
+    blockIdx.y * blockDim.y + threadIdx.y,
+    blockIdx.z * blockDim.z + threadIdx.z};
+  if (!valid_cidx_hex(*h, cidx)) return;
+  const int cid = cidx2cid_hex(*h, cidx);
+
+  int fids[12]; // max is 12
+  const int n = hexcell_hexfaces(*h, cidx, fids);  
+  // TODO: hexcell_tetfaces
+
+  int npf = 0;
+  for (int i=0; i<n; i++) 
+    npf += pftag[fids[i]];
+
+  hist[cid] += npf/2;
+}
+
+template <typename T, int meshtype, bool tag>
+__global__
 static void extract_faces_kernel(
     const gpu_hdr_t* h, 
     unsigned int *pfcount,
     gpu_pf_t *pflist,
+    bool *pftag, // tags, optional
     const T *rho, 
     const T *phi)
 {
@@ -818,8 +889,11 @@ static void extract_faces_kernel(
   if (threadIdx.x == 0)
     *spfcount = 0;
   __syncthreads();
-  
-  extract_face<T, meshtype>(*h, fid, spfcount, spflist, rho, phi);
+
+  if (tag) 
+    extract_face<T, meshtype, true>(*h, fid, spfcount, spflist, pftag, rho, phi);
+  else 
+    extract_face<T, meshtype, false>(*h, fid, spfcount, spflist, pftag, rho, phi);
   __syncthreads();
 
   if (threadIdx.x == 0 && (*spfcount)>0) {
@@ -866,12 +940,6 @@ static void extract_edges_kernel(
 #endif
 }
 
-void vfgpu_initialize(
-    bool enable_pertubation)
-{
-
-}
-
 void vfgpu_rotate_timesteps(ctx_vfgpu_t* c)
 {
   std::swap(c->d_h[0], c->d_h[1]);
@@ -916,11 +984,11 @@ void vfgpu_upload_data(
     cudaMalloc((void**)&c->d_pelist, sizeof(gpu_pe_t)*max_pe_count);
   }
 
-  if (c->enable_density_estimate && c->pftag == NULL) {
+  if (c->enable_count_lines_in_cell && c->pftag == NULL) {
     c->pftag = (bool*)malloc(face_count*sizeof(bool));
-    cudaMalloc((void**)c->d_pftag, sizeof(bool)*face_count);
-    c->density = (int*)malloc(count*sizeof(int));
-    cudaMalloc((void**)c->d_density, sizeof(int)*count);
+    cudaMalloc((void**)&c->d_pftag, sizeof(bool)*face_count);
+    c->count_lines_in_cell = (int*)malloc(count*sizeof(int));
+    cudaMalloc((void**)&c->d_count_lines_in_cell, sizeof(int)*count);
   }
   
   cudaMemcpy(c->d_h[slot], &h, sizeof(gpu_hdr_t), cudaMemcpyHostToDevice);
@@ -954,14 +1022,55 @@ void vfgpu_compute_rho_phi(ctx_vfgpu_t* c, int slot)
     compute_rho_phi_kernel<float, false><<<gridSize, blockSize>>>(c->d_h[slot], c->d_rho[slot], c->d_phi[slot], c->d_re[slot], c->d_im[slot], c->d_pert);
   }
 
-  cudaDeviceSynchronize();
+  // cudaDeviceSynchronize();
   checkLastCudaError("compute rho and phi");
+}
+
+void vfgpu_clear_count_lines_in_cell(ctx_vfgpu_t* c)
+{
+  cudaMemset(c->d_count_lines_in_cell, 0, sizeof(int)*c->h[0].count);
+}
+
+void vfgpu_count_lines_in_cell(ctx_vfgpu_t* c, int slot)
+{
+  const dim3 volumeSize = dim3(c->h[0].d[0], c->h[0].d[1], c->h[0].d[2]);
+  const dim3 blockSize = dim3(16, 8, 2);
+  const dim3 gridSize = idivup(volumeSize, blockSize);
+
+  if (c->meshtype == GLGPU3D_MESH_HEX) 
+    count_lines_in_cell_kernel<float, GLGPU3D_MESH_HEX><<<gridSize, blockSize>>>(c->d_h[slot], c->d_pftag, c->d_count_lines_in_cell);
+  else
+    count_lines_in_cell_kernel<float, GLGPU3D_MESH_TET><<<gridSize, blockSize>>>(c->d_h[slot], c->d_pftag, c->d_count_lines_in_cell);
+  checkLastCudaError("count lines in cell");
+}
+
+void vfgpu_dump_count_lines_in_cell(ctx_vfgpu_t* c)
+{
+  cudaMemcpy(c->count_lines_in_cell, c->d_count_lines_in_cell, sizeof(int)*c->h[0].count, cudaMemcpyDeviceToHost);
+
+#ifdef WITH_NETCDF
+  int ncid;
+  int dimids[3];
+  int varids[1];
+
+  size_t starts[3] = {0, 0, 0}, 
+         sizes[3] = {c->h[0].d[2], c->h[0].d[1], c->h[0].d[0]};
+
+  NC_SAFE_CALL( nc_create("count.nc", NC_CLOBBER | NC_64BIT_OFFSET, &ncid) );
+  NC_SAFE_CALL( nc_def_dim(ncid, "z", sizes[0], &dimids[0]) );
+  NC_SAFE_CALL( nc_def_dim(ncid, "y", sizes[1], &dimids[1]) );
+  NC_SAFE_CALL( nc_def_dim(ncid, "x", sizes[2], &dimids[2]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "count", NC_INT, 3, dimids, &varids[0]) );
+  NC_SAFE_CALL( nc_enddef(ncid) );
+
+  NC_SAFE_CALL( nc_put_vara_int(ncid, varids[0], starts, sizes, c->count_lines_in_cell) );
+  NC_SAFE_CALL( nc_close(ncid) );
+#endif
 }
 
 void vfgpu_extract_faces(ctx_vfgpu_t* c, int slot)
 {
   const int nfacetypes = c->meshtype == GLGPU3D_MESH_TET ? 12 : 3;
-
   const int threadCount = c->h[slot].count * nfacetypes;
   const int maxGridDim = 1024; // 32768;
   const int blockSize = 256;
@@ -977,10 +1086,18 @@ void vfgpu_extract_faces(ctx_vfgpu_t* c, int slot)
 
   cudaMemset(c->d_pfcount, 0, sizeof(unsigned int));
   checkLastCudaError("extract faces [0]");
-  if (c->meshtype == GLGPU3D_MESH_TET)
-    extract_faces_kernel<float, GLGPU3D_MESH_TET><<<gridSize, blockSize, sharedSize>>>(c->d_h[slot], c->d_pfcount, c->d_pflist, c->d_rho[slot], c->d_phi[slot]);
-  else if (c->meshtype == GLGPU3D_MESH_HEX)
-    extract_faces_kernel<float, GLGPU3D_MESH_HEX><<<gridSize, blockSize, sharedSize>>>(c->d_h[slot], c->d_pfcount, c->d_pflist, c->d_rho[slot], c->d_phi[slot]);
+  if (c->enable_count_lines_in_cell) {
+    cudaMemset(c->d_pftag, 0, sizeof(bool)*threadCount);
+    if (c->meshtype == GLGPU3D_MESH_HEX)
+      extract_faces_kernel<float, GLGPU3D_MESH_HEX, true><<<gridSize, blockSize, sharedSize>>>(c->d_h[slot], c->d_pfcount, c->d_pflist, c->d_pftag, c->d_rho[slot], c->d_phi[slot]);
+    else 
+      extract_faces_kernel<float, GLGPU3D_MESH_TET, true><<<gridSize, blockSize, sharedSize>>>(c->d_h[slot], c->d_pfcount, c->d_pflist, c->d_pftag, c->d_rho[slot], c->d_phi[slot]);
+  } else { // no density estimate
+    if (c->meshtype == GLGPU3D_MESH_HEX) 
+      extract_faces_kernel<float, GLGPU3D_MESH_HEX, false><<<gridSize, blockSize, sharedSize>>>(c->d_h[slot], c->d_pfcount, c->d_pflist, c->d_pftag, c->d_rho[slot], c->d_phi[slot]);
+    else 
+      extract_faces_kernel<float, GLGPU3D_MESH_TET, false><<<gridSize, blockSize, sharedSize>>>(c->d_h[slot], c->d_pfcount, c->d_pflist, c->d_pftag, c->d_rho[slot], c->d_phi[slot]);
+  }
   checkLastCudaError("extract faces [1]");
  
   cudaMemcpy((void*)&c->pfcount, c->d_pfcount, sizeof(unsigned int), cudaMemcpyDeviceToHost);
@@ -990,7 +1107,7 @@ void vfgpu_extract_faces(ctx_vfgpu_t* c, int slot)
     cudaMemcpy(c->pflist, c->d_pflist, sizeof(gpu_pf_t)*c->pfcount, cudaMemcpyDeviceToHost);
   checkLastCudaError("extract faces [2]");
   
-  cudaDeviceSynchronize();
+  // cudaDeviceSynchronize();
 }
 
 void vfgpu_extract_edges(ctx_vfgpu_t* c)
@@ -1022,7 +1139,7 @@ void vfgpu_extract_edges(ctx_vfgpu_t* c)
     cudaMemcpy(c->pelist, c->d_pelist, sizeof(gpu_pe_t)*c->pecount, cudaMemcpyDeviceToHost);
   checkLastCudaError("extract edges [2]");
   
-  cudaDeviceSynchronize();
+  // cudaDeviceSynchronize();
 }
 
 ///////////////////
@@ -1060,10 +1177,10 @@ void vfgpu_destroy_ctx(ctx_vfgpu_t *c)
   if (c->pftag != NULL)
     free(c->pftag);
 
-  if (c->d_density != NULL) 
-    cudaFree(c->d_density);
-  if (c->density != NULL)
-    free(c->density);
+  if (c->d_count_lines_in_cell != NULL) 
+    cudaFree(c->d_count_lines_in_cell);
+  if (c->count_lines_in_cell != NULL)
+    free(c->count_lines_in_cell);
   
   free(c);
   
@@ -1075,9 +1192,9 @@ void vfgpu_set_meshtype(ctx_vfgpu_t* c, int meshtype)
   c->meshtype = meshtype;
 }
 
-void vfgpu_set_enable_density_estimate(ctx_vfgpu_t* c, bool b)
+void vfgpu_set_enable_count_lines_in_cell(ctx_vfgpu_t* c, bool b)
 {
-  c->enable_density_estimate = b;
+  c->enable_count_lines_in_cell = b;
 }
 
 void vfgpu_get_pflist(ctx_vfgpu_t* c, int *n, gpu_pf_t **pflist)
@@ -1090,4 +1207,9 @@ void vfgpu_get_pelist(ctx_vfgpu_t* c, int *n, gpu_pe_t **pelist)
 {
   *n = c->pecount; 
   *pelist = c->pelist;
+}
+
+void vfgpu_set_pertubation(ctx_vfgpu_t* c, float p)
+{
+  c->pertubation = p;
 }
