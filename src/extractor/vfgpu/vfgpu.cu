@@ -214,10 +214,10 @@ template <typename T, int meshtype>
 __device__
 static inline bool find_zero(const T re[], const T im[], const T X[][3], T pos[3], T epsilon=T(0))
 {
-  if (meshtype == GLGPU3D_MESH_TET) 
+  if (meshtype == VFGPU_MESH_TET) 
     return find_zero_triangle(re, im, X, pos, epsilon);
     // return find_tri_center(X, pos);
-  else if (meshtype == GLGPU3D_MESH_HEX)
+  else if (meshtype == VFGPU_MESH_HEX)
     return find_zero_quad_bilinear(re, im, X, pos, epsilon);
     // return find_quad_center(X, pos);
   else
@@ -610,9 +610,9 @@ inline bool get_face_values(
     const T *rho_,
     const T *phi_)
 {
-  const int nnodes = meshtype == GLGPU3D_MESH_TET ? 3 : 4;
+  const int nnodes = meshtype == VFGPU_MESH_TET ? 3 : 4;
   int nidxs[nnodes][3], nids[nnodes];
-  bool valid = meshtype == GLGPU3D_MESH_TET ? fid2nodes_tet(h, fid, nidxs) : fid2nodes_hex(h, fid, nidxs);
+  bool valid = meshtype == VFGPU_MESH_TET ? fid2nodes_tet(h, fid, nidxs) : fid2nodes_hex(h, fid, nidxs);
   
   if (valid) {
     for (int i=0; i<nnodes; i++) {
@@ -645,7 +645,7 @@ inline bool get_vface_values(
     const T *phi1_)
 {
   int nidxs[2][3], nids[2];
-  bool valid = meshtype == GLGPU3D_MESH_TET ? eid2nodes_tet(h, eid, nidxs) : eid2nodes_hex(h, eid, nidxs);
+  bool valid = meshtype == VFGPU_MESH_TET ? eid2nodes_tet(h, eid, nidxs) : eid2nodes_hex(h, eid, nidxs);
 
   if (valid) {
     nids[0] = nidx2nid(h, nidxs[0]);
@@ -755,7 +755,7 @@ inline int extract_face(
     const T *rho_, 
     const T *phi_)
 {
-  const int nnodes = meshtype == GLGPU3D_MESH_TET ? 3 : 4;
+  const int nnodes = meshtype == VFGPU_MESH_TET ? 3 : 4;
   T X[nnodes][3], A[nnodes][3], rho[nnodes], phi[nnodes], re[nnodes], im[nnodes];
   T delta[nnodes];
   
@@ -875,7 +875,7 @@ static void extract_faces_kernel(
     const T *rho, 
     const T *phi)
 {
-  const int nfacetypes = meshtype == GLGPU3D_MESH_TET ? 12 : 3;
+  const int nfacetypes = meshtype == VFGPU_MESH_TET ? 12 : 3;
   int fid = getGlobalIdx_3D_1D();
   if (fid>h->d[0]*h->d[1]*h->d[2]*nfacetypes) return;
 
@@ -914,7 +914,7 @@ static void extract_edges_kernel(
     const T *phi, 
     const T *phi1)
 {
-  const int nedgetypes = meshtype == GLGPU3D_MESH_TET ? 7 : 3;
+  const int nedgetypes = meshtype == VFGPU_MESH_TET ? 7 : 3;
   const int eid = getGlobalIdx_3D_1D();
   if (eid>h->d[0]*h->d[1]*h->d[2]*nedgetypes) return;
 
@@ -957,8 +957,8 @@ void vfgpu_upload_data(
     const float *im)
 {
   const int count = h.count;
-  const int face_count = count*(c->meshtype == GLGPU3D_MESH_TET ? 12 : 3), 
-            edge_count = count*(c->meshtype == GLGPU3D_MESH_TET ? 7 : 3);
+  const int face_count = count*(c->meshtype == VFGPU_MESH_TET ? 12 : 3), 
+            edge_count = count*(c->meshtype == VFGPU_MESH_TET ? 7 : 3);
   const int max_pf_count = face_count*0.1, // TODO
             max_pe_count = edge_count*0.1;
  
@@ -1037,10 +1037,10 @@ void vfgpu_count_lines_in_cell(vfgpu_ctx_t* c, int slot)
   const dim3 blockSize = dim3(16, 8, 2);
   const dim3 gridSize = idivup(volumeSize, blockSize);
 
-  if (c->meshtype == GLGPU3D_MESH_HEX) 
-    count_lines_in_cell_kernel<float, GLGPU3D_MESH_HEX><<<gridSize, blockSize>>>(c->d_h[slot], c->d_pftag, c->d_count_lines_in_cell);
+  if (c->meshtype == VFGPU_MESH_HEX) 
+    count_lines_in_cell_kernel<float, VFGPU_MESH_HEX><<<gridSize, blockSize>>>(c->d_h[slot], c->d_pftag, c->d_count_lines_in_cell);
   else
-    count_lines_in_cell_kernel<float, GLGPU3D_MESH_TET><<<gridSize, blockSize>>>(c->d_h[slot], c->d_pftag, c->d_count_lines_in_cell);
+    count_lines_in_cell_kernel<float, VFGPU_MESH_TET><<<gridSize, blockSize>>>(c->d_h[slot], c->d_pftag, c->d_count_lines_in_cell);
   checkLastCudaError("count lines in cell");
 }
 
@@ -1070,7 +1070,7 @@ void vfgpu_dump_count_lines_in_cell(vfgpu_ctx_t* c)
 
 void vfgpu_extract_faces(vfgpu_ctx_t* c, int slot)
 {
-  const int nfacetypes = c->meshtype == GLGPU3D_MESH_TET ? 12 : 3;
+  const int nfacetypes = c->meshtype == VFGPU_MESH_TET ? 12 : 3;
   const int threadCount = c->h[slot].count * nfacetypes;
   const int maxGridDim = 1024; // 32768;
   const int blockSize = 256;
@@ -1088,15 +1088,15 @@ void vfgpu_extract_faces(vfgpu_ctx_t* c, int slot)
   checkLastCudaError("extract faces [0]");
   if (c->enable_count_lines_in_cell) {
     cudaMemset(c->d_pftag, 0, sizeof(bool)*threadCount);
-    if (c->meshtype == GLGPU3D_MESH_HEX)
-      extract_faces_kernel<float, GLGPU3D_MESH_HEX, true><<<gridSize, blockSize, sharedSize>>>(c->d_h[slot], c->d_pfcount, c->d_pflist, c->d_pftag, c->d_rho[slot], c->d_phi[slot]);
+    if (c->meshtype == VFGPU_MESH_HEX)
+      extract_faces_kernel<float, VFGPU_MESH_HEX, true><<<gridSize, blockSize, sharedSize>>>(c->d_h[slot], c->d_pfcount, c->d_pflist, c->d_pftag, c->d_rho[slot], c->d_phi[slot]);
     else 
-      extract_faces_kernel<float, GLGPU3D_MESH_TET, true><<<gridSize, blockSize, sharedSize>>>(c->d_h[slot], c->d_pfcount, c->d_pflist, c->d_pftag, c->d_rho[slot], c->d_phi[slot]);
+      extract_faces_kernel<float, VFGPU_MESH_TET, true><<<gridSize, blockSize, sharedSize>>>(c->d_h[slot], c->d_pfcount, c->d_pflist, c->d_pftag, c->d_rho[slot], c->d_phi[slot]);
   } else { // no density estimate
-    if (c->meshtype == GLGPU3D_MESH_HEX) 
-      extract_faces_kernel<float, GLGPU3D_MESH_HEX, false><<<gridSize, blockSize, sharedSize>>>(c->d_h[slot], c->d_pfcount, c->d_pflist, c->d_pftag, c->d_rho[slot], c->d_phi[slot]);
+    if (c->meshtype == VFGPU_MESH_HEX) 
+      extract_faces_kernel<float, VFGPU_MESH_HEX, false><<<gridSize, blockSize, sharedSize>>>(c->d_h[slot], c->d_pfcount, c->d_pflist, c->d_pftag, c->d_rho[slot], c->d_phi[slot]);
     else 
-      extract_faces_kernel<float, GLGPU3D_MESH_TET, false><<<gridSize, blockSize, sharedSize>>>(c->d_h[slot], c->d_pfcount, c->d_pflist, c->d_pftag, c->d_rho[slot], c->d_phi[slot]);
+      extract_faces_kernel<float, VFGPU_MESH_TET, false><<<gridSize, blockSize, sharedSize>>>(c->d_h[slot], c->d_pfcount, c->d_pflist, c->d_pftag, c->d_rho[slot], c->d_phi[slot]);
   }
   checkLastCudaError("extract faces [1]");
  
@@ -1112,7 +1112,7 @@ void vfgpu_extract_faces(vfgpu_ctx_t* c, int slot)
 
 void vfgpu_extract_edges(vfgpu_ctx_t* c)
 {
-  const int nedgetypes = c->meshtype == GLGPU3D_MESH_TET ? 7 : 3;
+  const int nedgetypes = c->meshtype == VFGPU_MESH_TET ? 7 : 3;
 
   const int threadCount = c->h[0].count * nedgetypes;
   const int maxGridDim = 1024; // 32768;
@@ -1127,10 +1127,10 @@ void vfgpu_extract_edges(vfgpu_ctx_t* c)
   
   cudaMemset(c->d_pecount, 0, sizeof(unsigned int));
   checkLastCudaError("extract edges [0]");
-  if (c->meshtype == GLGPU3D_MESH_TET)
-    extract_edges_kernel<float, GLGPU3D_MESH_TET><<<gridSize, blockSize, sharedSize>>>(c->d_h[0], c->d_h[1], c->d_pecount, c->d_pelist, c->d_phi[0], c->d_phi[1]);
-  else if (c->meshtype == GLGPU3D_MESH_HEX)
-    extract_edges_kernel<float, GLGPU3D_MESH_HEX><<<gridSize, blockSize, sharedSize>>>(c->d_h[0], c->d_h[1], c->d_pecount, c->d_pelist, c->d_phi[0], c->d_phi[1]);
+  if (c->meshtype == VFGPU_MESH_TET)
+    extract_edges_kernel<float, VFGPU_MESH_TET><<<gridSize, blockSize, sharedSize>>>(c->d_h[0], c->d_h[1], c->d_pecount, c->d_pelist, c->d_phi[0], c->d_phi[1]);
+  else if (c->meshtype == VFGPU_MESH_HEX)
+    extract_edges_kernel<float, VFGPU_MESH_HEX><<<gridSize, blockSize, sharedSize>>>(c->d_h[0], c->d_h[1], c->d_pecount, c->d_pelist, c->d_phi[0], c->d_phi[1]);
   checkLastCudaError("extract edges [1]");
  
   cudaMemcpy((void*)&c->pecount, c->d_pecount, sizeof(unsigned int), cudaMemcpyDeviceToHost);

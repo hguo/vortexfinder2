@@ -1,7 +1,10 @@
 #ifndef _EXTRACTOR_CUH
 #define _EXTRACTOR_CUH
 
-#include "def.h"
+enum {
+  VFGPU_MESH_HEX,
+  VFGPU_MESH_TET
+};
 
 typedef struct {
   int fid; 
@@ -40,6 +43,12 @@ void vfgpu_upload_data(
     const vfgpu_hdr_t &h, 
     const float *re, 
     const float *im);
+
+void vfgpu_set_data(
+    vfgpu_ctx_t*, 
+    int slot, 
+    const vfgpu_hdr_t &h, 
+    const float *psi_re_im);
 
 void vfgpu_rotate_timesteps(vfgpu_ctx_t*);
 
