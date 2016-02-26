@@ -811,7 +811,7 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
   ds->GetDataArray(h, &rho, &phi, &re, &im, &J, slot);
   const int count = h.dims[0] * h.dims[1] * h.dims[2];
 
-  gpu_hdr_t gh;
+  vfgpu_hdr_t gh;
 
   for (int i=0; i<3; i++) {
     gh.d[i] = h.dims[i];
@@ -832,7 +832,7 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
 #endif
 
   int pfcount; 
-  gpu_pf_t *pf; 
+  vfgpu_pf_t *pf; 
  
 #if 0 // density estimate
   vfgpu_set_pertubation(_vfgpu_ctx, 0.05);
@@ -893,7 +893,7 @@ void VortexExtractor::ExtractEdges_GPU()
 #endif
 
   int pecount; 
-  gpu_pe_t *pe; 
+  vfgpu_pe_t *pe; 
   vfgpu_extract_edges(_vfgpu_ctx);
   vfgpu_get_pelist(_vfgpu_ctx, &pecount, &pe); 
 
