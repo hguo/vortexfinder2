@@ -31,6 +31,7 @@ typedef struct {
 struct vfgpu_ctx_t;
 
 vfgpu_ctx_t* vfgpu_create_ctx();
+vfgpu_ctx_t* vfgpu_create_ctx_in_situ();
 void vfgpu_destroy_ctx(vfgpu_ctx_t*);
 
 void vfgpu_set_meshtype(vfgpu_ctx_t*, int);

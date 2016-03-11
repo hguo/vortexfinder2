@@ -102,7 +102,7 @@ typedef struct {
 //internally double precision is used
 
 class GLPP {
-  friend class vtkGLGPUSupercurrentFilter2;    
+  friend class vtkGLGPUSupercurrentFilter;    
 public:
     
     GLPP();

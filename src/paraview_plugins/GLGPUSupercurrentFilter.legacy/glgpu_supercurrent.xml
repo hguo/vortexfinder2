@@ -1,6 +1,6 @@
 <ServerManagerConfiguration>
   <ProxyGroup name="filters">
-    <SourceProxy name="GLGPUSupercurrentFilter2" class="vtkGLGPUSupercurrentFilter2" label="GLGPUSupercurrentFilter2">
+    <SourceProxy name="GLGPUSupercurrentFilter" class="vtkGLGPUSupercurrentFilter" label="GLGPUSupercurrentFilter">
       <Documentation
          short_help="compute supercurrent from GLGPU data"
          long_help="compute supercurrent from GLGPU data">
