@@ -11,6 +11,7 @@
 #include "vtkStreamingDemandDrivenPipeline.h"
 #include "vtkBDATReader.h"
 #include "io/GLGPU_IO_Helper.h"
+#include "io/GLGPU2DDataset.h"
 #include "io/GLGPU3DDataset.h"
 
 vtkStandardNewMacro(vtkBDATReader);
@@ -18,6 +19,7 @@ vtkStandardNewMacro(vtkBDATReader);
 vtkBDATReader::vtkBDATReader()
 {
   FileName = NULL;
+  GLdim = 3;
   SetNumberOfInputPorts(0);
   SetNumberOfOutputPorts(1);
 }
@@ -46,6 +48,8 @@ int vtkBDATReader::RequestInformation(
         FileName, hdr, NULL, NULL, NULL, NULL, true); 
   }
 
+  GLdim = hdr.ndims;
+
   int ext[6] = {0, hdr.dims[0]-1, 0, hdr.dims[1]-1, 0, hdr.dims[2]-1};
   double cell_lengths[3] = {hdr.cell_lengths[0], hdr.cell_lengths[1], hdr.cell_lengths[2]},
          origins[3] = {hdr.origins[0], hdr.origins[1], hdr.origins[2]};
@@ -63,9 +67,11 @@ int vtkBDATReader::RequestData(
     vtkInformationVector**, 
     vtkInformationVector* outVec)
 {
-  GLGPU3DDataset *ds = new GLGPU3DDataset;
+  GLGPUDataset *ds;
+  if (GLdim == 2) ds = new GLGPU2DDataset;
+  else ds = new GLGPU3DDataset;
+  
   bool succ; 
-
   ds->OpenDataFileByPattern(FileName);
   // ds->SetPrecomputeSupercurrent(true);
   succ = ds->LoadTimeStep(0, 0);

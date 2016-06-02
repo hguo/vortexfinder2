@@ -54,6 +54,7 @@ bool GLGPU_IO_Helper_ReadBDAT(
     if (name == "dim") {
       assert(type == BDAT_INT32);
       memcpy(&h.ndims, p, sizeof(int));
+      h.dims[0] = h.dims[1] = h.dims[2] = 1;
       assert(h.ndims == 2 || h.ndims == 3);
     } else if (name == "Nx") {
       assert(type == BDAT_INT32);
@@ -179,6 +180,7 @@ bool GLGPU_IO_Helper_ReadLegacy(
   if (!fp) return false;
 
   memset(&h, 0, sizeof(GLHeader));
+  h.dims[0] = h.dims[1] = h.dims[2] = 1;
 
   // tag check
   char tag[GLGPU_LEGACY_TAG_SIZE+1] = {0};  

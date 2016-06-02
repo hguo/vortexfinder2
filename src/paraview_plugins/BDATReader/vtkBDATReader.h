@@ -22,6 +22,7 @@ protected:
   ~vtkBDATReader();
 
   char *FileName;
+  int GLdim;
 
 private:
   vtkBDATReader(const vtkBDATReader&);
