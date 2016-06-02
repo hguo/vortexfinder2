@@ -10,6 +10,7 @@
 #include "vtkInformationVector.h"
 #include "vtkObjectFactory.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
+#include "io/GLGPU2DDataset.h"
 #include "io/GLGPU3DDataset.h"
 #include "extractor/Extractor.h"
 
@@ -86,11 +87,13 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   GLHeader h;
   double origins[3], cell_lengths[3];
 
-  h.ndims = 3;
   imageData->GetDimensions(h.dims);
+  if (h.dims[2] == 1) h.ndims = 2;
+  else h.ndims = 3;
+
   imageData->GetOrigin(origins);
   imageData->GetSpacing(cell_lengths);
-  for (int i=0; i<3; i++) {
+  for (int i=0; i<h.ndims; i++) {
     h.origins[i] = origins[i];
     h.cell_lengths[i] = cell_lengths[i];
     h.lengths[i] = h.cell_lengths[i] * h.dims[i];
@@ -119,14 +122,15 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
         *im = (float*)dataArrayIm->GetVoidPointer(0);
 
   // build data
-  GLGPU3DDataset *ds = new GLGPU3DDataset;
+  GLGPUDataset *ds;
+  if (h.ndims == 2) ds = new GLGPU2DDataset;
+  else ds = new GLGPU3DDataset;
   ds->BuildDataFromArray(h, rho, phi, re, im); // FIXME
-  if (iMeshType == 0)
-    ds->SetMeshType(GLGPU3D_MESH_HEX);
-  else if (iMeshType == 1)
-    ds->SetMeshType(GLGPU3D_MESH_TET);
-  else 
-    ds->SetMeshType(GLGPU3D_MESH_HEX);
+
+  if (h.ndims == 3 && iMeshType == 1) {
+    GLGPU3DDataset *ds3 = (GLGPU3DDataset*)ds;
+    ds3->SetMeshType(GLGPU3D_MESH_TET);
+  }
   ds->BuildMeshGraph();
 
   VortexExtractor *ex = new VortexExtractor;
