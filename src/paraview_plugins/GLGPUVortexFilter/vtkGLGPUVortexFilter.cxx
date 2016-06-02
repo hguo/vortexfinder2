@@ -148,45 +148,55 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   vtkSmartPointer<vtkPoints> points = vtkPoints::New();
   vtkSmartPointer<vtkCellArray> cells = vtkCellArray::New();
 
-  std::vector<int> vertCounts;
-  for (int i=0; i<vlines.size(); i++) {
-    int vertCount = 0;
-    const int nv = vlines[i].size()/3;
-    // if (nv<2) continue;
-    double p0[3];
-    for (int j=0; j<nv; j++) {
-      double p[3] = {vlines[i][j*3], vlines[i][j*3+1], vlines[i][j*3+2]};
-      points->InsertNextPoint(p);
+  if (h.ndims == 3) { // 3D poly lines
+    std::vector<int> vertCounts;
+    for (int i=0; i<vlines.size(); i++) {
+      int vertCount = 0;
+      const int nv = vlines[i].size()/3;
+      // if (nv<2) continue;
+      double p0[3];
+      for (int j=0; j<nv; j++) {
+        double p[3] = {vlines[i][j*3], vlines[i][j*3+1], vlines[i][j*3+2]};
+        points->InsertNextPoint(p);
 
-      double delta[3] = {p[0] - p0[0], p[1] - p0[1], p[2] - p0[2]};
-      double dist = sqrt(delta[0]*delta[0] + delta[1]*delta[1] + delta[2]*delta[2]);
+        double delta[3] = {p[0] - p0[0], p[1] - p0[1], p[2] - p0[2]};
+        double dist = sqrt(delta[0]*delta[0] + delta[1]*delta[1] + delta[2]*delta[2]);
 
-      if (j>0 && dist>5) { // FIXME
-        vertCounts.push_back(vertCount);
-        vertCount = 0;
+        if (j>0 && dist>5) { // FIXME
+          vertCounts.push_back(vertCount);
+          vertCount = 0;
+        }
+        memcpy(p0, p, sizeof(double)*3);
+        vertCount ++;
       }
-      memcpy(p0, p, sizeof(double)*3);
-      vertCount ++;
+
+      if (vertCount > 0) 
+        vertCounts.push_back(vertCount);
     }
 
-    if (vertCount > 0) 
-      vertCounts.push_back(vertCount);
+    int nv = 0;
+    for (int i=0; i<vertCounts.size(); i++) {
+      // fprintf(stderr, "vertCount=%d\n", vertCounts[i]);
+      vtkSmartPointer<vtkPolyLine> polyLine = vtkPolyLine::New();
+      polyLine->GetPointIds()->SetNumberOfIds(vertCounts[i]);
+      for (int j=0; j<vertCounts[i]; j++)
+        polyLine->GetPointIds()->SetId(j, j+nv);
+
+      cells->InsertNextCell(polyLine);
+      nv += vertCounts[i];
+    }
+    polyData->SetPoints(points);
+    polyData->SetLines(cells);
+  } else { // 2D data
+    for (int i=0; i<vlines.size(); i++) {
+      double p[3] = {vlines[i][0], vlines[i][1], vlines[i][2]};
+      points->InsertNextPoint(p);
+      cells->InsertNextCell(1);
+      cells->InsertCellPoint(i);
+    }
+    polyData->SetPoints(points);
+    polyData->SetVerts(cells);
   }
-
-  int nv = 0;
-  for (int i=0; i<vertCounts.size(); i++) {
-    // fprintf(stderr, "vertCount=%d\n", vertCounts[i]);
-    vtkSmartPointer<vtkPolyLine> polyLine = vtkPolyLine::New();
-    polyLine->GetPointIds()->SetNumberOfIds(vertCounts[i]);
-    for (int j=0; j<vertCounts[i]; j++)
-      polyLine->GetPointIds()->SetId(j, j+nv);
-
-    cells->InsertNextCell(polyLine);
-    nv += vertCounts[i];
-  }
-
-  polyData->SetPoints(points);
-  polyData->SetLines(cells);
 
   delete ex;
   delete ds;
