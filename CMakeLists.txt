@@ -41,6 +41,7 @@ else()
   option (WITH_VTK "Build with VTK" OFF)
   option (WITH_PARAVIEW "Build paraview plugins" OFF)
   option (WITH_CXX11 "Build with C++11" OFF)
+  option (WITH_IN_SITU "Build in-situ library" OFF)
 
   set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake-modules)
   set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
