@@ -51,6 +51,7 @@ typedef struct {
 std::queue<task_t> Q;
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+static bool all_done = false;
 
 void* exec_thread(void*)
 {
@@ -66,8 +67,7 @@ void* exec_thread(void*)
     task = Q.front();
     Q.pop();
     pthread_mutex_unlock(&mutex);
-
-    if (task.tag != 0) break; // exit
+    if (all_done) break;
 
     fprintf(stderr, "pfs=%lu\n", task.pfs.size());
     if (ds == NULL) {
@@ -108,9 +108,11 @@ int main(int argc, char **argv)
   int pfcount, pfcount_max=0;
 
   FILE *fp = fopen("/tmp/glgpu.fifo", "rb");
-  
-  pthread_t thread;
-  pthread_create(&thread, NULL, exec_thread, NULL);
+
+  const int nthreads = 2; // TODO
+  pthread_t threads[nthreads];
+  for (int i=0; i<nthreads; i++)
+    pthread_create(&threads[i], NULL, exec_thread, NULL);
 
   while (!feof(fp)) {
     fread(&hdr, sizeof(vfgpu_hdr_t), 1, fp);
@@ -128,14 +130,9 @@ int main(int argc, char **argv)
     }
   }
 
-  // thread exit
-  task_t task_exit;
-  task_exit.tag = 1;
-  pthread_mutex_lock(&mutex);
-  Q.push(task_exit);
-  pthread_cond_signal(&cond);
-  pthread_mutex_unlock(&mutex);
-  pthread_join(thread, NULL);
+  __sync_fetch_and_or(&all_done, 1); // atomic xor
+  for (int i=0; i<nthreads; i++) 
+    pthread_join(threads[i], NULL);
 
   fclose(fp);
 
