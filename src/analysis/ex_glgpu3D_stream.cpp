@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdio>
 #include <vector>
+#include <queue>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -41,34 +42,42 @@ typedef struct {
 } vfgpu_hdr_t;
 
 /////////////////
-int main(int argc, char **argv)
-{
+typedef struct {
+  int tag;
   vfgpu_hdr_t hdr;
-  int pfcount, pfcount_max=0;
-  vfgpu_pf_t *pflist = NULL;
+  std::vector<vfgpu_pf_t> pfs;
+} task_t;
 
+std::queue<task_t> Q;
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+
+void* exec_thread(void*)
+{
   GLGPU3DDataset *ds = NULL;
   VortexExtractor *ex = NULL;
+  task_t task;
+  
+  while (1) {
+    pthread_mutex_lock(&mutex);
+    while (Q.empty()) {
+      pthread_cond_wait(&cond, &mutex);
+    }
+    task = Q.front();
+    Q.pop();
+    pthread_mutex_unlock(&mutex);
 
-  FILE *fp = fopen("/tmp/glgpu.fifo", "rb");
+    if (task.tag != 0) break; // exit
 
-  while (!feof(fp)) {
-    fread(&hdr, sizeof(vfgpu_hdr_t), 1, fp);
-    fread(&pfcount, sizeof(int), 1, fp);
-    if (pfcount > pfcount_max)
-      pflist = (vfgpu_pf_t*)realloc(pflist, sizeof(vfgpu_pf_t)*pfcount);
-    if (pfcount > 0)
-      fread(pflist, sizeof(vfgpu_pf_t), pfcount, fp);
-    fprintf(stderr, "pfcount=%d\n", pfcount);
-
+    fprintf(stderr, "pfs=%lu\n", task.pfs.size());
     if (ds == NULL) {
       GLHeader h;
       h.ndims = 3;
-      memcpy(h.dims, hdr.d, sizeof(int)*3);
-      memcpy(h.pbc, hdr.pbc, sizeof(int)*3);
-      memcpy(h.lengths, hdr.lengths, sizeof(float)*3);
-      memcpy(h.origins, hdr.origins, sizeof(float)*3);
-      memcpy(h.cell_lengths, hdr.cell_lengths, sizeof(float)*3);
+      memcpy(h.dims, task.hdr.d, sizeof(int)*3);
+      memcpy(h.pbc, task.hdr.pbc, sizeof(int)*3);
+      memcpy(h.lengths, task.hdr.lengths, sizeof(float)*3);
+      memcpy(h.origins, task.hdr.origins, sizeof(float)*3);
+      memcpy(h.cell_lengths, task.hdr.cell_lengths, sizeof(float)*3);
 
       ds = new GLGPU3DDataset;
       ds->SetHeader(h);
@@ -78,18 +87,58 @@ int main(int argc, char **argv)
       ex = new VortexExtractor;
       ex->SetDataset(ds);
     }
-  
+    
     ex->Clear();
-    for (int i=0; i<pfcount; i++) {
-      vfgpu_pf_t &pf = pflist[i];
+    for (int i=0; i<task.pfs.size(); i++) {
+      vfgpu_pf_t &pf = task.pfs[i];
       ex->AddPuncturedFace(pf.fid, 0, pf.chirality, pf.pos);
     }
     ex->TraceOverSpace(0);
   }
 
-  fclose(fp);
-  delete ex;
   delete ds;
+  delete ex;
+  return NULL;
+}
 
+/////////////////
+int main(int argc, char **argv)
+{
+  vfgpu_hdr_t hdr;
+  int pfcount, pfcount_max=0;
+
+  FILE *fp = fopen("/tmp/glgpu.fifo", "rb");
+  
+  pthread_t thread;
+  pthread_create(&thread, NULL, exec_thread, NULL);
+
+  while (!feof(fp)) {
+    fread(&hdr, sizeof(vfgpu_hdr_t), 1, fp);
+    fread(&pfcount, sizeof(int), 1, fp);
+    if (pfcount > 0) {
+      task_t task;
+      task.hdr = hdr;
+      task.pfs.resize(pfcount);
+      fread(task.pfs.data(), sizeof(vfgpu_pf_t), pfcount, fp);
+
+      pthread_mutex_lock(&mutex);
+      Q.push(task);
+      pthread_cond_signal(&cond);
+      pthread_mutex_unlock(&mutex);
+    }
+  }
+
+  // thread exit
+  task_t task_exit;
+  task_exit.tag = 1;
+  pthread_mutex_lock(&mutex);
+  Q.push(task_exit);
+  pthread_cond_signal(&cond);
+  pthread_mutex_unlock(&mutex);
+  pthread_join(thread, NULL);
+
+  fclose(fp);
+
+  fprintf(stderr, "exiting...\n");
   return 0;
 }
