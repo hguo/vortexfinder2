@@ -73,10 +73,11 @@ protected:
   int NewGlobalVortexId();
   void ResetGlobalVortexId();
 
-protected:
+public:
   void AddPuncturedFace(FaceIdType, int slot, ChiralityType chirality, const float pos[3]);
   void AddPuncturedEdge(EdgeIdType, ChiralityType chirality, float t);
 
+protected:
   bool FindFaceZero(int n, const float X[][3], const float re[], const float im[], float pos[3]) const;
   bool FindSpaceTimeEdgeZero(const float re[], const float im[], float &t) const;
 

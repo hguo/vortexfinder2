@@ -20,6 +20,7 @@ public:
   std::string DataName() const {return _data_name;}
 
   const GLHeader& GetHeader(int slot=0) const {return _h[slot];}
+  void SetHeader(const GLHeader& h, int slot=0) {_h[slot] = h;}
 
   void SetTimeStep(int timestep, int slot=0);
   int TimeStep(int slot=0) const;

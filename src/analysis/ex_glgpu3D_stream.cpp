@@ -1,6 +1,10 @@
 #include <iostream>
 #include <cstdio>
 #include <vector>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include "io/GLGPU3DDataset.h"
 #include "extractor/Extractor.h"
 
@@ -43,15 +47,49 @@ int main(int argc, char **argv)
   int pfcount, pfcount_max=0;
   vfgpu_pf_t *pflist = NULL;
 
-  while (!feof(stdin)) {
-    fread(&hdr, sizeof(vfgpu_hdr_t), 1, stdin);
-    fread(&pfcount, sizeof(int), 1, stdin);
+  GLGPU3DDataset *ds = NULL;
+  VortexExtractor *ex = NULL;
+
+  FILE *fp = fopen("/tmp/glgpu.fifo", "rb");
+
+  while (!feof(fp)) {
+    fread(&hdr, sizeof(vfgpu_hdr_t), 1, fp);
+    fread(&pfcount, sizeof(int), 1, fp);
     if (pfcount > pfcount_max)
       pflist = (vfgpu_pf_t*)realloc(pflist, sizeof(vfgpu_pf_t)*pfcount);
     if (pfcount > 0)
-      fread(pflist, sizeof(vfgpu_pf_t), pfcount, stdin);
+      fread(pflist, sizeof(vfgpu_pf_t), pfcount, fp);
     fprintf(stderr, "pfcount=%d\n", pfcount);
+
+    if (ds == NULL) {
+      GLHeader h;
+      h.ndims = 3;
+      memcpy(h.dims, hdr.d, sizeof(int)*3);
+      memcpy(h.pbc, hdr.pbc, sizeof(int)*3);
+      memcpy(h.lengths, hdr.lengths, sizeof(float)*3);
+      memcpy(h.origins, hdr.origins, sizeof(float)*3);
+      memcpy(h.cell_lengths, hdr.cell_lengths, sizeof(float)*3);
+
+      ds = new GLGPU3DDataset;
+      ds->SetHeader(h);
+      ds->SetMeshType(GLGPU3D_MESH_HEX); // TODO
+      ds->BuildMeshGraph();
+
+      ex = new VortexExtractor;
+      ex->SetDataset(ds);
+    }
+  
+    ex->Clear();
+    for (int i=0; i<pfcount; i++) {
+      vfgpu_pf_t &pf = pflist[i];
+      ex->AddPuncturedFace(pf.fid, 0, pf.chirality, pf.pos);
+    }
+    ex->TraceOverSpace(0);
   }
+
+  fclose(fp);
+  delete ex;
+  delete ds;
 
   return 0;
 }

@@ -70,6 +70,11 @@ else()
       set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
     endif ()
   else ()
+    # boost options
+    set (Boost_USE_STATIC_LIBS ON)
+    set (Boost_USE_MULTITHREADED ON)
+    set (Boost_USE_STATIC_RUNTIME OFF)
+
     find_package (Boost REQUIRED COMPONENTS thread system)
     include_directories (${Boost_INCLUDE_DIR})
   endif ()
@@ -148,11 +153,6 @@ if (WITH_PROTOBUF)
   find_package (Protobuf REQUIRED)
   include_directories (${PROTOBUF_INCLUDE_DIR})
 endif ()
-
-# boost options
-set (Boost_USE_STATIC_LIBS ON)
-set (Boost_USE_MULTITHREADED ON)
-set (Boost_USE_STATIC_RUNTIME OFF)
 
 # openmp
 # find_package (OpenMP)

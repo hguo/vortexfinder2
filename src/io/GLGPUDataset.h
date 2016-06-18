@@ -22,7 +22,6 @@ public:
 
   void PrintInfo(int slot=0) const;
 
-  bool BuildDummyData(const GLHeader&);
   bool BuildDataFromArray(const GLHeader&, const float *rho, const float *phi, const float *re, const float *im);
   void GetDataArray(GLHeader& h, float **rho, float **phi, float **re, float **im, float **J, int slot=0);
   float *GetSupercurrentDataArray() const {return _J[0];} // FIXME
