@@ -41,6 +41,8 @@ bool SerializeVortexLines(const std::vector<VortexLine>& lines, const std::strin
 bool UnserializeVortexLines(std::vector<VortexLine>& lines, std::string& info, const std::string& buf);
 
 bool SaveVortexLines(const std::vector<VortexLine>& lines, const std::string& info, const std::string& filename);
-bool LoadVortexLines(std::vector<VortexLine>& lines, std::string& info, const std::string& filename); 
+bool LoadVortexLines(std::vector<VortexLine>& lines, std::string& info, const std::string& filename);
+
+bool SaveVortexLinesVTK(const std::vector<VortexLine>& lines, const std::string& filename);
 
 #endif

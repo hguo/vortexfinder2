@@ -31,7 +31,7 @@ typedef struct {
   int slot;
 } extractor_thread_t;
 
-pthread_mutex_t mutex;
+static pthread_mutex_t mutex;
 
 VortexExtractor::VortexExtractor() :
   _dataset(NULL), 
@@ -475,7 +475,7 @@ void VortexExtractor::TraceOverSpace(int slot)
     slot == 0 ? _punctured_faces : _punctured_faces1;
   const MeshGraph *mg = _dataset->MeshGraph();
   
-  fprintf(stderr, "tracing over space, #pcs=%ld, #pfs=%ld.\n", pcs.size(), pfs.size());
+  // fprintf(stderr, "tracing over space, #pcs=%ld, #pfs=%ld.\n", pcs.size(), pfs.size());
  
 #if 0
   for (std::map<CellIdType, PuncturedCell>::iterator it = pcs.begin(); it != pcs.end(); it ++) {
@@ -531,8 +531,8 @@ void VortexExtractor::TraceOverSpace(int slot)
     visited.clear();
 
     // fprintf(stderr, "#ordinary=%ld, #special=%ld\n", ordinary_pcells.size(), special_pcells.size());
-    if (special_pcells.size()>0) 
-      fprintf(stderr, "SPECIAL\n");
+    // if (special_pcells.size()>0) 
+    //   fprintf(stderr, "SPECIAL\n");
 
     /// 2. trace vortex lines
     VortexObject vobj; 
@@ -632,7 +632,7 @@ void VortexExtractor::TraceOverSpace(int slot)
     vobjs.push_back(vobj);
   }
 
-  fprintf(stderr, "#vortex_objs=%ld\n", vobjs.size());
+  // fprintf(stderr, "#vortex_objs=%ld\n", vobjs.size());
 }
 
 void VortexExtractor::VortexObjectsToVortexLines(

@@ -8,6 +8,15 @@
 #include "VortexLine.pb.h"
 #endif
 
+#if WITH_VTK
+#include <vtkSmartPointer.h>
+#include <vtkPointData.h>
+#include <vtkPolyData.h>
+#include <vtkPolyLine.h>
+#include <vtkCellArray.h>
+#include <vtkPolyDataWriter.h>
+#endif
+
 VortexLine::VortexLine() : 
   id(INT_MAX), 
   gid(INT_MAX), 
@@ -254,4 +263,63 @@ float VortexLine::MaxExtent() const
 
   float D[3] = {UB[0] - LB[0], UB[1] - LB[1], UB[2] - LB[2]};
   return std::max(std::max(D[0], D[1]), D[2]);
+}
+
+bool SaveVortexLinesVTK(const std::vector<VortexLine>& vlines, const std::string& filename)
+{
+#if WITH_VTK
+  // FIXME: can only process 3D now
+  vtkSmartPointer<vtkPolyData> polyData = vtkPolyData::New();
+  vtkSmartPointer<vtkPoints> points = vtkPoints::New();
+  vtkSmartPointer<vtkCellArray> cells = vtkCellArray::New();
+ 
+  std::vector<int> vertCounts;
+  for (int i=0; i<vlines.size(); i++) {
+    int vertCount = 0;
+    const int nv = vlines[i].size()/3;
+    // if (nv<2) continue;
+    double p0[3];
+    for (int j=0; j<nv; j++) {
+      double p[3] = {vlines[i][j*3], vlines[i][j*3+1], vlines[i][j*3+2]};
+      points->InsertNextPoint(p);
+
+      double delta[3] = {p[0] - p0[0], p[1] - p0[1], p[2] - p0[2]};
+      double dist = sqrt(delta[0]*delta[0] + delta[1]*delta[1] + delta[2]*delta[2]);
+
+      if (j>0 && dist>5) { // FIXME
+        vertCounts.push_back(vertCount);
+        vertCount = 0;
+      }
+      memcpy(p0, p, sizeof(double)*3);
+      vertCount ++;
+    }
+
+    if (vertCount > 0) 
+      vertCounts.push_back(vertCount);
+  }
+    
+  int nv = 0;
+  for (int i=0; i<vertCounts.size(); i++) {
+    // fprintf(stderr, "vertCount=%d\n", vertCounts[i]);
+    vtkSmartPointer<vtkPolyLine> polyLine = vtkPolyLine::New();
+    polyLine->GetPointIds()->SetNumberOfIds(vertCounts[i]);
+    for (int j=0; j<vertCounts[i]; j++)
+      polyLine->GetPointIds()->SetId(j, j+nv);
+
+    cells->InsertNextCell(polyLine);
+    nv += vertCounts[i];
+  }
+
+  polyData->SetPoints(points);
+  polyData->SetLines(cells);
+  
+  vtkSmartPointer<vtkPolyDataWriter> writer = vtkPolyDataWriter::New();
+  writer->SetFileName(filename.c_str());
+  writer->SetInputData(polyData);
+  writer->Write();
+
+  return true;
+#else
+  return false;
+#endif
 }

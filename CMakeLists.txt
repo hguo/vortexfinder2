@@ -140,6 +140,7 @@ else()
 
   if (WITH_VTK)
     find_package (VTK REQUIRED)
+    include_directories(${VTK_INCLUDE_DIRS})
   endif ()
 
   if (WITH_CUDA)

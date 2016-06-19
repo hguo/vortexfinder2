@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdio>
+#include <cassert>
 #include <vector>
 #include <queue>
 #include <sys/types.h>
@@ -21,16 +22,17 @@ enum {
 };
 
 typedef struct {
-  unsigned int fid; 
-  signed char chirality;
+  unsigned int fid_and_chirality; 
   float pos[3];
 } vfgpu_pf_t; // punctured faces from GPU output, 16 bytes
+
 typedef struct {
   unsigned int eid;
   signed char chirality;
 } vfgpu_pe_t;
 
 typedef struct {
+  int frame;
   int d[3];
   unsigned int count; // d[0]*d[1]*d[2];
   bool pbc[3];
@@ -51,7 +53,6 @@ typedef struct {
 std::queue<task_t> Q;
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-static bool all_done = false;
 
 void* exec_thread(void*)
 {
@@ -67,9 +68,8 @@ void* exec_thread(void*)
     task = Q.front();
     Q.pop();
     pthread_mutex_unlock(&mutex);
-    if (all_done) break;
+    if (task.tag != 0) break; // all done
 
-    fprintf(stderr, "pfs=%lu\n", task.pfs.size());
     if (ds == NULL) {
       GLHeader h;
       h.ndims = 3;
@@ -91,9 +91,19 @@ void* exec_thread(void*)
     ex->Clear();
     for (int i=0; i<task.pfs.size(); i++) {
       vfgpu_pf_t &pf = task.pfs[i];
-      ex->AddPuncturedFace(pf.fid, 0, pf.chirality, pf.pos);
+      int chirality = pf.fid_and_chirality & 0x80000000 ? 1 : -1;
+      int fid = pf.fid_and_chirality & 0x7fffffff;
+      ex->AddPuncturedFace(fid, 0, chirality, pf.pos);
     }
     ex->TraceOverSpace(0);
+
+    std::vector<VortexLine> vlines = ex->GetVortexLines();
+    fprintf(stderr, "frame=%d, #pfs=%d, #vlines=%d\n", 
+        task.hdr.frame, (int)task.pfs.size(), (int)vlines.size());
+
+    std::stringstream ss;
+    ss << "vlines-" << task.hdr.frame << ".vtk";
+    SaveVortexLinesVTK(vlines, ss.str());
   }
 
   delete ds;
@@ -108,6 +118,7 @@ int main(int argc, char **argv)
   int pfcount, pfcount_max=0;
 
   FILE *fp = fopen("/tmp/glgpu.fifo", "rb");
+  assert(fp);
 
   const int nthreads = 2; // TODO
   pthread_t threads[nthreads];
@@ -119,6 +130,7 @@ int main(int argc, char **argv)
     fread(&pfcount, sizeof(int), 1, fp);
     if (pfcount > 0) {
       task_t task;
+      task.tag = 0;
       task.hdr = hdr;
       task.pfs.resize(pfcount);
       fread(task.pfs.data(), sizeof(vfgpu_pf_t), pfcount, fp);
@@ -130,7 +142,16 @@ int main(int argc, char **argv)
     }
   }
 
-  __sync_fetch_and_or(&all_done, 1); // atomic xor
+  // exit threads
+  task_t task_all_done;
+  memset(&task_all_done, 0, sizeof(task_t));
+  task_all_done.tag = 1;
+  for (int i=0; i<nthreads; i++) {
+    pthread_mutex_lock(&mutex);
+    Q.push(task_all_done);
+    pthread_cond_signal(&cond);
+    pthread_mutex_unlock(&mutex);
+  }
   for (int i=0; i<nthreads; i++) 
     pthread_join(threads[i], NULL);
 
