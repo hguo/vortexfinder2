@@ -14,7 +14,7 @@
 #include <vtkPolyData.h>
 #include <vtkPolyLine.h>
 #include <vtkCellArray.h>
-#include <vtkPolyDataWriter.h>
+#include <vtkXMLPolyDataWriter.h>
 #endif
 
 VortexLine::VortexLine() : 
@@ -313,7 +313,7 @@ bool SaveVortexLinesVTK(const std::vector<VortexLine>& vlines, const std::string
   polyData->SetPoints(points);
   polyData->SetLines(cells);
   
-  vtkSmartPointer<vtkPolyDataWriter> writer = vtkPolyDataWriter::New();
+  vtkSmartPointer<vtkXMLPolyDataWriter> writer = vtkXMLPolyDataWriter::New();
   writer->SetFileName(filename.c_str());
   writer->SetInputData(polyData);
   writer->Write();
