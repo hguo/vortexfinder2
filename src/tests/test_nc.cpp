@@ -9,12 +9,12 @@ int main(int argc, char **argv)
  
   int ndims = 3;
   int dims[3];
-  double lengths[3];
+  float lengths[3];
   bool pbc[3];
-  double time; 
-  double B[3];
-  double Jxext, Kx, V;
-  double *re, *im;
+  float time; 
+  float B[3];
+  float Jxext, Kx, V;
+  float *re, *im;
 
   GLGPU_IO_Helper_ReadBDAT(
   // GLGPU_IO_Helper_ReadLegacy(

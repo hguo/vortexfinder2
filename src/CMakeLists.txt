@@ -19,6 +19,10 @@ if (WITH_QT)
   add_subdirectory (viewer)
 endif ()
 
+#if (WITH_IN_SITU)
+#  add_subdirectory (in_situ)
+#endif ()
+
 if (WITH_TESTS)
   add_subdirectory (tests)
 endif ()

@@ -14,10 +14,10 @@ public:
   void Clear();
   int Count() const {return _x.size();}
 
-  double Radius() const {return _radius;}
-  double x(int i) const {return _x[i];}
-  double y(int i) const {return _y[i];}
-  double z(int i) const {return _z[i];}
+  float Radius() const {return _radius;}
+  float x(int i) const {return _x[i];}
+  float y(int i) const {return _y[i];}
+  float z(int i) const {return _z[i];}
 
   bool ParseFromTextFile(const std::string& filename);
 
@@ -25,8 +25,8 @@ public:
   bool UnserializeToString(const std::string& str);
 
 protected:
-  double _radius;
-  std::vector<double> _x, _y, _z;
+  float _radius;
+  std::vector<float> _x, _y, _z;
 };
 
 #endif

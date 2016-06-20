@@ -41,6 +41,7 @@ else()
   option (WITH_VTK "Build with VTK" OFF)
   option (WITH_PARAVIEW "Build paraview plugins" OFF)
   option (WITH_CXX11 "Build with C++11" OFF)
+  option (WITH_IN_SITU "Build in-situ library" OFF)
 
   set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake-modules)
   set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
@@ -69,6 +70,11 @@ else()
       set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
     endif ()
   else ()
+    # boost options
+    set (Boost_USE_STATIC_LIBS ON)
+    set (Boost_USE_MULTITHREADED ON)
+    set (Boost_USE_STATIC_RUNTIME OFF)
+
     find_package (Boost REQUIRED COMPONENTS thread system)
     include_directories (${Boost_INCLUDE_DIR})
   endif ()
@@ -134,6 +140,7 @@ else()
 
   if (WITH_VTK)
     find_package (VTK REQUIRED)
+    include_directories(${VTK_INCLUDE_DIRS})
   endif ()
 
   if (WITH_CUDA)
@@ -147,11 +154,6 @@ if (WITH_PROTOBUF)
   find_package (Protobuf REQUIRED)
   include_directories (${PROTOBUF_INCLUDE_DIR})
 endif ()
-
-# boost options
-set (Boost_USE_STATIC_LIBS ON)
-set (Boost_USE_MULTITHREADED ON)
-set (Boost_USE_STATIC_RUNTIME OFF)
 
 # openmp
 # find_package (OpenMP)

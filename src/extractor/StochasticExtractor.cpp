@@ -66,7 +66,7 @@ void StochasticVortexExtractor::ExtractStochasticVortices()
   auto t0 = clock::now();
 #endif
   
-  vfgpu_density_estimate(pts.size()/3, acc.size(), pts.data(), acc.data());
+  // vfgpu_density_estimate(pts.size()/3, acc.size(), pts.data(), acc.data());
 
 #if WITH_CXX11
   auto t1 = clock::now();

@@ -6,23 +6,26 @@ endif ()
 add_executable (extractor_glgpu3D ex_glgpu3D.cpp)
 target_link_libraries (extractor_glgpu3D PUBLIC glextractor)
 
-add_executable (extractor_glgpu3D_sto ex_glgpu3D_sto.cpp)
-target_link_libraries (extractor_glgpu3D_sto PUBLIC glextractor)
+add_executable (extractor_glgpu3D_stream ex_glgpu3D_stream.cpp)
+target_link_libraries (extractor_glgpu3D_stream PUBLIC glextractor)
 
-add_executable (extractor_glgpu3D_box ex_glgpu3D_box.cpp)
-target_link_libraries (extractor_glgpu3D_box PUBLIC glextractor)
+# add_executable (extractor_glgpu3D_sto ex_glgpu3D_sto.cpp)
+# target_link_libraries (extractor_glgpu3D_sto PUBLIC glextractor)
+
+# add_executable (extractor_glgpu3D_box ex_glgpu3D_box.cpp)
+# target_link_libraries (extractor_glgpu3D_box PUBLIC glextractor)
 
 add_executable (extractor_glgpu2D ex_glgpu2D.cpp)
 target_link_libraries (extractor_glgpu2D PUBLIC glextractor)
 
-add_executable (extractor_presave ex_presave.cpp)
-target_link_libraries (extractor_presave PUBLIC glextractor)
+# add_executable (extractor_presave ex_presave.cpp)
+# target_link_libraries (extractor_presave PUBLIC glextractor)
 
-add_executable (events ex_events.cpp)
-target_link_libraries (events glcommon)
+# add_executable (events ex_events.cpp)
+# target_link_libraries (events glcommon)
 
-add_executable (dist ex_dist.cpp)
-target_link_libraries (dist glio)
+# add_executable (dist ex_dist.cpp)
+# target_link_libraries (dist glio)
 
-add_executable (count ex_count.cpp)
-target_link_libraries (count glio)
+# add_executable (count ex_count.cpp)
+# target_link_libraries (count glio)

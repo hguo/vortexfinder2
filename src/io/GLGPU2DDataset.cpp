@@ -19,7 +19,7 @@ void GLGPU2DDataset::BuildMeshGraph()
   _mg = new MeshGraphRegular2D(_h[0].dims, _h[0].pbc);
 }
 
-CellIdType GLGPU2DDataset::Pos2CellId(const double X[]) const
+CellIdType GLGPU2DDataset::Pos2CellId(const float X[]) const
 {
   // TODO
   return false;

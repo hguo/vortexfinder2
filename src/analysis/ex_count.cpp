@@ -8,9 +8,9 @@
 #include <fstream>
 #include <cfloat>
 
-static std::vector<double> timesteps;
+static std::vector<float> timesteps;
 static std::vector<std::string> filenames;
-static std::vector<double> Bz;
+static std::vector<float> Bz;
 
 static bool LoadTimesteps(const std::string& dataname)
 {

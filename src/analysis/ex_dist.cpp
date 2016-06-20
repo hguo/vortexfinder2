@@ -9,7 +9,7 @@
 #include <cfloat>
 #include <cstdio>
 
-static std::vector<double> timesteps;
+static std::vector<float> timesteps;
 static std::vector<std::string> filenames;
 
 static bool LoadTimesteps(const std::string& dataname)
@@ -49,7 +49,7 @@ static bool LoadTimesteps(const std::string& dataname)
   return true;
 }
 
-static double Dist(const std::string& dataname, int frame, int lvid0, int lvid1)
+static float Dist(const std::string& dataname, int frame, int lvid0, int lvid1)
 {
   std::stringstream ss;
   ss << dataname << ".vlines." << frame;
@@ -86,7 +86,7 @@ int main(int argc, char **argv)
   // vt.PrintSequence();
 
   for (int frame=ts; frame<ts+tl; frame++) {
-    double dist;
+    float dist;
     const int lvid0 = vt.gvid2lvid(frame, gvid0), 
               lvid1 = vt.gvid2lvid(frame, gvid1), 
               lvid2 = vt.gvid2lvid(frame, gvid2), 

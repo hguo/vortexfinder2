@@ -8,7 +8,7 @@ namespace FitCurves {
 template <int ndims>
 struct Vector
 {
-	double coords[ndims];
+	float coords[ndims];
 
 	Vector() {}
 	Vector(const Vector &p)
@@ -21,12 +21,12 @@ struct Vector
 		return *this;
 	}
 
-	double operator[](int index) const
+	float operator[](int index) const
 	{
 		return coords[index];
 	}
 
-	double& operator[](int index)
+	float& operator[](int index)
 	{
 		return coords[index];
 	}
@@ -45,7 +45,7 @@ struct Vector
 		return ret;
 	}
 
-	Vector<ndims> operator*(double f) const
+	Vector<ndims> operator*(float f) const
 	{
 		Vector<ndims> ret(*this);
 		for (int i = 0; i < ndims; ++i) ret[i] *= f;
@@ -59,9 +59,9 @@ struct Vector
 		return ret;
 	}
 
-	double length() const
+	float length() const
 	{
-		double ret = 0;
+		float ret = 0;
 		for (int i = 0; i < ndims; ++i) ret += coords[i] * coords[i];
 		return sqrt(ret);
 	}
@@ -69,7 +69,7 @@ struct Vector
 	Vector normalize() const
 	{
 		Vector ret(*this);
-		double len = length();
+		float len = length();
 		for (int i = 0; i < ndims; ++i) ret.coords[i] /= len;
 		return ret;
 	}
@@ -78,15 +78,15 @@ struct Vector
 #define Point Vector	// Treat Point as Vector
 
 template <int ndims>
-inline double dot(const Vector<ndims> &v0, const Vector<ndims> &v1)
+inline float dot(const Vector<ndims> &v0, const Vector<ndims> &v1)
 {
-	double ret = 0;
+	float ret = 0;
 	for (int i = 0; i < ndims; ++i) ret += v0[i] * v1[i];
 	return ret;
 }
 
 template <int ndims>
-inline double distance(const Vector<ndims> &v0, const Vector<ndims> &v1)
+inline float distance(const Vector<ndims> &v0, const Vector<ndims> &v1)
 {
 	return (v0 - v1).length();
 }

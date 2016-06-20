@@ -25,11 +25,11 @@ void free1(T **p)
 
 GLGPUDataset::GLGPUDataset()
 {
-  memset(_rho, 0, sizeof(double*)*2);
-  memset(_phi, 0, sizeof(double*)*2);
-  memset(_re, 0, sizeof(double*)*2);
-  memset(_im, 0, sizeof(double*)*2);
-  memset(_J, 0, sizeof(double*)*2);
+  memset(_rho, 0, sizeof(float*)*2);
+  memset(_phi, 0, sizeof(float*)*2);
+  memset(_re, 0, sizeof(float*)*2);
+  memset(_im, 0, sizeof(float*)*2);
+  memset(_J, 0, sizeof(float*)*2);
 }
 
 GLGPUDataset::~GLGPUDataset()
@@ -156,7 +156,7 @@ bool GLGPUDataset::LoadTimeStep(int timestep, int slot)
   return true;
 }
 
-void GLGPUDataset::GetDataArray(GLHeader& h, double **rho, double **phi, double **re, double **im, double **J, int slot)
+void GLGPUDataset::GetDataArray(GLHeader& h, float **rho, float **phi, float **re, float **im, float **J, int slot)
 {
   h = _h[slot];
   *rho = _rho[slot];
@@ -166,21 +166,21 @@ void GLGPUDataset::GetDataArray(GLHeader& h, double **rho, double **phi, double 
   *J = _J[slot];
 }
 
-bool GLGPUDataset::BuildDataFromArray(const GLHeader& h, const double *rho, const double *phi, const double *re, const double *im)
+bool GLGPUDataset::BuildDataFromArray(const GLHeader& h, const float *rho, const float *phi, const float *re, const float *im)
 {
   memcpy(&_h[0], &h, sizeof(GLHeader));
 
   const int count = h.dims[0]*h.dims[1]*h.dims[2];
-  // _psi[0] = (double*)realloc(_psi[0], sizeof(double)*count*2);
-  _rho[0] = (double*)malloc(sizeof(double)*count); 
-  _phi[0] = (double*)malloc(sizeof(double)*count); 
-  _re[0] = (double*)malloc(sizeof(double)*count); 
-  _im[0] = (double*)malloc(sizeof(double)*count); 
+  // _psi[0] = (float*)realloc(_psi[0], sizeof(float)*count*2);
+  _rho[0] = (float*)malloc(sizeof(float)*count); 
+  _phi[0] = (float*)malloc(sizeof(float)*count); 
+  _re[0] = (float*)malloc(sizeof(float)*count); 
+  _im[0] = (float*)malloc(sizeof(float)*count); 
 
-  memcpy(_rho[0], rho, sizeof(double)*count);
-  memcpy(_phi[0], phi, sizeof(double)*count);
-  memcpy(_re[0], re, sizeof(double)*count);
-  memcpy(_im[0], im, sizeof(double)*count);
+  memcpy(_rho[0], rho, sizeof(float)*count);
+  memcpy(_phi[0], phi, sizeof(float)*count);
+  memcpy(_re[0], re, sizeof(float)*count);
+  memcpy(_im[0], im, sizeof(float)*count);
   
   return true;
 }
@@ -188,8 +188,8 @@ bool GLGPUDataset::BuildDataFromArray(const GLHeader& h, const double *rho, cons
 #if 0
 void GLGPUDataset::ModulateKex(int slot)
 {
-  double K = Kex(slot);
-  double *re = slot == 0 ? _re : _re1,
+  float K = Kex(slot);
+  float *re = slot == 0 ? _re : _re1,
          *im = slot == 0 ? _im : _im1;
 
   for (int i=0; i<dims()[0]; i++) 
@@ -197,9 +197,9 @@ void GLGPUDataset::ModulateKex(int slot)
       for (int k=0; k<dims()[2]; k++) {
         const int idx[3] = {i, j, k};
         NodeIdType nid = Idx2Nid(idx);
-        double x = i * CellLengths()[0] + Origins()[0];
+        float x = i * CellLengths()[0] + Origins()[0];
 
-        double rho = sqrt(re[nid]*re[nid] + im[nid]*im[nid]), 
+        float rho = sqrt(re[nid]*re[nid] + im[nid]*im[nid]), 
                // phi = atan2(im[nid], re[nid]) - K*x;
                phi = atan2(im[nid], re[nid]) + K*x;
 
@@ -257,41 +257,41 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
 }
 
 #if 0
-double Ax(const double X[3], int slot=0) const {if (By()>0) return -Kex(slot); else return -X[1]*Bz()-Kex(slot);}
-// double Ax(const double X[3], int slot=0) const {if (By()>0) return 0; else return -X[1]*Bz();}
-double Ay(const double X[3], int slot=0) const {if (By()>0) return X[0]*Bz(); else return 0;}
-double Az(const double X[3], int slot=0) const {if (By()>0) return -X[0]*By(); else return X[1]*Bx();}
+float Ax(const float X[3], int slot=0) const {if (By()>0) return -Kex(slot); else return -X[1]*Bz()-Kex(slot);}
+// float Ax(const float X[3], int slot=0) const {if (By()>0) return 0; else return -X[1]*Bz();}
+float Ay(const float X[3], int slot=0) const {if (By()>0) return X[0]*Bz(); else return 0;}
+float Az(const float X[3], int slot=0) const {if (By()>0) return -X[0]*By(); else return X[1]*Bx();}
 #endif
 
-double GLGPUDataset::Rho(int i, int j, int k, int slot) const
+float GLGPUDataset::Rho(int i, int j, int k, int slot) const
 {
   int idx[3] = {i, j, k};
   NodeIdType nid = Idx2Nid(idx);
   return Rho(nid, slot);
 }
 
-double GLGPUDataset::Phi(int i, int j, int k, int slot) const
+float GLGPUDataset::Phi(int i, int j, int k, int slot) const
 {
   int idx[3] = {i, j, k};
   NodeIdType nid = Idx2Nid(idx);
   return Phi(nid, slot);
 }
 
-double GLGPUDataset::Re(int i, int j, int k, int slot) const
+float GLGPUDataset::Re(int i, int j, int k, int slot) const
 {
   int idx[3] = {i, j, k};
   NodeIdType nid = Idx2Nid(idx);
   return Re(nid, slot);
 }
 
-double GLGPUDataset::Im(int i, int j, int k, int slot) const
+float GLGPUDataset::Im(int i, int j, int k, int slot) const
 {
   int idx[3] = {i, j, k};
   NodeIdType nid = Idx2Nid(idx);
   return Im(nid, slot);
 }
 
-bool GLGPUDataset::A(const double X[3], double A[3], int slot) const
+bool GLGPUDataset::A(const float X[3], float A[3], int slot) const
 {
   if (B(slot)[1]>0) {
     A[0] = -Kex(slot);
@@ -306,9 +306,9 @@ bool GLGPUDataset::A(const double X[3], double A[3], int slot) const
   return true;
 }
 
-bool GLGPUDataset::A(NodeIdType n, double A_[3], int slot) const
+bool GLGPUDataset::A(NodeIdType n, float A_[3], int slot) const
 {
-  double X[3];
+  float X[3];
   Pos(n, X);
   return A(X, A_, slot);
 }
@@ -332,26 +332,26 @@ NodeIdType GLGPUDataset::Idx2Nid(const int *idx) const
   return idx[0] + dims()[0] * (idx[1] + dims()[1] * idx[2]); 
 }
 
-void GLGPUDataset::Idx2Pos(const int idx[], double pos[]) const
+void GLGPUDataset::Idx2Pos(const int idx[], float pos[]) const
 {
   for (int i=0; i<3; i++) 
     pos[i] = idx[i] * CellLengths()[i] + Origins()[i];
 }
 
-void GLGPUDataset::Pos2Idx(const double pos[], int idx[]) const
+void GLGPUDataset::Pos2Idx(const float pos[], int idx[]) const
 {
   for (int i=0; i<3; i++)
     idx[i] = (pos[i] - Origins()[i]) / CellLengths()[i]; 
   // TODO: perodic boundary conditions
 }
 
-void GLGPUDataset::Pos2Grid(const double pos[], double gpos[]) const
+void GLGPUDataset::Pos2Grid(const float pos[], float gpos[]) const
 {
   for (int i=0; i<3; i++)
     gpos[i] = (pos[i] - Origins()[i]) / CellLengths()[i]; 
 }
 
-bool GLGPUDataset::Pos(NodeIdType id, double X[3]) const
+bool GLGPUDataset::Pos(NodeIdType id, float X[3]) const
 {
   int idx[3];
 
@@ -361,24 +361,24 @@ bool GLGPUDataset::Pos(NodeIdType id, double X[3]) const
   return true;
 }
 
-bool GLGPUDataset::Supercurrent(const double X[2], double J[3], int slot) const
+bool GLGPUDataset::Supercurrent(const float X[2], float J[3], int slot) const
 {
   // TODO
   return false;
 }
 
-bool GLGPUDataset::Supercurrent(NodeIdType, double J[3], int slot) const
+bool GLGPUDataset::Supercurrent(NodeIdType, float J[3], int slot) const
 {
   // TODO
   return false;
 }
 
 #if 0
-double GLGPUDataset::QP(const double X0[], const double X1[]) const 
+float GLGPUDataset::QP(const float X0[], const float X1[]) const 
 {
-  const double *L = Lengths(), 
+  const float *L = Lengths(), 
                *O = Origins();
-  double d[3] = {X1[0] - X0[0], X1[1] - X0[1], X1[2] - X0[2]};
+  float d[3] = {X1[0] - X0[0], X1[1] - X0[1], X1[2] - X0[2]};
   int p[3] = {0}; // 0: not crossed; 1: positive; -1: negative
 
   for (int i=0; i<3; i++) {
@@ -387,7 +387,7 @@ double GLGPUDataset::QP(const double X0[], const double X1[]) const
     else if (d[i]<-L[i]/2) {d[i] += L[i]; p[i] = -1;}
   }
 
-  const double X[3] = {X0[0] - O[0], X0[1] - O[1], X0[2] - O[2]};
+  const float X[3] = {X0[0] - O[0], X0[1] - O[1], X0[2] - O[2]};
 
   if (By()>0 && p[0]!=0) { // By>0
     return p[0] * L[0] * (Bz()*X[1] - By()*X[2]); 
@@ -396,10 +396,10 @@ double GLGPUDataset::QP(const double X0[], const double X1[]) const
   } else return 0.0;
 }
 #else
-double GLGPUDataset::QP(const double X0_[], const double X1_[], int slot) const
+float GLGPUDataset::QP(const float X0_[], const float X1_[], int slot) const
 {
-  double X0[3], X1[3];
-  double N[3];
+  float X0[3], X1[3];
+  float N[3];
   for (int i=0; i<3; i++) {
     X0[i] = (X0_[i] - Origins()[i]) / CellLengths()[i];
     X1[i] = (X1_[i] - Origins()[i]) / CellLengths()[i];
@@ -412,28 +412,28 @@ double GLGPUDataset::QP(const double X0_[], const double X1_[], int slot) const
     return 0.0;
   } else if (fabs(X1[1]-X0[1])>N[1]/2) {
     // pbc j
-    double dj = X1[1] - X0[1];
+    float dj = X1[1] - X0[1];
     if (dj > N[1]/2) dj = dj - N[1];
     else if (dj < -N[1]/2) dj = dj + N[1];
     
-    double dist = fabs(dj);
-    double dist1 = fabs(fmod1(X0[1] + N[1]/2, N[1]) - N[1]);
-    double f = dist1/dist;
+    float dist = fabs(dj);
+    float dist1 = fabs(fmod1(X0[1] + N[1]/2, N[1]) - N[1]);
+    float f = dist1/dist;
 
     // pbc k
-    double dk = X1[2] - X0[2];
+    float dk = X1[2] - X0[2];
     if (dk > N[2]/2) dk = dk - N[2];
     else if (dk < -N[2]/2) dk = dk + N[2];
-    double k = fmod1(X0[2] + f*dk, N[2]);
+    float k = fmod1(X0[2] + f*dk, N[2]);
 
     // pbc i
-    double di = X1[0] - X0[0];
+    float di = X1[0] - X0[0];
     if (di > N[0]/2) di = di - N[0];
     else if (di < -N[0]/2) di = di + N[0];
-    double i = fmod1(X0[0] + f*dk, N[0]);
+    float i = fmod1(X0[0] + f*dk, N[0]);
 
-    double sign = dj>0 ? 1 : -1;
-    double qp = sign * (k*CellLengths()[2]*B(slot)[0]*Lengths()[1] - i*CellLengths()[0]*B(slot)[2]*Lengths()[1]);
+    float sign = dj>0 ? 1 : -1;
+    float qp = sign * (k*CellLengths()[2]*B(slot)[0]*Lengths()[1] - i*CellLengths()[0]*B(slot)[2]*Lengths()[1]);
 
     return qp;
   } 

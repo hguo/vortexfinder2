@@ -1,5 +1,5 @@
 set (vfgpu_sources
-  puncture.cu
+  vfgpu.cu
 )
 
 cuda_add_library (vfgpu STATIC ${vfgpu_sources})

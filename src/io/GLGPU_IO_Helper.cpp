@@ -26,7 +26,7 @@ static const char GLGPU_LEGACY_TAG[] = "CA02";
 bool GLGPU_IO_Helper_ReadBDAT(
     const std::string& filename, 
     GLHeader &h,
-    double **rho, double **phi, double **re, double **im, 
+    float **rho, float **phi, float **re, float **im, 
     bool header_only)
 {
   BDATReader *reader = new BDATReader(filename); 
@@ -54,6 +54,7 @@ bool GLGPU_IO_Helper_ReadBDAT(
     if (name == "dim") {
       assert(type == BDAT_INT32);
       memcpy(&h.ndims, p, sizeof(int));
+      h.dims[0] = h.dims[1] = h.dims[2] = 1;
       assert(h.ndims == 2 || h.ndims == 3);
     } else if (name == "Nx") {
       assert(type == BDAT_INT32);
@@ -125,15 +126,15 @@ bool GLGPU_IO_Helper_ReadBDAT(
         int optype = recID == 2000 ? 0 : 1;
         float *data = (float*)p;
 
-        *rho = (double*)malloc(sizeof(double)*count);
-        *phi = (double*)malloc(sizeof(double)*count);
-        *re = (double*)malloc(sizeof(double)*count);
-        *im = (double*)malloc(sizeof(double)*count);
+        *rho = (float*)malloc(sizeof(float)*count);
+        *phi = (float*)malloc(sizeof(float)*count);
+        *re = (float*)malloc(sizeof(float)*count);
+        *im = (float*)malloc(sizeof(float)*count);
 
         if (optype == 0) { // re, im
 #pragma omp parallel for
           for (int i=0; i<count; i++) {
-            const double R = data[i*2], I = data[i*2+1];
+            const float R = data[i*2], I = data[i*2+1];
             (*rho)[i] = sqrt(R*R + I*I);
             (*phi)[i] = atan2(I, R);
             (*re)[i] = R;
@@ -142,7 +143,7 @@ bool GLGPU_IO_Helper_ReadBDAT(
         } else { // rho^2, phi
 #pragma omp parallel for
           for (int i=0; i<count; i++) {
-            const double Rho = sqrt(data[i*2]), Phi = data[i*2+1];
+            const float Rho = sqrt(data[i*2]), Phi = data[i*2+1];
             (*rho)[i] = Rho; 
             (*phi)[i] = Phi;
             (*re)[i] = Rho * cos(Phi);
@@ -172,13 +173,14 @@ bool GLGPU_IO_Helper_ReadBDAT(
 bool GLGPU_IO_Helper_ReadLegacy(
     const std::string& filename, 
     GLHeader& h,
-    double **rho, double **phi, double **re, double **im, 
+    float **rho, float **phi, float **re, float **im, 
     bool header_only)
 {
   FILE *fp = fopen(filename.c_str(), "rb");
   if (!fp) return false;
 
   memset(&h, 0, sizeof(GLHeader));
+  h.dims[0] = h.dims[1] = h.dims[2] = 1;
 
   // tag check
   char tag[GLGPU_LEGACY_TAG_SIZE+1] = {0};  
@@ -210,7 +212,7 @@ bool GLGPU_IO_Helper_ReadLegacy(
       fread(&length, sizeof(float), 1, fp);
       h.lengths[i] = length; 
     } else if (datatype == GLGPU_TYPE_DOUBLE) {
-      fread(&h.lengths[i], sizeof(double), 1, fp); 
+      fread(&h.lengths[i], sizeof(float), 1, fp); 
     }
   }
 
@@ -232,11 +234,11 @@ bool GLGPU_IO_Helper_ReadLegacy(
     h.B[2] = B_[2];
     h.Jxext = Jx_;
   } else if (datatype == GLGPU_TYPE_DOUBLE) {
-    double fluctuation_amp;
-    fread(&h.time, sizeof(double), 1, fp); 
-    fread(&fluctuation_amp, sizeof(double), 1, fp);
-    fread(h.B, sizeof(double), 3, fp);
-    fread(&h.Jxext, sizeof(double), 1, fp); 
+    float fluctuation_amp;
+    fread(&h.time, sizeof(float), 1, fp); 
+    fread(&fluctuation_amp, sizeof(float), 1, fp);
+    fread(h.B, sizeof(float), 3, fp);
+    fread(&h.Jxext, sizeof(float), 1, fp); 
   }
 
   // btype
@@ -264,9 +266,9 @@ bool GLGPU_IO_Helper_ReadLegacy(
     h.Kex = Kex_;
     h.Kex_dot = Kex_dot_;
   } else if (datatype == GLGPU_TYPE_DOUBLE) {
-    double Kex_dot;
-    fread(&h.Kex, sizeof(double), 1, fp);
-    fread(&Kex_dot, sizeof(double), 1, fp); 
+    float Kex_dot;
+    fread(&h.Kex, sizeof(float), 1, fp);
+    fread(&Kex_dot, sizeof(float), 1, fp); 
   }
  
   if (header_only) {
@@ -282,10 +284,10 @@ bool GLGPU_IO_Helper_ReadLegacy(
   int offset = ftell(fp);
 
   // mem allocation 
-  *rho = (double*)malloc(sizeof(double)*count);
-  *phi = (double*)malloc(sizeof(double)*count);
-  *re = (double*)malloc(sizeof(double)*count);
-  *im = (double*)malloc(sizeof(double)*count);
+  *rho = (float*)malloc(sizeof(float)*count);
+  *phi = (float*)malloc(sizeof(float)*count);
+  *re = (float*)malloc(sizeof(float)*count);
+  *im = (float*)malloc(sizeof(float)*count);
 
   if (datatype == GLGPU_TYPE_FLOAT) {
     // raw data
@@ -295,7 +297,7 @@ bool GLGPU_IO_Helper_ReadLegacy(
     if (optype == 0) { // re, im
 #pragma omp parallel for
       for (int i=0; i<count; i++) {
-        const double R = buf[i*2], I = buf[i*2+1]; 
+        const float R = buf[i*2], I = buf[i*2+1]; 
         (*rho)[i] = sqrt(R*R + I*I);
         (*phi)[i] = atan2(I, R);
         (*re)[i] = R;
@@ -304,7 +306,7 @@ bool GLGPU_IO_Helper_ReadLegacy(
     } else { // rho, phi
 #pragma omp parallel for
       for (int i=0; i<count; i++) {
-        const double Rho = buf[i*2], Phi = buf[i*2+1];
+        const float Rho = buf[i*2], Phi = buf[i*2+1];
         (*rho)[i] = Rho; 
         (*phi)[i] = Phi;
         (*re)[i] = Rho * cos(Phi);
@@ -324,8 +326,8 @@ bool GLGPU_IO_Helper_ReadLegacy(
 bool GLGPU_IO_Helper_WriteNetCDF(
     const std::string& filename, 
     GLHeader& h,
-    double *re, 
-    double *im)
+    float *re, 
+    float *im)
 {
 #ifdef WITH_LIBMESH
   int ncid; 
@@ -336,8 +338,8 @@ bool GLGPU_IO_Helper_WriteNetCDF(
          sizes[3]  = {(size_t)h.dims[2], (size_t)h.dims[1], (size_t)h.dims[0]};
 
   const int cnt = sizes[0]*sizes[1]*sizes[2];
-  double *rho = (double*)malloc(sizeof(double)*cnt), 
-         *phi = (double*)malloc(sizeof(double)*cnt);
+  float *rho = (float*)malloc(sizeof(float)*cnt), 
+         *phi = (float*)malloc(sizeof(float)*cnt);
   for (int i=0; i<cnt; i++) {
     rho[i] = sqrt(re[i]*re[i] + im[i]*im[i]);
     phi[i] = atan2(im[i], re[i]);
@@ -349,22 +351,22 @@ bool GLGPU_IO_Helper_WriteNetCDF(
   NC_SAFE_CALL( nc_def_dim(ncid, "z", sizes[0], &dimids[0]) );
   NC_SAFE_CALL( nc_def_dim(ncid, "y", sizes[1], &dimids[1]) );
   NC_SAFE_CALL( nc_def_dim(ncid, "x", sizes[2], &dimids[2]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "rho", NC_DOUBLE, 3, dimids, &varids[0]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "phi", NC_DOUBLE, 3, dimids, &varids[1]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "re", NC_DOUBLE, 3, dimids, &varids[2]) );
-  NC_SAFE_CALL( nc_def_var(ncid, "im", NC_DOUBLE, 3, dimids, &varids[3]) );
-  // NC_SAFE_CALL( nc_def_var(ncid, "Jx", NC_DOUBLE, 3, dimids, &varids[4]) );
-  // NC_SAFE_CALL( nc_def_var(ncid, "Jy", NC_DOUBLE, 3, dimids, &varids[5]) );
-  // NC_SAFE_CALL( nc_def_var(ncid, "Jz", NC_DOUBLE, 3, dimids, &varids[6]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "rho", NC_FLOAT, 3, dimids, &varids[0]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "phi", NC_FLOAT, 3, dimids, &varids[1]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "re", NC_FLOAT, 3, dimids, &varids[2]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "im", NC_FLOAT, 3, dimids, &varids[3]) );
+  // NC_SAFE_CALL( nc_def_var(ncid, "Jx", NC_FLOAT, 3, dimids, &varids[4]) );
+  // NC_SAFE_CALL( nc_def_var(ncid, "Jy", NC_FLOAT, 3, dimids, &varids[5]) );
+  // NC_SAFE_CALL( nc_def_var(ncid, "Jz", NC_FLOAT, 3, dimids, &varids[6]) );
   NC_SAFE_CALL( nc_enddef(ncid) );
 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[0], starts, sizes, rho) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[1], starts, sizes, phi) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[2], starts, sizes, re) ); 
-  NC_SAFE_CALL( nc_put_vara_double(ncid, varids[3], starts, sizes, im) ); 
-  // NC_SAFE_CALL( nc_put_vara_double(ncid, varids[4], starts, sizes, _Jx) ); 
-  // NC_SAFE_CALL( nc_put_vara_double(ncid, varids[5], starts, sizes, _Jy) ); 
-  // NC_SAFE_CALL( nc_put_vara_double(ncid, varids[6], starts, sizes, _Jz) ); 
+  NC_SAFE_CALL( nc_put_vara_float(ncid, varids[0], starts, sizes, rho) ); 
+  NC_SAFE_CALL( nc_put_vara_float(ncid, varids[1], starts, sizes, phi) ); 
+  NC_SAFE_CALL( nc_put_vara_float(ncid, varids[2], starts, sizes, re) ); 
+  NC_SAFE_CALL( nc_put_vara_float(ncid, varids[3], starts, sizes, im) ); 
+  // NC_SAFE_CALL( nc_put_vara_float(ncid, varids[4], starts, sizes, _Jx) ); 
+  // NC_SAFE_CALL( nc_put_vara_float(ncid, varids[5], starts, sizes, _Jy) ); 
+  // NC_SAFE_CALL( nc_put_vara_float(ncid, varids[6], starts, sizes, _Jz) ); 
 
   NC_SAFE_CALL( nc_close(ncid) );
 

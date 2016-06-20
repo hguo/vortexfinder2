@@ -19,7 +19,7 @@ public:
   int Dimensions() const {return 2;}
 
 public:
-  CellIdType Pos2CellId(const double X[]) const; 
+  CellIdType Pos2CellId(const float X[]) const; 
 };
 
 #endif

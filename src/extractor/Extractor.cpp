@@ -31,11 +31,12 @@ typedef struct {
   int slot;
 } extractor_thread_t;
 
-pthread_mutex_t mutex;
+static pthread_mutex_t mutex;
 
 VortexExtractor::VortexExtractor() :
   _dataset(NULL), 
   _gauge(false), 
+  _vfgpu_ctx(NULL),
   _archive(false), 
   _gpu(false),
   _pertubation(0),
@@ -59,8 +60,8 @@ VortexExtractor::~VortexExtractor()
   pthread_mutex_destroy(&mutex);
 
 #ifdef WITH_CUDA
-  if (_gpu)
-    vfgpu_destroy_data();
+  if (_gpu && _vfgpu_ctx)
+    vfgpu_destroy_ctx(_vfgpu_ctx);
 #endif
 }
 
@@ -95,7 +96,7 @@ void VortexExtractor::SetPertubation(float p)
   _pertubation = p;
 }
 
-void VortexExtractor::SetExtentThreshold(double threshold)
+void VortexExtractor::SetExtentThreshold(float threshold)
 {
   _extent_threshold = threshold;
 }
@@ -216,7 +217,7 @@ bool VortexExtractor::LoadPuncturedFaces(int slot)
   return true;
 }
 
-void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType chirality, const double pos[])
+void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType chirality, const float pos[])
 {
   pthread_mutex_lock(&mutex);
   
@@ -224,7 +225,7 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType ch
   PuncturedFace pf;
 
   pf.chirality = chirality;
-  memcpy(pf.pos, pos, sizeof(double)*3);
+  memcpy(pf.pos, pos, sizeof(float)*3);
 
   if (slot == 0) _punctured_faces[id] = pf;
   else _punctured_faces1[id] = pf;
@@ -264,7 +265,7 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType ch
   pthread_mutex_unlock(&mutex);
 }
 
-void VortexExtractor::AddPuncturedEdge(EdgeIdType id, ChiralityType chirality, double t)
+void VortexExtractor::AddPuncturedEdge(EdgeIdType id, ChiralityType chirality, float t)
 {
   pthread_mutex_lock(&mutex);
   
@@ -291,11 +292,11 @@ void VortexExtractor::AddPuncturedEdge(EdgeIdType id, ChiralityType chirality, d
   pthread_mutex_unlock(&mutex);
 }
   
-bool VortexExtractor::FindSpaceTimeEdgeZero(const double re[], const double im[], double &t) const
+bool VortexExtractor::FindSpaceTimeEdgeZero(const float re[], const float im[], float &t) const
 {
   return true; // save time
 
-  double p[2];
+  float p[2];
   if (!find_zero_unit_quad_bilinear(re, im, p))
     if (!find_zero_unit_quad_barycentric(re, im, p))
       return false;
@@ -321,7 +322,7 @@ void VortexExtractor::RelateOverTime()
     
     std::list<FaceIdType> faces_to_visit;
     std::list<int> faces_to_visit_chirality; // face chirality
-    std::list<double> faces_to_visit_time;
+    std::list<float> faces_to_visit_time;
     std::set<FaceIdType> faces_visited;
     std::set<EdgeIdType> edges_visited;
     
@@ -330,12 +331,12 @@ void VortexExtractor::RelateOverTime()
     faces_to_visit_time.push_back(0);
       
     std::map<FaceIdType, FaceIdType> parent_map;
-    std::map<FaceIdType, std::pair<EdgeIdType, double> > parent_edge_map;
+    std::map<FaceIdType, std::pair<EdgeIdType, float> > parent_edge_map;
 
     while (!faces_to_visit.empty()) {
       FaceIdType current = faces_to_visit.front();
       int current_chirality = faces_to_visit_chirality.front();
-      double current_time = faces_to_visit_time.front();
+      float current_time = faces_to_visit_time.front();
 
       faces_to_visit.pop_front();
       faces_to_visit_chirality.pop_front();
@@ -352,7 +353,7 @@ void VortexExtractor::RelateOverTime()
         related.push_back(current);
 #if 0 // for debug purposes, print traverse history
         std::list<FaceIdType> history_faces;
-        std::list<std::tuple<EdgeIdType, double> > history_edges;
+        std::list<std::tuple<EdgeIdType, float> > history_edges;
 
         history_faces.push_back(current);
         std::map<FaceIdType, FaceIdType>::iterator it = parent_map.find(current);
@@ -364,7 +365,7 @@ void VortexExtractor::RelateOverTime()
 
         if (history_faces.size() > 1) {
           int i=0;
-          std::list<std::tuple<EdgeIdType, double> >::iterator it1 = history_edges.begin();
+          std::list<std::tuple<EdgeIdType, float> >::iterator it1 = history_edges.begin();
           for (std::list<FaceIdType>::iterator it = history_faces.begin(); 
                it != history_faces.end(); it ++) 
           {
@@ -474,7 +475,7 @@ void VortexExtractor::TraceOverSpace(int slot)
     slot == 0 ? _punctured_faces : _punctured_faces1;
   const MeshGraph *mg = _dataset->MeshGraph();
   
-  fprintf(stderr, "tracing over space, #pcs=%ld, #pfs=%ld.\n", pcs.size(), pfs.size());
+  // fprintf(stderr, "tracing over space, #pcs=%ld, #pfs=%ld.\n", pcs.size(), pfs.size());
  
 #if 0
   for (std::map<CellIdType, PuncturedCell>::iterator it = pcs.begin(); it != pcs.end(); it ++) {
@@ -530,8 +531,8 @@ void VortexExtractor::TraceOverSpace(int slot)
     visited.clear();
 
     // fprintf(stderr, "#ordinary=%ld, #special=%ld\n", ordinary_pcells.size(), special_pcells.size());
-    if (special_pcells.size()>0) 
-      fprintf(stderr, "SPECIAL\n");
+    // if (special_pcells.size()>0) 
+    //   fprintf(stderr, "SPECIAL\n");
 
     /// 2. trace vortex lines
     VortexObject vobj; 
@@ -631,7 +632,7 @@ void VortexExtractor::TraceOverSpace(int slot)
     vobjs.push_back(vobj);
   }
 
-  fprintf(stderr, "#vortex_objs=%ld\n", vobjs.size());
+  // fprintf(stderr, "#vortex_objs=%ld\n", vobjs.size());
 }
 
 void VortexExtractor::VortexObjectsToVortexLines(
@@ -788,7 +789,8 @@ void VortexExtractor::RotateTimeSteps()
   _vortex_lines.swap( _vortex_lines1 );
 
 #if WITH_CUDA
-  vfgpu_rotate_timesteps();
+  if (_gpu)
+    vfgpu_rotate_timesteps(_vfgpu_ctx);
 #endif
 }
 
@@ -796,14 +798,20 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
 {
 #if WITH_CUDA
   GLGPU3DDataset *ds = (GLGPU3DDataset*)_dataset;
-  const int mesh_type = ds->MeshType();
+  const int meshtype = ds->MeshType();
+
+  if (_vfgpu_ctx == NULL) {
+    _vfgpu_ctx = vfgpu_create_ctx();
+    vfgpu_set_meshtype(_vfgpu_ctx, meshtype);
+    vfgpu_set_enable_count_lines_in_cell(_vfgpu_ctx, true); // FIXME
+  }
 
   GLHeader h;
-  double *rho, *phi, *re, *im, *J;
+  float *rho, *phi, *re, *im, *J;
   ds->GetDataArray(h, &rho, &phi, &re, &im, &J, slot);
   const int count = h.dims[0] * h.dims[1] * h.dims[2];
 
-  gpu_hdr_t gh;
+  vfgpu_hdr_t gh;
 
   for (int i=0; i<3; i++) {
     gh.d[i] = h.dims[i];
@@ -816,22 +824,7 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
   gh.count = count;
   gh.Kx = h.Kex;
 
-  float *re1 = (float*)malloc(sizeof(float)*count), 
-        *im1 = (float*)malloc(sizeof(float)*count);
-
-  for (int i=0; i<count; i++) {
-    re1[i] = re[i];
-    im1[i] = im[i];
-  }
-
-  vfgpu_upload_data(
-    slot,
-    gh,
-    re1, 
-    im1);
-
-  free(re1);
-  free(im1);
+  vfgpu_upload_data(_vfgpu_ctx, slot, gh, re, im);
  
 #if WITH_CXX11
   typedef std::chrono::high_resolution_clock clock;
@@ -839,17 +832,35 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
 #endif
 
   int pfcount; 
-  gpu_pf_t *pf; 
-  vfgpu_extract_faces(slot, &pfcount, &pf, _pertubation, mesh_type);
+  vfgpu_pf_t *pf; 
+ 
+#if 0 // density estimate
+  vfgpu_set_pertubation(_vfgpu_ctx, 0.05);
+  vfgpu_clear_count_lines_in_cell(_vfgpu_ctx);
+  vfgpu_set_enable_count_lines_in_cell(_vfgpu_ctx, true);
+  for (int i=0; i<256; i++) {
+    vfgpu_extract_faces(_vfgpu_ctx, slot);
+    vfgpu_count_lines_in_cell(_vfgpu_ctx, slot);
+  }
+  vfgpu_dump_count_lines_in_cell(_vfgpu_ctx);
+
+  vfgpu_set_pertubation(_vfgpu_ctx, 0);
+  vfgpu_set_enable_count_lines_in_cell(_vfgpu_ctx, false);
+  vfgpu_extract_faces(_vfgpu_ctx, slot);
+  vfgpu_get_pflist(_vfgpu_ctx, &pfcount, &pf);
+#else
+  vfgpu_extract_faces(_vfgpu_ctx, slot);
+  vfgpu_get_pflist(_vfgpu_ctx, &pfcount, &pf);
+#endif
 
 #if WITH_CXX11
   auto t1 = clock::now();
-  double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
+  float elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
   fprintf(stderr, "t_fgpu=%f\n", elapsed);
 #endif
 
   for (int i=0; i<pfcount; i++) {
-    double pos[3] = {pf[i].pos[0], pf[i].pos[1], pf[i].pos[2]};
+    float pos[3] = {pf[i].pos[0], pf[i].pos[1], pf[i].pos[2]};
     AddPuncturedFace(pf[i].fid, slot, pf[i].chirality, pos);
   }
 #endif
@@ -859,10 +870,9 @@ void VortexExtractor::ExtractEdges_GPU()
 {
 #if WITH_CUDA
   GLGPU3DDataset *ds = (GLGPU3DDataset*)_dataset;
-  const int mesh_type = ds->MeshType();
 
   GLHeader h;
-  double *rho[2], *phi[2], *re[2], *im[2], *J[2];
+  float *rho[2], *phi[2], *re[2], *im[2], *J[2];
   for (int i=0; i<2; i++) 
     ds->GetDataArray(h, &rho[i], &phi[i], &re[i], &im[i], &J[i], i);
 
@@ -883,12 +893,13 @@ void VortexExtractor::ExtractEdges_GPU()
 #endif
 
   int pecount; 
-  gpu_pe_t *pe; 
-  vfgpu_extract_edges(&pecount, &pe, mesh_type);
+  vfgpu_pe_t *pe; 
+  vfgpu_extract_edges(_vfgpu_ctx);
+  vfgpu_get_pelist(_vfgpu_ctx, &pecount, &pe); 
 
 #if WITH_CXX11
   auto t1 = clock::now();
-  double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
+  float elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
   fprintf(stderr, "t_egpu=%f\n", elapsed);
 #endif
 
@@ -939,7 +950,7 @@ void VortexExtractor::ExtractFaces(int slot)
  
 #if WITH_CXX11
   auto t1 = clock::now();
-  double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
+  float elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
   fprintf(stderr, "t_f=%f\n", elapsed);
 #endif
 }
@@ -1003,7 +1014,7 @@ void VortexExtractor::ExtractEdges()
   
 #if WITH_CXX11
   auto t1 = clock::now();
-  double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
+  float elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
   fprintf(stderr, "t_e=%f\n", elapsed);
 #endif
 }
@@ -1018,22 +1029,22 @@ void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
     return;
   }
 
-  double X[4][3], A[4][3];
-  double rho[4], phi[4], re[4], im[4];
+  float X[4][3], A[4][3];
+  float rho[4], phi[4], re[4], im[4];
   ds->GetSpaceTimeEdgeValues(e, X, A, rho, phi, re, im);
 
-  const double dt = ds->Time(1) - ds->Time(0);
-  double li[4] = {
+  const float dt = ds->Time(1) - ds->Time(0);
+  float li[4] = {
     ds->LineIntegral(X[0], X[1], A[0], A[1]), 
     0, 
     // 0.5 * (ds->Kex(1) + ds->Kex(0)) * dt, 
     ds->LineIntegral(X[1], X[0], A[2], A[3]), 
     0}; 
     // -0.5 * (ds->Kex(1) + ds->Kex(0)) * dt};
-  double qp[4] = {
+  float qp[4] = {
     ds->QP(X[0], X[1]), 0, 
     ds->QP(X[1], X[0]), 0};
-  double delta[4] = {
+  float delta[4] = {
     phi[1] - phi[0],
     phi[2] - phi[1],
     phi[3] - phi[2],
@@ -1044,8 +1055,8 @@ void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
     if (_gauge) delta[i] = mod2pi1(delta[i] - li[i] + qp[i]);
     else delta[i] = mod2pi1(delta[i] + qp[i]);
 
-  double phase_shift = -(delta[0] + delta[1] + delta[2] + delta[3]);
-  double critera = phase_shift / (2*M_PI);
+  float phase_shift = -(delta[0] + delta[1] + delta[2] + delta[3]);
+  float critera = phase_shift / (2*M_PI);
 
   ChiralityType chirality;
   if (critera > 0.5) chirality = 1; 
@@ -1062,7 +1073,7 @@ void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
   }
 
   // find zero
-  double t = 0;
+  float t = 0;
   if (FindSpaceTimeEdgeZero(re, im, t)) {
     // fprintf(stderr, "punctured edge: eid=%u, chirality=%d, t=%f\n", 
     //     id, chirality, t);
@@ -1081,16 +1092,16 @@ int VortexExtractor::ExtractFace(FaceIdType id, int slot)
 
   if (!f.Valid()) return 0;
 
-  double X[nnodes][3], A[nnodes][3];
-  double rho[nnodes], phi[nnodes], re[nnodes], im[nnodes];
+  float X[nnodes][3], A[nnodes][3];
+  float rho[nnodes], phi[nnodes], re[nnodes], im[nnodes];
   ds->GetFaceValues(f, slot, X, A, rho, phi, re, im);
 
   // calculating phase shift
-  double delta[nnodes], phase_shift = 0;
+  float delta[nnodes], phase_shift = 0;
   for (int i=0; i<nnodes; i++) {
     int j = (i+1) % nnodes;
     delta[i] = phi[j] - phi[i]; 
-    double li = ds->LineIntegral(X[i], X[j], A[i], A[j]), 
+    float li = ds->LineIntegral(X[i], X[j], A[i], A[j]), 
            qp = ds->QP(X[i], X[j]);
     if (_gauge) 
       // delta[i] = mod2pi1(delta[i] - li + qp);
@@ -1101,7 +1112,7 @@ int VortexExtractor::ExtractFace(FaceIdType id, int slot)
   }
 
   // check if punctured
-  double critera = phase_shift / (2*M_PI);
+  float critera = phase_shift / (2*M_PI);
   if (fabs(critera)<0.5) return 0; // not punctured
 
   // chirality
@@ -1117,7 +1128,7 @@ int VortexExtractor::ExtractFace(FaceIdType id, int slot)
   }
 
   // find zero
-  double pos[3];
+  float pos[3];
   if (FindFaceZero(nnodes, X, re, im, pos)) {
     AddPuncturedFace(id, slot, chirality, pos);
     // fprintf(stderr, "pos={%f, %f, %f}, chi=%d\n", pos[0], pos[1], pos[2], chirality);
@@ -1152,12 +1163,12 @@ void VortexExtractor::execute_thread(int nthreads, int tid, int type, int slot)
   } else assert(false);
 }
 
-bool VortexExtractor::FindFaceZero(int n, const double X_[][3], const double re[], const double im[], double pos[3]) const
+bool VortexExtractor::FindFaceZero(int n, const float X_[][3], const float re[], const float im[], float pos[3]) const
 {
-  const double epsilon = 0.05;
+  const float epsilon = 0.05;
   bool succ = false;
 
-  double X[4][3];
+  float X[4][3];
   for (int i=0; i<4; i++)
     for (int j=0; j<3; j++)
       X[i][j] = X_[i][j];

@@ -34,10 +34,10 @@ public:
   void SerializeDataInfoToString(std::string& buf) const;
 
 public:
-  void GetFaceValues(const CFace&, int slot, double X[][3], double A[][3], double rho[], double phi[]) const;
-  void GetSpaceTimeEdgeValues(const CEdge&, double X[][3], double A[][3], double rho[], double phi[]) const;
+  void GetFaceValues(const CFace&, int slot, float X[][3], float A[][3], float rho[], float phi[]) const;
+  void GetSpaceTimeEdgeValues(const CEdge&, float X[][3], float A[][3], float rho[], float phi[]) const;
   
-  CellIdType Pos2CellId(const double X[]) const; //!< returns the elemId for a given position
+  CellIdType Pos2CellId(const float X[]) const; //!< returns the elemId for a given position
   bool OnBoundary(ElemIdType id) const;
 
 public:
@@ -53,23 +53,23 @@ public:
   unsigned int Az_var() const {return _Az_var;}
 
 public:
-  double Rho(NodeIdType, int slot) const;
-  double Phi(NodeIdType, int slot) const;
+  float Rho(NodeIdType, int slot) const;
+  float Phi(NodeIdType, int slot) const;
 
-  bool Pos(NodeIdType, double X[3]) const;
-  bool Psi(const double X[3], double &re, double &im, int slot) const;
-  // bool Psi(NodeIdType, double &re, double &im, int slot) const;
-  bool A(const double X[3], double A[3], int slot) const;
-  bool A(NodeIdType, double A[3], int slot) const;
-  bool Supercurrent(const double X[3], double J[3], int slot) const;
-  bool Supercurrent(NodeIdType, double J[3], int slot) const;
+  bool Pos(NodeIdType, float X[3]) const;
+  bool Psi(const float X[3], float &re, float &im, int slot) const;
+  // bool Psi(NodeIdType, float &re, float &im, int slot) const;
+  bool A(const float X[3], float A[3], int slot) const;
+  bool A(NodeIdType, float A[3], int slot) const;
+  bool Supercurrent(const float X[3], float J[3], int slot) const;
+  bool Supercurrent(NodeIdType, float J[3], int slot) const;
 
 private: 
   void ProbeBoundingBox();
   void LoadTimeStep_(int timestep);
 
 private:
-  const libMesh::Elem* LocateElemCoherently(const double X[3]) const; // not thread-safe
+  const libMesh::Elem* LocateElemCoherently(const float X[3]) const; // not thread-safe
 
 private:
   libMesh::UnstructuredMesh *_mesh;
