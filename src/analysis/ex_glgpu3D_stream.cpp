@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdio>
 #include <cassert>
+#include <cstring>
 #include <vector>
 #include <queue>
 #include <sys/types.h>
@@ -9,6 +10,13 @@
 #include <unistd.h>
 #include "io/GLGPU3DDataset.h"
 #include "extractor/Extractor.h"
+
+#if WITH_CXX11
+#include <thread>
+#include <chrono>
+#else
+#include <boost/thread.hpp>
+#endif
 
 enum {
   VFGPU_MESH_HEX = 0,
@@ -120,7 +128,12 @@ int main(int argc, char **argv)
   FILE *fp = fopen("/tmp/glgpu.fifo", "rb");
   assert(fp);
 
-  const int nthreads = 2; // TODO
+#if WITH_CXX11
+  const int nthreads = std::thread::hardware_concurrency() - 1;
+#else
+  const int nthreads = boost::thread::hardware_concurrency() - 1;
+#endif
+
   pthread_t threads[nthreads];
   for (int i=0; i<nthreads; i++)
     pthread_create(&threads[i], NULL, exec_thread, NULL);
