@@ -125,7 +125,15 @@ int main(int argc, char **argv)
   vfgpu_hdr_t hdr;
   int pfcount, pfcount_max=0;
 
-  FILE *fp = fopen("/tmp/glgpu.fifo", "rb");
+  std::string filename; 
+  if (argc > 1) filename = argv[1];
+  else filename = "/tmp/glgpu.fifo", "rb";
+
+  FILE *fp = fopen(filename.c_str(), "rb");
+  if (fp == NULL) {
+    fprintf(stderr, "cannot open pipe %s\n", filename.c_str());
+    exit(1);
+  }
   assert(fp);
 
 #if WITH_CXX11
