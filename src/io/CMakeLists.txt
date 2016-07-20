@@ -16,9 +16,11 @@ endif ()
 add_library (glio STATIC ${io_sources})
 
 if (WITH_LIBMESH)
-  target_link_libraries (glio PUBLIC glcommon ${LIBMESH_LIBRARY} ${NETCDF_LIBRARY})
+  target_link_libraries (glio PUBLIC glcommon glpp ${LIBMESH_LIBRARY} ${NETCDF_LIBRARY})
 else ()
-  target_link_libraries (glio PUBLIC glcommon)
+  target_link_libraries (glio PUBLIC glcommon glpp)
 endif ()
 
 #install (TARGETS glio DESTINATION ${VTK_INSTALL_LIBRARY_DIR})
+
+add_subdirectory (glpp)

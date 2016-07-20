@@ -7,7 +7,7 @@
 #include "vtkInformationVector.h"
 #include "vtkObjectFactory.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
-#include "GL_post_process.h"
+#include "io/glpp/GL_post_process.h"
 #include <cassert>
 
 vtkStandardNewMacro(vtkGLGPUSupercurrentFilter);
