@@ -127,7 +127,7 @@ int main(int argc, char **argv)
 
   std::string filename; 
   if (argc > 1) filename = argv[1];
-  else filename = "/tmp/glgpu.fifo", "rb";
+  else filename = "/tmp/glgpu.fifo";
 
   FILE *fp = fopen(filename.c_str(), "rb");
   if (fp == NULL) {
