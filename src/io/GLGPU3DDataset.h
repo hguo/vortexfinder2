@@ -11,7 +11,7 @@ public:
   GLGPU3DDataset(); 
   ~GLGPU3DDataset();
   
-  void ComputeSupercurrentField(int slot=0);
+  // void ComputeSupercurrentField(int slot=0);
 
 public: // mesh graph
   void SetMeshType(int); // hex or tet

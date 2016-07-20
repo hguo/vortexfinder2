@@ -28,7 +28,7 @@ bool GLGPU_IO_Helper_ReadBDAT(
     const std::string& filename, 
     GLHeader &h,
     float **rho, float **phi, float **re, float **im, float **J,
-    bool header_only)
+    bool header_only, bool supercurrent)
 {
   BDATReader *reader = new BDATReader(filename); 
   if (!reader->Valid()) {
@@ -167,6 +167,9 @@ bool GLGPU_IO_Helper_ReadBDAT(
       h.cell_lengths[i] = h.lengths[i] / (h.dims[i] - 1);
   }
 
+  if (supercurrent)
+    GLGPU_IO_Helper_ComputeSupercurrent(h, *re, *im, J);
+
   delete reader;
   return true;
 }
@@ -175,7 +178,7 @@ bool GLGPU_IO_Helper_ReadLegacy(
     const std::string& filename, 
     GLHeader& h,
     float **rho, float **phi, float **re, float **im, float **J,
-    bool header_only)
+    bool header_only, bool supercurrent)
 {
   FILE *fp = fopen(filename.c_str(), "rb");
   if (!fp) return false;
@@ -319,6 +322,9 @@ bool GLGPU_IO_Helper_ReadLegacy(
   } else if (datatype == GLGPU_TYPE_DOUBLE) {
     assert(false);
   }
+  
+  if (supercurrent)
+    GLGPU_IO_Helper_ComputeSupercurrent(h, *re, *im, J);
 
   fclose(fp);
   return true;
@@ -412,11 +418,12 @@ void GLGPU_IO_Helper_ComputeSupercurrent(
   assert(pp->Jx != NULL);
 
   *J = (float*)malloc(sizeof(float)*arraySize*3);
+  float *j = *J;
   for (int i=0; i<arraySize; i++) {
-    *J[i*3] = pp->Jx[i];
-    *J[i*3+1] = pp->Jy[i];
-    *J[i*3+2] = pp->Jz[i];
+    j[i*3] = pp->Jx[i];
+    j[i*3+1] = pp->Jy[i];
+    j[i*3+2] = pp->Jz[i];
   }
-  
+
   delete pp;
 }

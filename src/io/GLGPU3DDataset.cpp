@@ -118,6 +118,7 @@ std::vector<ElemIdType> GLGPU3DDataset::GetNeighborIds(ElemIdType elem_id) const
 }
 #endif
 
+#if 0
 void GLGPU3DDataset::ComputeSupercurrentField(int slot)
 {
   const int nvoxels = dims()[0]*dims()[1]*dims()[2];
@@ -162,6 +163,7 @@ void GLGPU3DDataset::ComputeSupercurrentField(int slot)
     }
   }
 }
+#endif
 
 bool GLGPU3DDataset::Psi(const float X[3], float &re, float &im) const
 {
