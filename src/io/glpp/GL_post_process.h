@@ -102,7 +102,6 @@ typedef struct {
 //internally double precision is used
 
 class GLPP {
-  friend class vtkGLGPUSupercurrentFilter;    
 public:
     
     GLPP();
@@ -158,7 +157,7 @@ public:
     void delaunay_analysis();
 
     
-private:
+// private:
     int numinputfiles;  //number of input files
     string *inputfiles; //name of input files
     string outputfileprefix; //used only for common output from all input files, e.g. XDMF files

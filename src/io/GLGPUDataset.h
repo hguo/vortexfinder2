@@ -30,7 +30,7 @@ private:
   bool OpenBDATDataFile(const std::string& filename, int slot=0);
   bool OpenLegacyDataFile(const std::string& filename, int slot=0);
 
-  virtual void ComputeSupercurrentField(int slot=0) = 0;
+  void ComputeSupercurrentField(int slot=0);
 
 protected:
   void Nid2Idx(NodeIdType id, int *idx) const; 

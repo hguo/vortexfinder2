@@ -1,5 +1,6 @@
 #include "def.h"
 #include "GLGPU_IO_Helper.h"
+#include "glpp/GL_post_process.h"
 #include <cmath>
 #include <cassert>
 #include <cstdio>
@@ -26,7 +27,7 @@ static const char GLGPU_LEGACY_TAG[] = "CA02";
 bool GLGPU_IO_Helper_ReadBDAT(
     const std::string& filename, 
     GLHeader &h,
-    float **rho, float **phi, float **re, float **im, 
+    float **rho, float **phi, float **re, float **im, float **J,
     bool header_only)
 {
   BDATReader *reader = new BDATReader(filename); 
@@ -173,7 +174,7 @@ bool GLGPU_IO_Helper_ReadBDAT(
 bool GLGPU_IO_Helper_ReadLegacy(
     const std::string& filename, 
     GLHeader& h,
-    float **rho, float **phi, float **re, float **im, 
+    float **rho, float **phi, float **re, float **im, float **J,
     bool header_only)
 {
   FILE *fp = fopen(filename.c_str(), "rb");
@@ -375,4 +376,47 @@ bool GLGPU_IO_Helper_WriteNetCDF(
   assert(false);
   return false;
 #endif
+}
+
+void GLGPU_IO_Helper_ComputeSupercurrent(
+    GLHeader &h, const float *re, const float *im, float **J)
+{
+  const int arraySize = h.dims[0] * h.dims[1] * h.dims[2];
+  
+  // GLPP
+  GLPP *pp = new GLPP;
+  // FIXME!
+  pp->dim = h.ndims;
+  pp->Nx = h.dims[0];
+  pp->Ny = h.dims[1];
+  pp->Nz = h.dims[2];
+  pp->NN = arraySize;
+  pp->btype = h.dtype;
+  pp->Lx = h.lengths[0];
+  pp->Ly = h.lengths[1];
+  pp->Lz = h.lengths[2];
+  pp->dx = h.cell_lengths[0];
+  pp->dy = h.cell_lengths[1];
+  pp->dz = h.cell_lengths[2];
+  pp->Bx = h.B[0];
+  pp->By = h.B[1]; 
+  pp->Bz = h.B[2];
+  pp->KEx = h.Kex;
+  pp->psi = (COMPLEX*)malloc(sizeof(COMPLEX)*arraySize);
+  for (int i=0; i<arraySize; i++) {
+    pp->psi[i].re = re[i];
+    pp->psi[i].im = im[i];
+  }
+
+  pp->calc_current();
+  assert(pp->Jx != NULL);
+
+  *J = (float*)malloc(sizeof(float)*arraySize*3);
+  for (int i=0; i<arraySize; i++) {
+    *J[i*3] = pp->Jx[i];
+    *J[i*3+1] = pp->Jy[i];
+    *J[i*3+2] = pp->Jz[i];
+  }
+  
+  delete pp;
 }

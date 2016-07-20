@@ -1,6 +1,7 @@
 #include "GLGPUDataset.h"
 #include "GLGPU_IO_Helper.h"
 #include "common/Utils.hpp"
+#include "glpp/GL_post_process.h"
 #include <cassert>
 #include <cmath>
 #include <climits>
@@ -232,7 +233,7 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string& filename, int slot)
   free1(&_J[slot]);
 
   if (!::GLGPU_IO_Helper_ReadLegacy(
-        filename, _h[slot], &_rho[slot], &_phi[slot], &_re[slot], &_im[slot]))
+        filename, _h[slot], &_rho[slot], &_phi[slot], &_re[slot], &_im[slot], &_J[slot]))
     return false;
   else 
     return true;
@@ -250,7 +251,7 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
   free1(&_J[slot]);
 
   if (!::GLGPU_IO_Helper_ReadBDAT(
-        filename, _h[slot], &_rho[slot], &_phi[slot], &_re[slot], &_im[slot]))
+        filename, _h[slot], &_rho[slot], &_phi[slot], &_re[slot], &_im[slot], &_J[slot]))
     return false;
   else 
     return true;
@@ -359,6 +360,10 @@ bool GLGPUDataset::Pos(NodeIdType id, float X[3]) const
   Idx2Pos(idx, X);
 
   return true;
+}
+
+void GLGPUDataset::ComputeSupercurrentField(int slot)
+{
 }
 
 bool GLGPUDataset::Supercurrent(const float X[2], float J[3], int slot) const
