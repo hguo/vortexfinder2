@@ -2,6 +2,15 @@
 #include "io/GLDataset.h"
 #include "common/Utils.hpp"
 
+#if WITH_VTK
+#include <vtkSmartPointer.h>
+#include <vtkPointData.h>
+#include <vtkPolyData.h>
+#include <vtkPolyLine.h>
+#include <vtkCellArray.h>
+#include <vtkXMLPolyDataWriter.h>
+#endif
+
 FieldLineTracer::FieldLineTracer()
 {
 
@@ -19,14 +28,48 @@ void FieldLineTracer::SetDataset(const GLDataset* ds)
 
 void FieldLineTracer::WriteFieldLines(const std::string& filename)
 {
+#if WITH_VTK
+  vtkSmartPointer<vtkPolyData> polyData = vtkPolyData::New();
+  vtkSmartPointer<vtkPoints> points = vtkPoints::New();
+  vtkSmartPointer<vtkCellArray> cells = vtkCellArray::New();
+
+  int nv = 0;
+  for (int i=0; i<_fieldlines.size(); i++) {
+    const FieldLine& l = _fieldlines[i];
+    
+    vtkSmartPointer<vtkPolyLine> polyLine = vtkPolyLine::New();
+    polyLine->GetPointIds()->SetNumberOfIds(l.size()/3);
+
+    int j = 0;
+    for (FieldLine::const_iterator it = l.begin(); it != l.end(); ) {
+      double p[3] = {*(it++), *(it++), *(it++)};
+      // double p[3] = {l[i*3], l[i*3+1], l[i*3+2]};
+      points->InsertNextPoint(p);
+      polyLine->GetPointIds()->SetId(j, j+nv);
+      j ++;
+    }
+    cells->InsertNextCell(polyLine);
+    nv += l.size()/3;
+  }
+
+  polyData->SetPoints(points);
+  polyData->SetLines(cells);
+  
+  vtkSmartPointer<vtkXMLPolyDataWriter> writer = vtkXMLPolyDataWriter::New();
+  writer->SetFileName(filename.c_str());
+  writer->SetInputData(polyData);
+  writer->Write();
+#else
   ::WriteFieldLines(filename, _fieldlines);
+#endif
 }
 
 void FieldLineTracer::Trace()
 {
   fprintf(stderr, "Trace..\n");
 
-  const int nseeds[3] = {8, 9, 8};
+  // const int nseeds[3] = {8, 9, 8};
+  const int nseeds[3] = {64, 8, 8};
   const float span[3] = {
     _ds->Lengths()[0]/(nseeds[0]-1), 
     _ds->Lengths()[1]/(nseeds[1]-1), 
@@ -47,8 +90,8 @@ void FieldLineTracer::Trace()
 
 void FieldLineTracer::Trace(const float seed[3])
 {
-  static const int max_length = 1024; 
-  const float h = 0.05; 
+  static const int max_length = INT_MAX; 
+  const float h = 0.25; 
   float X[3] = {seed[0], seed[1], seed[2]}; 
 
   FieldLine line;
@@ -71,7 +114,9 @@ void FieldLineTracer::Trace(const float seed[3])
     if (!RK1(X, -h)) break;
   }
 
-  _fieldlines.push_back(line);
+  // fprintf(stderr, "length=%d\n", line.size()/3);
+  if (line.size()/3 > 10)
+    _fieldlines.push_back(line);
 }
 
 bool FieldLineTracer::Supercurrent(const float *X, float *J) const
@@ -83,7 +128,15 @@ template <typename T>
 bool FieldLineTracer::RK1(T *X, T h)
 {
   T J[3]; 
-  if (!Supercurrent(X, J)) return false;
+  bool succ = Supercurrent(X, J);
+  if (!succ) return false;
+
+  const float threshold = 0.25;
+  float Jmag = sqrt(J[0]*J[0] + J[1]*J[1] + J[2]*J[2]);
+  if (Jmag < threshold) return false;
+
+  // fprintf(stderr, "X={%f, %f, %f}, J={%f, %f, %f}\n", 
+  //     X[0], X[1], X[2], J[0], J[1], J[2]);
 
   X[0] = X[0] + h*J[0]; 
   X[1] = X[1] + h*J[1]; 

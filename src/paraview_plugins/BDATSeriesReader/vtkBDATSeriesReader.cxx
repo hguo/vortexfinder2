@@ -70,11 +70,11 @@ int vtkBDATSeriesReader::RequestInformation(
     bool succ = false;
     if (!succ) {
       succ = GLGPU_IO_Helper_ReadBDAT(
-          FileNames[fidx], h, NULL, NULL, NULL, NULL, NULL, true);
+          FileNames[fidx], h, NULL, NULL, NULL, NULL, NULL, NULL, NULL, true);
     } 
     if (!succ) {
       succ = GLGPU_IO_Helper_ReadLegacy(
-          FileNames[fidx], h, NULL, NULL, NULL, NULL, NULL, true);
+          FileNames[fidx], h, NULL, NULL, NULL, NULL, NULL, NULL, NULL, true);
     }
     if (!succ) {
       fprintf(stderr, "cannot open file: %s\n", FileNames[fidx].c_str());
@@ -122,11 +122,11 @@ int vtkBDATSeriesReader::RequestData(
   bool succ = false;
   if (!succ) {
     succ = GLGPU_IO_Helper_ReadBDAT(
-        filename.c_str(), h, &rho, &phi, &re, &im, NULL);
+        filename.c_str(), h, &rho, &phi, &re, &im, NULL, NULL, NULL);
   }
   if (!succ) {
     succ = GLGPU_IO_Helper_ReadLegacy(
-        filename.c_str(), h, &rho, &phi, &re, &im, NULL);
+        filename.c_str(), h, &rho, &phi, &re, &im, NULL, NULL, NULL);
   }
   if (!succ)
   {

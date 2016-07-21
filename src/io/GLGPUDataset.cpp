@@ -30,7 +30,9 @@ GLGPUDataset::GLGPUDataset()
   memset(_phi, 0, sizeof(float*)*2);
   memset(_re, 0, sizeof(float*)*2);
   memset(_im, 0, sizeof(float*)*2);
-  memset(_J, 0, sizeof(float*)*2);
+  memset(_Jx, 0, sizeof(float*)*2);
+  memset(_Jy, 0, sizeof(float*)*2);
+  memset(_Jz, 0, sizeof(float*)*2);
 }
 
 GLGPUDataset::~GLGPUDataset()
@@ -40,7 +42,9 @@ GLGPUDataset::~GLGPUDataset()
     free1(&_phi[i]);
     free1(&_re[i]);
     free1(&_im[i]);
-    free1(&_J[i]);
+    free1(&_Jx[i]);
+    free1(&_Jy[i]);
+    free1(&_Jz[i]);
   }
 }
 
@@ -164,7 +168,8 @@ void GLGPUDataset::GetDataArray(GLHeader& h, float **rho, float **phi, float **r
   *phi = _phi[slot];
   *re = _re[slot]; 
   *im = _im[slot];
-  *J = _J[slot];
+  // *J = _J[slot];
+  *J = NULL;  // FIXME
 }
 
 bool GLGPUDataset::BuildDataFromArray(const GLHeader& h, const float *rho, const float *phi, const float *re, const float *im)
@@ -216,7 +221,9 @@ void GLGPUDataset::RotateTimeSteps()
   std::swap(_phi[0], _phi[1]);
   std::swap(_re[0], _re[1]);
   std::swap(_im[0], _im[1]);
-  std::swap(_J[0], _J[1]);
+  std::swap(_Jx[0], _Jx[1]);
+  std::swap(_Jy[0], _Jy[1]);
+  std::swap(_Jz[0], _Jz[1]);
 
   GLDataset::RotateTimeSteps();
 }
@@ -230,10 +237,12 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string& filename, int slot)
   free1(&_phi[slot]); 
   free1(&_re[slot]); 
   free1(&_im[slot]);
-  free1(&_J[slot]);
+  free1(&_Jx[slot]);
+  free1(&_Jy[slot]);
+  free1(&_Jz[slot]);
 
   if (!::GLGPU_IO_Helper_ReadLegacy(
-        filename, _h[slot], &_rho[slot], &_phi[slot], &_re[slot], &_im[slot], &_J[slot], false, _precompute_supercurrent))
+        filename, _h[slot], &_rho[slot], &_phi[slot], &_re[slot], &_im[slot], &_Jx[slot], &_Jy[slot], &_Jz[slot], false, _precompute_supercurrent))
     return false;
   else 
     return true;
@@ -248,10 +257,12 @@ bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
   free1(&_phi[slot]); 
   free1(&_re[slot]); 
   free1(&_im[slot]); 
-  free1(&_J[slot]);
+  free1(&_Jx[slot]);
+  free1(&_Jy[slot]);
+  free1(&_Jz[slot]);
 
   if (!::GLGPU_IO_Helper_ReadBDAT(
-        filename, _h[slot], &_rho[slot], &_phi[slot], &_re[slot], &_im[slot], &_J[slot], false, _precompute_supercurrent))
+        filename, _h[slot], &_rho[slot], &_phi[slot], &_re[slot], &_im[slot], &_Jx[slot], &_Jy[slot], &_Jz[slot], false, _precompute_supercurrent))
     return false;
   else 
     return true;

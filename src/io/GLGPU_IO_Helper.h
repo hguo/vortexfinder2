@@ -7,17 +7,17 @@
 bool GLGPU_IO_Helper_ReadBDAT(
     const std::string& filename, 
     GLHeader &hdr,
-    float **rho, float **phi, float **re, float **im, float **J,
+    float **rho, float **phi, float **re, float **im, float **Jx, float **Jy, float **Jz,
     bool header_only=false, bool supercurrent=false);
 
 bool GLGPU_IO_Helper_ReadLegacy(
     const std::string& filename, 
     GLHeader &hdr, 
-    float **rho, float **phi, float **re, float **im, float **J,
+    float **rho, float **phi, float **re, float **im, float **Jx, float **Jy, float **Jz,
     bool header_only=false, bool supercurrent=false);
 
 void GLGPU_IO_Helper_ComputeSupercurrent(
-    GLHeader &h, const float *re, const float *im, float **J);
+    GLHeader &h, const float *re, const float *im, float **Jx, float **Jy, float **Jz);
 
 bool GLGPU_IO_Helper_ReadNetCDF(
     const std::string& filename, 

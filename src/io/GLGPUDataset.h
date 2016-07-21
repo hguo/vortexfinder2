@@ -24,7 +24,7 @@ public:
 
   bool BuildDataFromArray(const GLHeader&, const float *rho, const float *phi, const float *re, const float *im);
   void GetDataArray(GLHeader& h, float **rho, float **phi, float **re, float **im, float **J, int slot=0);
-  float *GetSupercurrentDataArray() const {return _J[0];} // FIXME
+  // float *GetSupercurrentDataArray() const {return _J[0];} // FIXME
   
 private:
   bool OpenBDATDataFile(const std::string& filename, int slot=0);
@@ -78,7 +78,7 @@ public:
 
 protected:
   float *_rho[2], *_phi[2], *_re[2], *_im[2];
-  float *_J[2]; // supercurrent
+  float *_Jx[2], *_Jy[2], *_Jz[2]; // supercurrent
 
   std::vector<std::string> _filenames; // filenames for different timesteps
 };

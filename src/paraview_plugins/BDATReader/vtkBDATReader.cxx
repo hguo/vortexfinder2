@@ -41,11 +41,11 @@ int vtkBDATReader::RequestInformation(
   bool succ = false;
   if (!succ) {
     succ = GLGPU_IO_Helper_ReadBDAT(
-        FileName, hdr, NULL, NULL, NULL, NULL, NULL, true); 
+        FileName, hdr, NULL, NULL, NULL, NULL, NULL, NULL, NULL, true); 
   } 
   if (!succ) {
     succ = GLGPU_IO_Helper_ReadLegacy(
-        FileName, hdr, NULL, NULL, NULL, NULL, NULL, true); 
+        FileName, hdr, NULL, NULL, NULL, NULL, NULL, NULL, NULL, true); 
   }
 
   GLdim = hdr.ndims;

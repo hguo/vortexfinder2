@@ -27,7 +27,7 @@ static const char GLGPU_LEGACY_TAG[] = "CA02";
 bool GLGPU_IO_Helper_ReadBDAT(
     const std::string& filename, 
     GLHeader &h,
-    float **rho, float **phi, float **re, float **im, float **J,
+    float **rho, float **phi, float **re, float **im, float **Jx, float **Jy, float **Jz,
     bool header_only, bool supercurrent)
 {
   BDATReader *reader = new BDATReader(filename); 
@@ -168,7 +168,7 @@ bool GLGPU_IO_Helper_ReadBDAT(
   }
 
   if (supercurrent)
-    GLGPU_IO_Helper_ComputeSupercurrent(h, *re, *im, J);
+    GLGPU_IO_Helper_ComputeSupercurrent(h, *re, *im, Jx, Jy, Jz);
 
   delete reader;
   return true;
@@ -177,7 +177,7 @@ bool GLGPU_IO_Helper_ReadBDAT(
 bool GLGPU_IO_Helper_ReadLegacy(
     const std::string& filename, 
     GLHeader& h,
-    float **rho, float **phi, float **re, float **im, float **J,
+    float **rho, float **phi, float **re, float **im, float **Jx, float **Jy, float **Jz,
     bool header_only, bool supercurrent)
 {
   FILE *fp = fopen(filename.c_str(), "rb");
@@ -324,7 +324,7 @@ bool GLGPU_IO_Helper_ReadLegacy(
   }
   
   if (supercurrent)
-    GLGPU_IO_Helper_ComputeSupercurrent(h, *re, *im, J);
+    GLGPU_IO_Helper_ComputeSupercurrent(h, *re, *im, Jx, Jy, Jz);
 
   fclose(fp);
   return true;
@@ -385,7 +385,7 @@ bool GLGPU_IO_Helper_WriteNetCDF(
 }
 
 void GLGPU_IO_Helper_ComputeSupercurrent(
-    GLHeader &h, const float *re, const float *im, float **J)
+    GLHeader &h, const float *re, const float *im, float **Jx, float **Jy, float **Jz)
 {
   const int arraySize = h.dims[0] * h.dims[1] * h.dims[2];
   
@@ -417,12 +417,14 @@ void GLGPU_IO_Helper_ComputeSupercurrent(
   pp->calc_current();
   assert(pp->Jx != NULL);
 
-  *J = (float*)malloc(sizeof(float)*arraySize*3);
-  float *j = *J;
+  *Jx = (float*)malloc(sizeof(float)*arraySize);
+  *Jy = (float*)malloc(sizeof(float)*arraySize);
+  *Jz = (float*)malloc(sizeof(float)*arraySize);
+
   for (int i=0; i<arraySize; i++) {
-    j[i*3] = pp->Jx[i];
-    j[i*3+1] = pp->Jy[i];
-    j[i*3+2] = pp->Jz[i];
+    (*Jx)[i] = pp->Jx[i];
+    (*Jy)[i] = pp->Jy[i];
+    (*Jz)[i] = pp->Jz[i];
   }
 
   delete pp;

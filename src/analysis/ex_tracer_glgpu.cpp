@@ -22,7 +22,7 @@ int main(int argc, char **argv)
   FieldLineTracer tracer;
   tracer.SetDataset(&ds);
   tracer.Trace();
-  tracer.WriteFieldLines(filename + ".trace");
+  tracer.WriteFieldLines(filename + ".trace.vtk");
 
   return 0;
 }
