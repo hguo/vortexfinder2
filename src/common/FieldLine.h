@@ -5,10 +5,9 @@
 #include <list>
 #include <string>
 
-class FieldLine : public std::vector<float> {
+class FieldLine : public std::list<float> {
 public:
   FieldLine();
-  FieldLine(const std::list<float>&);
   ~FieldLine(); 
 
   // (un)serialization for communication and I/O

@@ -29,3 +29,6 @@ target_link_libraries (extractor_glgpu2D PUBLIC glextractor)
 
 # add_executable (count ex_count.cpp)
 # target_link_libraries (count glio)
+
+add_executable (tracer_glgpu3D ex_tracer_glgpu.cpp)
+target_link_libraries (tracer_glgpu3D PUBLIC gltracer glextractor)

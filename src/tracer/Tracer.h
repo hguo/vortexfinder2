@@ -16,12 +16,15 @@ public:
   void WriteFieldLines(const std::string& filename);
  
 protected:
-  void Trace(const double seed[3]);
+  void Trace(const float seed[3]);
 
-  bool RK1(double pt[3], double h);
-  bool RK4(double pt[3], double h);
+  template <typename T>
+  bool RK1(T pt[3], T h);
   
-  bool Supercurrent(const double *X, double *J) const;
+  template <typename T>
+  bool RK4(T pt[3], T h);
+  
+  bool Supercurrent(const float *X, float *J) const;
 
 protected:
   const GLDataset *_ds;

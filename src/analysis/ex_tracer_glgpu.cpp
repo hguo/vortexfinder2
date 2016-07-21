@@ -1,6 +1,6 @@
 #include <iostream>
-#include "io/GLGPUDataset.h"
-#include "Tracer.h"
+#include "io/GLGPU3DDataset.h"
+#include "tracer/Tracer.h"
 
 using namespace std; 
 
@@ -13,7 +13,8 @@ int main(int argc, char **argv)
 
   const std::string filename = argv[1]; 
 
-  GLGPUDataset ds;
+  GLGPU3DDataset ds;
+  ds.SetPrecomputeSupercurrent(true);
   ds.OpenDataFile(filename);
 
   FieldLineTracer tracer;

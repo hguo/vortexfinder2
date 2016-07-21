@@ -27,7 +27,7 @@ void FieldLineTracer::Trace()
   fprintf(stderr, "Trace..\n");
 
   const int nseeds[3] = {8, 9, 8};
-  const double span[3] = {
+  const float span[3] = {
     _ds->Lengths()[0]/(nseeds[0]-1), 
     _ds->Lengths()[1]/(nseeds[1]-1), 
     _ds->Lengths()[2]/(nseeds[2]-1)}; 
@@ -35,7 +35,7 @@ void FieldLineTracer::Trace()
   for (int i=0; i<nseeds[0]; i++) {
     for (int j=0; j<nseeds[1]; j++) {
       for (int k=0; k<nseeds[2]; k++) {
-        double seed[3] = {
+        float seed[3] = {
           i * span[0] + _ds->Origins()[0], 
           j * span[1] + _ds->Origins()[1], 
           k * span[2] + _ds->Origins()[2]}; 
@@ -45,13 +45,13 @@ void FieldLineTracer::Trace()
   }
 }
 
-void FieldLineTracer::Trace(const double seed[3])
+void FieldLineTracer::Trace(const float seed[3])
 {
   static const int max_length = 1024; 
-  const double h = 0.05; 
-  double X[3] = {seed[0], seed[1], seed[2]}; 
+  const float h = 0.05; 
+  float X[3] = {seed[0], seed[1], seed[2]}; 
 
-  std::list<double> line;
+  FieldLine line;
 
   fprintf(stderr, "Tracing line from X={%f, %f, %f}\n", seed[0], seed[1], seed[2]);
 
@@ -71,18 +71,18 @@ void FieldLineTracer::Trace(const double seed[3])
     if (!RK1(X, -h)) break;
   }
 
-  FieldLine line1(line);
-  _fieldlines.push_back(line1);
+  _fieldlines.push_back(line);
 }
 
-bool FieldLineTracer::Supercurrent(const double *X, double *J) const
+bool FieldLineTracer::Supercurrent(const float *X, float *J) const
 {
   return (_ds->Supercurrent(X, J)); 
 }
 
-bool FieldLineTracer::RK1(double *X, double h)
+template <typename T>
+bool FieldLineTracer::RK1(T *X, T h)
 {
-  double J[3]; 
+  T J[3]; 
   if (!Supercurrent(X, J)) return false;
 
   X[0] = X[0] + h*J[0]; 
@@ -92,26 +92,27 @@ bool FieldLineTracer::RK1(double *X, double h)
   return true; 
 }
 
-bool FieldLineTracer::RK4(double *X, double h)
+template <typename T>
+bool FieldLineTracer::RK4(T *X, T h)
 {
-  double X0[3] = {X[0], X[1], X[2]};
-  double J[3]; 
+  T X0[3] = {X[0], X[1], X[2]};
+  T J[3]; 
   
   // 1st RK step
   if (!Supercurrent(X, J)) return false;
-  float k1[3]; 
+  T k1[3]; 
   for (int i=0; i<3; i++) k1[i] = h * J[i];
   for (int i=0; i<3; i++) X[i] = X0[i] + 0.5 * k1[i];
   
   // 2nd RK step
   if (!Supercurrent(X, J)) return false;
-  float k2[3]; 
+  T k2[3]; 
   for (int i=0; i<3; i++) k2[i] = h * J[i];
   for (int i=0; i<3; i++) X[i] = X0[i] + 0.5 * k2[i];
   
   // 3rd RK step
   if (!Supercurrent(X, J)) return false;
-  float k3[3]; 
+  T k3[3]; 
   for (int i=0; i<3; i++) k3[i] = h * J[i];
   for (int i=0; i<3; i++) X[i] = X0[i] + k3[i];
 
