@@ -333,8 +333,8 @@ bool GLGPU_IO_Helper_ReadLegacy(
 bool GLGPU_IO_Helper_WriteNetCDF(
     const std::string& filename, 
     GLHeader& h,
-    float *re, 
-    float *im)
+    const float *re, const float *im, 
+    const float *Jx, const float *Jy, const float *Jz)
 {
 #ifdef WITH_LIBMESH
   int ncid; 
@@ -362,18 +362,18 @@ bool GLGPU_IO_Helper_WriteNetCDF(
   NC_SAFE_CALL( nc_def_var(ncid, "phi", NC_FLOAT, 3, dimids, &varids[1]) );
   NC_SAFE_CALL( nc_def_var(ncid, "re", NC_FLOAT, 3, dimids, &varids[2]) );
   NC_SAFE_CALL( nc_def_var(ncid, "im", NC_FLOAT, 3, dimids, &varids[3]) );
-  // NC_SAFE_CALL( nc_def_var(ncid, "Jx", NC_FLOAT, 3, dimids, &varids[4]) );
-  // NC_SAFE_CALL( nc_def_var(ncid, "Jy", NC_FLOAT, 3, dimids, &varids[5]) );
-  // NC_SAFE_CALL( nc_def_var(ncid, "Jz", NC_FLOAT, 3, dimids, &varids[6]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "Jx", NC_FLOAT, 3, dimids, &varids[4]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "Jy", NC_FLOAT, 3, dimids, &varids[5]) );
+  NC_SAFE_CALL( nc_def_var(ncid, "Jz", NC_FLOAT, 3, dimids, &varids[6]) );
   NC_SAFE_CALL( nc_enddef(ncid) );
 
   NC_SAFE_CALL( nc_put_vara_float(ncid, varids[0], starts, sizes, rho) ); 
   NC_SAFE_CALL( nc_put_vara_float(ncid, varids[1], starts, sizes, phi) ); 
   NC_SAFE_CALL( nc_put_vara_float(ncid, varids[2], starts, sizes, re) ); 
   NC_SAFE_CALL( nc_put_vara_float(ncid, varids[3], starts, sizes, im) ); 
-  // NC_SAFE_CALL( nc_put_vara_float(ncid, varids[4], starts, sizes, _Jx) ); 
-  // NC_SAFE_CALL( nc_put_vara_float(ncid, varids[5], starts, sizes, _Jy) ); 
-  // NC_SAFE_CALL( nc_put_vara_float(ncid, varids[6], starts, sizes, _Jz) ); 
+  NC_SAFE_CALL( nc_put_vara_float(ncid, varids[4], starts, sizes, _Jx) ); 
+  NC_SAFE_CALL( nc_put_vara_float(ncid, varids[5], starts, sizes, _Jy) ); 
+  NC_SAFE_CALL( nc_put_vara_float(ncid, varids[6], starts, sizes, _Jz) ); 
 
   NC_SAFE_CALL( nc_close(ncid) );
 
