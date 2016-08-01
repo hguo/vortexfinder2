@@ -1,6 +1,9 @@
 #include "Tracer.h"
 #include "io/GLDataset.h"
 #include "common/Utils.hpp"
+#include <cstdio>
+#include <cstdlib>
+#include <climits>
 
 #if WITH_VTK
 #include <vtkSmartPointer.h>
