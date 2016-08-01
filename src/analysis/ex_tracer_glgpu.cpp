@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdio>
 #include "io/GLGPU3DDataset.h"
 #include "tracer/Tracer.h"
 
