@@ -3,6 +3,7 @@
 #include "fitCurves/fitCurves.hpp"
 #include <climits>
 #include <cfloat>
+#include <cassert>
 
 #if WITH_PROTOBUF
 #include "VortexLine.pb.h"
@@ -165,6 +166,7 @@ bool SerializeVortexLines(const std::vector<VortexLine>& lines, const std::strin
   }
   return plines.SerializeToString(&buf);
 #else
+  assert(false);
   return false;
 #endif
 }
@@ -191,6 +193,7 @@ bool UnserializeVortexLines(std::vector<VortexLine>& lines, std::string& info, c
 
   return true;
 #else
+  assert(false);
   return false;
 #endif
 }
@@ -219,7 +222,7 @@ bool LoadVortexLines(std::vector<VortexLine>& lines, std::string& info, const st
   std::string buf;
   buf.resize(sz);
   fseek(fp, 0L, SEEK_SET);
-  fread((char*)buf.data(), 1, sz, fp);
+  size_t length = fread((char*)buf.data(), 1, sz, fp);
   fclose(fp);
 
   return UnserializeVortexLines(lines, info, buf);

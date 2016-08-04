@@ -36,6 +36,8 @@ public:
 
   const std::vector<struct VortexSequence> Sequences() const {return _seqs;}
   void RandomColorSchemes();
+  
+  const std::vector<struct VortexEvent>& Events() const {return _events;}
 
 private:
   int NewVortexSequence(int ts);

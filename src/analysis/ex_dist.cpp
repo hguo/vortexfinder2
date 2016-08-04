@@ -30,11 +30,11 @@ static bool LoadTimesteps(const std::string& dataname)
     bool succ = false;
     if (!succ) {
       succ = GLGPU_IO_Helper_ReadBDAT(
-          fname, h, NULL, NULL, NULL, NULL, true);
+          fname, h, NULL, NULL, NULL, NULL, NULL, NULL, NULL, true);
     } 
     if (!succ) {
       succ = GLGPU_IO_Helper_ReadLegacy(
-          fname, h, NULL, NULL, NULL, NULL, true);
+          fname, h, NULL, NULL, NULL, NULL, NULL, NULL, NULL, true);
     }
     if (!succ) {
       fprintf(stderr, "cannot open file: %s\n", fname);

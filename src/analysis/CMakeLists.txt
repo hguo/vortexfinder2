@@ -21,11 +21,14 @@ target_link_libraries (extractor_glgpu2D PUBLIC glextractor)
 # add_executable (extractor_presave ex_presave.cpp)
 # target_link_libraries (extractor_presave PUBLIC glextractor)
 
-# add_executable (events ex_events.cpp)
-# target_link_libraries (events glcommon)
+add_executable (events ex_events.cpp)
+target_link_libraries (events glcommon)
 
-# add_executable (dist ex_dist.cpp)
-# target_link_libraries (dist glio)
+add_executable (events_dist ex_events_dist.cpp)
+target_link_libraries (events_dist glcommon)
+
+add_executable (dist ex_dist.cpp)
+target_link_libraries (dist glio)
 
 # add_executable (count ex_count.cpp)
 # target_link_libraries (count glio)
