@@ -27,6 +27,7 @@ struct VortexLine : public std::vector<float>
   float MaxExtent() const;
 
   friend float MinimumDist(const VortexLine& l0, const VortexLine& l1);
+  friend float CrossingPoint(const VortexLine& l0, const VortexLine& l1, float X[3]);
 
   int id, gid;
   int timestep;

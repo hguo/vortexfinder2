@@ -243,6 +243,30 @@ float MinimumDist(const VortexLine& l0, const VortexLine& l1)
   return minDist;
 }
 
+float CrossingPoint(const VortexLine& l0, const VortexLine& l1, float X[3])
+{
+  float minDist = DBL_MAX;
+  const int n0 = l0.size()/3, n1 = l1.size()/3;
+  int i0, j0;
+
+  for (int i=0; i<n0; i++) 
+    for (int j=0; j<n1; j++) {
+      const float d[3] = {l0[i*3] - l1[j*3], l0[i*3+1] - l1[j*3+1], l0[i*3+2] - l1[j*3+2]};
+      const float dist = sqrt(d[0]*d[0] + d[1]*d[1] + d[2]*d[2]);
+      if (minDist > dist) {
+        i0 = i;
+        j0 = j;
+        minDist = dist;
+      }
+    }
+
+  X[0] = l0[i0*3] + l1[j0*3];
+  X[1] = l0[i0*3+1] + l1[j0*3+1];
+  X[2] = l0[i0*3+2] + l1[j0*3+2];
+
+  return minDist;
+}
+
 void VortexLine::BoundingBox(float LB[3], float UB[3]) const
 {
   LB[0] = LB[1] = LB[2] = FLT_MAX;
