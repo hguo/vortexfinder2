@@ -66,9 +66,12 @@ int main(int argc, char **argv)
       CrossingPoint(dataname, e.frame, llvid[0], llvid[1], X0);
       CrossingPoint(dataname, e.frame+1, rlvid[0], rlvid[1], X1);
 
-      fprintf(stderr, "frame=%d, lhs={%d, %d}, rhs={%d, %d}, crossPt0={%f, %f, %f}, crossPt1={%f, %f, %f}\n", 
+      // fprintf(stderr, "frame=%d, lhs={%d, %d}, rhs={%d, %d}, crossPt0={%f, %f, %f}, crossPt1={%f, %f, %f}\n", 
+      //     e.frame, lgvid[0], lgvid[1], rgvid[0], rgvid[1], 
+      //     X0[0], X0[1], X0[2], X1[0], X1[1], X1[2]);
+      fprintf(stderr, "frame=%d, lhs={%d, %d}, rhs={%d, %d}, crossPt0={%f, %f, %f}\n",
           e.frame, lgvid[0], lgvid[1], rgvid[0], rgvid[1], 
-          X0[0], X0[1], X0[2], X1[0], X1[1], X1[2]);
+          X0[0], X0[1], X0[2]);
     }
   }
 
