@@ -9,6 +9,11 @@ target_link_libraries (extractor_glgpu3D PUBLIC glextractor)
 add_executable (extractor_glgpu3D_stream ex_glgpu3D_stream.cpp)
 target_link_libraries (extractor_glgpu3D_stream PUBLIC glextractor)
 
+if (WITH_TBB)
+  add_executable (extractor_glgpu3D_stream_tbb ex_glgpu3D_stream_tbb.cpp)
+  target_link_libraries (extractor_glgpu3D_stream_tbb PUBLIC glextractor ${TBB_LIBRARY_RELEASE})
+endif ()
+
 # add_executable (extractor_glgpu3D_sto ex_glgpu3D_sto.cpp)
 # target_link_libraries (extractor_glgpu3D_sto PUBLIC glextractor)
 
