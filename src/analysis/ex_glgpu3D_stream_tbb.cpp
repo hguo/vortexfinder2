@@ -85,8 +85,6 @@ struct extract {
     ex->TraceOverSpace(0);
 
     std::vector<VortexLine> vlines = ex->GetVortexLines();
-    fprintf(stderr, "frame=%d, #pfs=%d, #vlines=%d\n", 
-        hdr.frame, (int)pfs.size(), (int)vlines.size());
 
     std::stringstream ss;
     ss << "vlines-" << hdr.frame << ".vtk";
@@ -94,6 +92,9 @@ struct extract {
 
     delete ds;
     delete ex;
+    
+    fprintf(stderr, "frame=%d, #pfs=%d, #vlines=%d\n", 
+        hdr.frame, (int)pfs.size(), (int)vlines.size());
   }
 }; 
 
@@ -118,9 +119,15 @@ int main(int argc, char **argv)
   assert(fp);
 
   while (!feof(fp)) {
-    fread(&hdr, sizeof(vfgpu_hdr_t), 1, fp);
-    fread(&pfcount, sizeof(int), 1, fp);
+    size_t count;
     
+    count = fread(&hdr, sizeof(vfgpu_hdr_t), 1, fp);
+    if (count != 1) break;
+    
+    count = fread(&pfcount, sizeof(int), 1, fp);
+    if (count != 1) break;
+    
+    // fprintf(stderr, "read frame %d, pfs=%d\n", hdr.frame, pfcount);
 
     if (pfcount > 0) {
       std::vector<vfgpu_pf_t> pfs;
