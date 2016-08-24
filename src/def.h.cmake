@@ -11,6 +11,7 @@
 #cmakedefine WITH_VTK 1
 #cmakedefine WITH_PARAVIEW 1
 #cmakedefine WITH_CXX11 1
+#cmakedefine WITH_TBB 1
 
 // needed for malloc
 #include <cstdlib>
