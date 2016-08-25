@@ -109,6 +109,7 @@ private:
   void execute_thread(int nthreads, int tid, int type, int slot);
 
   int _nthreads;
+  pthread_mutex_t _mutex;
 }; 
 
 #endif

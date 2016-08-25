@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <tbb/flow_graph.h>
+#include <tbb/concurrent_unordered_map.h>
 #include "io/GLGPU3DDataset.h"
 #include "extractor/Extractor.h"
 
@@ -45,20 +46,19 @@ typedef struct {
   float Kx;
 } vfgpu_hdr_t;
 
+tbb::concurrent_unordered_map<int, vfgpu_hdr_t> hdrs_all;
+tbb::concurrent_unordered_map<int, std::vector<vfgpu_pf_t> > pfs_all;
+tbb::concurrent_unordered_map<std::pair<int, int>, std::vector<vfgpu_pe_t> > pes_all;
+
 /////////////////
 struct extract {
-  const vfgpu_hdr_t hdr;
-  const std::vector<vfgpu_pf_t> pfs;
-
-  extract(const vfgpu_hdr_t& h, const std::vector<vfgpu_pf_t>& p) : 
-    hdr(h), pfs(p)
-  {
-  }
+  int frame;
+  extract(int frame_) : frame(frame_) {}
 
   void operator()(tbb::flow::continue_msg) const {
-    GLGPU3DDataset *ds = NULL;
-    VortexExtractor *ex = NULL;
-    
+    const vfgpu_hdr_t& hdr = hdrs_all[frame];
+    const std::vector<vfgpu_pf_t>& pfs = pfs_all[frame];
+
     GLHeader h;
     h.ndims = 3;
     memcpy(h.dims, hdr.d, sizeof(int)*3);
@@ -67,12 +67,12 @@ struct extract {
     memcpy(h.origins, hdr.origins, sizeof(float)*3);
     memcpy(h.cell_lengths, hdr.cell_lengths, sizeof(float)*3);
 
-    ds = new GLGPU3DDataset;
+    GLGPU3DDataset *ds = new GLGPU3DDataset;
     ds->SetHeader(h);
     ds->SetMeshType(GLGPU3D_MESH_HEX); // TODO
     ds->BuildMeshGraph();
 
-    ex = new VortexExtractor;
+    VortexExtractor *ex = new VortexExtractor;
     ex->SetDataset(ds);
     
     ex->Clear();
@@ -97,6 +97,20 @@ struct extract {
         hdr.frame, (int)pfs.size(), (int)vlines.size());
   }
 }; 
+
+/////////////////
+struct track {
+  const vfgpu_hdr_t hdr;
+  const std::vector<vfgpu_pe_t> pes;
+
+  track(const vfgpu_hdr_t& h, const std::vector<vfgpu_pe_t>& p) : 
+    hdr(h), pes(p)
+  {
+  }
+
+  void operator()(tbb::flow::continue_msg) const {
+  }
+};
 
 /////////////////
 int main(int argc, char **argv)
@@ -130,11 +144,12 @@ int main(int argc, char **argv)
     // fprintf(stderr, "read frame %d, pfs=%d\n", hdr.frame, pfcount);
 
     if (pfcount > 0) {
-      std::vector<vfgpu_pf_t> pfs;
+      hdrs_all[hdr.frame] = hdr;
+      std::vector<vfgpu_pf_t> &pfs = pfs_all[hdr.frame];
       pfs.resize(pfcount);
       fread(pfs.data(), sizeof(vfgpu_pf_t), pfcount, fp);
       
-      continue_node<continue_msg> *e = new continue_node<continue_msg>(g, extract(hdr, pfs));
+      continue_node<continue_msg> *e = new continue_node<continue_msg>(g, extract(hdr.frame));
       e->try_put(continue_msg());
     }
   }

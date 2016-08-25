@@ -31,8 +31,6 @@ typedef struct {
   int slot;
 } extractor_thread_t;
 
-static pthread_mutex_t mutex;
-
 VortexExtractor::VortexExtractor() :
   _dataset(NULL), 
   _gauge(false), 
@@ -43,7 +41,7 @@ VortexExtractor::VortexExtractor() :
   _extent_threshold(0),
   _interpolation_mode(INTERPOLATION_TRI_BARYCENTRIC | INTERPOLATION_QUAD_BILINEAR)
 {
-  pthread_mutex_init(&mutex, NULL);
+  pthread_mutex_init(&_mutex, NULL);
 
   // probe number of cores
 #if WITH_CXX11
@@ -57,7 +55,7 @@ VortexExtractor::VortexExtractor() :
 
 VortexExtractor::~VortexExtractor()
 {
-  pthread_mutex_destroy(&mutex);
+  pthread_mutex_destroy(&_mutex);
 
 #ifdef WITH_CUDA
   if (_gpu && _vfgpu_ctx)
@@ -219,7 +217,7 @@ bool VortexExtractor::LoadPuncturedFaces(int slot)
 
 void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType chirality, const float pos[])
 {
-  pthread_mutex_lock(&mutex);
+  pthread_mutex_lock(&_mutex);
   
   // face
   PuncturedFace pf;
@@ -262,12 +260,12 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType ch
       fidx[0], fidx[1], fidx[2], fidx[3], chirality, pos[0], pos[1], pos[2]);
 #endif
   
-  pthread_mutex_unlock(&mutex);
+  pthread_mutex_unlock(&_mutex);
 }
 
 void VortexExtractor::AddPuncturedEdge(EdgeIdType id, ChiralityType chirality, float t)
 {
-  pthread_mutex_lock(&mutex);
+  pthread_mutex_lock(&_mutex);
   
   // edge
   PuncturedEdge pe;
@@ -289,7 +287,7 @@ void VortexExtractor::AddPuncturedEdge(EdgeIdType id, ChiralityType chirality, f
     // vc.SetChirality(eid+2, chirality * echirality);
   }
 #endif
-  pthread_mutex_unlock(&mutex);
+  pthread_mutex_unlock(&_mutex);
 }
   
 bool VortexExtractor::FindSpaceTimeEdgeZero(const float re[], const float im[], float &t) const
