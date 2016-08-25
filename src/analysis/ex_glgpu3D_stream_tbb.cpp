@@ -34,10 +34,7 @@ typedef struct {
   float pos[3];
 } vfgpu_pf_t; // punctured faces from GPU output, 16 bytes
 
-typedef struct {
-  unsigned int eid;
-  signed char chirality;
-} vfgpu_pe_t;
+typedef unsigned int vfgpu_pe_t; 
 
 typedef struct {
   int frame;
@@ -123,17 +120,7 @@ int main(int argc, char **argv)
   vfgpu_hdr_t hdr;
   int pfcount, pecount;
 
-  std::string filename; 
-  if (argc > 1) filename = argv[1];
-  else filename = "/tmp/glgpu.fifo";
-
-  FILE *fp = fopen(filename.c_str(), "rb");
-  if (fp == NULL) {
-    fprintf(stderr, "cannot open pipe %s\n", filename.c_str());
-    exit(1);
-  }
-  assert(fp);
-
+  FILE *fp = stdin;
   while (!feof(fp)) {
     size_t count = fread(&type_msg, sizeof(int), 1, fp);
     if (count != 1) break;
@@ -157,8 +144,8 @@ int main(int argc, char **argv)
       std::vector<vfgpu_pe_t> &pes = pes_all[frames];
       pes.resize(pecount);
       fread(pes.data(), sizeof(vfgpu_pe_t), pecount, fp);
-     
-      continue_node<continue_msg> *t = new continue_node<continue_msg>(g, track(frames));
+    
+      // continue_node<continue_msg> *t = new continue_node<continue_msg>(g, track(frames));
       // make_edge(*e, *t);
       // make_edge(*e, *t);
     }
