@@ -14,6 +14,11 @@
 #include "extractor/Extractor.h"
 
 enum {
+  VFGPU_MSG_PF = 0,
+  VFGPU_MSG_PE = 1
+};
+
+enum {
   VFGPU_MESH_HEX = 0,
   VFGPU_MESH_TET,
   VFGPU_MESH_2D
@@ -100,15 +105,11 @@ struct extract {
 
 /////////////////
 struct track {
-  const vfgpu_hdr_t hdr;
-  const std::vector<vfgpu_pe_t> pes;
-
-  track(const vfgpu_hdr_t& h, const std::vector<vfgpu_pe_t>& p) : 
-    hdr(h), pes(p)
-  {
-  }
+  std::pair<int, int> frames;
+  track(const std::pair<int, int> f) : frames(f) {}
 
   void operator()(tbb::flow::continue_msg) const {
+    // TODO
   }
 };
 
@@ -118,8 +119,9 @@ int main(int argc, char **argv)
   using namespace tbb::flow;
   graph g;
 
+  int type_msg;
   vfgpu_hdr_t hdr;
-  int pfcount, pfcount_max=0;
+  int pfcount, pecount;
 
   std::string filename; 
   if (argc > 1) filename = argv[1];
@@ -133,17 +135,13 @@ int main(int argc, char **argv)
   assert(fp);
 
   while (!feof(fp)) {
-    size_t count;
-    
-    count = fread(&hdr, sizeof(vfgpu_hdr_t), 1, fp);
+    size_t count = fread(&type_msg, sizeof(int), 1, fp);
     if (count != 1) break;
-    
-    count = fread(&pfcount, sizeof(int), 1, fp);
-    if (count != 1) break;
-    
-    // fprintf(stderr, "read frame %d, pfs=%d\n", hdr.frame, pfcount);
 
-    if (pfcount > 0) {
+    if (type_msg == VFGPU_MSG_PF) {
+      fread(&hdr, sizeof(vfgpu_hdr_t), 1, fp);
+      fread(&pfcount, sizeof(int), 1, fp);
+      
       hdrs_all[hdr.frame] = hdr;
       std::vector<vfgpu_pf_t> &pfs = pfs_all[hdr.frame];
       pfs.resize(pfcount);
@@ -151,6 +149,18 @@ int main(int argc, char **argv)
       
       continue_node<continue_msg> *e = new continue_node<continue_msg>(g, extract(hdr.frame));
       e->try_put(continue_msg());
+    } else if (type_msg == VFGPU_MSG_PE) {
+      std::pair<int, int> frames;
+      fread(&frames, sizeof(int), 2, fp);
+      fread(&pecount, sizeof(int), 1, fp);
+
+      std::vector<vfgpu_pe_t> &pes = pes_all[frames];
+      pes.resize(pecount);
+      fread(pes.data(), sizeof(vfgpu_pe_t), pecount, fp);
+     
+      continue_node<continue_msg> *t = new continue_node<continue_msg>(g, track(frames));
+      // make_edge(*e, *t);
+      // make_edge(*e, *t);
     }
   }
 
