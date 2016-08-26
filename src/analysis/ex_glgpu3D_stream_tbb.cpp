@@ -116,7 +116,7 @@ struct track {
   track(const std::pair<int, int> f) : frames(f) {}
 
   void operator()(tbb::flow::continue_msg) const {
-    fprintf(stderr, "tracking %d, %d\n", frames.first, frames.second);
+    // fprintf(stderr, "tracking %d, %d\n", frames.first, frames.second);
     
     const vfgpu_hdr_t& hdr0 = hdrs_all[frames.first], 
                        hdr1 = hdrs_all[frames.second];
@@ -163,6 +163,9 @@ struct track {
 
     delete ex;
     delete ds;
+    
+    fprintf(stderr, "frames={%d, %d}, #pfs0=%d, #pfs1=%d, #pes=%d\n", 
+        frames.first, frames.second, (int)pfs0.size(), (int)pfs1.size(), (int)pes.size());
   }
 };
 

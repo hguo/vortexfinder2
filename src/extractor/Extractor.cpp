@@ -305,8 +305,8 @@ bool VortexExtractor::FindSpaceTimeEdgeZero(const float re[], const float im[], 
 
 void VortexExtractor::RelateOverTime()
 {
-  fprintf(stderr, "Relating over time, #pf0=%ld, #pf1=%ld, #pe=%ld\n", 
-      _punctured_faces.size(), _punctured_faces1.size(), _punctured_edges.size());
+  // fprintf(stderr, "Relating over time, #pf0=%ld, #pf1=%ld, #pe=%ld\n", 
+  //     _punctured_faces.size(), _punctured_faces1.size(), _punctured_edges.size());
   const MeshGraph *mg = _dataset->MeshGraph();
 
   _related_faces.clear();
@@ -716,6 +716,7 @@ next:
   // if (_archive) tm.SaveToFile(Dataset()->DataName(), Dataset()->TimeStep(0), Dataset()->TimeStep(1));
   tm.SaveToFile(Dataset()->DataName(), Dataset()->TimeStep(0), Dataset()->TimeStep(1));
   _vortex_transition.AddMatrix(tm);
+  tm.Print();
 
 #if 0
   std::vector<int> ids0(n0), ids1(n1);

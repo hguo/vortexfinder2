@@ -23,6 +23,8 @@ public: // IO
   void SetToDummy() {_n0 = _n1 = 0; _match.push_back(0);}
 
   bool Valid() const {return _match.size()>0;}
+
+  void Print() const;
   
 public: // modulars
   void Modularize();

@@ -191,3 +191,13 @@ void VortexTransitionMatrix::Modularize()
     _events.push_back(event);
   }
 }
+
+void VortexTransitionMatrix::Print() const
+{
+  for (int i=0; i<_n0; i++) {
+    for (int j=0; j<_n1; j++) {
+      fprintf(stderr, "%d\t", at(i, j));
+    }
+    fprintf(stderr, "\n");
+  }
+}
