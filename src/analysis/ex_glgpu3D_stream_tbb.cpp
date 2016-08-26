@@ -50,9 +50,22 @@ typedef struct {
 
 tbb::concurrent_unordered_map<int, vfgpu_hdr_t> hdrs_all;
 tbb::concurrent_unordered_map<int, std::vector<vfgpu_pf_t> > pfs_all;
+tbb::concurrent_unordered_map<int, std::vector<VortexObject> > vobjs_all;
 tbb::concurrent_unordered_map<std::pair<int, int>, std::vector<vfgpu_pe_t> > pes_all;
 std::map<int, tbb::flow::continue_node<tbb::flow::continue_msg>* > extract_tasks; 
 std::map<std::pair<int, int>, tbb::flow::continue_node<tbb::flow::continue_msg>* > track_tasks;
+
+
+static GLHeader conv_hdr(const vfgpu_hdr_t& hdr) {
+  GLHeader h;
+  h.ndims = 3;
+  memcpy(h.dims, hdr.d, sizeof(int)*3);
+  memcpy(h.pbc, hdr.pbc, sizeof(int)*3);
+  memcpy(h.lengths, hdr.lengths, sizeof(float)*3);
+  memcpy(h.origins, hdr.origins, sizeof(float)*3);
+  memcpy(h.cell_lengths, hdr.cell_lengths, sizeof(float)*3);
+  return h;
+}
 
 /////////////////
 struct extract {
@@ -62,14 +75,7 @@ struct extract {
   void operator()(tbb::flow::continue_msg) const {
     const vfgpu_hdr_t& hdr = hdrs_all[frame];
     const std::vector<vfgpu_pf_t>& pfs = pfs_all[frame];
-
-    GLHeader h;
-    h.ndims = 3;
-    memcpy(h.dims, hdr.d, sizeof(int)*3);
-    memcpy(h.pbc, hdr.pbc, sizeof(int)*3);
-    memcpy(h.lengths, hdr.lengths, sizeof(float)*3);
-    memcpy(h.origins, hdr.origins, sizeof(float)*3);
-    memcpy(h.cell_lengths, hdr.cell_lengths, sizeof(float)*3);
+    GLHeader h = conv_hdr(hdrs_all[frame]);
 
     GLGPU3DDataset *ds = new GLGPU3DDataset;
     ds->SetHeader(h);
@@ -87,6 +93,8 @@ struct extract {
       ex->AddPuncturedFace(fid, 0, chirality, pf.pos);
     }
     ex->TraceOverSpace(0);
+
+    vobjs_all[hdr.frame] = ex->GetVortexObjects(0);
 
     std::vector<VortexLine> vlines = ex->GetVortexLines();
 
@@ -109,6 +117,52 @@ struct track {
 
   void operator()(tbb::flow::continue_msg) const {
     fprintf(stderr, "tracking %d, %d\n", frames.first, frames.second);
+    
+    const vfgpu_hdr_t& hdr0 = hdrs_all[frames.first], 
+                       hdr1 = hdrs_all[frames.second];
+    GLHeader h0 = conv_hdr(hdr0), 
+             h1 = conv_hdr(hdr1);
+    const std::vector<vfgpu_pf_t>& pfs0 = pfs_all[frames.first], 
+                                   pfs1 = pfs_all[frames.second];
+    const std::vector<vfgpu_pe_t>& pes = pes_all[frames];
+    const std::vector<VortexObject>& vobjs0 = vobjs_all[frames.first],
+                                     vobjs1 = vobjs_all[frames.second];
+
+    GLGPU3DDataset *ds = new GLGPU3DDataset;
+    ds->SetHeader(h0);
+    ds->SetMeshType(GLGPU3D_MESH_HEX); // TODO
+    ds->BuildMeshGraph();
+
+    VortexExtractor *ex = new VortexExtractor;
+    ex->SetDataset(ds);
+    
+    for (int i=0; i<pfs0.size(); i++) {
+      const vfgpu_pf_t &pf = pfs0[i];
+      int chirality = pf.fid_and_chirality & 0x80000000 ? 1 : -1;
+      int fid = pf.fid_and_chirality & 0x7fffffff;
+      ex->AddPuncturedFace(fid, 0, chirality, pf.pos);
+    }
+    
+    for (int i=0; i<pfs1.size(); i++) {
+      const vfgpu_pf_t &pf = pfs1[i];
+      int chirality = pf.fid_and_chirality & 0x80000000 ? 1 : -1;
+      int fid = pf.fid_and_chirality & 0x7fffffff;
+      ex->AddPuncturedFace(fid, 1, chirality, pf.pos);
+    }
+
+    for (int i=0; i<pes.size(); i++) {
+      const vfgpu_pe_t &pe = pes[i];
+      int chirality = pe & 0x80000000 ? 1 : -1;
+      int eid = pe & 0x7fffffff;
+      ex->AddPuncturedEdge(eid, chirality, 0);
+    }
+
+    ex->SetVortexObjects(vobjs0, 0);
+    ex->SetVortexObjects(vobjs1, 1);
+    ex->TraceOverTime();
+
+    delete ex;
+    delete ds;
   }
 };
 

@@ -1212,3 +1212,15 @@ bool VortexExtractor::FindFaceZero(int n, const float X_[][3], const float re[],
 
   return succ;
 }
+
+void VortexExtractor::SetVortexObjects(const std::vector<VortexObject>& vobj, int slot)
+{
+  if (slot == 0) _vortex_objects = vobj;
+  else _vortex_objects1 = vobj;
+}
+
+const std::vector<VortexObject>& VortexExtractor::GetVortexObjects(int slot) const 
+{
+  if (slot == 0) return _vortex_objects;
+  else return _vortex_objects1;
+}

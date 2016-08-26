@@ -53,6 +53,8 @@ public:
   
   void SaveVortexLines(int slot=0);
   std::vector<VortexLine> GetVortexLines(int slot=0);
+  void SetVortexObjects(const std::vector<VortexObject>&, int slot);
+  const std::vector<VortexObject>& GetVortexObjects(int slot) const;
 
   void TraceVirtualCells();
   void TraceOverSpace(int slot=0);
