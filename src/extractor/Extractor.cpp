@@ -713,10 +713,10 @@ next:
     }
   }
 
-  // if (_archive) tm.SaveToFile(Dataset()->DataName(), Dataset()->TimeStep(0), Dataset()->TimeStep(1));
-  tm.SaveToFile(Dataset()->DataName(), Dataset()->TimeStep(0), Dataset()->TimeStep(1));
+  if (_archive) tm.SaveToFile(Dataset()->DataName(), Dataset()->TimeStep(0), Dataset()->TimeStep(1));
+  // tm.SaveToFile(Dataset()->DataName(), Dataset()->TimeStep(0), Dataset()->TimeStep(1));
   _vortex_transition.AddMatrix(tm);
-  tm.Print();
+  // tm.Print();
 
 #if 0
   std::vector<int> ids0(n0), ids1(n1);
