@@ -51,6 +51,8 @@ typedef struct {
 tbb::concurrent_unordered_map<int, vfgpu_hdr_t> hdrs_all;
 tbb::concurrent_unordered_map<int, std::vector<vfgpu_pf_t> > pfs_all;
 tbb::concurrent_unordered_map<std::pair<int, int>, std::vector<vfgpu_pe_t> > pes_all;
+std::map<int, tbb::flow::continue_node<tbb::flow::continue_msg>* > extract_tasks; 
+std::map<std::pair<int, int>, tbb::flow::continue_node<tbb::flow::continue_msg>* > track_tasks;
 
 /////////////////
 struct extract {
@@ -106,7 +108,7 @@ struct track {
   track(const std::pair<int, int> f) : frames(f) {}
 
   void operator()(tbb::flow::continue_msg) const {
-    // TODO
+    fprintf(stderr, "tracking %d, %d\n", frames.first, frames.second);
   }
 };
 
@@ -136,6 +138,7 @@ int main(int argc, char **argv)
       
       continue_node<continue_msg> *e = new continue_node<continue_msg>(g, extract(hdr.frame));
       e->try_put(continue_msg());
+      extract_tasks[hdr.frame] = e;
     } else if (type_msg == VFGPU_MSG_PE) {
       std::pair<int, int> frames;
       fread(&frames, sizeof(int), 2, fp);
@@ -145,9 +148,11 @@ int main(int argc, char **argv)
       pes.resize(pecount);
       fread(pes.data(), sizeof(vfgpu_pe_t), pecount, fp);
     
-      // continue_node<continue_msg> *t = new continue_node<continue_msg>(g, track(frames));
-      // make_edge(*e, *t);
-      // make_edge(*e, *t);
+      continue_node<continue_msg> *t = new continue_node<continue_msg>(g, track(frames));
+      track_tasks[frames] = t;
+     
+      make_edge(*extract_tasks[frames.first], *t);
+      make_edge(*extract_tasks[frames.second], *t);
     }
   }
 
