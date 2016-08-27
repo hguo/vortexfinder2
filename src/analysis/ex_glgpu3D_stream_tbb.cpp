@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <tbb/mutex.h>
 #include <tbb/flow_graph.h>
 #include <tbb/concurrent_unordered_map.h>
 #include "io/GLGPU3DDataset.h"
@@ -51,10 +52,12 @@ typedef struct {
 tbb::concurrent_unordered_map<int, vfgpu_hdr_t> hdrs_all;
 tbb::concurrent_unordered_map<int, std::vector<vfgpu_pf_t> > pfs_all;
 tbb::concurrent_unordered_map<int, std::vector<VortexObject> > vobjs_all;
-tbb::concurrent_unordered_map<std::pair<int, int>, std::vector<vfgpu_pe_t> > pes_all;
+tbb::concurrent_unordered_map<std::pair<int, int>, std::vector<vfgpu_pe_t> > pes_all; // released on exit
 std::map<int, tbb::flow::continue_node<tbb::flow::continue_msg>* > extract_tasks; 
 std::map<std::pair<int, int>, tbb::flow::continue_node<tbb::flow::continue_msg>* > track_tasks;
 
+tbb::concurrent_unordered_map<int, int> frame_counter;  // used to count how many times a frame is referenced by trackers
+// tbb::concurrent_unordered_map<int, tbb::mutex> frame_mutexes;
 
 static GLHeader conv_hdr(const vfgpu_hdr_t& hdr) {
   GLHeader h;
@@ -112,21 +115,21 @@ struct extract {
 
 /////////////////
 struct track {
-  std::pair<int, int> frames;
-  track(const std::pair<int, int> f) : frames(f) {}
+  const std::pair<int, int> frames;
+  const int f0, f1;
+  track(const std::pair<int, int> f) : frames(f), f0(f.first), f1(f.second) {}
 
   void operator()(tbb::flow::continue_msg) const {
     // fprintf(stderr, "tracking %d, %d\n", frames.first, frames.second);
-    
-    const vfgpu_hdr_t& hdr0 = hdrs_all[frames.first], 
-                       hdr1 = hdrs_all[frames.second];
+    const vfgpu_hdr_t& hdr0 = hdrs_all[f0], 
+                       hdr1 = hdrs_all[f1];
     GLHeader h0 = conv_hdr(hdr0), 
              h1 = conv_hdr(hdr1);
-    const std::vector<vfgpu_pf_t>& pfs0 = pfs_all[frames.first], 
-                                   pfs1 = pfs_all[frames.second];
+    const std::vector<vfgpu_pf_t>& pfs0 = pfs_all[f0], 
+                                   pfs1 = pfs_all[f1];
     const std::vector<vfgpu_pe_t>& pes = pes_all[frames];
-    const std::vector<VortexObject>& vobjs0 = vobjs_all[frames.first],
-                                     vobjs1 = vobjs_all[frames.second];
+    const std::vector<VortexObject>& vobjs0 = vobjs_all[f0],
+                                     vobjs1 = vobjs_all[f1];
 
     GLGPU3DDataset *ds = new GLGPU3DDataset;
     ds->SetHeader(h0);
@@ -166,6 +169,21 @@ struct track {
     
     fprintf(stderr, "frames={%d, %d}, #pfs0=%d, #pfs1=%d, #pes=%d\n", 
         frames.first, frames.second, (int)pfs0.size(), (int)pfs1.size(), (int)pes.size());
+    
+    // release resources
+    pes_all[frames].clear();
+    int &fc0 = frame_counter[f0], 
+        &fc1 = frame_counter[f1];
+    __sync_fetch_and_add(&fc0, 1);
+    __sync_fetch_and_add(&fc1, 1);
+    if (fc0 == 2) {
+      pfs_all[fc0] = std::vector<vfgpu_pf_t>();
+      vobjs_all[fc0] = std::vector<VortexObject>();
+    }
+    if (fc1 == 2) {
+      pfs_all[fc1] = std::vector<vfgpu_pf_t>();
+      vobjs_all[fc1] = std::vector<VortexObject>();
+    }
   }
 };
 
