@@ -684,7 +684,7 @@ int VortexExtractor::NewGlobalVortexId()
 }
 
 // only relate ids
-void VortexExtractor::TraceOverTime()
+VortexTransitionMatrix VortexExtractor::TraceOverTime()
 {
   const int n0 = _vortex_objects.size(), 
             n1 = _vortex_objects1.size();
@@ -717,6 +717,8 @@ next:
   // tm.SaveToFile(Dataset()->DataName(), Dataset()->TimeStep(0), Dataset()->TimeStep(1));
   _vortex_transition.AddMatrix(tm);
   // tm.Print();
+
+  return tm;
 
 #if 0
   std::vector<int> ids0(n0), ids1(n1);

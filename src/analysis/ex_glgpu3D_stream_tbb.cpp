@@ -162,12 +162,12 @@ struct track {
 
     ex->SetVortexObjects(vobjs0, 0);
     ex->SetVortexObjects(vobjs1, 1);
-    ex->TraceOverTime();
+    VortexTransitionMatrix mat = ex->TraceOverTime();
 
     delete ex;
     delete ds;
     
-    fprintf(stderr, "frames={%d, %d}, #pfs0=%d, #pfs1=%d, #pes=%d\n", 
+    fprintf(stderr, "interval={%d, %d}, #pfs0=%d, #pfs1=%d, #pes=%d\n", 
         frames.first, frames.second, (int)pfs0.size(), (int)pfs1.size(), (int)pes.size());
     
     // release resources
@@ -196,9 +196,12 @@ int main(int argc, char **argv)
   int type_msg;
   vfgpu_hdr_t hdr;
   int pfcount, pecount;
+  const int max_frames = 10000;
+  int frame_count = 0;
 
   FILE *fp = stdin;
   while (!feof(fp)) {
+    if (frame_count ++ > max_frames) break;
     size_t count = fread(&type_msg, sizeof(int), 1, fp);
     if (count != 1) break;
 

@@ -58,7 +58,7 @@ public:
 
   void TraceVirtualCells();
   void TraceOverSpace(int slot=0);
-  void TraceOverTime();
+  VortexTransitionMatrix TraceOverTime();
   void AnalyzeTransition();
 
   void RelateOverTime();
