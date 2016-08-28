@@ -115,19 +115,18 @@ struct extract {
 
 /////////////////
 struct track {
-  const std::pair<int, int> frames;
+  const std::pair<int, int> interval;
   const int f0, f1;
-  track(const std::pair<int, int> f) : frames(f), f0(f.first), f1(f.second) {}
+  track(const std::pair<int, int> f) : interval(f), f0(f.first), f1(f.second) {}
 
   void operator()(tbb::flow::continue_msg) const {
-    // fprintf(stderr, "tracking %d, %d\n", frames.first, frames.second);
     const vfgpu_hdr_t& hdr0 = hdrs_all[f0], 
                        hdr1 = hdrs_all[f1];
     GLHeader h0 = conv_hdr(hdr0), 
              h1 = conv_hdr(hdr1);
     const std::vector<vfgpu_pf_t>& pfs0 = pfs_all[f0], 
                                    pfs1 = pfs_all[f1];
-    const std::vector<vfgpu_pe_t>& pes = pes_all[frames];
+    const std::vector<vfgpu_pe_t>& pes = pes_all[interval];
     const std::vector<VortexObject>& vobjs0 = vobjs_all[f0],
                                      vobjs1 = vobjs_all[f1];
 
@@ -168,10 +167,10 @@ struct track {
     delete ds;
     
     fprintf(stderr, "interval={%d, %d}, #pfs0=%d, #pfs1=%d, #pes=%d\n", 
-        frames.first, frames.second, (int)pfs0.size(), (int)pfs1.size(), (int)pes.size());
+        interval.first, interval.second, (int)pfs0.size(), (int)pfs1.size(), (int)pes.size());
     
     // release resources
-    pes_all[frames].clear();
+    pes_all[interval].clear();
     int &fc0 = frame_counter[f0], 
         &fc1 = frame_counter[f1];
     __sync_fetch_and_add(&fc0, 1);

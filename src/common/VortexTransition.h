@@ -5,6 +5,8 @@
 #include "common/VortexSequence.h"
 #include <utility>
 
+typedef std::pair<int, int> Interval;
+
 class VortexTransition 
 {
 public:
