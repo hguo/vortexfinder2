@@ -2,6 +2,7 @@
 #define _VORTEX_EVENTS_H
 
 #include <vector>
+#include "common/Interval.h"
 
 enum {
   VORTEX_EVENT_DUMMY = 0,
@@ -14,7 +15,8 @@ enum {
 };
 
 struct VortexEvent {
-  int frame, type;
+  Interval interval;
+  int type;
   std::set<int> lhs, rhs; // local ids.
   // std::vector<int> lhs_gids, rhs_gids;
 

@@ -56,21 +56,21 @@ int main(int argc, char **argv)
 
 
       int lgvid[2] = {
-        vt.lvid2gvid(e.frame, llvid[0]), 
-        vt.lvid2gvid(e.frame, llvid[1])};
+        vt.lvid2gvid(e.interval.first, llvid[0]), 
+        vt.lvid2gvid(e.interval.first, llvid[1])};
       int rgvid[2] = {
-        vt.lvid2gvid(e.frame+1, rlvid[0]), 
-        vt.lvid2gvid(e.frame+1, rlvid[1])};
+        vt.lvid2gvid(e.interval.second, rlvid[0]), 
+        vt.lvid2gvid(e.interval.second, rlvid[1])};
 
       float X0[3], X1[3];
-      CrossingPoint(dataname, e.frame, llvid[0], llvid[1], X0);
-      CrossingPoint(dataname, e.frame+1, rlvid[0], rlvid[1], X1);
+      CrossingPoint(dataname, e.interval.first, llvid[0], llvid[1], X0);
+      CrossingPoint(dataname, e.interval.second, rlvid[0], rlvid[1], X1);
 
       // fprintf(stderr, "frame=%d, lhs={%d, %d}, rhs={%d, %d}, crossPt0={%f, %f, %f}, crossPt1={%f, %f, %f}\n", 
       //     e.frame, lgvid[0], lgvid[1], rgvid[0], rgvid[1], 
       //     X0[0], X0[1], X0[2], X1[0], X1[1], X1[2]);
-      fprintf(stderr, "frame=%d, lhs={%d, %d}, rhs={%d, %d}, crossPt0={%f, %f, %f}\n",
-          e.frame, lgvid[0], lgvid[1], rgvid[0], rgvid[1], 
+      fprintf(stderr, "interval={%d, %d}, lhs={%d, %d}, rhs={%d, %d}, crossPt0={%f, %f, %f}\n",
+          e.interval.first, e.interval.second, lgvid[0], lgvid[1], rgvid[0], rgvid[1], 
           X0[0], X0[1], X0[2]);
     }
   }

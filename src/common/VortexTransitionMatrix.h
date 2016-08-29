@@ -6,11 +6,13 @@
 #include <map>
 #include <set>
 #include "common/VortexEvents.h"
+#include "common/Interval.h"
 
 class VortexTransitionMatrix {
 public:
   VortexTransitionMatrix();
   VortexTransitionMatrix(int t0, int t1, int n0, int n1);
+  VortexTransitionMatrix(Interval, int n0, int n1);
   ~VortexTransitionMatrix();
 
 public: // IO
@@ -20,7 +22,7 @@ public: // IO
   bool LoadFromFile(const std::string& dataname, int t0, int t1);
   bool SaveToFile(const std::string& dataname, int t0, int t1) const;
 
-  void SetToDummy() {_n0 = _n1 = 0; _match.push_back(0);}
+  void SetToDummy() {_n0 = _n1 = 0; _match.clear();}
 
   bool Valid() const {return _match.size()>0;}
 
@@ -38,8 +40,8 @@ public: // access
   int& at(int i, int j);
   int at(int i, int j) const;
 
-  int t0() const {return _t0;} // timestep
-  int t1() const {return _t1;}
+  int t0() const {return _interval.first;} // timestep
+  int t1() const {return _interval.second;}
   int n0() const {return _n0;}
   int n1() const {return _n1;}
 
@@ -50,7 +52,7 @@ private:
   std::string MatrixFileName(const std::string& dataname, int t0, int t1) const;
 
 private:
-  int _t0, _t1;
+  Interval _interval;
   int _n0, _n1;
   std::vector<int> _match; // match matrix
 

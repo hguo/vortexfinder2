@@ -24,7 +24,8 @@
 #endif
 
 #ifdef WITH_CUDA
-#include "volren/rc.h"
+#undef WITH_CUDA
+// #include "volren/rc.h"
 #endif
 
 #ifdef __APPLE__
@@ -455,6 +456,7 @@ static bool compare_inclusions(const inclusion_t& i0, const inclusion_t& i1)
 
 void CGLWidget::renderInclusions()
 {
+#if 0
   const int n = 10;
   const float radius = 5.f;
   const GLubyte alpha = 128;
@@ -511,6 +513,7 @@ void CGLWidget::renderInclusions()
   glPopMatrix();
 
   glPopAttrib();
+#endif
 }
 
 void CGLWidget::renderVortexArrows()
@@ -746,6 +749,7 @@ void CGLWidget::paintGL()
 
 void CGLWidget::LoadFieldLines(const std::string& filename)
 {
+#if 0
   std::vector<FieldLine> fieldlines;
   ReadFieldLines(filename, fieldlines);
 
@@ -768,6 +772,7 @@ void CGLWidget::LoadFieldLines(const std::string& filename)
     f_line_indices.push_back(cnt); 
     cnt += f_line_vert_count[i]; 
   }
+#endif
 }
 
 void CGLWidget::Clear()
@@ -1062,7 +1067,8 @@ void CGLWidget::updateVortexTubes(int nPatches, float radius)
 
 void CGLWidget::extractIsosurfaces()
 {
-#ifdef WITH_VTK
+// #ifdef WITH_VTK
+#if 0
   const float isovalue = 0.2, 
                isovalue1 = 0.6;
   const float *re = _ds->GetDataPointerRe(), 

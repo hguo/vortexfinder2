@@ -256,7 +256,7 @@ void VortexTransition::ConstructSequence()
       // if (event >= VORTEX_EVENT_MERGE) {
       if (event > VORTEX_EVENT_DUMMY) {
         VortexEvent e;
-        e.frame = i;
+        e.interval = std::make_pair<int, int>(i, i+1);
         e.type = event;
         e.lhs = lhs;
         e.rhs = rhs;
@@ -274,7 +274,7 @@ void VortexTransition::PrintSequence() const
   for (int i=0; i<_events.size(); i++) {
     const VortexEvent& e = _events[i];
     std::stringstream ss;
-    ss << "frame=" << e.frame << ", ";
+    ss << "interval={" << e.interval.first << ", " << e.interval.second << "}, ";
     ss << "type=" << VortexEvent::TypeToString(e.type) << ", ";
     ss << "lhs={";
 
@@ -282,7 +282,7 @@ void VortexTransition::PrintSequence() const
     if (e.lhs.empty()) ss << "}, "; 
     else 
       for (std::set<int>::iterator it = e.lhs.begin(); it != e.lhs.end(); it++, j++) {
-        const int gvid = lvid2gvid(e.frame, *it);
+        const int gvid = lvid2gvid(e.interval.first, *it);
         if (j<e.lhs.size()-1) 
           ss << gvid << ", ";
         else 
@@ -295,7 +295,7 @@ void VortexTransition::PrintSequence() const
     if (e.rhs.empty()) ss << "}";
     else 
       for (std::set<int>::iterator it = e.rhs.begin(); it != e.rhs.end(); it++, j++) {
-        const int gvid = lvid2gvid(e.frame+1, *it);
+        const int gvid = lvid2gvid(e.interval.second, *it);
         if (j<e.rhs.size()-1) 
           ss << gvid << ", ";
         else 

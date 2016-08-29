@@ -43,7 +43,7 @@ if (WITH_VTK)
 endif ()
 
 if (WITH_CUDA)
-  target_link_libraries (glviewer glvolren)
+  # target_link_libraries (glviewer glvolren)
 endif ()
 
 # add_executable (viewer main.cpp)
@@ -55,4 +55,5 @@ target_link_libraries (viewer1 glviewer)
 add_executable (storyLine storyLine.cpp)
 target_link_libraries (storyLine glviewer)
 
-subdirs (volren gl2ps ilines)
+# subdirs (volren gl2ps ilines)
+subdirs (gl2ps ilines)
