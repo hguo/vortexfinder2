@@ -59,6 +59,8 @@ std::map<std::pair<int, int>, tbb::flow::continue_node<tbb::flow::continue_msg>*
 tbb::concurrent_unordered_map<int, int> frame_counter;  // used to count how many times a frame is referenced by trackers
 // tbb::concurrent_unordered_map<int, tbb::mutex> frame_mutexes;
 
+static std::string infile;
+
 static GLHeader conv_hdr(const vfgpu_hdr_t& hdr) {
   GLHeader h;
   h.ndims = 3;
@@ -102,8 +104,13 @@ struct extract {
     std::vector<VortexLine> vlines = ex->GetVortexLines();
 
     std::stringstream ss;
-    ss << "vlines-" << hdr.frame << ".vtk";
+#if 0 // VTK
+    ss << infile << "." << hdr.frame << ".vtk";
     SaveVortexLinesVTK(vlines, ss.str());
+#else
+    ss << infile << "." << hdr.frame << ".vlines";
+    SaveVortexLines(vlines, std::string(), ss.str());
+#endif
 
     delete ds;
     delete ex;
@@ -162,6 +169,10 @@ struct track {
     ex->SetVortexObjects(vobjs0, 0);
     ex->SetVortexObjects(vobjs1, 1);
     VortexTransitionMatrix mat = ex->TraceOverTime();
+    
+    std::stringstream ss;
+    ss << infile << "." << f0 << "." << f1 << ".match";
+    mat.SaveToFile(ss.str());
 
     delete ex;
     delete ds;
@@ -189,16 +200,21 @@ struct track {
 /////////////////
 int main(int argc, char **argv)
 {
+  if (argc < 2) return 1;
+  infile = argv[1];
+  
+  FILE *fp = fopen(infile.c_str(), "rb");
+  if (!fp) return 1;
+
   using namespace tbb::flow;
   graph g;
 
   int type_msg;
   vfgpu_hdr_t hdr;
   int pfcount, pecount;
-  const int max_frames = 10000;
+  const int max_frames = INT_MAX;
   int frame_count = 0;
 
-  FILE *fp = stdin;
   while (!feof(fp)) {
     if (frame_count ++ > max_frames) break;
     size_t count = fread(&type_msg, sizeof(int), 1, fp);
