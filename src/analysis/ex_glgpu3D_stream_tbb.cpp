@@ -104,7 +104,7 @@ struct extract {
     std::vector<VortexLine> vlines = ex->GetVortexLines();
 
     std::stringstream ss;
-#if 0 // VTK
+#if 1 // VTK
     ss << infile << "." << hdr.frame << ".vtk";
     SaveVortexLinesVTK(vlines, ss.str());
 #else
