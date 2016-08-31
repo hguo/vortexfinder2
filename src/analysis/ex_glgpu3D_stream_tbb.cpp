@@ -239,6 +239,7 @@ int main(int argc, char **argv)
   int pfcount, pecount;
   const int max_frames = INT_MAX;
   int frame_count = 0;
+  std::vector<int> frames;
 
   while (!feof(fp)) {
     if (frame_count ++ > max_frames) break;
@@ -257,6 +258,8 @@ int main(int argc, char **argv)
       continue_node<continue_msg> *e = new continue_node<continue_msg>(g, extract(hdr.frame));
       e->try_put(continue_msg());
       extract_tasks[hdr.frame] = e;
+
+      frames.push_back(hdr.frame);
     } else if (type_msg == VFGPU_MSG_PE) {
       std::pair<int, int> interval;
       fread(&interval, sizeof(int), 2, fp);
@@ -278,6 +281,7 @@ int main(int argc, char **argv)
   g.wait_for_all();
 
 #if WITH_LEVELDB
+  db->Put(leveldb::WriteOptions(), "frames", leveldb::Slice((const char*)frames.data(), sizeof(int)*frames.size()));
   delete db;
 #endif
 
