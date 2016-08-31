@@ -1,9 +1,14 @@
 #ifndef _VORTEX_TRANSITION_H
 #define _VORTEX_TRANSITION_H
 
+#include "def.h"
 #include "common/VortexTransitionMatrix.h"
 #include "common/VortexSequence.h"
 #include <utility>
+
+#if WITH_LEVELDB
+#include <leveldb/db.h>
+#endif
 
 class VortexTransition 
 {
@@ -13,6 +18,10 @@ public:
   
   int ts() const {return _ts;}
   int tl() const {return _tl;}
+
+#ifdef WITH_LEVELDB
+  bool LoadFromLevelDB(leveldb::DB*);
+#endif
 
   void LoadFromFile(const std::string &dataname, int ts, int tl);
   void SaveToDotFile(const std::string &filename) const;
@@ -47,6 +56,7 @@ private:
 private:
   int _ts, _tl;
   std::map<int, VortexTransitionMatrix> _matrices;
+  std::vector<int> _frames; // frame IDs
   std::vector<struct VortexSequence> _seqs;
   std::map<std::pair<int, int>, int> _seqmap; // <time, lid>, gid
   std::map<std::pair<int, int>, int> _invseqmap; // <time, gid>, lid

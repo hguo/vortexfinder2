@@ -2,6 +2,24 @@
 #include "common/VortexTransition.h"
 #include <cstdio>
 
+int main(int argc, char **argv)
+{
+  if (argc < 2) return 1;
+  leveldb::DB* db;
+
+  leveldb::Options options;
+  leveldb::Status status = leveldb::DB::Open(options, argv[1], &db);
+
+  VortexTransition vt;
+  vt.LoadFromLevelDB(db);
+  vt.ConstructSequence();
+  vt.PrintSequence();
+
+  delete db;
+  return 0;
+}
+
+#if 0
 #ifdef WITH_PROTOBUF
 #include "common/DataInfo.pb.h"
 #endif
@@ -24,3 +42,6 @@ int main(int argc, char **argv)
 
   return 0;
 }
+#endif
+
+

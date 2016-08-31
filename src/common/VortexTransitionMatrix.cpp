@@ -25,25 +25,39 @@ VortexTransitionMatrix::~VortexTransitionMatrix()
 
 bool VortexTransitionMatrix::Serialize(std::string& buf) const
 {
+#if WITH_PROTOBUF
   PBAssociation pb;
+  pb.set_f0(_interval.first);
+  pb.set_f1(_interval.second);
   pb.set_n0(_n0);
   pb.set_n1(_n1);
   for (int i=0; i<_match.size(); i++)
     pb.add_mat(_match[i]);
   pb.SerializeToString(&buf);
   return true;
+#else
+  assert(false);
+  return false;
+#endif
 }
 
 bool VortexTransitionMatrix::Unserialize(const std::string& buf)
 {
+#if WITH_PROTOBUF
   PBAssociation pb;
   if (!pb.ParseFromString(buf)) return false;
+  _interval.first = pb.f0();
+  _interval.second = pb.f1();
   _n0 = pb.n0();
   _n1 = pb.n1();
   _match.resize(_n0 * _n1);
   for (int i=0; i<_match.size(); i++) 
     _match[i] = pb.mat(i);
   return true;
+#else
+  assert(false);
+  return false;
+#endif
 }
 
 bool VortexTransitionMatrix::LoadFromFile(const std::string& filename)

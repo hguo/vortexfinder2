@@ -1,5 +1,7 @@
 message PBAssociation { // association matrix, or transition matrix
-  required uint32 n0 = 1;
-  required uint32 n1 = 2;
-  repeated uint32 mat = 3;
+  required uint32 f0 = 1;
+  required uint32 f1 = 2;
+  required uint32 n0 = 3;
+  required uint32 n1 = 4;
+  repeated uint32 mat = 5;
 };

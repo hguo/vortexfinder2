@@ -18,6 +18,33 @@ VortexTransition::~VortexTransition()
 {
 }
 
+#if WITH_LEVELDB
+bool VortexTransition::LoadFromLevelDB(leveldb::DB* db)
+{
+  std::string buf;
+  leveldb::Status s = db->Get(leveldb::ReadOptions(), "frames", &buf);
+  if (!s.ok()) return false;
+
+  int nframes = buf.length() / sizeof(int);
+  _frames.resize(nframes);
+  memcpy((char*)_frames.data(), buf.data(), sizeof(int) * nframes);
+  buf.clear();
+
+  for (int i=0; i<nframes-1; i++) {
+    std::stringstream ss;
+    ss << "match." << _frames[i] << "." << _frames[i+1];
+    leveldb::Status s = db->Get(leveldb::ReadOptions(), ss.str(), &buf);
+    if (!s.ok()) fprintf(stderr, "Key not found, %s\n", ss.str().c_str());
+
+    VortexTransitionMatrix mat;
+    mat.Unserialize(buf);
+    AddMatrix(mat);
+  }
+
+  return true;
+}
+#endif
+
 void VortexTransition::LoadFromFile(const std::string& dataname, int ts, int tl)
 {
   _ts = ts;
