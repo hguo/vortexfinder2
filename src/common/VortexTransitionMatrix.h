@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include "def.h"
 #include "common/VortexEvents.h"
 #include "common/Interval.h"
 
@@ -18,6 +19,9 @@ public:
 public: // IO
   bool LoadFromFile(const std::string& filename);
   bool SaveToFile(const std::string& filename) const;
+
+  bool Serialize(std::string&) const;
+  bool Unserialize(const std::string&);
 
   bool LoadFromFile(const std::string& dataname, int t0, int t1);
   bool SaveToFile(const std::string& dataname, int t0, int t1) const;

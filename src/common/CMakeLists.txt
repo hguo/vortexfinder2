@@ -22,6 +22,7 @@ set (common_protos
   Inclusions.proto
   FieldLine.proto
   Puncture.proto
+  Association.proto
 )
 
 if (WITH_PROTOBUF)

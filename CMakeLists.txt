@@ -109,7 +109,7 @@ else()
 
   if (WITH_LEVELDB)
     find_package (LevelDB REQUIRED)
-    include_directories (${LEVELDB_INCLUDE_DIR})
+    include_directories (${LevelDB_INCLUDE_DIR})
   endif ()
 
   if (WITH_LIBMESH)

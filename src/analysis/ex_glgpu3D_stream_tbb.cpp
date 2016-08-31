@@ -14,6 +14,10 @@
 #include "io/GLGPU3DDataset.h"
 #include "extractor/Extractor.h"
 
+#if WITH_LEVELDB
+#include <leveldb/db.h>
+#endif
+
 enum {
   VFGPU_MSG_PF = 0,
   VFGPU_MSG_PE = 1
@@ -61,6 +65,10 @@ tbb::concurrent_unordered_map<int, int> frame_counter;  // used to count how man
 
 static std::string infile;
 
+#ifdef WITH_LEVELDB
+static leveldb::DB* db;
+#endif
+
 static GLHeader conv_hdr(const vfgpu_hdr_t& hdr) {
   GLHeader h;
   h.ndims = 3;
@@ -104,12 +112,14 @@ struct extract {
     std::vector<VortexLine> vlines = ex->GetVortexLines();
 
     std::stringstream ss;
-#if 1 // VTK
+#if 0 // VTK
     ss << infile << "." << hdr.frame << ".vtk";
     SaveVortexLinesVTK(vlines, ss.str());
 #else
-    ss << infile << "." << hdr.frame << ".vlines";
-    SaveVortexLines(vlines, std::string(), ss.str());
+    std::string buf;
+    SerializeVortexLines(vlines, std::string(), buf);
+    ss << "vlines." << hdr.frame;
+    db->Put(leveldb::WriteOptions(), ss.str(), buf);
 #endif
 
     delete ds;
@@ -171,8 +181,10 @@ struct track {
     VortexTransitionMatrix mat = ex->TraceOverTime();
     
     std::stringstream ss;
-    ss << infile << "." << f0 << "." << f1 << ".match";
-    mat.SaveToFile(ss.str());
+    ss << "match." << f0 << "." << f1;
+    std::string buf;
+    mat.Serialize(buf);
+    db->Put(leveldb::WriteOptions(), ss.str(), buf);
 
     delete ex;
     delete ds;
@@ -206,6 +218,19 @@ int main(int argc, char **argv)
   FILE *fp = fopen(infile.c_str(), "rb");
   if (!fp) return 1;
 
+#if WITH_LEVELDB
+  std::string dbname = infile + ".db";
+
+  leveldb::Options options;
+  options.create_if_missing = true;
+  leveldb::Status status = leveldb::DB::Open(options, dbname.c_str(), &db);
+  assert(status.ok());
+
+  // std::string key = "test_key";
+  // std::string val = "test_val";
+  // db->Put(leveldb::WriteOptions(), key, val);
+#endif
+
   using namespace tbb::flow;
   graph g;
 
@@ -233,25 +258,29 @@ int main(int argc, char **argv)
       e->try_put(continue_msg());
       extract_tasks[hdr.frame] = e;
     } else if (type_msg == VFGPU_MSG_PE) {
-      std::pair<int, int> frames;
-      fread(&frames, sizeof(int), 2, fp);
+      std::pair<int, int> interval;
+      fread(&interval, sizeof(int), 2, fp);
       fread(&pecount, sizeof(int), 1, fp);
 
-      std::vector<vfgpu_pe_t> &pes = pes_all[frames];
+      std::vector<vfgpu_pe_t> &pes = pes_all[interval];
       pes.resize(pecount);
       fread(pes.data(), sizeof(vfgpu_pe_t), pecount, fp);
     
-      continue_node<continue_msg> *t = new continue_node<continue_msg>(g, track(frames));
-      track_tasks[frames] = t;
+      continue_node<continue_msg> *t = new continue_node<continue_msg>(g, track(interval));
+      track_tasks[interval] = t;
      
-      make_edge(*extract_tasks[frames.first], *t);
-      make_edge(*extract_tasks[frames.second], *t);
+      make_edge(*extract_tasks[interval.first], *t);
+      make_edge(*extract_tasks[interval.second], *t);
     }
   }
 
   fclose(fp);
-
   g.wait_for_all();
+
+#if WITH_LEVELDB
+  delete db;
+#endif
+
   fprintf(stderr, "exiting...\n");
   return 0;
 }

@@ -3,6 +3,10 @@
 #include <cstdio>
 #include <climits>
 
+#if WITH_PROTOBUF
+#include "Association.pb.h"
+#endif
+
 VortexTransitionMatrix::VortexTransitionMatrix() :
   _n0(INT_MAX), _n1(INT_MAX)
 {
@@ -17,6 +21,29 @@ VortexTransitionMatrix::VortexTransitionMatrix(int t0, int t1, int n0, int n1) :
 
 VortexTransitionMatrix::~VortexTransitionMatrix()
 {
+}
+
+bool VortexTransitionMatrix::Serialize(std::string& buf) const
+{
+  PBAssociation pb;
+  pb.set_n0(_n0);
+  pb.set_n1(_n1);
+  for (int i=0; i<_match.size(); i++)
+    pb.add_mat(_match[i]);
+  pb.SerializeToString(&buf);
+  return true;
+}
+
+bool VortexTransitionMatrix::Unserialize(const std::string& buf)
+{
+  PBAssociation pb;
+  if (!pb.ParseFromString(buf)) return false;
+  _n0 = pb.n0();
+  _n1 = pb.n1();
+  _match.resize(_n0 * _n1);
+  for (int i=0; i<_match.size(); i++) 
+    _match[i] = pb.mat(i);
+  return true;
 }
 
 bool VortexTransitionMatrix::LoadFromFile(const std::string& filename)
