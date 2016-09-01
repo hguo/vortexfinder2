@@ -42,9 +42,6 @@ public:
   CGLWidget(const QGLFormat& fmt=QGLFormat::defaultFormat(), QWidget *parent=NULL, QGLWidget *sharedWidget=NULL); 
   ~CGLWidget(); 
 
-#if WITH_LEVELDB
-  void LoadVortexLines(leveldb::DB*);
-#endif
   void LoadVortexLines();
   void LoadVortexLinesFromTextFile(const std::string& filename); // legacy
   void LoadVortexLines2D(); // special for 2D simulation
@@ -52,6 +49,7 @@ public:
   void LoadInclusionsFromTextFile(const std::string& filename);
 
   void SetData(const std::string& dataname, int ts, int tl);
+  void SetDB(leveldb::DB* db) {_db = db;}
   void LoadTimeStep(int t);
 
   void SetVortexTransition(const VortexTransition* vt);
@@ -167,6 +165,9 @@ private: // id rendering
 
 private: // GLGPU
   GLGPUDataset *_ds;
+#if WITH_LEVELDB
+  leveldb::DB *_db;
+#endif
 }; 
 
 #endif

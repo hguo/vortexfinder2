@@ -801,109 +801,21 @@ void CGLWidget::Clear()
   _cones_color.clear();
 }
 
-#if WITH_LEVELDB
-void CGLWidget::LoadVortexLines(leveldb::DB* db)
+void CGLWidget::LoadVortexLines()
 {
+#if WITH_LEVELDB
   std::stringstream ss;
-  ss << _dataname << "vlines." << _vt->TimestepToFrame(_timestep);
+  ss << "vlines." << _vt->TimestepToFrame(_timestep);
   const std::string key = ss.str();
   std::string info_bytes, buf;
 
-  leveldb::Status s = db->Get(leveldb::ReadOptions(), key, &buf);
+  leveldb::Status s = _db->Get(leveldb::ReadOptions(), key, &buf);
   std::vector<VortexLine> vortex_liness;
   if (!::UnserializeVortexLines(vortex_liness, info_bytes, buf)) 
     return;
-  
-  for (int i=0; i<vortex_liness.size(); i++) {
-    vortex_liness[i].gid = _vt->lvid2gvid(_timestep, vortex_liness[i].id);
-    _vt->SequenceColor(vortex_liness[i].gid, vortex_liness[i].r, vortex_liness[i].g, vortex_liness[i].b);
-  }
-  
-  int vertCount = 0; 
-  for (int k=0; k<vortex_liness.size(); k++) { //iterator over lines
-    if (_toggle_vip && !_vips.contains(vortex_liness[k].gid)) continue;
 
-    if (vortex_liness[k].size()>=3) {
-      _vids.push_back(vortex_liness[k].gid);
-      QVector3D pt(*(vortex_liness[k].begin()), 
-                   *(vortex_liness[k].begin()+1),
-                   *(vortex_liness[k].begin()+2));
-      _vids_coord.push_back(pt);
-      
-      QColor color(vortex_liness[k].r, vortex_liness[k].g, vortex_liness[k].b);
-      _vids_colors.push_back(color);
-    }
-
-    if (_toggle_bezier) {
-      // vortex_liness[k].Flattern(O, L);
-      vortex_liness[k].ToBezier();
-    }
-
-    if (vortex_liness[k].is_bezier) { // TODO: make it more graceful..
-      VortexLine& vl = vortex_liness[k];
-      const int span = vl.size()/4/2/2;
-      // const int span = 18;
-
-      for (int i=4*span; i<vl.size()/3; i+=4*span) {
-        QVector3D p(vl[i*3], vl[i*3+1], vl[i*3+2]);
-        QVector3D p0(vl[i*3], vl[i*3+1], vl[i*3+2]), 
-                  p1(vl[i*3+3], vl[i*3+4], vl[i*3+5]);
-        QVector3D d = (p1 - p0).normalized();
-        QColor color(vl.r, vl.g, vl.b);
-
-        _cones_pos.push_back(p);
-        _cones_dir.push_back(d);
-        _cones_color.push_back(color);
-      }
-
-      vl.ToRegular(0.02);
-      // vl.Unflattern(O, L);
-    }
-    
-    std::vector<float>::iterator it = vortex_liness[k].begin();
-    unsigned char c[3] = {vortex_liness[k].r, vortex_liness[k].g, vortex_liness[k].b};
-    QVector3D p0;
-    for (int i=0; i<vortex_liness[k].size()/3; i++) {
-      QVector3D p(*it, *(++it), *(++it));
-      it ++;
-      
-      v_line_vertices.push_back(p.x()); 
-      v_line_vertices.push_back(p.y()); 
-      v_line_vertices.push_back(p.z()); 
-      v_line_colors.push_back(c[0]); 
-      v_line_colors.push_back(c[1]); 
-      v_line_colors.push_back(c[2]); 
-      v_line_colors.push_back(255); 
-
-      if (i>0 && (p-p0).length()>5) {
-        v_line_vert_count.push_back(vertCount); 
-        vertCount = 0;
-      }
-      p0 = p;
-      
-      vertCount ++;
-    }
-
-    if (vertCount != 0) {
-      v_line_vert_count.push_back(vertCount); 
-      vertCount = 0;
-    }
-  }
-  
-  int cnt = 0; 
-  for (int i=0; i<v_line_vert_count.size(); i++) {
-    v_line_indices.push_back(cnt); 
-    cnt += v_line_vert_count[i]; 
-    // fprintf(stderr, "break, vertCount=%d, lineIndices=%d\n", v_line_vert_count[i], v_line_indices[i]);
-  }
-  // v_line_indices.push_back(cnt); 
-
-  updateVortexTubes(20, 0.3); 
-}
-#endif
-
-void CGLWidget::LoadVortexLines()
-{
+  fprintf(stderr, "Loaded vortex line from DB, key=%s\n", key.c_str());
+#else
   std::stringstream ss;
   ss << _dataname << ".vlines." << _timestep;
   const std::string filename = ss.str();
@@ -912,6 +824,9 @@ void CGLWidget::LoadVortexLines()
   std::vector<VortexLine> vortex_liness;
   if (!::LoadVortexLines(vortex_liness, info_bytes, filename))
     return;
+  
+  fprintf(stderr, "Loaded vortex line file from %s\n", filename.c_str());
+#endif
 
   if (info_bytes.length()>0) 
     _data_info.ParseFromString(info_bytes);
@@ -921,8 +836,6 @@ void CGLWidget::LoadVortexLines()
     _vt->SequenceColor(vortex_liness[i].gid, vortex_liness[i].r, vortex_liness[i].g, vortex_liness[i].b);
     // fprintf(stderr, "t=%d, lid=%d, gid=%d\n", _timestep, vortex_liness[i].id, vortex_liness[i].gid);
   }
-  
-  fprintf(stderr, "Loaded vortex line file from %s\n", filename.c_str());
 
   const float O[3] = {_data_info.ox(), _data_info.oy(), _data_info.oz()},
                L[3] = {_data_info.lx(), _data_info.ly(), _data_info.lz()};
