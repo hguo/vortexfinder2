@@ -48,9 +48,11 @@ public:
   
   const std::vector<struct VortexEvent>& Events() const {return _events;}
 
+  int TimestepToFrame(int timestep) const {return _frames[timestep];}
+  int NTimesteps() const {return _frames.size();}
+
 private:
   int NewVortexSequence(int its);
-
   std::string NodeToString(int i, int j) const;
 
 private:

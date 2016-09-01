@@ -31,14 +31,12 @@ int main(int argc, char **argv)
   fmt.setSamples(16); 
   QGLFormat::setDefaultFormat(fmt); 
 
-
-#if 0
   CGLWidget *widget = new CGLWidget;
   widget->show();
-  widget->SetData(dataname, ts, tl);
+  widget->SetData(dbname, 0, vt.NTimesteps());
+  // widget->SetData(dataname, ts, tl);
   // widget->OpenGLGPUDataset();
   widget->SetVortexTransition(&vt);
-#endif
 
   return app.exec(); 
 }

@@ -13,6 +13,10 @@
 #include "common/DataInfo.pb.h"
 #include "common/VortexTransition.h"
 
+#ifdef WITH_LEVELDB
+#include <leveldb/db.h>
+#endif
+
 namespace ILines {class ILRender;}
 
 class QMConnector; 
@@ -38,6 +42,9 @@ public:
   CGLWidget(const QGLFormat& fmt=QGLFormat::defaultFormat(), QWidget *parent=NULL, QGLWidget *sharedWidget=NULL); 
   ~CGLWidget(); 
 
+#if WITH_LEVELDB
+  void LoadVortexLines(leveldb::DB*);
+#endif
   void LoadVortexLines();
   void LoadVortexLinesFromTextFile(const std::string& filename); // legacy
   void LoadVortexLines2D(); // special for 2D simulation
