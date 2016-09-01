@@ -422,7 +422,7 @@ void CGLWidget::renderVortexIds()
   glColor3f(0, 0, 0);
   glDisable(GL_DEPTH_TEST);
 
-  QString s0 = QString("frame=%1").arg(_timestep);
+  QString s0 = QString("timestep=%1, frame=%2").arg(_timestep).arg(_vt->TimestepToFrame(_timestep));
   renderText(20, 60, s0, ft);
 
   ft.setPointSize(24);
