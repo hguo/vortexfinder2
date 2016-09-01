@@ -16,8 +16,8 @@ public:
   VortexTransition();
   ~VortexTransition();
   
-  int ts() const {return _ts;}
-  int tl() const {return _tl;}
+  // int ts() const {return _ts;}
+  // int tl() const {return _tl;}
 
 #ifdef WITH_LEVELDB
   bool LoadFromLevelDB(leveldb::DB*);
@@ -26,11 +26,11 @@ public:
   void LoadFromFile(const std::string &dataname, int ts, int tl);
   void SaveToDotFile(const std::string &filename) const;
 
-  VortexTransitionMatrix Matrix(int t) const;
+  VortexTransitionMatrix& Matrix(Interval intervals);
   void AddMatrix(const VortexTransitionMatrix& m);
   int Transition(int t, int i, int j) const;
   // const std::map<int, VortexTransitionMatrix>& Matrices() const {return _matrices;}
-  std::map<int, VortexTransitionMatrix>& Matrices() {return _matrices;}
+  std::map<Interval, VortexTransitionMatrix>& Matrices() {return _matrices;}
 
   void ConstructSequence();
   void PrintSequence() const;
@@ -49,13 +49,13 @@ public:
   const std::vector<struct VortexEvent>& Events() const {return _events;}
 
 private:
-  int NewVortexSequence(int ts);
+  int NewVortexSequence(int its);
 
   std::string NodeToString(int i, int j) const;
 
 private:
-  int _ts, _tl;
-  std::map<int, VortexTransitionMatrix> _matrices;
+  // int _ts, _tl;
+  std::map<Interval, VortexTransitionMatrix> _matrices;
   std::vector<int> _frames; // frame IDs
   std::vector<struct VortexSequence> _seqs;
   std::map<std::pair<int, int>, int> _seqmap; // <time, lid>, gid

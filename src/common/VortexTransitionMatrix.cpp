@@ -53,6 +53,9 @@ bool VortexTransitionMatrix::Unserialize(const std::string& buf)
   _match.resize(_n0 * _n1);
   for (int i=0; i<_match.size(); i++) 
     _match[i] = pb.mat(i);
+  
+  if (Valid()) 
+    Normalize();
   return true;
 #else
   assert(false);
@@ -232,6 +235,10 @@ void VortexTransitionMatrix::Modularize()
 
 void VortexTransitionMatrix::Print() const
 {
+  // fprintf(stderr, "Interval={%d, %d}, n0=%d, n1=%d\n", 
+  //     _interval.first, _interval.second, _n0, _n1);
+  return;
+
   for (int i=0; i<_n0; i++) {
     for (int j=0; j<_n1; j++) {
       fprintf(stderr, "%d\t", at(i, j));

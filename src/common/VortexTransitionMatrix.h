@@ -49,6 +49,9 @@ public: // access
   int n0() const {return _n0;}
   int n1() const {return _n1;}
 
+  Interval GetInterval() const {return _interval;}
+  void SetInterval(const Interval &i) {_interval = i;}
+
   int colsum(int j) const;
   int rowsum(int i) const;
 

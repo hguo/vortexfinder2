@@ -7,7 +7,8 @@
 
 struct VortexSequence {
 public:
-  int ts, tl; // start and duration
+  // int ts, tl; // start and duration
+  int its, itl;  // start and duration (index of frames)
   std::vector<int> lids; // local ids
 
   unsigned char r, g, b;

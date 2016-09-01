@@ -95,6 +95,7 @@ void CStorylineWidget::saveLayoutToJs()
 
 void CStorylineWidget::saveLayoutToSVG(int w, int h)
 {
+#if 0 // TODO FIXME
   using namespace std;
   ofstream ofs("dot.svg");
   if (!ofs.is_open()) return;
@@ -146,6 +147,7 @@ void CStorylineWidget::saveLayoutToSVG(int w, int h)
   exit(1);
 
   ofs.close();
+#endif
 }
 
 void CStorylineWidget::SetVortexTrasition(VortexTransition *vt)

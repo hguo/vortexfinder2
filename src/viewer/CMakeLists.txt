@@ -15,7 +15,7 @@ endif ()
 set (viewer_sources
   trackball.cpp
   widget.cpp
-  storyLineWidget.cpp
+  # storyLineWidget.cpp
   mainWindow.cpp)
 
 qt4_wrap_ui (viewer_headers 
@@ -52,8 +52,8 @@ endif ()
 add_executable (viewer1 main1.cpp)
 target_link_libraries (viewer1 glviewer)
 
-add_executable (storyLine storyLine.cpp)
-target_link_libraries (storyLine glviewer)
+# add_executable (storyLine storyLine.cpp)
+# target_link_libraries (storyLine glviewer)
 
 # subdirs (volren gl2ps ilines)
 subdirs (gl2ps ilines)

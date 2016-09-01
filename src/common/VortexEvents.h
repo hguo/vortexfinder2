@@ -15,7 +15,7 @@ enum {
 };
 
 struct VortexEvent {
-  Interval interval;
+  int if0, if1;
   int type;
   std::set<int> lhs, rhs; // local ids.
   // std::vector<int> lhs_gids, rhs_gids;

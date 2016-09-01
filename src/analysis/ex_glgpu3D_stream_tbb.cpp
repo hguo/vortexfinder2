@@ -183,6 +183,7 @@ struct track {
     std::stringstream ss;
     ss << "match." << f0 << "." << f1;
     std::string buf;
+    mat.SetInterval(interval);
     mat.Serialize(buf);
     db->Put(leveldb::WriteOptions(), ss.str(), buf);
 
