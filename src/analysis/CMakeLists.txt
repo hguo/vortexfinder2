@@ -14,10 +14,6 @@ if (WITH_TBB)
   target_link_libraries (extractor_glgpu3D_stream_tbb PUBLIC glextractor ${TBB_LIBRARY_RELEASE})
 endif ()
   
-if (WITH_LEVELDB)
-  target_link_libraries (extractor_glgpu3D_stream_tbb PUBLIC glextractor ${LevelDB_LIBRARY})
-endif ()
-
 # add_executable (extractor_glgpu3D_sto ex_glgpu3D_sto.cpp)
 # target_link_libraries (extractor_glgpu3D_sto PUBLIC glextractor)
 

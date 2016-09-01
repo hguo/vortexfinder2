@@ -42,5 +42,8 @@ endif ()
 if (WITH_VTK)
   list (APPEND deps ${VTK_LIBRARIES})
 endif ()
+if (WITH_LEVELDB)
+  list (APPEND deps ${LevelDB_LIBRARY})
+endif ()
 
 target_link_libraries (glcommon PUBLIC ${deps})

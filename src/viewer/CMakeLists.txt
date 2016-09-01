@@ -52,6 +52,11 @@ endif ()
 add_executable (viewer1 main1.cpp)
 target_link_libraries (viewer1 glviewer)
 
+if (WITH_LEVELDB)
+  add_executable (viewer2 main2.cpp)
+  target_link_libraries (viewer2 glviewer)
+endif ()
+
 # add_executable (storyLine storyLine.cpp)
 # target_link_libraries (storyLine glviewer)
 
