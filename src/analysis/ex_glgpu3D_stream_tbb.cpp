@@ -226,7 +226,7 @@ int main(int argc, char **argv)
 
   rocksdb::Options options;
   options.create_if_missing = true;
-  options.write_buffer_size = 64*1024*1024; // 64 MB
+  // options.write_buffer_size = 64*1024*1024; // 64 MB
   rocksdb::Status status = rocksdb::DB::Open(options, dbname.c_str(), &db);
   assert(status.ok());
 #endif

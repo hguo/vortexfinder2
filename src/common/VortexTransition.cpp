@@ -242,6 +242,13 @@ void VortexTransition::SequenceColor(int gid, unsigned char &r, unsigned char &g
   b = _seqs[gid].b;
 }
 
+#if 0
+void VortexTransition::SerializeSequence()
+{
+
+}
+#endif
+
 void VortexTransition::ConstructSequence()
 {
   for (int i=0; i<_frames.size()-1; i++) {

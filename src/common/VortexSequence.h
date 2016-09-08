@@ -17,4 +17,7 @@ public:
   // int lhs_event, rhs_event;
 };
 
+bool SerializeVortexSequence(const std::vector<VortexSequence>&, std::string& buf);
+bool UnserializeVortexLines(std::vector<VortexSequence>&, const std::string& buf);
+
 #endif

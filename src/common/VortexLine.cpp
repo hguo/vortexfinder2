@@ -269,7 +269,28 @@ float CrossingPoint(const VortexLine& l0, const VortexLine& l1, float X[3])
 
 float Area(const VortexLine& l0, const VortexLine& l1) 
 {
-  return 0; // TODO
+  VortexLine b0 = l0, b1 = l1;
+  b0.ToBezier(); 
+  b1.ToBezier();
+
+  const int N = 100;
+  const float delta = 1.f / N;
+
+  b0.ToRegular(delta);
+  b1.ToRegular(delta);
+
+  float a = 0;
+
+  for (int i=0; i<N; i++) {
+    const int j = i + 1;
+    float A[3] = {b0[i*3], b0[i*3+1], b0[i*3+2]}, 
+          B[3] = {b0[j*3], b0[j*3+1], b0[j*3+2]}, 
+          C[3] = {b1[j*3], b1[j*3+1], b1[j*3+2]},
+          D[3] = {b1[i*3], b1[i*3+1], b1[i*3+2]};
+    a += area(A, B, C) + area(A, C, D);
+  }
+
+  return a;
 }
 
 void VortexLine::BoundingBox(float LB[3], float UB[3]) const
