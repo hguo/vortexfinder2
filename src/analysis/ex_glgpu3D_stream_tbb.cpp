@@ -226,13 +226,9 @@ int main(int argc, char **argv)
 
   leveldb::Options options;
   options.create_if_missing = true;
-  options.write_buffer_size = 64*1024*1024;
+  options.write_buffer_size = 64*1024*1024; // 64 MB
   leveldb::Status status = leveldb::DB::Open(options, dbname.c_str(), &db);
   assert(status.ok());
-
-  // std::string key = "test_key";
-  // std::string val = "test_val";
-  // db->Put(leveldb::WriteOptions(), key, val);
 #endif
 
   using namespace tbb::flow;
@@ -282,13 +278,13 @@ int main(int argc, char **argv)
   }
 
   fclose(fp);
-  g.wait_for_all();
 
 #if WITH_LEVELDB
   db->Put(leveldb::WriteOptions(), "frames", leveldb::Slice((const char*)frames.data(), sizeof(int)*frames.size()));
   delete db;
 #endif
-
+  
+  g.wait_for_all();
   fprintf(stderr, "exiting...\n");
   return 0;
 }
