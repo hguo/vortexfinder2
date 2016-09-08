@@ -29,6 +29,8 @@ bool VortexTransition::LoadFromLevelDB(leveldb::DB* db)
   memcpy((char*)_frames.data(), buf.data(), sizeof(int) * nframes);
   buf.clear();
 
+  fprintf(stderr, "nframes=%d\n", nframes);
+
   for (int i=0; i<nframes-1; i++) {
     std::stringstream ss;
     ss << "match." << _frames[i] << "." << _frames[i+1];

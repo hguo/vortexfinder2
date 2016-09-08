@@ -35,7 +35,7 @@ void VortexLine::ToBezier()
 {
   using namespace FitCurves;
   typedef Point<3> Pt;
-  const float error_bound = 0.001;
+  const float error_bound = 0.01;
   float tot_error;
 
   if (is_bezier) return;
@@ -265,6 +265,11 @@ float CrossingPoint(const VortexLine& l0, const VortexLine& l1, float X[3])
   X[2] = l0[i0*3+2] + l1[j0*3+2];
 
   return minDist;
+}
+
+float Area(const VortexLine& l0, const VortexLine& l1) 
+{
+  return 0; // TODO
 }
 
 void VortexLine::BoundingBox(float LB[3], float UB[3]) const

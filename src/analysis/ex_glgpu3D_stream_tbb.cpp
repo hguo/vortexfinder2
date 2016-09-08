@@ -110,6 +110,8 @@ struct extract {
     vobjs_all[hdr.frame] = ex->GetVortexObjects(0);
 
     std::vector<VortexLine> vlines = ex->GetVortexLines();
+    // for (int i=0; i<vlines.size(); i++) 
+    //   vlines[i].ToBezier();
 
     std::stringstream ss;
 #if 0 // VTK
@@ -224,6 +226,7 @@ int main(int argc, char **argv)
 
   leveldb::Options options;
   options.create_if_missing = true;
+  options.write_buffer_size = 64*1024*1024;
   leveldb::Status status = leveldb::DB::Open(options, dbname.c_str(), &db);
   assert(status.ok());
 
@@ -238,7 +241,7 @@ int main(int argc, char **argv)
   int type_msg;
   vfgpu_hdr_t hdr;
   int pfcount, pecount;
-  const int max_frames = 10000;
+  const int max_frames = INT_MAX;
   int frame_count = 0;
   std::vector<int> frames;
 
