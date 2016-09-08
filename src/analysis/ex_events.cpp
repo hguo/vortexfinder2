@@ -6,16 +6,16 @@
 #include "common/DataInfo.pb.h"
 #endif
 
-#if WITH_LEVELDB
-#include <leveldb/db.h>
+#if WITH_ROCKSDB
+#include <rocksdb/db.h>
 
 int main(int argc, char **argv)
 {
   if (argc < 2) return 1;
-  leveldb::DB* db;
 
-  leveldb::Options options;
-  leveldb::Status status = leveldb::DB::Open(options, argv[1], &db);
+  rocksdb::DB* db;
+  rocksdb::Options options;
+  rocksdb::Status status = rocksdb::DB::Open(options, argv[1], &db);
 
   VortexTransition vt;
   vt.LoadFromLevelDB(db);
@@ -25,7 +25,7 @@ int main(int argc, char **argv)
   delete db;
   return 0;
 }
-#else 
+#else
 int main(int argc, char **argv)
 {
   if (argc < 4) {
@@ -45,5 +45,3 @@ int main(int argc, char **argv)
   return 0;
 }
 #endif
-
-

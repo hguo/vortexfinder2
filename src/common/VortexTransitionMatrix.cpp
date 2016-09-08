@@ -14,7 +14,7 @@ VortexTransitionMatrix::VortexTransitionMatrix() :
 }
 
 VortexTransitionMatrix::VortexTransitionMatrix(int t0, int t1, int n0, int n1) :
-  _interval(std::make_pair<int, int>(t0, t1)), 
+  _interval(std::make_pair(t0, t1)), 
   _n0(n0), _n1(n1)
 {
   _match.resize(_n0*_n1);

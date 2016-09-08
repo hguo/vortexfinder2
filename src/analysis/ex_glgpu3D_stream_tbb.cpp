@@ -14,8 +14,8 @@
 #include "io/GLGPU3DDataset.h"
 #include "extractor/Extractor.h"
 
-#if WITH_LEVELDB
-#include <leveldb/db.h>
+#if WITH_ROCKSDB
+#include <rocksdb/db.h>
 #endif
 
 enum {
@@ -65,8 +65,8 @@ tbb::concurrent_unordered_map<int, int> frame_counter;  // used to count how man
 
 static std::string infile;
 
-#ifdef WITH_LEVELDB
-static leveldb::DB* db;
+#ifdef WITH_ROCKSDB
+static rocksdb::DB* db;
 #endif
 
 static GLHeader conv_hdr(const vfgpu_hdr_t& hdr) {
@@ -120,8 +120,8 @@ struct extract {
 #else
     std::string buf;
     SerializeVortexLines(vlines, std::string(), buf);
-    ss << "vlines." << hdr.frame;
-    db->Put(leveldb::WriteOptions(), ss.str(), buf);
+    ss << "v." << hdr.frame;
+    db->Put(rocksdb::WriteOptions(), ss.str(), buf);
 #endif
 
     delete ds;
@@ -183,11 +183,11 @@ struct track {
     VortexTransitionMatrix mat = ex->TraceOverTime();
     
     std::stringstream ss;
-    ss << "match." << f0 << "." << f1;
+    ss << "m." << f0 << "." << f1;
     std::string buf;
     mat.SetInterval(interval);
     mat.Serialize(buf);
-    db->Put(leveldb::WriteOptions(), ss.str(), buf);
+    db->Put(rocksdb::WriteOptions(), ss.str(), buf);
 
     delete ex;
     delete ds;
@@ -221,13 +221,13 @@ int main(int argc, char **argv)
   FILE *fp = fopen(infile.c_str(), "rb");
   if (!fp) return 1;
 
-#if WITH_LEVELDB
-  std::string dbname = infile + ".db";
+#if WITH_ROCKSDB
+  std::string dbname = infile + ".rocksdb";
 
-  leveldb::Options options;
+  rocksdb::Options options;
   options.create_if_missing = true;
   options.write_buffer_size = 64*1024*1024; // 64 MB
-  leveldb::Status status = leveldb::DB::Open(options, dbname.c_str(), &db);
+  rocksdb::Status status = rocksdb::DB::Open(options, dbname.c_str(), &db);
   assert(status.ok());
 #endif
 
@@ -279,13 +279,13 @@ int main(int argc, char **argv)
 
   fclose(fp);
 
-#if WITH_LEVELDB
-  db->Put(leveldb::WriteOptions(), "frames", leveldb::Slice((const char*)frames.data(), sizeof(int)*frames.size()));
+#if WITH_ROCKSDB
+  db->Put(rocksdb::WriteOptions(), "f", rocksdb::Slice((const char*)frames.data(), sizeof(int)*frames.size()));
 #endif
   
   g.wait_for_all();
   
-#if WITH_LEVELDB
+#if WITH_ROCKSDB
   delete db;
 #endif
 

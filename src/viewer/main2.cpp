@@ -13,9 +13,9 @@ int main(int argc, char **argv)
 
   // DB
   const std::string dbname = argv[1];
-  leveldb::DB* db;
-  leveldb::Options options;
-  leveldb::Status status = leveldb::DB::Open(options, argv[1], &db);
+  rocksdb::DB* db;
+  rocksdb::Options options;
+  rocksdb::Status status = rocksdb::DB::Open(options, argv[1], &db);
 
   // VT
   VortexTransition vt;

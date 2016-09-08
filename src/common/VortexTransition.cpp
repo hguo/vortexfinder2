@@ -17,11 +17,11 @@ VortexTransition::~VortexTransition()
 {
 }
 
-#if WITH_LEVELDB
-bool VortexTransition::LoadFromLevelDB(leveldb::DB* db)
+#if WITH_ROCKSDB
+bool VortexTransition::LoadFromLevelDB(rocksdb::DB* db)
 {
   std::string buf;
-  leveldb::Status s = db->Get(leveldb::ReadOptions(), "frames", &buf);
+  rocksdb::Status s = db->Get(rocksdb::ReadOptions(), "f", &buf);
   if (!s.ok()) return false;
 
   int nframes = buf.length() / sizeof(int);
@@ -33,8 +33,8 @@ bool VortexTransition::LoadFromLevelDB(leveldb::DB* db)
 
   for (int i=0; i<nframes-1; i++) {
     std::stringstream ss;
-    ss << "match." << _frames[i] << "." << _frames[i+1];
-    leveldb::Status s = db->Get(leveldb::ReadOptions(), ss.str(), &buf);
+    ss << "m." << _frames[i] << "." << _frames[i+1];
+    rocksdb::Status s = db->Get(rocksdb::ReadOptions(), ss.str(), &buf);
     if (!s.ok()) fprintf(stderr, "Key not found, %s\n", ss.str().c_str());
 
     VortexTransitionMatrix mat;
@@ -411,7 +411,7 @@ void VortexTransition::SequenceGraphColoring()
     int t = _seqs[i].its + _seqs[i].itl - 1;
     if (t>=_frames.size()-1) continue; 
     int lhs_lid = _seqs[i].lids.back();
-    Interval interval = std::make_pair<int, int>(_frames[t], _frames[t+1]);
+    Interval interval = std::make_pair(_frames[t], _frames[t+1]);
     VortexTransitionMatrix &mat = _matrices[interval];
     for (int k=0; k<mat.n1(); k++) {
       if (mat(lhs_lid, k)) {

@@ -6,8 +6,8 @@
 #include "common/VortexSequence.h"
 #include <utility>
 
-#if WITH_LEVELDB
-#include <leveldb/db.h>
+#if WITH_ROCKSDB
+#include <rocksdb/db.h>
 #endif
 
 class VortexTransition 
@@ -19,8 +19,8 @@ public:
   // int ts() const {return _ts;}
   // int tl() const {return _tl;}
 
-#ifdef WITH_LEVELDB
-  bool LoadFromLevelDB(leveldb::DB*);
+#ifdef WITH_ROCKSDB
+  bool LoadFromLevelDB(rocksdb::DB*);
 #endif
 
   void LoadFromFile(const std::string &dataname, int ts, int tl);

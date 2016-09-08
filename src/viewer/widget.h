@@ -13,8 +13,8 @@
 #include "common/DataInfo.pb.h"
 #include "common/VortexTransition.h"
 
-#ifdef WITH_LEVELDB
-#include <leveldb/db.h>
+#ifdef WITH_ROCKSDB
+#include <rocksdb/db.h>
 #endif
 
 namespace ILines {class ILRender;}
@@ -49,7 +49,9 @@ public:
   void LoadInclusionsFromTextFile(const std::string& filename);
 
   void SetData(const std::string& dataname, int ts, int tl);
-  void SetDB(leveldb::DB* db) {_db = db;}
+#if WITH_ROCKSDB
+  void SetDB(rocksdb::DB* db) {_db = db;}
+#endif 
   void LoadTimeStep(int t);
 
   void SetVortexTransition(const VortexTransition* vt);
@@ -165,8 +167,8 @@ private: // id rendering
 
 private: // GLGPU
   GLGPUDataset *_ds;
-#if WITH_LEVELDB
-  leveldb::DB *_db;
+#if WITH_ROCKSDB
+  rocksdb::DB *_db;
 #endif
 }; 
 

@@ -52,7 +52,7 @@ endif ()
 add_executable (viewer1 main1.cpp)
 target_link_libraries (viewer1 glviewer)
 
-if (WITH_LEVELDB)
+if (WITH_ROCKSDB)
   add_executable (viewer2 main2.cpp)
   target_link_libraries (viewer2 glviewer)
 endif ()

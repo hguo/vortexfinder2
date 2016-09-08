@@ -803,13 +803,13 @@ void CGLWidget::Clear()
 
 void CGLWidget::LoadVortexLines()
 {
-#if WITH_LEVELDB
+#if WITH_ROCKSDB
   std::stringstream ss;
-  ss << "vlines." << _vt->TimestepToFrame(_timestep);
+  ss << "v." << _vt->TimestepToFrame(_timestep);
   const std::string key = ss.str();
   std::string info_bytes, buf;
 
-  leveldb::Status s = _db->Get(leveldb::ReadOptions(), key, &buf);
+  rocksdb::Status s = _db->Get(rocksdb::ReadOptions(), key, &buf);
   std::vector<VortexLine> vortex_liness;
   if (!::UnserializeVortexLines(vortex_liness, info_bytes, buf)) 
     return;
