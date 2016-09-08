@@ -281,10 +281,14 @@ int main(int argc, char **argv)
 
 #if WITH_LEVELDB
   db->Put(leveldb::WriteOptions(), "frames", leveldb::Slice((const char*)frames.data(), sizeof(int)*frames.size()));
-  delete db;
 #endif
   
   g.wait_for_all();
+  
+#if WITH_LEVELDB
+  delete db;
+#endif
+
   fprintf(stderr, "exiting...\n");
   return 0;
 }
