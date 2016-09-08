@@ -32,8 +32,8 @@ if (WITH_LEVELDB)
   target_link_libraries (events ${LevelDB_LIBRARY})
 endif ()
 
-add_executable (events_dist ex_events_dist.cpp)
-target_link_libraries (events_dist glcommon)
+# add_executable (events_dist ex_events_dist.cpp)
+# target_link_libraries (events_dist glcommon)
 
 add_executable (dist ex_dist.cpp)
 target_link_libraries (dist glio)

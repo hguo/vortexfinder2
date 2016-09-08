@@ -2,6 +2,7 @@
 #include <sstream>
 #include <cstdio>
 #include <climits>
+#include <cassert>
 
 #if WITH_PROTOBUF
 #include "Association.pb.h"

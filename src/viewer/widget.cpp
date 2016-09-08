@@ -946,7 +946,8 @@ void CGLWidget::LoadVortexLines()
 
 void CGLWidget::LoadVortexLinesFromTextFile(const std::string& filename)
 {
-  std::ifstream ifs(filename);
+  std::ifstream ifs; 
+  ifs.open(filename.c_str());
   if (!ifs.is_open()) return;
 
   const float c[3] = {1, 0, 0};
