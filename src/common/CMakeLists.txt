@@ -24,6 +24,7 @@ set (common_protos
   FieldLine.proto
   Puncture.proto
   VortexTransitionMatrix.proto
+  VortexTransition.proto
   VortexSequence.proto
 )
 

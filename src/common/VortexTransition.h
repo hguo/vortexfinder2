@@ -12,6 +12,7 @@
 
 class VortexTransition 
 {
+  friend class diy::Serialization<VortexTransition>;
 public:
   VortexTransition();
   ~VortexTransition();
@@ -57,8 +58,8 @@ private:
 
 private:
   // int _ts, _tl;
-  std::map<Interval, VortexTransitionMatrix> _matrices;
   std::vector<int> _frames; // frame IDs
+  std::map<Interval, VortexTransitionMatrix> _matrices;
   std::vector<struct VortexSequence> _seqs;
   std::map<std::pair<int, int>, int> _seqmap; // <time, lid>, gid
   std::map<std::pair<int, int>, int> _invseqmap; // <time, gid>, lid
@@ -66,6 +67,31 @@ private:
   int _max_nvortices_per_frame;
 
   std::vector<struct VortexEvent> _events;
+};
+
+/////////
+template <> struct diy::Serialization<VortexTransition> {
+  static void save(diy::BinaryBuffer& bb, const VortexTransition& m) {
+    diy::save(bb, m._frames);
+    diy::save(bb, m._matrices);
+    diy::save(bb, m._seqs);
+    diy::save(bb, m._seqmap);
+    diy::save(bb, m._invseqmap);
+    diy::save(bb, m._nvortices_per_frame);
+    diy::save(bb, m._max_nvortices_per_frame);
+    diy::save(bb, m._events);
+  }
+
+  static void load(diy::BinaryBuffer&bb, VortexTransition& m) {
+    diy::load(bb, m._frames);
+    diy::load(bb, m._matrices);
+    diy::load(bb, m._seqs);
+    diy::load(bb, m._seqmap);
+    diy::load(bb, m._invseqmap);
+    diy::load(bb, m._nvortices_per_frame);
+    diy::load(bb, m._max_nvortices_per_frame);
+    diy::load(bb, m._events);
+  }
 };
 
 #endif

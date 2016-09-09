@@ -1,6 +1,8 @@
 project (vortexfinder2)
 cmake_minimum_required (VERSION 2.8.12)
 
+include_directories (${CMAKE_SOURCE_DIR}/diy2/include)
+
 if (CMAKE_PROJECT_NAME STREQUAL "ParaView")
 
   # Build as a plugin within ParaView

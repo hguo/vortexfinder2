@@ -1,0 +1,8 @@
+import "VortexTransitionMatrix.proto";
+import "VortexSequence.proto";
+
+message PBVortexTransition {
+  repeated uint32 frames = 1;
+  repeated PBVortexTransitionMatrix mats = 2;
+  repeated PBVortexSequence seqs = 3;
+};

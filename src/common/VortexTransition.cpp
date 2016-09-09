@@ -5,9 +5,14 @@
 #include <set>
 #include <cassert>
 #include <cstring>
+#include "common/diy-ext.hpp"
 #include "random_color.h"
 #include "graph_color.h"
 #include "def.h"
+
+#if WITH_PROTOBUF
+#include "VortexTransition.pb.h"
+#endif
 
 VortexTransition::VortexTransition()
 {
@@ -241,13 +246,6 @@ void VortexTransition::SequenceColor(int gid, unsigned char &r, unsigned char &g
   g = _seqs[gid].g;
   b = _seqs[gid].b;
 }
-
-#if 0
-void VortexTransition::SerializeSequence()
-{
-
-}
-#endif
 
 void VortexTransition::ConstructSequence()
 {

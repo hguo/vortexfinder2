@@ -1,4 +1,4 @@
-message PBAssociation { // association matrix, or transition matrix
+message PBVortexTransitionMatrix { // association matrix, or transition matrix
   required uint32 f0 = 1;
   required uint32 f1 = 2;
   required uint32 n0 = 3;

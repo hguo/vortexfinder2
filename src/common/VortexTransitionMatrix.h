@@ -6,10 +6,12 @@
 #include <map>
 #include <set>
 #include "def.h"
+#include "common/diy-ext.hpp"
 #include "common/VortexEvents.h"
 #include "common/Interval.h"
 
 class VortexTransitionMatrix {
+  friend class diy::Serialization<VortexTransitionMatrix>;
 public:
   VortexTransitionMatrix();
   VortexTransitionMatrix(int t0, int t1, int n0, int n1);
@@ -66,6 +68,24 @@ private:
   // modulars
   std::vector<std::set<int> > _lhss, _rhss;
   std::vector<int> _events;
+};
+
+
+///////////
+template <> struct diy::Serialization<VortexTransitionMatrix> {
+  static void save(diy::BinaryBuffer& bb, const VortexTransitionMatrix& m) {
+    diy::save(bb, m._interval);
+    diy::save(bb, m._n0);
+    diy::save(bb, m._n1);
+    diy::save(bb, m._match);
+  }
+
+  static void load(diy::BinaryBuffer&bb, VortexTransitionMatrix& m) {
+    diy::load(bb, m._interval);
+    diy::load(bb, m._n0);
+    diy::load(bb, m._n1);
+    diy::save(bb, m._match);
+  }
 };
 
 #endif

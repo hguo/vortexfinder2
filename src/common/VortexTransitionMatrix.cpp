@@ -27,7 +27,7 @@ VortexTransitionMatrix::~VortexTransitionMatrix()
 bool VortexTransitionMatrix::Serialize(std::string& buf) const
 {
 #if WITH_PROTOBUF
-  PBAssociation pb;
+  PBVortexTransitionMatrix pb;
   pb.set_f0(_interval.first);
   pb.set_f1(_interval.second);
   pb.set_n0(_n0);
@@ -45,7 +45,7 @@ bool VortexTransitionMatrix::Serialize(std::string& buf) const
 bool VortexTransitionMatrix::Unserialize(const std::string& buf)
 {
 #if WITH_PROTOBUF
-  PBAssociation pb;
+  PBVortexTransitionMatrix pb;
   if (!pb.ParseFromString(buf)) return false;
   _interval.first = pb.f0();
   _interval.second = pb.f1();
