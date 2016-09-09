@@ -27,10 +27,23 @@ bool SerializeVortexSequence(const std::vector<VortexSequence>& seqs, std::strin
 #endif
 }
 
-bool UnserializeVortexLines(std::vector<VortexSequence>&, const std::string& buf)
+bool UnserializeVortexLines(std::vector<VortexSequence>& seqs, const std::string& buf)
 {
 #if WITH_PROTOBUF
-  return false;
+  PBVortexSequences pb;
+  if (!pb.ParseFromString(buf)) return false;
+
+  for (int i=0; i<pb.seqs_size(); i++) {
+    VortexSequence seq;
+    seq.its = pb.seqs(i).its();
+    seq.itl = pb.seqs(i).itl();
+    seq.r = pb.seqs(i).r(); 
+    seq.g = pb.seqs(i).g(); 
+    seq.b = pb.seqs(i).b();
+    for (int j=0; j<pb.seqs(i).lids_size(); j++) 
+      seq.lids.push_back(pb.seqs(i).lids(i));
+  }
+  return true;
 #else
   assert(false);
   return false;
