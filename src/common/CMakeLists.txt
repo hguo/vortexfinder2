@@ -6,7 +6,6 @@ set (common_sources
   VortexLine.cpp
   VortexTransitionMatrix.cpp
   VortexTransition.cpp
-  VortexSequence.cpp
   Inclusions.cpp
   FieldLine.cpp
   Puncture.cpp
@@ -23,8 +22,6 @@ set (common_protos
   Inclusions.proto
   FieldLine.proto
   Puncture.proto
-  VortexTransition.proto
-  VortexSequence.proto
 )
 
 if (WITH_PROTOBUF)

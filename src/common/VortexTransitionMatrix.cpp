@@ -4,10 +4,6 @@
 #include <climits>
 #include <cassert>
 
-#if WITH_PROTOBUF
-#include "VortexTransitionMatrix.pb.h"
-#endif
-
 VortexTransitionMatrix::VortexTransitionMatrix() :
   _n0(INT_MAX), _n1(INT_MAX)
 {

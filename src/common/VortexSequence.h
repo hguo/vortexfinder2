@@ -16,10 +16,6 @@ struct VortexSequence {
   // int lhs_event, rhs_event;
 };
 
-bool SerializeVortexSequence(const std::vector<VortexSequence>&, std::string& buf);
-bool UnserializeVortexLines(std::vector<VortexSequence>&, const std::string& buf);
-
-
 template <> struct diy::Serialization<VortexSequence> {
   static void save(diy::BinaryBuffer& bb, const VortexSequence& m) {
     diy::save(bb, m.its);

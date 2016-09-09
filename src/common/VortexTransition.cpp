@@ -10,10 +10,6 @@
 #include "graph_color.h"
 #include "def.h"
 
-#if WITH_PROTOBUF
-#include "VortexTransition.pb.h"
-#endif
-
 VortexTransition::VortexTransition()
 {
 }
