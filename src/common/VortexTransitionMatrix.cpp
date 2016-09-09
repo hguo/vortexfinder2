@@ -24,98 +24,14 @@ VortexTransitionMatrix::~VortexTransitionMatrix()
 {
 }
 
-bool VortexTransitionMatrix::Serialize(std::string& buf) const
-{
-#if WITH_PROTOBUF
-  PBVortexTransitionMatrix pb;
-  pb.set_f0(_interval.first);
-  pb.set_f1(_interval.second);
-  pb.set_n0(_n0);
-  pb.set_n1(_n1);
-  for (int i=0; i<_match.size(); i++)
-    pb.add_mat(_match[i]);
-  pb.SerializeToString(&buf);
-  return true;
-#else
-  assert(false);
-  return false;
-#endif
-}
-
-bool VortexTransitionMatrix::Unserialize(const std::string& buf)
-{
-#if WITH_PROTOBUF
-  PBVortexTransitionMatrix pb;
-  if (!pb.ParseFromString(buf)) return false;
-  _interval.first = pb.f0();
-  _interval.second = pb.f1();
-  _n0 = pb.n0();
-  _n1 = pb.n1();
-  _match.resize(_n0 * _n1);
-  for (int i=0; i<_match.size(); i++) 
-    _match[i] = pb.mat(i);
-  
-  if (Valid()) 
-    Normalize();
-  return true;
-#else
-  assert(false);
-  return false;
-#endif
-}
-
-bool VortexTransitionMatrix::LoadFromFile(const std::string& filename)
-{
-  FILE *fp = fopen(filename.c_str(), "rb");
-  if (!fp) return false;
-
-  fread(&_interval, sizeof(int), 2, fp);
-  fread(&_n0, sizeof(int), 1, fp);
-  fread(&_n1, sizeof(int), 1, fp);
-
-  _match.resize(_n0*_n1);
-  fread((char*)_match.data(), sizeof(int), _n0*_n1, fp);
-
-  fclose(fp);
-
-  if (Valid()) 
-    Normalize();
-
-  return Valid();
-}
-
-bool VortexTransitionMatrix::SaveToFile(const std::string& filename) const
-{
-  if (!Valid()) return false;
-
-  FILE *fp = fopen(filename.c_str(), "wb");
-  if (!fp) return false;
-
-  fwrite(&_interval, sizeof(int), 2, fp);
-  fwrite(&_n0, sizeof(int), 1, fp);
-  fwrite(&_n1, sizeof(int), 1, fp);
-  fwrite((char*)_match.data(), sizeof(int), _n0*_n1, fp);
-
-  fclose(fp);
-  return true;
-}
-
-bool VortexTransitionMatrix::LoadFromFile(const std::string& dataname, int t0, int t1)
-{
-  return LoadFromFile(MatrixFileName(dataname, t0, t1));
-}
-
-bool VortexTransitionMatrix::SaveToFile(const std::string& dataname, int t0, int t1) const 
-{
-  return SaveToFile(MatrixFileName(dataname, t0, t1));
-}
-
+#if 0
 std::string VortexTransitionMatrix::MatrixFileName(const std::string& dataname, int t0, int t1) const
 {
   std::stringstream ss;
   ss << dataname << ".match." << t0 << "." << t1;
   return ss.str();
 }
+#endif
 
 int VortexTransitionMatrix::operator()(int i, int j) const
 {
@@ -236,9 +152,8 @@ void VortexTransitionMatrix::Modularize()
 
 void VortexTransitionMatrix::Print() const
 {
-  // fprintf(stderr, "Interval={%d, %d}, n0=%d, n1=%d\n", 
-  //     _interval.first, _interval.second, _n0, _n1);
-  return;
+  fprintf(stderr, "Interval={%d, %d}, n0=%d, n1=%d\n", 
+      _interval.first, _interval.second, _n0, _n1);
 
   for (int i=0; i<_n0; i++) {
     for (int j=0; j<_n1; j++) {

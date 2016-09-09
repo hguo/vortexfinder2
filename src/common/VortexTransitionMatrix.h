@@ -19,19 +19,8 @@ public:
   ~VortexTransitionMatrix();
 
 public: // IO
-  bool LoadFromFile(const std::string& filename);
-  bool SaveToFile(const std::string& filename) const;
-
-  bool Serialize(std::string&) const;
-  bool Unserialize(const std::string&);
-
-  bool LoadFromFile(const std::string& dataname, int t0, int t1);
-  bool SaveToFile(const std::string& dataname, int t0, int t1) const;
-
   void SetToDummy() {_n0 = _n1 = 0; _match.clear();}
-
   bool Valid() const {return _match.size()>0;}
-
   void Print() const;
   
 public: // modulars
@@ -58,7 +47,7 @@ public: // access
   int rowsum(int i) const;
 
 private:
-  std::string MatrixFileName(const std::string& dataname, int t0, int t1) const;
+  // std::string MatrixFileName(const std::string& dataname, int t0, int t1) const;
 
 private:
   Interval _interval;
@@ -84,7 +73,8 @@ template <> struct diy::Serialization<VortexTransitionMatrix> {
     diy::load(bb, m._interval);
     diy::load(bb, m._n0);
     diy::load(bb, m._n1);
-    diy::save(bb, m._match);
+    diy::load(bb, m._match);
+    if (m.Valid()) m.Normalize();
   }
 };
 

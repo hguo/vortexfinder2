@@ -23,7 +23,6 @@ set (common_protos
   Inclusions.proto
   FieldLine.proto
   Puncture.proto
-  VortexTransitionMatrix.proto
   VortexTransition.proto
   VortexSequence.proto
 )

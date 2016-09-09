@@ -184,9 +184,11 @@ struct track {
     
     std::stringstream ss;
     ss << "m." << f0 << "." << f1;
+    
     std::string buf;
     mat.SetInterval(interval);
-    mat.Serialize(buf);
+    serialize(mat, buf);
+    // mat.Serialize(buf);
     db->Put(rocksdb::WriteOptions(), ss.str(), buf);
 
     delete ex;
@@ -237,7 +239,7 @@ int main(int argc, char **argv)
   int type_msg;
   vfgpu_hdr_t hdr;
   int pfcount, pecount;
-  const int max_frames = INT_MAX;
+  const int max_frames = 100;//  INT_MAX;
   int frame_count = 0;
   std::vector<int> frames;
 

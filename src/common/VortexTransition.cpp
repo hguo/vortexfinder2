@@ -43,10 +43,11 @@ bool VortexTransition::LoadFromLevelDB(rocksdb::DB* db)
     if (!s.ok()) fprintf(stderr, "Key not found, %s\n", ss.str().c_str());
 
     VortexTransitionMatrix mat;
-    mat.Unserialize(buf);
+    unserialize(buf, mat);
+    // mat.Unserialize(buf);
     AddMatrix(mat);
 
-    mat.Print();
+    // mat.Print();
   }
 
   return true;
