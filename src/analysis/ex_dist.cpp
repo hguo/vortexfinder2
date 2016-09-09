@@ -57,8 +57,9 @@ static float Dist(const std::string& dataname, int frame, int lvid0, int lvid1)
 
   std::string info_bytes;
   std::vector<VortexLine> vortex_liness;
-  if (!::LoadVortexLines(vortex_liness, info_bytes, filename))
-    return DBL_MAX;
+  unserializeFromFile(filename, vortex_liness);
+  // if (!::LoadVortexLines(vortex_liness, info_bytes, filename))
+  //   return DBL_MAX;
 
   return MinimumDist(vortex_liness[lvid0], vortex_liness[lvid1]);
 }

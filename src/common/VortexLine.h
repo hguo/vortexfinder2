@@ -6,6 +6,7 @@
 #include <vector>
 #include <sstream>
 #include "def.h"
+#include "common/diy-ext.hpp"
 
 /* 
  * \class   VortexLine
@@ -39,11 +40,27 @@ struct VortexLine : public std::vector<float>
   unsigned char r, g, b;
 };
 
-bool SerializeVortexLines(const std::vector<VortexLine>& lines, const std::string& info, std::string& buf);
-bool UnserializeVortexLines(std::vector<VortexLine>& lines, std::string& info, const std::string& buf);
+template <> struct diy::Serialization<VortexLine> {
+  static void save(diy::BinaryBuffer& bb, const VortexLine& m) {
+    diy::save(bb, m.id);
+    diy::save(bb, m.gid);
+    diy::save(bb, m.timestep);
+    diy::save(bb, m.time);
+    diy::save(bb, m.is_bezier);
+    diy::save(bb, m.is_loop);
+    diy::save<std::vector<float> >(bb, m);
+  }
 
-bool SaveVortexLines(const std::vector<VortexLine>& lines, const std::string& info, const std::string& filename);
-bool LoadVortexLines(std::vector<VortexLine>& lines, std::string& info, const std::string& filename);
+  static void load(diy::BinaryBuffer&bb, VortexLine& m) {
+    diy::load(bb, m.id);
+    diy::load(bb, m.gid);
+    diy::load(bb, m.timestep);
+    diy::load(bb, m.time);
+    diy::load(bb, m.is_bezier);
+    diy::load(bb, m.is_loop);
+    diy::load<std::vector<float> >(bb, m);
+  }
+};
 
 bool SaveVortexLinesVTK(const std::vector<VortexLine>& lines, const std::string& filename);
 

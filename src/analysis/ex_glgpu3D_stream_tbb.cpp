@@ -119,7 +119,8 @@ struct extract {
     SaveVortexLinesVTK(vlines, ss.str());
 #else
     std::string buf;
-    SerializeVortexLines(vlines, std::string(), buf);
+    serialize(vlines, buf);
+    // SerializeVortexLines(vlines, std::string(), buf);
     ss << "v." << hdr.frame;
     db->Put(rocksdb::WriteOptions(), ss.str(), buf);
 #endif

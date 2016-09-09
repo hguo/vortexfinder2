@@ -5,10 +5,6 @@
 #include <cfloat>
 #include <cassert>
 
-#if WITH_PROTOBUF
-#include "VortexLine.pb.h"
-#endif
-
 #if WITH_VTK
 #include <vtkSmartPointer.h>
 #include <vtkPointData.h>
@@ -145,87 +141,6 @@ void VortexLine::Unflattern(const float O[3], const float L[3])
 
   clear();
   swap(line);
-}
-
-///////
-bool SerializeVortexLines(const std::vector<VortexLine>& lines, const std::string& info, std::string& buf)
-{
-#if WITH_PROTOBUF
-  PBVortexLines plines;
-  for (int i=0; i<lines.size(); i++) {
-    PBVortexLine *pline = plines.add_lines();
-    for (int j=0; j<lines[i].size(); j++) 
-      pline->add_vertices( lines[i][j] );
-    pline->set_id( lines[i].id );
-    pline->set_timestep( lines[i].timestep );
-    pline->set_time( lines[i].time );
-    pline->set_bezier( lines[i].is_bezier );
-  }
-  if (info.length()>0) {
-    plines.set_info_bytes(info);
-  }
-  return plines.SerializeToString(&buf);
-#else
-  assert(false);
-  return false;
-#endif
-}
-
-bool UnserializeVortexLines(std::vector<VortexLine>& lines, std::string& info, const std::string& buf)
-{
-#if WITH_PROTOBUF
-  PBVortexLines plines;
-  if (!plines.ParseFromString(buf)) return false;
-
-  for (int i=0; i<plines.lines_size(); i++) {
-    VortexLine line;
-    for (int j=0; j<plines.lines(i).vertices_size(); j++) 
-      line.push_back(plines.lines(i).vertices(j));
-    line.id = plines.lines(i).id();
-    line.timestep = plines.lines(i).timestep();
-    line.time = plines.lines(i).time();
-    line.is_bezier = plines.lines(i).bezier();
-    lines.push_back(line);
-  }
-
-  if (plines.has_info_bytes())
-    info = plines.info_bytes();
-
-  return true;
-#else
-  assert(false);
-  return false;
-#endif
-}
-
-bool SaveVortexLines(const std::vector<VortexLine>& lines, const std::string& info, const std::string& filename)
-{
-  FILE *fp = fopen(filename.c_str(), "wb");
-  if (!fp) return false;
-
-  std::string buf;
-  SerializeVortexLines(lines, info, buf);
-  fwrite(buf.data(), 1, buf.size(), fp);
-
-  fclose(fp);
-  return true;
-}
-
-bool LoadVortexLines(std::vector<VortexLine>& lines, std::string& info, const std::string& filename)
-{
-  FILE *fp = fopen(filename.c_str(), "rb"); 
-  if (!fp) return false;
-
-  fseek(fp, 0L, SEEK_END);
-  size_t sz = ftell(fp);
-
-  std::string buf;
-  buf.resize(sz);
-  fseek(fp, 0L, SEEK_SET);
-  size_t length = fread((char*)buf.data(), 1, sz, fp);
-  fclose(fp);
-
-  return UnserializeVortexLines(lines, info, buf);
 }
 
 float MinimumDist(const VortexLine& l0, const VortexLine& l1)

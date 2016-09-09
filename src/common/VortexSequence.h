@@ -36,5 +36,4 @@ template <> struct diy::Serialization<VortexSequence> {
   }
 };
 
-
 #endif

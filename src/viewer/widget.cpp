@@ -117,8 +117,9 @@ void CGLWidget::LoadVortexLines2D()
   
     std::string info_bytes;
     std::vector<VortexLine> vortex_liness;
-    if (!::LoadVortexLines(vortex_liness, info_bytes, filename))
-      continue;
+    unserializeFromFile(filename, vortex_liness);
+    // if (!::LoadVortexLines(vortex_liness, info_bytes, filename))
+    //   continue;
     
     if (info_bytes.length()>0) 
       _data_info.ParseFromString(info_bytes);
@@ -811,8 +812,9 @@ void CGLWidget::LoadVortexLines()
 
   rocksdb::Status s = _db->Get(rocksdb::ReadOptions(), key, &buf);
   std::vector<VortexLine> vortex_liness;
-  if (!::UnserializeVortexLines(vortex_liness, info_bytes, buf)) 
-    return;
+  unserialize(buf, vortex_liness);
+  // if (!::UnserializeVortexLines(vortex_liness, info_bytes, buf)) 
+  //   return;
 
   fprintf(stderr, "Loaded vortex line from DB, key=%s\n", key.c_str());
 #else
