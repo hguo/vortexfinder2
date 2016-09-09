@@ -5,7 +5,7 @@
 #include <cassert>
 
 #if WITH_PROTOBUF
-#include "Association.pb.h"
+#include "VortexTransitionMatrix.pb.h"
 #endif
 
 VortexTransitionMatrix::VortexTransitionMatrix() :
