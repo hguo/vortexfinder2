@@ -6,26 +6,15 @@
 #include <bitset>
 #include <map>
 
-#ifdef WITH_CXX11
 #include <tuple>
-#else
-#include <boost/tuple/tuple.hpp>
-#include <boost/tuple/tuple_comparison.hpp>
-#endif
 
 struct CEdge;
 struct CFace;
 struct CCell;
 
-#ifdef WITH_CXX11
 typedef std::tuple<NodeIdType, NodeIdType> EdgeIdType2;
 typedef std::tuple<NodeIdType, NodeIdType, NodeIdType> FaceIdType3;
 typedef std::tuple<NodeIdType, NodeIdType, NodeIdType, NodeIdType> FaceIdType4;
-#else
-typedef boost::tuple<NodeIdType, NodeIdType> EdgeIdType2;
-typedef boost::tuple<NodeIdType, NodeIdType, NodeIdType> FaceIdType3;
-typedef boost::tuple<NodeIdType, NodeIdType, NodeIdType, NodeIdType> FaceIdType4;
-#endif
 
 EdgeIdType2 AlternateEdge(EdgeIdType2 e2, ChiralityType chirality);
 FaceIdType3 AlternateFace(FaceIdType3 f3, int rotation, ChiralityType chirality);

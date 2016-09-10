@@ -16,12 +16,8 @@
 #include "vfgpu/vfgpu.h"
 #endif
 
-#if WITH_CXX11
 #include <thread>
 #include <chrono>
-#else
-#include <boost/thread.hpp>
-#endif
 
 typedef struct {
   VortexExtractor *extractor;
@@ -44,11 +40,7 @@ VortexExtractor::VortexExtractor() :
   pthread_mutex_init(&_mutex, NULL);
 
   // probe number of cores
-#if WITH_CXX11
   _nthreads = std::thread::hardware_concurrency();
-#else
-  _nthreads = boost::thread::hardware_concurrency();
-#endif
   if (_nthreads == 0) _nthreads = 1;
   // fprintf(stderr, "nthreads=%d\n", _nthreads);
 }
@@ -826,10 +818,8 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
 
   vfgpu_upload_data(_vfgpu_ctx, slot, gh, re, im);
  
-#if WITH_CXX11
   typedef std::chrono::high_resolution_clock clock;
   auto t0 = clock::now();
-#endif
 
   int pfcount; 
   vfgpu_pf_t *pf; 
@@ -853,11 +843,9 @@ void VortexExtractor::ExtractFaces_GPU(int slot)
   vfgpu_get_pflist(_vfgpu_ctx, &pfcount, &pf);
 #endif
 
-#if WITH_CXX11
   auto t1 = clock::now();
   float elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
   fprintf(stderr, "t_fgpu=%f\n", elapsed);
-#endif
 
   for (int i=0; i<pfcount; i++) {
     float pos[3] = {pf[i].pos[0], pf[i].pos[1], pf[i].pos[2]};
@@ -887,21 +875,17 @@ void VortexExtractor::ExtractEdges_GPU()
 
   const int count = h.dims[0] * h.dims[1] * h.dims[2];
  
-#if WITH_CXX11
   typedef std::chrono::high_resolution_clock clock;
   auto t0 = clock::now();
-#endif
 
   int pecount; 
   vfgpu_pe_t *pe; 
   vfgpu_extract_edges(_vfgpu_ctx);
   vfgpu_get_pelist(_vfgpu_ctx, &pecount, &pe); 
 
-#if WITH_CXX11
   auto t1 = clock::now();
   float elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
   fprintf(stderr, "t_egpu=%f\n", elapsed);
-#endif
 
   for (int i=0; i<pecount; i++) {
     AddPuncturedEdge(pe[i].eid, pe[i].chirality, 0);
@@ -911,10 +895,8 @@ void VortexExtractor::ExtractEdges_GPU()
 
 void VortexExtractor::ExtractFaces(int slot) 
 {
-#if WITH_CXX11
   typedef std::chrono::high_resolution_clock clock;
   auto t0 = clock::now();
-#endif
 
   if (!LoadPuncturedFaces(slot)) {
     if (_gpu) {
@@ -948,11 +930,9 @@ void VortexExtractor::ExtractFaces(int slot)
     if (_archive) SavePuncturedFaces(slot);
   }
  
-#if WITH_CXX11
   auto t1 = clock::now();
   float elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
   fprintf(stderr, "t_f=%f\n", elapsed);
-#endif
 }
 
 void VortexExtractor::ExtractFaces(std::vector<FaceIdType> faces, int slot, int &positive, int &negative)
@@ -975,10 +955,8 @@ void VortexExtractor::ExtractFaces(std::vector<FaceIdType> faces, int slot, int 
 
 void VortexExtractor::ExtractEdges() 
 {
-#if WITH_CXX11
   typedef std::chrono::high_resolution_clock clock;
   auto t0 = clock::now();
-#endif
 
   if (!LoadPuncturedEdges()) {
     if (_gpu) {
@@ -1012,11 +990,9 @@ void VortexExtractor::ExtractEdges()
     if (_archive) SavePuncturedEdges();
   }
   
-#if WITH_CXX11
   auto t1 = clock::now();
   float elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
   fprintf(stderr, "t_e=%f\n", elapsed);
-#endif
 }
 
 void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)

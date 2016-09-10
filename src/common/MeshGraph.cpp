@@ -8,13 +8,8 @@
 #include <google/protobuf/io/coded_stream.h> // for parsing large message
 #endif
 
-#ifdef WITH_CXX11
 using std::make_tuple;
 using std::get;
-#else
-using boost::make_tuple;
-using boost::get;
-#endif
 
 EdgeIdType2 AlternateEdge(EdgeIdType2 e, ChiralityType chirality)
 {

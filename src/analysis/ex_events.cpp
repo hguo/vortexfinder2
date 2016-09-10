@@ -2,10 +2,6 @@
 #include "common/VortexTransition.h"
 #include <cstdio>
 
-#ifdef WITH_PROTOBUF
-#include "common/DataInfo.pb.h"
-#endif
-
 #if WITH_ROCKSDB
 #include <rocksdb/db.h>
 

@@ -20,7 +20,7 @@ int main(int argc, char **argv)
   // VT
   VortexTransition vt;
   vt.LoadFromDB(db);
-  vt.ConstructSequence();
+  // vt.ConstructSequence();
   vt.PrintSequence();
 
   // QT

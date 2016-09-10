@@ -10,7 +10,6 @@
 #include "def.h"
 #include "trackball.h"
 #include "common/Inclusions.h"
-#include "common/DataInfo.pb.h"
 #include "common/VortexTransition.h"
 
 #ifdef WITH_ROCKSDB
@@ -93,7 +92,7 @@ private:
 private: //data
   // std::vector<VortexLine> _vortex_liness;
   // std::vector<FieldLine> _fieldlines;
-  PBDataInfo _data_info;
+  // PBDataInfo _data_info;
   std::string _dataname;
   int _timestep;
   int _ts, _tl;

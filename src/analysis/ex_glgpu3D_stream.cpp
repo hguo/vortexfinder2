@@ -11,12 +11,8 @@
 #include "io/GLGPU3DDataset.h"
 #include "extractor/Extractor.h"
 
-#if WITH_CXX11
 #include <thread>
 #include <chrono>
-#else
-#include <boost/thread.hpp>
-#endif
 
 enum {
   VFGPU_MESH_HEX = 0,
@@ -136,11 +132,7 @@ int main(int argc, char **argv)
   }
   assert(fp);
 
-#if WITH_CXX11
   const int nthreads = std::thread::hardware_concurrency() - 1;
-#else
-  const int nthreads = boost::thread::hardware_concurrency() - 1;
-#endif
 
   pthread_t threads[nthreads];
   for (int i=0; i<nthreads; i++)

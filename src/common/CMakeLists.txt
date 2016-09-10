@@ -22,20 +22,10 @@ set (common_protos
   Puncture.proto
 )
 
-if (WITH_PROTOBUF)
-  protobuf_generate_cpp (common_proto_sources common_proto_headers ${common_protos})
-endif ()
-
 add_library (glcommon STATIC ${common_sources} ${common_proto_sources})
 target_include_directories(glcommon PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 set (deps ${CMAKE_THREAD_LIBS_INIT})
-if (WITH_PROTOBUF)
-  list (APPEND deps ${PROTOBUF_LIBRARY})
-endif ()
-if (NOT WITH_CXX11)
-  list (APPEND deps ${Boost_LIBRARIES})
-endif ()
 if (WITH_VTK)
   list (APPEND deps ${VTK_LIBRARIES})
 endif ()

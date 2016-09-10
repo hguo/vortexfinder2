@@ -1,7 +1,6 @@
 #ifndef _DEF_H
 #define _DEF_H
 
-#cmakedefine WITH_PROTOBUF 1
 #cmakedefine WITH_CUDA 1
 #cmakedefine WITH_ARMA 1
 #cmakedefine WITH_LIBMESH 1
@@ -10,9 +9,7 @@
 #cmakedefine WITH_QT 1
 #cmakedefine WITH_VTK 1
 #cmakedefine WITH_PARAVIEW 1
-#cmakedefine WITH_CXX11 1
 #cmakedefine WITH_TBB 1
-// #cmakedefine WITH_LEVELDB 1
 #cmakedefine WITH_ROCKSDB 1
 
 // needed for malloc

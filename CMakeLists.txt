@@ -1,5 +1,8 @@
 project (vortexfinder2)
-cmake_minimum_required (VERSION 2.8.12)
+cmake_minimum_required (VERSION 3.1.3)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories (${CMAKE_SOURCE_DIR}/diy2/include)
 
@@ -15,24 +18,12 @@ if (CMAKE_PROJECT_NAME STREQUAL "ParaView")
     include_directories(${VTK_INCLUDE_DIRS})
   endif()
 
-  # use Boost, since C++11 is not supported by ParaView
-  find_package (Boost REQUIRED COMPONENTS thread system)
-  include_directories (${Boost_INCLUDE_DIR})
-
-  # Set Protobuf flags to point to ParaView's Protobuf
-  # FIND_PACKAGE(Protobuf REQUIRED)
-  # set (PROTOBUF_INCLUDE_DIR ${ParaView_SOURCE_DIR}/ThirdParty/protobuf/vtkprotobuf/src)
-  # set (PROTOBUF_LIBRARY ${ParaView_BINARY_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}protobuf${CMAKE_SHARED_LIBRARY_SUFFIX})
-  # set (PROTOBUF_PROTOC_EXECUTABLE ${ParaView_BINARY_DIR}/bin/protoc)
-
-  set (WITH_PROTOBUF OFF)
   set (WITH_PARAVIEW ON)
 
 else()
 
   # Standalone build
 
-  option (WITH_PROTOBUF ON)
   option (WITH_ARMA "Build with Armadillo" OFF)
   option (WITH_TESTS "Build the tests" OFF)
   option (WITH_CUDA "Build with CUDA" OFF)
@@ -42,14 +33,8 @@ else()
   option (WITH_QT "Build with Qt" OFF)
   option (WITH_VTK "Build with VTK" OFF)
   option (WITH_TBB "Build with TBB" OFF)
-  # option (WITH_LEVELDB "Build with LevelDB" OFF)
   option (WITH_ROCKSDB "Build with RocksDB" OFF)
   option (WITH_PARAVIEW "Build paraview plugins" OFF)
-  option (WITH_CXX11 "Build with C++11" OFF)
-
-  if (WITH_ROCKSDB)
-    set (WITH_CXX11 ON)
-  endif ()
 
   set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake-modules)
   set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
@@ -70,40 +55,6 @@ else()
     endif()
   endif()
 
-  # C++11/Boost
-  if (WITH_CXX11)
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-      set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-    elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-      set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-    endif ()
-  else ()
-    # boost options
-    set (Boost_USE_STATIC_LIBS ON)
-    set (Boost_USE_MULTITHREADED ON)
-    set (Boost_USE_STATIC_RUNTIME OFF)
-
-    find_package (Boost REQUIRED COMPONENTS thread system)
-    include_directories (${Boost_INCLUDE_DIR})
-  endif ()
-
-  if (APPLE)
-    set (CMAKE_MACOSX_RPATH ON)
-    set (CMAKE_SKIP_BUILD_RPATH FALSE)
-    set (CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-    set (CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-    set (CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-    list (FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
-      "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
-    if ("${isSystemDir}" STREQUAL "-1")
-      set (CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-    endif ()
-  endif ()
-
-  if (OPENMP_FOUND)
-    list (APPEND CMAKE_CXX_FLAGS ${OpenMP_CXX_FLAGS})
-  endif ()
-
   if (WITH_NETCDF)
     find_package (NetCDF REQUIRED)
     include_directories (${NETCDF_INCLUDES})
@@ -113,11 +64,6 @@ else()
     find_package (TBB REQUIRED)
     include_directories (${TBB_INCLUDE_DIR})
   endif ()
-
-  # if (WITH_LEVELDB)
-  #   find_package (LevelDB REQUIRED)
-  #   include_directories (${LevelDB_INCLUDE_DIR})
-  # endif ()
 
   if (WITH_ROCKSDB)
     find_package (RocksDB REQUIRED)
@@ -172,11 +118,6 @@ else()
   endif ()
 
 endif()
-
-if (WITH_PROTOBUF)
-  find_package (Protobuf REQUIRED)
-  include_directories (${PROTOBUF_INCLUDE_DIR})
-endif ()
 
 # openmp
 # find_package (OpenMP)

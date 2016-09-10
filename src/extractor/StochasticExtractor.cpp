@@ -61,16 +61,12 @@ void StochasticVortexExtractor::ExtractStochasticVortices()
     }
   }
 
-#if WITH_CXX11
   typedef std::chrono::high_resolution_clock clock;
   auto t0 = clock::now();
-#endif
   
   // vfgpu_density_estimate(pts.size()/3, acc.size(), pts.data(), acc.data());
 
-#if WITH_CXX11
   auto t1 = clock::now();
   double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1000000000.0; 
   fprintf(stderr, "t_density=%f\n", elapsed);
-#endif
 }
