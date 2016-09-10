@@ -59,6 +59,7 @@ tbb::concurrent_unordered_map<int, std::vector<VortexObject> > vobjs_all;
 tbb::concurrent_unordered_map<std::pair<int, int>, std::vector<vfgpu_pe_t> > pes_all; // released on exit
 std::map<int, tbb::flow::continue_node<tbb::flow::continue_msg>* > extract_tasks; 
 std::map<std::pair<int, int>, tbb::flow::continue_node<tbb::flow::continue_msg>* > track_tasks;
+VortexTransition vt;
 
 tbb::concurrent_unordered_map<int, int> frame_counter;  // used to count how many times a frame is referenced by trackers
 // tbb::concurrent_unordered_map<int, tbb::mutex> frame_mutexes;
@@ -182,12 +183,14 @@ struct track {
     ex->SetVortexObjects(vobjs0, 0);
     ex->SetVortexObjects(vobjs1, 1);
     VortexTransitionMatrix mat = ex->TraceOverTime();
+    mat.SetInterval(interval);
+    mat.Modularize();
+    vt.AddMatrix(mat);
     
     std::stringstream ss;
     ss << "m." << f0 << "." << f1;
     
     std::string buf;
-    mat.SetInterval(interval);
     diy::serialize(mat, buf);
     db->Put(rocksdb::WriteOptions(), ss.str(), buf);
 
@@ -239,7 +242,7 @@ int main(int argc, char **argv)
   int type_msg;
   vfgpu_hdr_t hdr;
   int pfcount, pecount;
-  const int max_frames = 10000;//  INT_MAX;
+  const int max_frames = 100;//  INT_MAX;
   int frame_count = 0;
   std::vector<int> frames;
 
@@ -281,15 +284,21 @@ int main(int argc, char **argv)
 
   fclose(fp);
 
-#if WITH_ROCKSDB
-  std::string buf;
-  diy::serialize(frames, buf);
-  db->Put(rocksdb::WriteOptions(), "f", buf);
-#endif
-  
   g.wait_for_all();
   
 #if WITH_ROCKSDB
+  std::string buf;
+  
+  diy::serialize(frames, buf);
+  db->Put(rocksdb::WriteOptions(), "f", buf);
+
+  fprintf(stderr, "constructing sequences...\n");
+  vt.SetFrames(frames);
+  vt.ConstructSequence();
+  vt.PrintSequence();
+  diy::serialize(vt, buf);
+  db->Put(rocksdb::WriteOptions(), "trans", buf);
+  
   delete db;
 #endif
 

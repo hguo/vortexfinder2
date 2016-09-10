@@ -210,6 +210,8 @@ VortexTransitionMatrix& VortexTransition::Matrix(Interval I)
 void VortexTransition::AddMatrix(const VortexTransitionMatrix& m)
 {
   if (!m.Valid()) return;
+  
+  std::unique_lock<std::mutex> lock(_mutex);
   _matrices[m.GetInterval()] = m;
 }
 

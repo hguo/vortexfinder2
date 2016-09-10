@@ -5,6 +5,7 @@
 #include "common/VortexTransitionMatrix.h"
 #include "common/VortexSequence.h"
 #include <utility>
+#include <mutex>
 
 #if WITH_ROCKSDB
 #include <rocksdb/db.h>
@@ -51,6 +52,7 @@ public:
 
   int TimestepToFrame(int timestep) const {return _frames[timestep];}
   int NTimesteps() const {return _frames.size();}
+  void SetFrames(const std::vector<int> frames) {_frames = frames;}
 
 private:
   int NewVortexSequence(int its);
@@ -67,6 +69,8 @@ private:
   int _max_nvortices_per_frame;
 
   std::vector<struct VortexEvent> _events;
+
+  std::mutex _mutex;
 };
 
 /////////
