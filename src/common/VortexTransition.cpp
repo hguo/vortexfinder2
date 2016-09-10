@@ -19,16 +19,14 @@ VortexTransition::~VortexTransition()
 }
 
 #if WITH_ROCKSDB
-bool VortexTransition::LoadFromLevelDB(rocksdb::DB* db)
+bool VortexTransition::LoadFromDB(rocksdb::DB* db)
 {
   std::string buf;
   rocksdb::Status s = db->Get(rocksdb::ReadOptions(), "f", &buf);
   if (!s.ok()) return false;
 
-  int nframes = buf.length() / sizeof(int);
-  _frames.resize(nframes);
-  memcpy((char*)_frames.data(), buf.data(), sizeof(int) * nframes);
-  buf.clear();
+  diy::unserialize(buf, _frames);
+  const int nframes = _frames.size();
 
   fprintf(stderr, "nframes=%d\n", nframes);
 
@@ -39,8 +37,7 @@ bool VortexTransition::LoadFromLevelDB(rocksdb::DB* db)
     if (!s.ok()) fprintf(stderr, "Key not found, %s\n", ss.str().c_str());
 
     VortexTransitionMatrix mat;
-    unserialize(buf, mat);
-    // mat.Unserialize(buf);
+    diy::unserialize(buf, mat);
     AddMatrix(mat);
 
     // mat.Print();

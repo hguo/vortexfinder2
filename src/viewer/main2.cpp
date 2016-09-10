@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 
   // VT
   VortexTransition vt;
-  vt.LoadFromLevelDB(db);
+  vt.LoadFromDB(db);
   vt.ConstructSequence();
   vt.PrintSequence();
 

@@ -18,7 +18,7 @@ int main(int argc, char **argv)
   rocksdb::Status status = rocksdb::DB::Open(options, argv[1], &db);
 
   VortexTransition vt;
-  vt.LoadFromLevelDB(db);
+  vt.LoadFromDB(db);
   vt.ConstructSequence();
   vt.PrintSequence();
 

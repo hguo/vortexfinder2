@@ -21,7 +21,7 @@ public:
   // int tl() const {return _tl;}
 
 #ifdef WITH_ROCKSDB
-  bool LoadFromLevelDB(rocksdb::DB*);
+  bool LoadFromDB(rocksdb::DB*);
 #endif
 
   void LoadFromFile(const std::string &dataname, int ts, int tl);

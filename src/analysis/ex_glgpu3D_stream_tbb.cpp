@@ -119,7 +119,7 @@ struct extract {
     SaveVortexLinesVTK(vlines, ss.str());
 #else
     std::string buf;
-    serialize(vlines, buf);
+    diy::serialize(vlines, buf);
     // SerializeVortexLines(vlines, std::string(), buf);
     ss << "v." << hdr.frame;
     db->Put(rocksdb::WriteOptions(), ss.str(), buf);
@@ -188,8 +188,7 @@ struct track {
     
     std::string buf;
     mat.SetInterval(interval);
-    serialize(mat, buf);
-    // mat.Serialize(buf);
+    diy::serialize(mat, buf);
     db->Put(rocksdb::WriteOptions(), ss.str(), buf);
 
     delete ex;
@@ -283,7 +282,9 @@ int main(int argc, char **argv)
   fclose(fp);
 
 #if WITH_ROCKSDB
-  db->Put(rocksdb::WriteOptions(), "f", rocksdb::Slice((const char*)frames.data(), sizeof(int)*frames.size()));
+  std::string buf;
+  diy::serialize(frames, buf);
+  db->Put(rocksdb::WriteOptions(), "f", buf);
 #endif
   
   g.wait_for_all();
