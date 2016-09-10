@@ -17,7 +17,6 @@ set (common_sources
 set (common_protos
   MeshGraph.proto
   DataInfo.proto
-  VortexObject.proto
   Inclusions.proto
   FieldLine.proto
   Puncture.proto
