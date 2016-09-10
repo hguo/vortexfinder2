@@ -22,25 +22,34 @@ VortexTransition::~VortexTransition()
 bool VortexTransition::LoadFromDB(rocksdb::DB* db)
 {
   std::string buf;
-  rocksdb::Status s = db->Get(rocksdb::ReadOptions(), "f", &buf);
-  if (!s.ok()) return false;
+  rocksdb::Status s; 
 
-  diy::unserialize(buf, _frames);
-  const int nframes = _frames.size();
+  s = db->Get(rocksdb::ReadOptions(), "trans", &buf);
+  if (s.ok()) {
+    diy::unserialize(buf, *this);
+  } else {
+    s = db->Get(rocksdb::ReadOptions(), "f", &buf);
+    if (!s.ok()) return false;
 
-  fprintf(stderr, "nframes=%d\n", nframes);
+    diy::unserialize(buf, _frames);
+    const int nframes = _frames.size();
 
-  for (int i=0; i<nframes-1; i++) {
-    std::stringstream ss;
-    ss << "m." << _frames[i] << "." << _frames[i+1];
-    rocksdb::Status s = db->Get(rocksdb::ReadOptions(), ss.str(), &buf);
-    if (!s.ok()) fprintf(stderr, "Key not found, %s\n", ss.str().c_str());
+    fprintf(stderr, "nframes=%d\n", nframes);
 
-    VortexTransitionMatrix mat;
-    diy::unserialize(buf, mat);
-    AddMatrix(mat);
+    for (int i=0; i<nframes-1; i++) {
+      std::stringstream ss;
+      ss << "m." << _frames[i] << "." << _frames[i+1];
+      rocksdb::Status s = db->Get(rocksdb::ReadOptions(), ss.str(), &buf);
+      if (!s.ok()) fprintf(stderr, "Key not found, %s\n", ss.str().c_str());
 
-    // mat.Print();
+      VortexTransitionMatrix mat;
+      diy::unserialize(buf, mat);
+      AddMatrix(mat);
+    }
+
+    ConstructSequence();
+    diy::serialize(*this, buf);
+    db->Put(rocksdb::WriteOptions(), "trans", buf);
   }
 
   return true;

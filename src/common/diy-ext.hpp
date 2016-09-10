@@ -33,6 +33,7 @@ namespace diy {
   //////////
   template <typename T> void serialize(const T& obj, std::string& buf)
   {
+    buf.clear();
     diy::StringBuffer bb(buf);
     diy::save(bb, obj);
   }

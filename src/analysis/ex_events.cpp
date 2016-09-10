@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 
   VortexTransition vt;
   vt.LoadFromDB(db);
-  vt.ConstructSequence();
+  // vt.ConstructSequence();
   vt.PrintSequence();
 
   delete db;
