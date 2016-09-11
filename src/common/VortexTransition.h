@@ -74,28 +74,30 @@ private:
 };
 
 /////////
-template <> struct diy::Serialization<VortexTransition> {
-  static void save(diy::BinaryBuffer& bb, const VortexTransition& m) {
-    diy::save(bb, m._frames);
-    diy::save(bb, m._matrices);
-    diy::save(bb, m._seqs);
-    diy::save(bb, m._seqmap);
-    diy::save(bb, m._invseqmap);
-    diy::save(bb, m._nvortices_per_frame);
-    diy::save(bb, m._max_nvortices_per_frame);
-    diy::save(bb, m._events);
-  }
+namespace diy {
+  template <> struct Serialization<VortexTransition> {
+    static void save(diy::BinaryBuffer& bb, const VortexTransition& m) {
+      diy::save(bb, m._frames);
+      diy::save(bb, m._matrices);
+      diy::save(bb, m._seqs);
+      diy::save(bb, m._seqmap);
+      diy::save(bb, m._invseqmap);
+      diy::save(bb, m._nvortices_per_frame);
+      diy::save(bb, m._max_nvortices_per_frame);
+      diy::save(bb, m._events);
+    }
 
-  static void load(diy::BinaryBuffer&bb, VortexTransition& m) {
-    diy::load(bb, m._frames);
-    diy::load(bb, m._matrices);
-    diy::load(bb, m._seqs);
-    diy::load(bb, m._seqmap);
-    diy::load(bb, m._invseqmap);
-    diy::load(bb, m._nvortices_per_frame);
-    diy::load(bb, m._max_nvortices_per_frame);
-    diy::load(bb, m._events);
-  }
-};
+    static void load(diy::BinaryBuffer&bb, VortexTransition& m) {
+      diy::load(bb, m._frames);
+      diy::load(bb, m._matrices);
+      diy::load(bb, m._seqs);
+      diy::load(bb, m._seqmap);
+      diy::load(bb, m._invseqmap);
+      diy::load(bb, m._nvortices_per_frame);
+      diy::load(bb, m._max_nvortices_per_frame);
+      diy::load(bb, m._events);
+    }
+  };
+}
 
 #endif

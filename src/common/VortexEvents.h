@@ -27,22 +27,24 @@ struct VortexEvent {
   }
 };
 
-template <> struct diy::Serialization<VortexEvent> {
-  static void save(diy::BinaryBuffer& bb, const VortexEvent& m) {
-    diy::save(bb, m.if0);
-    diy::save(bb, m.if1);
-    diy::save(bb, m.type);
-    diy::save(bb, m.lhs);
-    diy::save(bb, m.rhs);
-  }
+namespace diy {
+  template <> struct Serialization<VortexEvent> {
+    static void save(diy::BinaryBuffer& bb, const VortexEvent& m) {
+      diy::save(bb, m.if0);
+      diy::save(bb, m.if1);
+      diy::save(bb, m.type);
+      diy::save(bb, m.lhs);
+      diy::save(bb, m.rhs);
+    }
 
-  static void load(diy::BinaryBuffer&bb, VortexEvent& m) {
-    diy::load(bb, m.if0);
-    diy::load(bb, m.if1);
-    diy::load(bb, m.type);
-    diy::load(bb, m.lhs);
-    diy::load(bb, m.rhs);
-  }
-};
+    static void load(diy::BinaryBuffer&bb, VortexEvent& m) {
+      diy::load(bb, m.if0);
+      diy::load(bb, m.if1);
+      diy::load(bb, m.type);
+      diy::load(bb, m.lhs);
+      diy::load(bb, m.rhs);
+    }
+  };
+}
 
 #endif

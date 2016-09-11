@@ -40,27 +40,29 @@ struct VortexLine : public std::vector<float>
   unsigned char r, g, b;
 };
 
-template <> struct diy::Serialization<VortexLine> {
-  static void save(diy::BinaryBuffer& bb, const VortexLine& m) {
-    diy::save(bb, m.id);
-    diy::save(bb, m.gid);
-    diy::save(bb, m.timestep);
-    diy::save(bb, m.time);
-    diy::save(bb, m.is_bezier);
-    diy::save(bb, m.is_loop);
-    diy::save<std::vector<float> >(bb, m);
-  }
+namespace diy {
+  template <> struct Serialization<VortexLine> {
+    static void save(diy::BinaryBuffer& bb, const VortexLine& m) {
+      diy::save(bb, m.id);
+      diy::save(bb, m.gid);
+      diy::save(bb, m.timestep);
+      diy::save(bb, m.time);
+      diy::save(bb, m.is_bezier);
+      diy::save(bb, m.is_loop);
+      diy::save<std::vector<float> >(bb, m);
+    }
 
-  static void load(diy::BinaryBuffer&bb, VortexLine& m) {
-    diy::load(bb, m.id);
-    diy::load(bb, m.gid);
-    diy::load(bb, m.timestep);
-    diy::load(bb, m.time);
-    diy::load(bb, m.is_bezier);
-    diy::load(bb, m.is_loop);
-    diy::load<std::vector<float> >(bb, m);
-  }
-};
+    static void load(diy::BinaryBuffer&bb, VortexLine& m) {
+      diy::load(bb, m.id);
+      diy::load(bb, m.gid);
+      diy::load(bb, m.timestep);
+      diy::load(bb, m.time);
+      diy::load(bb, m.is_bezier);
+      diy::load(bb, m.is_loop);
+      diy::load<std::vector<float> >(bb, m);
+    }
+  };
+}
 
 bool SaveVortexLinesVTK(const std::vector<VortexLine>& lines, const std::string& filename);
 

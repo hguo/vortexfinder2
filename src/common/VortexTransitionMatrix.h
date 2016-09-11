@@ -61,26 +61,28 @@ private:
 
 
 ///////////
-template <> struct diy::Serialization<VortexTransitionMatrix> {
-  static void save(diy::BinaryBuffer& bb, const VortexTransitionMatrix& m) {
-    diy::save(bb, m._interval);
-    diy::save(bb, m._n0);
-    diy::save(bb, m._n1);
-    diy::save(bb, m._match);
-    diy::save(bb, m._lhss);
-    diy::save(bb, m._rhss);
-    diy::save(bb, m._events);
-  }
+namespace diy {
+  template <> struct Serialization<VortexTransitionMatrix> {
+    static void save(diy::BinaryBuffer& bb, const VortexTransitionMatrix& m) {
+      diy::save(bb, m._interval);
+      diy::save(bb, m._n0);
+      diy::save(bb, m._n1);
+      diy::save(bb, m._match);
+      diy::save(bb, m._lhss);
+      diy::save(bb, m._rhss);
+      diy::save(bb, m._events);
+    }
 
-  static void load(diy::BinaryBuffer&bb, VortexTransitionMatrix& m) {
-    diy::load(bb, m._interval);
-    diy::load(bb, m._n0);
-    diy::load(bb, m._n1);
-    diy::load(bb, m._match);
-    diy::load(bb, m._lhss);
-    diy::load(bb, m._rhss);
-    diy::load(bb, m._events);
-  }
-};
+    static void load(diy::BinaryBuffer&bb, VortexTransitionMatrix& m) {
+      diy::load(bb, m._interval);
+      diy::load(bb, m._n0);
+      diy::load(bb, m._n1);
+      diy::load(bb, m._match);
+      diy::load(bb, m._lhss);
+      diy::load(bb, m._rhss);
+      diy::load(bb, m._events);
+    }
+  };
+}
 
 #endif

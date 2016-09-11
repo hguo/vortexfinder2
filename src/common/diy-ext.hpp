@@ -4,6 +4,7 @@
 #include <diy/serialization.hpp>
 #include <diy/storage.hpp>
 #include <cassert>
+#include <cstring>
 
 namespace diy {
   struct StringBuffer : public BinaryBuffer {

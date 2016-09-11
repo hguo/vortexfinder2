@@ -242,7 +242,7 @@ int main(int argc, char **argv)
   int type_msg;
   vfgpu_hdr_t hdr;
   int pfcount, pecount;
-  const int max_frames = 100;//  INT_MAX;
+  const int max_frames = INT_MAX;
   int frame_count = 0;
   std::vector<int> frames;
 

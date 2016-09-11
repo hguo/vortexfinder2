@@ -16,24 +16,26 @@ struct VortexSequence {
   // int lhs_event, rhs_event;
 };
 
-template <> struct diy::Serialization<VortexSequence> {
-  static void save(diy::BinaryBuffer& bb, const VortexSequence& m) {
-    diy::save(bb, m.its);
-    diy::save(bb, m.itl);
-    diy::save(bb, m.lids);
-    diy::save(bb, m.r);
-    diy::save(bb, m.g);
-    diy::save(bb, m.b);
-  }
+namespace diy {
+  template <> struct Serialization<VortexSequence> {
+    static void save(diy::BinaryBuffer& bb, const VortexSequence& m) {
+      diy::save(bb, m.its);
+      diy::save(bb, m.itl);
+      diy::save(bb, m.lids);
+      diy::save(bb, m.r);
+      diy::save(bb, m.g);
+      diy::save(bb, m.b);
+    }
 
-  static void load(diy::BinaryBuffer&bb, VortexSequence& m) {
-    diy::load(bb, m.its);
-    diy::load(bb, m.itl);
-    diy::load(bb, m.lids);
-    diy::load(bb, m.r);
-    diy::load(bb, m.g);
-    diy::load(bb, m.b);
-  }
-};
+    static void load(diy::BinaryBuffer&bb, VortexSequence& m) {
+      diy::load(bb, m.its);
+      diy::load(bb, m.itl);
+      diy::load(bb, m.lids);
+      diy::load(bb, m.r);
+      diy::load(bb, m.g);
+      diy::load(bb, m.b);
+    }
+  };
+}
 
 #endif
