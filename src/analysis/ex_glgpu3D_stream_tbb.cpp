@@ -64,6 +64,7 @@ VortexTransition vt;
 tbb::concurrent_unordered_map<int, int> frame_counter;  // used to count how many times a frame is referenced by trackers
 // tbb::concurrent_unordered_map<int, tbb::mutex> frame_mutexes;
 
+static const int meshType = VFGPU_MESH_TET;
 static std::string infile;
 
 #ifdef WITH_ROCKSDB
@@ -93,7 +94,7 @@ struct extract {
 
     GLGPU3DDataset *ds = new GLGPU3DDataset;
     ds->SetHeader(h);
-    ds->SetMeshType(GLGPU3D_MESH_HEX); // TODO
+    ds->SetMeshType(meshType); // TODO
     ds->BuildMeshGraph();
 
     VortexExtractor *ex = new VortexExtractor;
@@ -153,7 +154,7 @@ struct track {
 
     GLGPU3DDataset *ds = new GLGPU3DDataset;
     ds->SetHeader(h0);
-    ds->SetMeshType(GLGPU3D_MESH_HEX); // TODO
+    ds->SetMeshType(meshType); // TODO
     ds->BuildMeshGraph();
 
     VortexExtractor *ex = new VortexExtractor;
@@ -231,6 +232,7 @@ int main(int argc, char **argv)
 
   rocksdb::Options options;
   options.create_if_missing = true;
+  // options.compression = rocksdb::kLZ4Compression;
   // options.write_buffer_size = 64*1024*1024; // 64 MB
   rocksdb::Status status = rocksdb::DB::Open(options, dbname.c_str(), &db);
   assert(status.ok());
