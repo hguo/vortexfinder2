@@ -1,6 +1,7 @@
 #include "ilines/ILRender.h"
 #include <QMouseEvent>
 #include <QFileDialog>
+#include <QInputDialog>
 #include <QDebug>
 #include <fstream>
 #include <iostream>
@@ -205,6 +206,15 @@ void CGLWidget::keyPressEvent(QKeyEvent* e)
     LoadTimeStep(_timestep + 1);
     addCurrentLineToHistory();
     updateGL();
+    break;
+
+  case Qt::Key_G:
+    {
+      int f = QInputDialog::getInt(this, "go to timestep", "timestep");
+      LoadTimeStep(f);
+      updateGL();
+      break;
+    }
     break;
 
   case Qt::Key_T:
