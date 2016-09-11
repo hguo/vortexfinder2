@@ -41,7 +41,7 @@ template <typename T>
 static inline T area(const T A[3], const T B[3], const T C[3])
 {
   T AB[3] = {B[0] - A[0], B[1] - A[1], B[2] - A[2]}, 
-    AC[3] = {C[0] - A[0], C[1] - A[0], C[2] - A[2]};
+    AC[3] = {C[0] - A[0], C[1] - A[1], C[2] - A[2]};
 
   T D[3];
   cross_product(AB, AC, D);

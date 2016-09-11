@@ -18,6 +18,7 @@ VortexLine::VortexLine() :
   id(INT_MAX), 
   gid(INT_MAX), 
   timestep(0), 
+  moving_speed(NAN),
   is_bezier(false), 
   is_loop(false)
 {
@@ -188,7 +189,7 @@ float Area(const VortexLine& l0, const VortexLine& l1)
   b0.ToBezier(); 
   b1.ToBezier();
 
-  const int N = 100;
+  const int N = 1000;
   const float delta = 1.f / N;
 
   b0.ToRegular(delta);

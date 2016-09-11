@@ -144,6 +144,8 @@ void VortexTransitionMatrix::Modularize()
     _rhss.push_back(rhs);
     _events.push_back(event);
   }
+
+  moving_speeds.resize(_n0, NAN);
 }
 
 void VortexTransitionMatrix::Print() const

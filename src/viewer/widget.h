@@ -163,6 +163,7 @@ private: // id rendering
   QVector<int> _vids;
   QVector<QVector3D> _vids_coord;
   QVector<QColor> _vids_colors;
+  QVector<float> _vids_speed;
 
 private: // GLGPU
   GLGPUDataset *_ds;

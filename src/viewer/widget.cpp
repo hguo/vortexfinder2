@@ -436,11 +436,14 @@ void CGLWidget::renderVortexIds()
   QString s0 = QString("timestep=%1, frame=%2").arg(_timestep).arg(_vt->TimestepToFrame(_timestep));
   renderText(20, 60, s0, ft);
 
-  ft.setPointSize(24);
+  // ft.setPointSize(24);
+  ft.setPointSize(16);
   for (int i=0; i<_vids.size(); i++) {
-    int id = _vids[i];
+    const int id = _vids[i];
+    const double speed = _vids_speed[i];
     QVector3D v = _vids_coord[i];
     QString s = QString("%1").arg(id);
+    if (!isnan(speed)) s = s + ": " + QString::number(speed, 'f', 2);
 #if 0
     glColor3ub(_vids_colors[i].red(), _vids_colors[i].green(), _vids_colors[i].blue());
     glPushMatrix();
@@ -467,7 +470,6 @@ static bool compare_inclusions(const inclusion_t& i0, const inclusion_t& i1)
 
 void CGLWidget::renderInclusions()
 {
-#if 0
   const int n = 10;
   const float radius = 5.f;
   const GLubyte alpha = 128;
@@ -522,9 +524,7 @@ void CGLWidget::renderInclusions()
     glPopMatrix();
   }
   glPopMatrix();
-
   glPopAttrib();
-#endif
 }
 
 void CGLWidget::renderVortexArrows()
@@ -806,6 +806,7 @@ void CGLWidget::Clear()
   _vids.clear();
   _vids_coord.clear();
   _vids_colors.clear();
+  _vids_speed.clear();
 
   _cones_pos.clear();
   _cones_dir.clear();
@@ -875,6 +876,7 @@ void CGLWidget::LoadVortexLines()
       
       QColor color(vortex_liness[k].r, vortex_liness[k].g, vortex_liness[k].b);
       _vids_colors.push_back(color);
+      _vids_speed.push_back(vortex_liness[k].moving_speed);
     }
 
     if (_toggle_bezier) {

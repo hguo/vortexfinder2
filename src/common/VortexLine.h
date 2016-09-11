@@ -34,6 +34,7 @@ struct VortexLine : public std::vector<float>
   int id, gid;
   int timestep;
   float time;
+  float moving_speed;
   bool is_bezier;
   bool is_loop;
 
@@ -47,6 +48,7 @@ namespace diy {
       diy::save(bb, m.gid);
       diy::save(bb, m.timestep);
       diy::save(bb, m.time);
+      diy::save(bb, m.moving_speed);
       diy::save(bb, m.is_bezier);
       diy::save(bb, m.is_loop);
       diy::save<std::vector<float> >(bb, m);
@@ -57,6 +59,7 @@ namespace diy {
       diy::load(bb, m.gid);
       diy::load(bb, m.timestep);
       diy::load(bb, m.time);
+      diy::load(bb, m.moving_speed);
       diy::load(bb, m.is_bezier);
       diy::load(bb, m.is_loop);
       diy::load<std::vector<float> >(bb, m);
