@@ -859,7 +859,7 @@ void CGLWidget::LoadVortexLines()
   std::vector<double> dist(fdist.size()), coords(fdist.size()*2);
   for (int i=0; i<fdist.size(); i++) 
     dist[i] = fdist[i];
-
+#if WITH_FORTRAN
   int nelems = vlines.size();
   cmds2_(&nelems, dist.data(), coords.data());
 
@@ -868,6 +868,7 @@ void CGLWidget::LoadVortexLines()
     v_mds_coords[i*2] = coords[i];
     v_mds_coords[i*2+1] = coords[i+nelems];
   }
+#endif
 
   fprintf(stderr, "Loaded vortex line from DB, key=%s\n", key.c_str());
 #else
