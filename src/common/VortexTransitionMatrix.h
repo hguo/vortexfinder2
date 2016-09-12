@@ -27,6 +27,7 @@ public: // modulars
   void Modularize();
   int NModules() const {return _lhss.size();}
   void GetModule(int i, std::set<int>& lhs, std::set<int>& rhs, int &event) const;
+
   void Normalize();
  
 public: // access
@@ -57,6 +58,10 @@ private:
   // modulars
   std::vector<std::set<int> > _lhss, _rhss;
   std::vector<int> _events;
+
+public:
+  // vortex properties
+  std::vector<float> moving_speeds; // length=n0
 };
 
 
@@ -71,6 +76,7 @@ namespace diy {
       diy::save(bb, m._lhss);
       diy::save(bb, m._rhss);
       diy::save(bb, m._events);
+      diy::save(bb, m.moving_speeds);
     }
 
     static void load(diy::BinaryBuffer&bb, VortexTransitionMatrix& m) {
@@ -81,6 +87,7 @@ namespace diy {
       diy::load(bb, m._lhss);
       diy::load(bb, m._rhss);
       diy::load(bb, m._events);
+      diy::load(bb, m.moving_speeds);
     }
   };
 }
