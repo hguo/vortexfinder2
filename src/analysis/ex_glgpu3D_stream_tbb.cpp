@@ -87,11 +87,25 @@ static GLHeader conv_hdr(const vfgpu_hdr_t& hdr) {
 
 static void write_vlines(int frame, const std::vector<VortexLine>& vlines)
 {
+  // vlines
   std::stringstream ss;
   std::string buf;
   diy::serialize(vlines, buf);
   ss << "v." << frame;
   db->Put(rocksdb::WriteOptions(), ss.str(), buf);
+#if 0
+  // distance matrix
+  std::vector<float> dist;
+  for (int i=0; i<vlines.size(); i++)
+    for (int j=0; j<vlines.size(); j++)
+      if (i == j) dist.push_back(0);
+      else 
+        dist.push_back(MinimumDist(vlines[i], vlines[j]));
+  diy::serialize(dist, buf);
+  ss.clear();
+  ss << "d." << frame;
+  db->Put(rocksdb::WriteOptions(), ss.str(), buf);
+#endif
 }
 
 static void write_mat(int f0, int f1, const VortexTransitionMatrix& mat)

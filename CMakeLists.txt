@@ -35,11 +35,17 @@ else()
   option (WITH_TBB "Build with TBB" OFF)
   option (WITH_ROCKSDB "Build with RocksDB" OFF)
   option (WITH_PARAVIEW "Build paraview plugins" OFF)
+  option (WITH_FORTRAN "Enable fortran" OFF)
 
   set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake-modules)
   set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
   set (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
   set (CMAKE_INCLUDE_CURRENT_DIR ON)
+
+  if (WITH_FORTRAN) 
+    enable_language (Fortran)
+    find_package (LAPACK REQUIRED)
+  endif ()
 
   # Always use a full RPATH
   if(APPLE)

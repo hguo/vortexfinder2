@@ -37,6 +37,10 @@
 #include <GL/glut.h>
 #endif
 
+extern "C" {
+void cmds2_(int* nelems, double* delta, double* coords); 
+}
+
 CGLWidget::CGLWidget(const QGLFormat& fmt, QWidget *parent, QGLWidget *sharedWidget)
   : QGLWidget(fmt, parent, sharedWidget), 
     _fovy(30.f), _znear(0.1f), _zfar(10.f), 
@@ -117,20 +121,20 @@ void CGLWidget::LoadVortexLines2D()
     const std::string filename = ss.str();
   
     std::string info_bytes;
-    std::vector<VortexLine> vortex_liness;
-    diy::unserializeFromFile(filename, vortex_liness);
-    // if (!::LoadVortexLines(vortex_liness, info_bytes, filename))
+    std::vector<VortexLine> vlines;
+    diy::unserializeFromFile(filename, vlines);
+    // if (!::LoadVortexLines(vlines, info_bytes, filename))
     //   continue;
     
     // if (info_bytes.length()>0) 
     //   _data_info.ParseFromString(info_bytes);
 
-    for (int i=0; i<vortex_liness.size(); i++) {
-      const int gid = _vt->lvid2gvid(t, vortex_liness[i].id);
+    for (int i=0; i<vlines.size(); i++) {
+      const int gid = _vt->lvid2gvid(t, vlines[i].id);
       unsigned char r, g, b;
       _vt->SequenceColor(gid, r, g, b);
-      lines[gid] << *(vortex_liness[i].begin())
-                 << *(vortex_liness[i].begin()+1)
+      lines[gid] << *(vlines[i].begin())
+                 << *(vlines[i].begin()+1)
                  << t*delta - (_tl*delta*0.5);
       colors[gid] = QColor(r, g, b);
     }
@@ -816,14 +820,29 @@ void CGLWidget::Clear()
 void CGLWidget::LoadVortexLines()
 {
 #if WITH_ROCKSDB
+  // vortex lines
   std::stringstream ss;
   ss << "v." << _vt->TimestepToFrame(_timestep);
   const std::string key = ss.str();
   std::string info_bytes, buf;
 
   rocksdb::Status s = _db->Get(rocksdb::ReadOptions(), key, &buf);
-  std::vector<VortexLine> vortex_liness;
-  diy::unserialize(buf, vortex_liness);
+  std::vector<VortexLine> vlines;
+  diy::unserialize(buf, vlines);
+
+  ss.clear(); 
+  ss << "d." << _vt->TimestepToFrame(_timestep);
+  s = _db->Get(rocksdb::ReadOptions(), ss.str(), &buf);
+  
+  std::vector<float> fdist;
+  diy::unserialize(buf, fdist);
+  
+  std::vector<double> dist(fdist.size()), coords(fdist.size()*2);
+  for (int i=0; i<fdist.size(); i++) 
+    dist[i] = fdist[i];
+
+  int nelems = vlines.size();
+  cmds2_(&nelems, dist.data(), coords.data());
 
   fprintf(stderr, "Loaded vortex line from DB, key=%s\n", key.c_str());
 #else
@@ -832,60 +851,60 @@ void CGLWidget::LoadVortexLines()
   const std::string filename = ss.str();
 
   std::string info_bytes;
-  std::vector<VortexLine> vortex_liness;
-  if (!::LoadVortexLines(vortex_liness, info_bytes, filename))
+  std::vector<VortexLine> vlines;
+  if (!::LoadVortexLines(vlines, info_bytes, filename))
     return;
   
   fprintf(stderr, "Loaded vortex line file from %s\n", filename.c_str());
 #endif
 
-  for (int i=0; i<vortex_liness.size(); i++) {
-    vortex_liness[i].gid = _vt->lvid2gvid(_timestep, vortex_liness[i].id);
-    _vt->SequenceColor(vortex_liness[i].gid, vortex_liness[i].r, vortex_liness[i].g, vortex_liness[i].b);
-    // fprintf(stderr, "t=%d, lid=%d, gid=%d\n", _timestep, vortex_liness[i].id, vortex_liness[i].gid);
+  for (int i=0; i<vlines.size(); i++) {
+    vlines[i].gid = _vt->lvid2gvid(_timestep, vlines[i].id);
+    _vt->SequenceColor(vlines[i].gid, vlines[i].r, vlines[i].g, vlines[i].b);
+    // fprintf(stderr, "t=%d, lid=%d, gid=%d\n", _timestep, vlines[i].id, vlines[i].gid);
   }
 
   // const float O[3] = {_data_info.ox(), _data_info.oy(), _data_info.oz()},
   //              L[3] = {_data_info.lx(), _data_info.ly(), _data_info.lz()};
 
   int vertCount = 0; 
-  for (int k=0; k<vortex_liness.size(); k++) { //iterator over lines
-    if (_toggle_vip && !_vips.contains(vortex_liness[k].gid)) continue;
+  for (int k=0; k<vlines.size(); k++) { //iterator over lines
+    if (_toggle_vip && !_vips.contains(vlines[k].gid)) continue;
 
-    if (vortex_liness[k].size()>=3) {
-      _vids.push_back(vortex_liness[k].gid);
+    if (vlines[k].size()>=3) {
+      _vids.push_back(vlines[k].gid);
 #if 0
       // search for the min(x) point
       QVector3D maxv;
       int maxi;
-      for (int i=0; i<vortex_liness[k].size()/3; i++) {
-        if (vortex_liness[k][i*3] < minx) {
-          minx = vortex_liness[k][i*3];
+      for (int i=0; i<vlines[k].size()/3; i++) {
+        if (vlines[k][i*3] < minx) {
+          minx = vlines[k][i*3];
           minxi = i;
         }
       }
-      QVector3D pt(vortex_liness[k][minxi*3], 
-                   vortex_liness[k][minxi*3+1],
-                   vortex_liness[k][minxi*3+2]);
+      QVector3D pt(vlines[k][minxi*3], 
+                   vlines[k][minxi*3+1],
+                   vlines[k][minxi*3+2]);
 #else
-      QVector3D pt(*(vortex_liness[k].begin()), 
-                   *(vortex_liness[k].begin()+1),
-                   *(vortex_liness[k].begin()+2));
+      QVector3D pt(*(vlines[k].begin()), 
+                   *(vlines[k].begin()+1),
+                   *(vlines[k].begin()+2));
 #endif
       _vids_coord.push_back(pt);
       
-      QColor color(vortex_liness[k].r, vortex_liness[k].g, vortex_liness[k].b);
+      QColor color(vlines[k].r, vlines[k].g, vlines[k].b);
       _vids_colors.push_back(color);
-      _vids_speed.push_back(vortex_liness[k].moving_speed);
+      _vids_speed.push_back(vlines[k].moving_speed);
     }
 
     if (_toggle_bezier) {
-      // vortex_liness[k].Flattern(O, L);
-      vortex_liness[k].ToBezier();
+      // vlines[k].Flattern(O, L);
+      vlines[k].ToBezier();
     }
 
-    if (vortex_liness[k].is_bezier) { // TODO: make it more graceful..
-      VortexLine& vl = vortex_liness[k];
+    if (vlines[k].is_bezier) { // TODO: make it more graceful..
+      VortexLine& vl = vlines[k];
       const int span = vl.size()/4/2/2;
       // const int span = 18;
 
@@ -912,10 +931,10 @@ void CGLWidget::LoadVortexLines()
       // vl.Unflattern(O, L);
     }
     
-    std::vector<float>::iterator it = vortex_liness[k].begin();
-    unsigned char c[3] = {vortex_liness[k].r, vortex_liness[k].g, vortex_liness[k].b};
+    std::vector<float>::iterator it = vlines[k].begin();
+    unsigned char c[3] = {vlines[k].r, vlines[k].g, vlines[k].b};
     QVector3D p0;
-    for (int i=0; i<vortex_liness[k].size()/3; i++) {
+    for (int i=0; i<vlines[k].size()/3; i++) {
       QVector3D p(*it, *(++it), *(++it));
       it ++;
       

@@ -18,6 +18,10 @@ set (viewer_sources
   # storyLineWidget.cpp
   mainWindow.cpp)
 
+if (WITH_FORTRAN)
+  list (APPEND viewer_sources cmds2.f90)
+endif ()
+
 qt4_wrap_ui (viewer_headers 
   mainWindow.ui)
 
@@ -44,6 +48,10 @@ endif ()
 
 if (WITH_CUDA)
   # target_link_libraries (glviewer glvolren)
+endif ()
+
+if (WITH_FORTRAN)
+  target_link_libraries (glviewer ${LAPACK_LIBRARIES})
 endif ()
 
 # add_executable (viewer main.cpp)
