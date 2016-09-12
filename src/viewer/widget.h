@@ -70,6 +70,7 @@ protected:
   void keyPressEvent(QKeyEvent*); 
   void wheelEvent(QWheelEvent*); 
 
+  void renderMDS();
   void renderVortexIds();
   void renderVortexLines(); 
   void renderVortexPoints(); 
@@ -126,6 +127,9 @@ private: // vortex line rendering
   std::vector<GLfloat> vortex_tube_vertices, vortex_tube_normals;
   std::vector<GLubyte> vortex_tube_colors; 
   std::vector<GLuint> vortex_tube_indices_lines, vortex_tube_indices_vertices;
+
+private: // MDS
+  std::vector<float> v_mds_coords;
 
 private: // history line render
   const int h_max;

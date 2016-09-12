@@ -226,6 +226,12 @@ void CGLWidget::keyPressEvent(QKeyEvent* e)
     updateGL();
     break;
 
+  case Qt::Key_Z: 
+    _vortex_render_mode = 4; // MDS
+    _toggle_ids = false;
+    updateGL();
+    break;
+
   case Qt::Key_L:
     if (e->modifiers() == Qt::ShiftModifier) 
       _vortex_render_mode = 3; // points
@@ -578,6 +584,17 @@ void CGLWidget::renderVortexPoints()
   CHECK_GLERROR();
 }
 
+void CGLWidget::renderMDS()
+{
+  glPointSize(4.f);
+  glColor3f(0, 0, 0);
+  glBegin(GL_POINTS);
+  for (int i=0; i<v_mds_coords.size()/2; i++) {
+    glVertex2f(v_mds_coords[i*2], v_mds_coords[i*2+1]);
+  }
+  glEnd();
+}
+
 void CGLWidget::renderVortexLines()
 {
   glEnableClientState(GL_VERTEX_ARRAY); 
@@ -737,6 +754,8 @@ void CGLWidget::paintGL()
     renderIsosurfaces();
   } else if (_vortex_render_mode == 3) 
     renderVortexPoints();
+  else if (_vortex_render_mode == 4) 
+    renderMDS();
 
   if (_toggle_inclusions)
     renderInclusions();
@@ -843,6 +862,12 @@ void CGLWidget::LoadVortexLines()
 
   int nelems = vlines.size();
   cmds2_(&nelems, dist.data(), coords.data());
+
+  v_mds_coords.resize(nelems*2);
+  for (int i=0; i<nelems; i++) {
+    v_mds_coords[i*2] = coords[i];
+    v_mds_coords[i*2+1] = coords[i+nelems];
+  }
 
   fprintf(stderr, "Loaded vortex line from DB, key=%s\n", key.c_str());
 #else
