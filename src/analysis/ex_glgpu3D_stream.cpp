@@ -8,11 +8,20 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <tbb/mutex.h>
+#include <tbb/flow_graph.h>
+#include <tbb/concurrent_unordered_map.h>
 #include "io/GLGPU3DDataset.h"
 #include "extractor/Extractor.h"
 
-#include <thread>
-#include <chrono>
+#if WITH_ROCKSDB
+#include <rocksdb/db.h>
+#endif
+
+enum {
+  VFGPU_MSG_PF = 0,
+  VFGPU_MSG_PE = 1
+};
 
 enum {
   VFGPU_MESH_HEX = 0,
@@ -30,145 +39,283 @@ typedef struct {
   float pos[3];
 } vfgpu_pf_t; // punctured faces from GPU output, 16 bytes
 
-typedef struct {
-  unsigned int eid;
-  signed char chirality;
-} vfgpu_pe_t;
+typedef unsigned int vfgpu_pe_t; 
 
 typedef struct {
-  int frame;
+  unsigned char meshtype;
+  bool tracking;
+  float dt;
   int d[3];
   unsigned int count; // d[0]*d[1]*d[2];
   bool pbc[3];
   float origins[3];
   float lengths[3];
   float cell_lengths[3];
+  float zaniso;
+} vfgpu_cfg_t;
+
+typedef struct {
+  int frame;
   float B[3];
-  float Kx;
+  float Kx; // Kx
+  float Jxext;
+  float V; // voltage
 } vfgpu_hdr_t;
 
+tbb::concurrent_unordered_map<int, vfgpu_hdr_t> hdrs_all;
+tbb::concurrent_unordered_map<int, std::vector<vfgpu_pf_t> > pfs_all;
+tbb::concurrent_unordered_map<int, std::vector<VortexObject> > vobjs_all;
+tbb::concurrent_unordered_map<std::pair<int, int>, std::vector<vfgpu_pe_t> > pes_all; // released on exit
+std::map<int, tbb::flow::continue_node<tbb::flow::continue_msg>* > extract_tasks; 
+std::map<std::pair<int, int>, tbb::flow::continue_node<tbb::flow::continue_msg>* > track_tasks;
+VortexTransition vt;
+
+tbb::concurrent_unordered_map<int, int> frame_counter;  // used to count how many times a frame is referenced by trackers
+// tbb::concurrent_unordered_map<int, tbb::mutex> frame_mutexes;
+
+static vfgpu_cfg_t cfg;
+static std::string infile;
+
+#ifdef WITH_ROCKSDB
+static rocksdb::DB* db;
+#endif
+
+static GLHeader conv_hdr(const vfgpu_cfg_t& cfg, const vfgpu_hdr_t& hdr) {
+  GLHeader h;
+  h.ndims = 3;
+  memcpy(h.dims, cfg.d, sizeof(int)*3);
+  memcpy(h.pbc, cfg.pbc, sizeof(int)*3);
+  memcpy(h.lengths, cfg.lengths, sizeof(float)*3);
+  memcpy(h.origins, cfg.origins, sizeof(float)*3);
+  memcpy(h.cell_lengths, cfg.cell_lengths, sizeof(float)*3);
+  return h;
+}
+
 /////////////////
-typedef struct {
-  int tag;
-  vfgpu_hdr_t hdr;
-  std::vector<vfgpu_pf_t> pfs;
-} task_t;
+struct extract {
+  int frame;
+  extract(int frame_) : frame(frame_) {}
 
-std::queue<task_t> Q;
-static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+  void operator()(tbb::flow::continue_msg) const {
+    const vfgpu_hdr_t& hdr = hdrs_all[frame];
+    const std::vector<vfgpu_pf_t>& pfs = pfs_all[frame];
+    GLHeader h = conv_hdr(cfg, hdrs_all[frame]);
 
-void* exec_thread(void*)
-{
-  GLGPU3DDataset *ds = NULL;
-  VortexExtractor *ex = NULL;
-  task_t task;
-  
-  while (1) {
-    pthread_mutex_lock(&mutex);
-    while (Q.empty()) {
-      pthread_cond_wait(&cond, &mutex);
-    }
-    task = Q.front();
-    Q.pop();
-    pthread_mutex_unlock(&mutex);
-    if (task.tag != 0) break; // all done
+    GLGPU3DDataset *ds = new GLGPU3DDataset;
+    ds->SetHeader(h);
+    ds->SetMeshType(cfg.meshtype); 
+    ds->BuildMeshGraph();
 
-    if (ds == NULL) {
-      GLHeader h;
-      h.ndims = 3;
-      memcpy(h.dims, task.hdr.d, sizeof(int)*3);
-      memcpy(h.pbc, task.hdr.pbc, sizeof(int)*3);
-      memcpy(h.lengths, task.hdr.lengths, sizeof(float)*3);
-      memcpy(h.origins, task.hdr.origins, sizeof(float)*3);
-      memcpy(h.cell_lengths, task.hdr.cell_lengths, sizeof(float)*3);
-
-      ds = new GLGPU3DDataset;
-      ds->SetHeader(h);
-      ds->SetMeshType(GLGPU3D_MESH_HEX); // TODO
-      ds->BuildMeshGraph();
-
-      ex = new VortexExtractor;
-      ex->SetDataset(ds);
-    }
+    VortexExtractor *ex = new VortexExtractor;
+    ex->SetDataset(ds);
     
     ex->Clear();
-    for (int i=0; i<task.pfs.size(); i++) {
-      vfgpu_pf_t &pf = task.pfs[i];
+    for (int i=0; i<pfs.size(); i++) {
+      const vfgpu_pf_t &pf = pfs[i];
       int chirality = pf.fid_and_chirality & 0x80000000 ? 1 : -1;
       int fid = pf.fid_and_chirality & 0x7fffffff;
       ex->AddPuncturedFace(fid, 0, chirality, pf.pos);
     }
     ex->TraceOverSpace(0);
 
+    vobjs_all[hdr.frame] = ex->GetVortexObjects(0);
+
     std::vector<VortexLine> vlines = ex->GetVortexLines();
-    fprintf(stderr, "frame=%d, #pfs=%d, #vlines=%d\n", 
-        task.hdr.frame, (int)task.pfs.size(), (int)vlines.size());
+    // for (int i=0; i<vlines.size(); i++) 
+    //   vlines[i].ToBezier();
 
     std::stringstream ss;
-    ss << "vlines-" << task.hdr.frame << ".vtk";
+#if 0 // VTK
+    ss << infile << "." << hdr.frame << ".vtk";
     SaveVortexLinesVTK(vlines, ss.str());
-  }
+#else
+    std::string buf;
+    diy::serialize(vlines, buf);
+    // SerializeVortexLines(vlines, std::string(), buf);
+    ss << "v." << hdr.frame;
+    db->Put(rocksdb::WriteOptions(), ss.str(), buf);
+#endif
 
-  delete ds;
-  delete ex;
-  return NULL;
-}
+    delete ds;
+    delete ex;
+    
+    fprintf(stderr, "frame=%d, #pfs=%d, #vlines=%d\n", 
+        hdr.frame, (int)pfs.size(), (int)vlines.size());
+  }
+}; 
+
+/////////////////
+struct track {
+  const std::pair<int, int> interval;
+  const int f0, f1;
+  track(const std::pair<int, int> f) : interval(f), f0(f.first), f1(f.second) {}
+
+  void operator()(tbb::flow::continue_msg) const {
+    const vfgpu_hdr_t& hdr0 = hdrs_all[f0], 
+                       hdr1 = hdrs_all[f1];
+    GLHeader h0 = conv_hdr(cfg, hdr0), 
+             h1 = conv_hdr(cfg, hdr1);
+    const std::vector<vfgpu_pf_t>& pfs0 = pfs_all[f0], 
+                                   pfs1 = pfs_all[f1];
+    const std::vector<vfgpu_pe_t>& pes = pes_all[interval];
+    const std::vector<VortexObject>& vobjs0 = vobjs_all[f0],
+                                     vobjs1 = vobjs_all[f1];
+
+    GLGPU3DDataset *ds = new GLGPU3DDataset;
+    ds->SetHeader(h0);
+    ds->SetMeshType(cfg.meshtype);
+    ds->BuildMeshGraph();
+
+    VortexExtractor *ex = new VortexExtractor;
+    ex->SetDataset(ds);
+    
+    for (int i=0; i<pfs0.size(); i++) {
+      const vfgpu_pf_t &pf = pfs0[i];
+      int chirality = pf.fid_and_chirality & 0x80000000 ? 1 : -1;
+      int fid = pf.fid_and_chirality & 0x7fffffff;
+      ex->AddPuncturedFace(fid, 0, chirality, pf.pos);
+    }
+    
+    for (int i=0; i<pfs1.size(); i++) {
+      const vfgpu_pf_t &pf = pfs1[i];
+      int chirality = pf.fid_and_chirality & 0x80000000 ? 1 : -1;
+      int fid = pf.fid_and_chirality & 0x7fffffff;
+      ex->AddPuncturedFace(fid, 1, chirality, pf.pos);
+    }
+
+    for (int i=0; i<pes.size(); i++) {
+      const vfgpu_pe_t &pe = pes[i];
+      int chirality = pe & 0x80000000 ? 1 : -1;
+      int eid = pe & 0x7fffffff;
+      ex->AddPuncturedEdge(eid, chirality, 0);
+    }
+
+    ex->SetVortexObjects(vobjs0, 0);
+    ex->SetVortexObjects(vobjs1, 1);
+    VortexTransitionMatrix mat = ex->TraceOverTime();
+    mat.SetInterval(interval);
+    mat.Modularize();
+    vt.AddMatrix(mat);
+    
+    std::stringstream ss;
+    ss << "m." << f0 << "." << f1;
+    
+    std::string buf;
+    diy::serialize(mat, buf);
+    db->Put(rocksdb::WriteOptions(), ss.str(), buf);
+
+    delete ex;
+    delete ds;
+    
+    fprintf(stderr, "interval={%d, %d}, #pfs0=%d, #pfs1=%d, #pes=%d\n", 
+        interval.first, interval.second, (int)pfs0.size(), (int)pfs1.size(), (int)pes.size());
+    
+    // release resources
+    pes_all[interval].clear();
+    int &fc0 = frame_counter[f0], 
+        &fc1 = frame_counter[f1];
+    __sync_fetch_and_add(&fc0, 1);
+    __sync_fetch_and_add(&fc1, 1);
+    if (fc0 == 2) {
+      pfs_all[fc0] = std::vector<vfgpu_pf_t>();
+      vobjs_all[fc0] = std::vector<VortexObject>();
+    }
+    if (fc1 == 2) {
+      pfs_all[fc1] = std::vector<vfgpu_pf_t>();
+      vobjs_all[fc1] = std::vector<VortexObject>();
+    }
+  }
+};
 
 /////////////////
 int main(int argc, char **argv)
 {
+  if (argc < 2) return 1;
+  infile = argv[1];
+  
+  FILE *fp = fopen(infile.c_str(), "rb");
+  if (!fp) return 1;
+
+#if WITH_ROCKSDB
+  std::string dbname = infile + ".rocksdb";
+
+  rocksdb::Options options;
+  options.create_if_missing = true;
+  // options.compression = rocksdb::kLZ4Compression;
+  // options.write_buffer_size = 64*1024*1024; // 64 MB
+  rocksdb::Status status = rocksdb::DB::Open(options, dbname.c_str(), &db);
+  assert(status.ok());
+#endif
+
+  using namespace tbb::flow;
+  graph g;
+
+  int type_msg;
   vfgpu_hdr_t hdr;
-  int pfcount, pfcount_max=0;
+  int pfcount, pecount;
+  const int max_frames = INT_MAX;
+  int frame_count = 0;
+  std::vector<int> frames;
 
-  std::string filename; 
-  if (argc > 1) filename = argv[1];
-  else filename = "/tmp/glgpu.fifo";
-
-  FILE *fp = fopen(filename.c_str(), "rb");
-  if (fp == NULL) {
-    fprintf(stderr, "cannot open pipe %s\n", filename.c_str());
-    exit(1);
-  }
-  assert(fp);
-
-  const int nthreads = std::thread::hardware_concurrency() - 1;
-
-  pthread_t threads[nthreads];
-  for (int i=0; i<nthreads; i++)
-    pthread_create(&threads[i], NULL, exec_thread, NULL);
+  fread(&cfg, sizeof(vfgpu_cfg_t), 1, fp);
 
   while (!feof(fp)) {
-    fread(&hdr, sizeof(vfgpu_hdr_t), 1, fp);
-    fread(&pfcount, sizeof(int), 1, fp);
-    if (pfcount > 0) {
-      task_t task;
-      task.tag = 0;
-      task.hdr = hdr;
-      task.pfs.resize(pfcount);
-      fread(task.pfs.data(), sizeof(vfgpu_pf_t), pfcount, fp);
+    if (frame_count ++ > max_frames) break;
+    size_t count = fread(&type_msg, sizeof(int), 1, fp);
+    if (count != 1) break;
 
-      pthread_mutex_lock(&mutex);
-      Q.push(task);
-      pthread_cond_signal(&cond);
-      pthread_mutex_unlock(&mutex);
+    if (type_msg == VFGPU_MSG_PF) {
+      fread(&hdr, sizeof(vfgpu_hdr_t), 1, fp);
+      fread(&pfcount, sizeof(int), 1, fp);
+      
+      hdrs_all[hdr.frame] = hdr;
+      std::vector<vfgpu_pf_t> &pfs = pfs_all[hdr.frame];
+      pfs.resize(pfcount);
+      fread(pfs.data(), sizeof(vfgpu_pf_t), pfcount, fp);
+      
+      continue_node<continue_msg> *e = new continue_node<continue_msg>(g, extract(hdr.frame));
+      e->try_put(continue_msg());
+      extract_tasks[hdr.frame] = e;
+
+      frames.push_back(hdr.frame);
+      // fprintf(stderr, "pushed frame %d\n", hdr.frame);
+    } else if (type_msg == VFGPU_MSG_PE) {
+      std::pair<int, int> interval;
+      fread(&interval, sizeof(int), 2, fp);
+      fread(&pecount, sizeof(int), 1, fp);
+
+      std::vector<vfgpu_pe_t> &pes = pes_all[interval];
+      pes.resize(pecount);
+      fread(pes.data(), sizeof(vfgpu_pe_t), pecount, fp);
+    
+      continue_node<continue_msg> *t = new continue_node<continue_msg>(g, track(interval));
+      track_tasks[interval] = t;
+     
+      make_edge(*extract_tasks[interval.first], *t);
+      make_edge(*extract_tasks[interval.second], *t);
+      // fprintf(stderr, "pushed interval {%d, %d}\n", interval.first, interval.second);
     }
   }
 
-  // exit threads
-  task_t task_all_done;
-  memset(&task_all_done, 0, sizeof(task_t));
-  task_all_done.tag = 1;
-  for (int i=0; i<nthreads; i++) {
-    pthread_mutex_lock(&mutex);
-    Q.push(task_all_done);
-    pthread_cond_signal(&cond);
-    pthread_mutex_unlock(&mutex);
-  }
-  for (int i=0; i<nthreads; i++) 
-    pthread_join(threads[i], NULL);
-
   fclose(fp);
+
+  g.wait_for_all();
+  
+#if WITH_ROCKSDB
+  std::string buf;
+  
+  diy::serialize(frames, buf);
+  db->Put(rocksdb::WriteOptions(), "f", buf);
+
+  fprintf(stderr, "constructing sequences...\n");
+  vt.SetFrames(frames);
+  vt.ConstructSequence();
+  vt.PrintSequence();
+  diy::serialize(vt, buf);
+  db->Put(rocksdb::WriteOptions(), "trans", buf);
+  
+  delete db;
+#endif
 
   fprintf(stderr, "exiting...\n");
   return 0;
