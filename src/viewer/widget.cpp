@@ -453,7 +453,7 @@ void CGLWidget::renderVortexIds()
     s0 = QString("frame=%1, timestep=%2").arg(_timestep).arg(_vt->TimestepToFrame(_timestep));
   else {
     const vfgpu_hdr_t &h = vfgpu_hdrs[_timestep];
-    s0 = QString("frame=%1, timestep=%2, B={%3, %4, %5}, V=%6")
+    s0 = QString("frame=%1, timestep=%2, B=(%3, %4, %5), V=%6")
       .arg(_timestep)
       .arg(_vt->TimestepToFrame(_timestep))
       .arg(h.B[0]).arg(h.B[1]).arg(h.B[2])
@@ -873,26 +873,28 @@ void CGLWidget::LoadVortexLines()
   std::vector<VortexLine> vlines;
   diy::unserialize(buf, vlines);
 
-  ss.clear(); 
-  ss << "d." << _vt->TimestepToFrame(_timestep);
-  s = _db->Get(rocksdb::ReadOptions(), ss.str(), &buf);
-  
-  std::vector<float> fdist;
-  diy::unserialize(buf, fdist);
-  
-  std::vector<double> dist(fdist.size()), coords(fdist.size()*2);
-  for (int i=0; i<fdist.size(); i++) 
-    dist[i] = fdist[i];
+  if (_vortex_render_mode == 4) {
+    ss.clear(); 
+    ss << "d." << _vt->TimestepToFrame(_timestep);
+    s = _db->Get(rocksdb::ReadOptions(), ss.str(), &buf);
+    
+    std::vector<float> fdist;
+    diy::unserialize(buf, fdist);
+    
+    std::vector<double> dist(fdist.size()), coords(fdist.size()*2);
+    for (int i=0; i<fdist.size(); i++) 
+      dist[i] = fdist[i];
 #if WITH_FORTRAN
-  int nelems = vlines.size();
-  cmds2_(&nelems, dist.data(), coords.data());
+    int nelems = vlines.size();
+    cmds2_(&nelems, dist.data(), coords.data());
 
-  v_mds_coords.resize(nelems*2);
-  for (int i=0; i<nelems; i++) {
-    v_mds_coords[i*2] = coords[i];
-    v_mds_coords[i*2+1] = coords[i+nelems];
-  }
+    v_mds_coords.resize(nelems*2);
+    for (int i=0; i<nelems; i++) {
+      v_mds_coords[i*2] = coords[i];
+      v_mds_coords[i*2+1] = coords[i+nelems];
+    }
 #endif
+  }
 
   fprintf(stderr, "Loaded vortex line from DB, key=%s\n", key.c_str());
 #else
