@@ -272,7 +272,12 @@ void CGLWidget::keyPressEvent(QKeyEvent* e)
   case Qt::Key_H:
     if (e->modifiers() == Qt::ShiftModifier) 
       clearHistory();
-    else 
+    else if (e->modifiers() == Qt::AltModifier) {
+      int h = QInputDialog::getInt(this, "max_num_history", "max_num_history");
+      h_max = h;
+      clearHistory();
+      updateGL();
+    } else 
       _toggle_history = !_toggle_history;
     updateGL();
     break;

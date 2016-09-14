@@ -132,7 +132,7 @@ private: // MDS
   std::vector<float> v_mds_coords;
 
 private: // history line render
-  const int h_max;
+  int h_max;
   QVector<std::vector<GLfloat> > h_line_vertices;
   QVector<std::vector<GLubyte> > h_line_colors;
   QVector<std::vector<GLsizei> > h_line_vert_count;
