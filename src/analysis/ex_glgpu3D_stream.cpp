@@ -65,6 +65,7 @@ typedef struct {
 tbb::concurrent_unordered_map<int, vfgpu_hdr_t> hdrs_all;
 tbb::concurrent_unordered_map<int, std::vector<vfgpu_pf_t> > pfs_all;
 tbb::concurrent_unordered_map<int, std::vector<VortexObject> > vobjs_all;
+tbb::concurrent_unordered_map<int, std::vector<VortexLine> > vlines_all;
 tbb::concurrent_unordered_map<std::pair<int, int>, std::vector<vfgpu_pe_t> > pes_all; // released on exit
 std::map<int, tbb::flow::continue_node<tbb::flow::continue_msg>* > extract_tasks; 
 std::map<std::pair<int, int>, tbb::flow::continue_node<tbb::flow::continue_msg>* > track_tasks;
@@ -72,6 +73,8 @@ VortexTransition vt;
 
 tbb::concurrent_unordered_map<int, int> frame_counter;  // used to count how many times a frame is referenced by trackers
 // tbb::concurrent_unordered_map<int, tbb::mutex> frame_mutexes;
+static const int max_buffered_frames = 256;
+static int num_buffered_frames = 0;
 
 static vfgpu_cfg_t cfg;
 static std::string infile;
@@ -89,6 +92,24 @@ static GLHeader conv_hdr(const vfgpu_cfg_t& cfg, const vfgpu_hdr_t& hdr) {
   memcpy(h.origins, cfg.origins, sizeof(float)*3);
   memcpy(h.cell_lengths, cfg.cell_lengths, sizeof(float)*3);
   return h;
+}
+
+static void write_vlines(int frame, const std::vector<VortexLine>& vlines)
+{
+  std::stringstream ss;
+  std::string buf;
+  diy::serialize(vlines, buf);
+  ss << "v." << frame;
+  db->Put(rocksdb::WriteOptions(), ss.str(), buf);
+}
+
+static void write_mat(int f0, int f1, const VortexTransitionMatrix& mat)
+{
+  std::stringstream ss;
+  ss << "m." << f0 << "." << f1;
+  std::string buf;
+  diy::serialize(mat, buf);
+  db->Put(rocksdb::WriteOptions(), ss.str(), buf);
 }
 
 /////////////////
@@ -121,24 +142,16 @@ struct extract {
     vobjs_all[hdr.frame] = ex->GetVortexObjects(0);
 
     std::vector<VortexLine> vlines = ex->GetVortexLines();
+    vlines_all[hdr.frame] = vlines;
     // for (int i=0; i<vlines.size(); i++) 
     //   vlines[i].ToBezier();
-
-    std::stringstream ss;
-#if 0 // VTK
-    ss << infile << "." << hdr.frame << ".vtk";
-    SaveVortexLinesVTK(vlines, ss.str());
-#else
-    std::string buf;
-    diy::serialize(vlines, buf);
-    // SerializeVortexLines(vlines, std::string(), buf);
-    ss << "v." << hdr.frame;
-    db->Put(rocksdb::WriteOptions(), ss.str(), buf);
-#endif
+    
+    // write_vlines(hdr.frame, vlines);
 
     delete ds;
     delete ex;
     
+    __sync_fetch_and_sub(&num_buffered_frames, 1);
     fprintf(stderr, "frame=%d, #pfs=%d, #vlines=%d\n", 
         hdr.frame, (int)pfs.size(), (int)vlines.size());
   }
@@ -160,6 +173,8 @@ struct track {
     const std::vector<vfgpu_pe_t>& pes = pes_all[interval];
     const std::vector<VortexObject>& vobjs0 = vobjs_all[f0],
                                      vobjs1 = vobjs_all[f1];
+    std::vector<VortexLine>& vlines0 = vlines_all[f0], 
+                             vlines1 = vlines_all[f1];
 
     GLGPU3DDataset *ds = new GLGPU3DDataset;
     ds->SetHeader(h0);
@@ -196,16 +211,12 @@ struct track {
     mat.SetInterval(interval);
     mat.Modularize();
     vt.AddMatrix(mat);
-    
-    std::stringstream ss;
-    ss << "m." << f0 << "." << f1;
-    
-    std::string buf;
-    diy::serialize(mat, buf);
-    db->Put(rocksdb::WriteOptions(), ss.str(), buf);
 
     delete ex;
     delete ds;
+    
+    write_vlines(f0, vlines0);
+    write_mat(f0, f1, mat);
     
     fprintf(stderr, "interval={%d, %d}, #pfs0=%d, #pfs1=%d, #pes=%d\n", 
         interval.first, interval.second, (int)pfs0.size(), (int)pfs1.size(), (int)pes.size());
@@ -219,11 +230,15 @@ struct track {
     if (fc0 == 2) {
       pfs_all[fc0] = std::vector<vfgpu_pf_t>();
       vobjs_all[fc0] = std::vector<VortexObject>();
+      vlines_all[fc0] = std::vector<VortexLine>();
     }
     if (fc1 == 2) {
       pfs_all[fc1] = std::vector<vfgpu_pf_t>();
       vobjs_all[fc1] = std::vector<VortexObject>();
+      vlines_all[fc1] = std::vector<VortexLine>();
     }
+    
+    __sync_fetch_and_sub(&num_buffered_frames, 1);
   }
 };
 
@@ -242,6 +257,7 @@ int main(int argc, char **argv)
   rocksdb::Options options;
   options.create_if_missing = true;
   // options.compression = rocksdb::kLZ4Compression;
+  options.compression = rocksdb::kBZip2Compression;
   // options.write_buffer_size = 64*1024*1024; // 64 MB
   rocksdb::Status status = rocksdb::DB::Open(options, dbname.c_str(), &db);
   assert(status.ok());
@@ -261,6 +277,12 @@ int main(int argc, char **argv)
 
   while (!feof(fp)) {
     if (frame_count ++ > max_frames) break;
+    
+    // simple flow control
+    __sync_fetch_and_add(&num_buffered_frames, 1);
+    while (num_buffered_frames >= max_buffered_frames) 
+      usleep(100000);
+
     size_t count = fread(&type_msg, sizeof(int), 1, fp);
     if (count != 1) break;
 
