@@ -49,7 +49,7 @@ public:
 
   void SetData(const std::string& dataname, int ts, int tl);
 #if WITH_ROCKSDB
-  void SetDB(rocksdb::DB* db) {_db = db;}
+  void SetDB(rocksdb::DB* db);
 #endif 
   void LoadTimeStep(int t);
 
@@ -127,6 +127,16 @@ private: // vortex line rendering
   std::vector<GLfloat> vortex_tube_vertices, vortex_tube_normals;
   std::vector<GLubyte> vortex_tube_colors; 
   std::vector<GLuint> vortex_tube_indices_lines, vortex_tube_indices_vertices;
+
+private: //HDR
+  typedef struct {
+    int frame;
+    float B[3];
+    float Kx; // Kx
+    float Jxext;
+    float V; // voltage
+    } vfgpu_hdr_t;
+  std::vector<vfgpu_hdr_t> vfgpu_hdrs;
 
 private: // MDS
   std::vector<float> v_mds_coords;

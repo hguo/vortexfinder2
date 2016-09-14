@@ -101,6 +101,16 @@ static void write_vlines(int frame, const std::vector<VortexLine>& vlines)
   diy::serialize(vlines, buf);
   ss << "v." << frame;
   db->Put(rocksdb::WriteOptions(), ss.str(), buf);
+
+  std::vector<float> dist;
+  for (int i=0; i<vlines.size(); i++) 
+    for (int j=0; j<vlines.size(); j++) 
+      if (i==j) dist.push_back(0);
+      else dist.push_back(MinimumDist(vlines[i], vlines[j]));
+  ss.clear();
+  ss << "d." << frame;
+  diy::serialize(dist, buf);
+  db->Put(rocksdb::WriteOptions(), ss.str(), buf);
 }
 
 static void write_mat(int f0, int f1, const VortexTransitionMatrix& mat)
@@ -272,6 +282,7 @@ int main(int argc, char **argv)
   const int max_frames = INT_MAX;
   int frame_count = 0;
   std::vector<int> frames;
+  std::vector<vfgpu_hdr_t> hdrs;
 
   fread(&cfg, sizeof(vfgpu_cfg_t), 1, fp);
 
@@ -299,6 +310,7 @@ int main(int argc, char **argv)
       e->try_put(continue_msg());
       extract_tasks[hdr.frame] = e;
 
+      hdrs.push_back(hdr);
       frames.push_back(hdr.frame);
       // fprintf(stderr, "pushed frame %d\n", hdr.frame);
     } else if (type_msg == VFGPU_MSG_PE) {
@@ -326,7 +338,7 @@ int main(int argc, char **argv)
 #if WITH_ROCKSDB
   std::string buf;
   
-  diy::serialize(frames, buf);
+  diy::serialize(hdrs, buf);
   db->Put(rocksdb::WriteOptions(), "f", buf);
 
   fprintf(stderr, "constructing sequences...\n");

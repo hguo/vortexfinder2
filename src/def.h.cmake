@@ -11,6 +11,7 @@
 #cmakedefine WITH_PARAVIEW 1
 #cmakedefine WITH_TBB 1
 #cmakedefine WITH_ROCKSDB 1
+#cmakedefine WITH_FORTRAN 1
 
 // needed for malloc
 #include <cstdlib>

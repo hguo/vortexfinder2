@@ -448,7 +448,17 @@ void CGLWidget::renderVortexIds()
   glColor3f(0, 0, 0);
   glDisable(GL_DEPTH_TEST);
 
-  QString s0 = QString("timestep=%1, frame=%2").arg(_timestep).arg(_vt->TimestepToFrame(_timestep));
+  QString s0;
+  if (vfgpu_hdrs.empty()) 
+    s0 = QString("frame=%1, timestep=%2").arg(_timestep).arg(_vt->TimestepToFrame(_timestep));
+  else {
+    const vfgpu_hdr_t &h = vfgpu_hdrs[_timestep];
+    s0 = QString("frame=%1, timestep=%2, B={%3, %4, %5}, V=%6")
+      .arg(_timestep)
+      .arg(_vt->TimestepToFrame(_timestep))
+      .arg(h.B[0]).arg(h.B[1]).arg(h.B[2])
+      .arg(h.V);
+  }
   renderText(20, 60, s0, ft);
 
   // ft.setPointSize(24);
@@ -839,6 +849,15 @@ void CGLWidget::Clear()
   _cones_pos.clear();
   _cones_dir.clear();
   _cones_color.clear();
+}
+
+void CGLWidget::SetDB(rocksdb::DB* db)
+{
+  _db = db;
+
+  std::string buf;
+  rocksdb::Status s = _db->Get(rocksdb::ReadOptions(), "f", &buf);
+  diy::unserialize(buf, vfgpu_hdrs);
 }
 
 void CGLWidget::LoadVortexLines()
