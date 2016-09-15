@@ -1,3 +1,5 @@
+var ws;
+
 function connectToServer() {
   ws = new WebSocket("ws://127.0.0.1:8080");
   // ws.binaryType = "arraybuffer";
@@ -27,7 +29,19 @@ function rgb(r, g, b) {
 
 function onMessage(evt)
 {
-  vlines = JSON.parse(evt.data);
+  var msg = JSON.parse(evt.data);
+  console.log(msg);
+  if (msg.type == "hdr") 
+    updateHdr(msg.data);
+  else if (msg.type == "vlines")
+    updateVlines(msg.data);
+}
+
+function updateHdr(hdr) {
+  console.log(hdr);
+}
+
+function updateVlines(vlines) {
   vortexId = [];
   vortexIdPos3D = [];
  

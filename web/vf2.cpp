@@ -15,8 +15,16 @@ using v8::Object;
 using v8::String;
 using v8::Value;
 using v8::Exception;
+  
+typedef struct {
+  int timestep;
+  float B[3];
+  float Kx; // Kx
+  float Jxext;
+  float V; // voltage
+} vfgpu_hdr_t;
 
-void LoadVorticiesFromDB(const std::string& dbname, int frame, std::vector<VortexLine>& vlines)
+void LoadVorticiesFromDB(const std::string& dbname, int frame, vfgpu_hdr_t& hdr, std::vector<VortexLine>& vlines)
 {
   fprintf(stderr, "dbname=%s, frame=%d\n", 
       dbname.c_str(), frame);
@@ -32,6 +40,11 @@ void LoadVorticiesFromDB(const std::string& dbname, int frame, std::vector<Vorte
   s = db->Get(rocksdb::ReadOptions(), "trans", &buf);
   VortexTransition vt;
   diy::unserialize(buf, vt);
+ 
+  std::vector<vfgpu_hdr_t> hdrs;
+  s = db->Get(rocksdb::ReadOptions(), "f", &buf);
+  diy::unserialize(buf, hdrs);
+  hdr = hdrs[frame];
 
   const int timestep = vt.Frame(frame);
   std::stringstream ss;
@@ -71,10 +84,28 @@ void Load(const FunctionCallbackInfo<Value>& args) {
   int frame = args[1]->NumberValue();
 
   std::vector<VortexLine> vlines;
-  LoadVorticiesFromDB(dbname, frame, vlines);
+  vfgpu_hdr_t hdr;
+  LoadVorticiesFromDB(dbname, frame, hdr, vlines);
 
   // output args
-  Local<Array> jvlines = Local<Array>::Cast(args[2]);
+  Local<Object> jhdr = Local<Object>::Cast(args[2]);
+  Local<Number> jtimestep = Number::New(isolate, hdr.timestep);
+  jhdr->Set(String::NewFromUtf8(isolate, "timestep"), jtimestep);
+  Local<Number> jBx = Number::New(isolate, hdr.B[0]);
+  jhdr->Set(String::NewFromUtf8(isolate, "Bx"), jBx);
+  Local<Number> jBy = Number::New(isolate, hdr.B[1]);
+  jhdr->Set(String::NewFromUtf8(isolate, "By"), jBy);
+  Local<Number> jBz = Number::New(isolate, hdr.B[2]);
+  jhdr->Set(String::NewFromUtf8(isolate, "Bz"), jBz);
+  Local<Number> jKx = Number::New(isolate, hdr.Kx);
+  jhdr->Set(String::NewFromUtf8(isolate, "Kx"), jKx);
+  Local<Number> jJxext = Number::New(isolate, hdr.Jxext);
+  jhdr->Set(String::NewFromUtf8(isolate, "Jxext"), jJxext);
+  Local<Number> jV = Number::New(isolate, hdr.V);
+  jhdr->Set(String::NewFromUtf8(isolate, "V"), jV);
+  
+  // vlines
+  Local<Array> jvlines = Local<Array>::Cast(args[3]);
   for (size_t i=0; i<vlines.size(); i++) {
     VortexLine& vline = vlines[i];
     vline.ToBezier();
