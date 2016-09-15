@@ -38,7 +38,10 @@ function onMessage(evt)
 
     var r = vlines[i].r, g = vlines[i].g, b = vlines[i].b;
     var color = new THREE.Color(rgb(r, g, b));
-   
+  
+    // var tubeGeom = new THREE.TubeGeometry(geom, 20, 2, 8, false);
+    // var tube = new THREE.Mesh(tubeGeom);
+
     var material = new THREE.LineBasicMaterial({color: color});
     var line = new THREE.Line(geom, material);
     scene.add(line);
