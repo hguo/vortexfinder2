@@ -76,9 +76,15 @@ void Load(const FunctionCallbackInfo<Value>& args) {
   // output args
   Local<Array> jvlines = Local<Array>::Cast(args[2]);
   for (size_t i=0; i<vlines.size(); i++) {
-    const VortexLine& vline = vlines[i];
+    VortexLine& vline = vlines[i];
+    vline.ToBezier();
+    vline.ToRegular(0.2);
     Local<Object> jvline = Object::New(isolate);
-   
+
+    // gid
+    Local<Number> jgid = Number::New(isolate, vline.gid);
+    jvline->Set(String::NewFromUtf8(isolate, "gid"), jgid);
+
     // verts
     Local<Array> jverts = Array::New(isolate);
     for (size_t j=0; j<vline.size(); j++)

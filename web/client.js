@@ -28,23 +28,36 @@ function rgb(r, g, b) {
 function onMessage(evt)
 {
   vlines = JSON.parse(evt.data);
-  // console.log(vlines);
+  vortexId = [];
+  vortexIdPos3D = [];
  
   for (i=0; i<vlines.length; i++) {
     var verts = vlines[i].verts;
-    var geom = new THREE.Geometry();
-    for (j=0; j<verts.length/3; j++)
-      geom.vertices.push(new THREE.Vector3(verts[j*3], verts[j*3+1], verts[j*3+2]));
 
     var r = vlines[i].r, g = vlines[i].g, b = vlines[i].b;
     var color = new THREE.Color(rgb(r, g, b));
   
-    // var tubeGeom = new THREE.TubeGeometry(geom, 20, 2, 8, false);
-    // var tube = new THREE.Mesh(tubeGeom);
+    var points = [];
+    for (j=0; j<verts.length/3; j++)
+      points.push(new THREE.Vector3(verts[j*3], verts[j*3+1], verts[j*3+2]));
+    var curve = new THREE.CatmullRomCurve3(points);
 
-    var material = new THREE.LineBasicMaterial({color: color});
-    var line = new THREE.Line(geom, material);
-    scene.add(line);
+    var tubeGeometry = new THREE.TubeGeometry(curve, 100, 0.5, 8, false);
+    var tubeMaterial = new THREE.MeshPhysicalMaterial({
+      color: color,
+      side: THREE.DoubleSide,
+      wireframe: false
+    });
+    var tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
+    scene.add(tubeMesh);
+
+    // var lineMaterial = new THREE.LineBasicMaterial({color: color});
+    // var lineGeometry = new THREE.Geometry(curve);
+    // var line = new THREE.Line(lineGeometry, lineMaterial);
+    // scene.add(line);
+
+    vortexId.push(vlines[i].gid);
+    vortexIdPos3D.push(new THREE.Vector3(verts[0], verts[1], verts[2]));
   }
 
   render();
