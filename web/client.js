@@ -10,10 +10,10 @@ function connectToServer() {
 function onOpen(evt)
 {
   console.log("connected to server");
-  ws.send(JSON.stringify({
-    dataname : "Xfieldramp", 
-    frame : "1000"
-  }));
+  // ws.send(JSON.stringify({
+  //   dataname : "Xfieldramp", 
+  //   frame : "1000"
+  // }));
 }
 
 function onClose(evt)
@@ -23,8 +23,10 @@ function onClose(evt)
 
 function onMessage(evt)
 {
-  console.log("message");
-  // var view = new DataView(evt);
+  // console.log(evt.data);
+  var data = JSON.parse(evt.data);
+  var verts = data[0];
+  console.log(verts);
 }
 
 function onError(evt)
