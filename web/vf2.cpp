@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include "common/VortexLine.h"
+#include "common/VortexTransition.h"
 
 using v8::FunctionCallbackInfo;
 using v8::Function;
@@ -27,14 +28,24 @@ void LoadVorticiesFromDB(const std::string& dbname, int frame, std::vector<Vorte
   s = rocksdb::DB::Open(options, dbname, &db);
   assert(s.ok());
 
-  std::stringstream ss;
   std::string buf;
-  ss << "v." << frame;
-  s = db->Get(rocksdb::ReadOptions(), ss.str(), &buf);
-  // fprintf(stderr, "bufsize=%d\n", buf.size());
+  s = db->Get(rocksdb::ReadOptions(), "trans", &buf);
+  VortexTransition vt;
+  diy::unserialize(buf, vt);
 
+  const int timestep = vt.Frame(frame);
+  std::stringstream ss;
+  ss << "v." << timestep;
+  buf.clear();
+  s = db->Get(rocksdb::ReadOptions(), ss.str(), &buf);
   diy::unserialize(buf, vlines);
-  fprintf(stderr, "#vlines=%d\n", (int)vlines.size());
+
+  for (size_t i=0; i<vlines.size(); i++) {
+    vlines[i].gid = vt.lvid2gvid(frame, vlines[i].id); // sorry, this is confusing
+    vt.SequenceColor(vlines[i].gid, vlines[i].r, vlines[i].g, vlines[i].b);
+    // fprintf(stderr, "timestep=%d, lid=%d, gid=%d\n", timestep, vlines[i].id, vlines[i].gid);
+  }
+  // fprintf(stderr, "#vlines=%d\n", (int)vlines.size());
 
   delete db;
 }
@@ -42,7 +53,7 @@ void LoadVorticiesFromDB(const std::string& dbname, int frame, std::vector<Vorte
 void Load(const FunctionCallbackInfo<Value>& args) {
   Isolate *isolate = args.GetIsolate();
 
-  if (args.Length() < 6) {
+  if (args.Length() < 3) {
     isolate->ThrowException(Exception::TypeError(
           String::NewFromUtf8(isolate, "Wrong number of arguments")));
     return;
@@ -63,32 +74,27 @@ void Load(const FunctionCallbackInfo<Value>& args) {
   LoadVorticiesFromDB(dbname, frame, vlines);
 
   // output args
-  Local<Array> verts = Local<Array>::Cast(args[2]), 
-               indices = Local<Array>::Cast(args[3]),
-               colors = Local<Array>::Cast(args[4]),
-               counts = Local<Array>::Cast(args[5]);
+  Local<Array> jvlines = Local<Array>::Cast(args[2]);
+  for (size_t i=0; i<vlines.size(); i++) {
+    const VortexLine& vline = vlines[i];
+    Local<Object> jvline = Object::New(isolate);
+   
+    // verts
+    Local<Array> jverts = Array::New(isolate);
+    for (size_t j=0; j<vline.size(); j++)
+      jverts->Set(j, Number::New(isolate, vline[j]));
+    jvline->Set(String::NewFromUtf8(isolate, "verts"), jverts);
+   
+    // color
+    // fprintf(stderr, "rgb=%d, %d, %d\n", vline.r, vline.g, vline.b);
+    Local<Number> jr = Number::New(isolate, vline.r);
+    jvline->Set(String::NewFromUtf8(isolate, "r"), jr);
+    Local<Number> jg = Number::New(isolate, vline.g);
+    jvline->Set(String::NewFromUtf8(isolate, "g"), jg);
+    Local<Number> jb = Number::New(isolate, vline.b);
+    jvline->Set(String::NewFromUtf8(isolate, "b"), jb);
 
-  int vertCount = 0;
-  int vertCountSize = 0;
-  for (int i=0; i<vlines.size(); i++) {
-    const VortexLine& v = vlines[i];
-    for (int j=0; j<v.size()/3; j++) {
-      verts->Set(j*3, Number::New(isolate, v[j*3]));
-      verts->Set(j*3+1, Number::New(isolate, v[j*3+1]));
-      verts->Set(j*3+2, Number::New(isolate, v[j*3+2]));
-      vertCount ++;
-    }
-
-    if (vertCount != 0) {
-      counts->Set(vertCountSize ++, Number::New(isolate, vertCount));
-      vertCount = 0;
-    }
-  }
-
-  int cnt = 0;
-  for (int i=0; i<vertCountSize; i++) {
-    indices->Set(i, Number::New(isolate, i));
-    cnt += counts->Get(i)->NumberValue();
+    jvlines->Set(i, jvline);
   }
 }
 

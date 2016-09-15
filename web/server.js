@@ -7,10 +7,7 @@ var vf2 = require('bindings')('vf2');
 
 const dbname="/Users/hguo/workspace/projects/vortexfinder2/build/bin/GL_3D_Xfieldramp_inter.rocksdb";
 
-var verts = [];
-var indices = [];
-var colors = [];
-var counts = [];
+var vlines = [];
 
 wss = new WebSocketServer({
   port : 8080, 
@@ -21,12 +18,9 @@ wss = new WebSocketServer({
 wss.on("connection", function(ws) {
   console.log("connected.");
 
-  vf2.load(dbname, 100, verts, indices, colors, counts);
-
-  // ws.send(BSON.serialize(verts)); // I don't know why BSON doesn't work
-
-  var data = [verts, indices, colors, counts];
-  ws.send(JSON.stringify(data));
+  vf2.load(dbname, 200, vlines);
+  ws.send(JSON.stringify(vlines));
+  // ws.send(BSON.serialize(vlines)); // I don't know why BSON doesn't work
 
   // ws.onmessage = function(msg) {
   //   console.log(msg.data);

@@ -50,7 +50,8 @@ public:
   
   const std::vector<struct VortexEvent>& Events() const {return _events;}
 
-  int TimestepToFrame(int timestep) const {return _frames[timestep];}
+  int TimestepToFrame(int timestep) const {return _frames[timestep];} // confusing.  TODO: change func name
+  int Frame(int i) const {return _frames[i];}
   int NTimesteps() const {return _frames.size();}
   void SetFrames(const std::vector<int> frames) {_frames = frames;}
 
