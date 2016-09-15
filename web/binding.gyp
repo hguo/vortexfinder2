@@ -1,0 +1,23 @@
+{
+  "targets": [
+    {
+      "target_name": "vf2", 
+      "sources": [ "vf2.cpp" ],
+      "include_dirs": [
+        "/Users/hguo/local/rocksdb-4.9/include", 
+        "/Users/hguo/workspace/projects/vortexfinder2/build/install/include",
+        "/Users/hguo/workspace/projects/vortexfinder2/diy2/include"
+      ],
+      "libraries": [
+        "/Users/hguo/workspace/projects/vortexfinder2/build/install/lib/libglcommon.dylib",
+        "/Users/hguo/local/rocksdb-4.9/lib/librocksdb.dylib"
+      ],
+      "xcode_settings": {
+        "OTHER_CPLUSPLUSFLAGS" : [ "-std=c++11", "-stdlib=libc++" ], 
+        "OTHER_LDFLAGS": [ "-stdlib=libc++" ],
+        "MACOSX_DEPLOYMENT_TARGET": "10.7",
+        "GCC_ENABLE_CPP_EXCEPTIONS": "YES"
+      }, 
+    }
+  ]
+}

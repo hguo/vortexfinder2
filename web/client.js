@@ -1,6 +1,6 @@
 function connectToServer() {
   ws = new WebSocket("ws://127.0.0.1:8080");
-  ws.binaryType = "arraybuffer";
+  // ws.binaryType = "arraybuffer";
   ws.onopen = onOpen;
   ws.onclose = onClose;
   ws.onerror = onError;
@@ -10,6 +10,10 @@ function connectToServer() {
 function onOpen(evt)
 {
   console.log("connected to server");
+  ws.send(JSON.stringify({
+    dataname : "Xfieldramp", 
+    frame : "1000"
+  }));
 }
 
 function onClose(evt)
