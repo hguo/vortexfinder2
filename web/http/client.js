@@ -1,7 +1,7 @@
 var ws;
 
 function connectToServer() {
-  ws = new WebSocket("ws://127.0.0.1:8080");
+  ws = new WebSocket("ws://red.mcs.anl.gov:8080");
   // ws.binaryType = "arraybuffer";
   ws.onopen = onOpen;
   ws.onclose = onClose;

@@ -1,1 +1,4 @@
 node_modules/
+binding.gyp
+*.rocksdb
+log*

@@ -5,7 +5,7 @@ var vf2 = require('bindings')('vf2');
 // var BSON = new bson.BSONPure.BSON()
 // var BSON = new bson.BSONPure.BSON()
 
-const dbname="/Users/hguo/workspace/projects/vortexfinder2/build/bin/GL_3D_Xfieldramp_inter.rocksdb";
+const dbname="GL_3D_Xfieldramp_inter.rocksdb";
 
 var vlines = [];
 var hdr = [];
