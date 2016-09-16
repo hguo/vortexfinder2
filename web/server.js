@@ -20,7 +20,7 @@ wss.on("connection", function(ws) {
   var hdr = {};
 
   vf2.load(dbname, 200, hdr, vlines);
-  console.log(hdr);
+  var inclusions = vf2.loadInclusions(dbname);
  
   msg0 = {
     type: "vlines", 
@@ -33,6 +33,12 @@ wss.on("connection", function(ws) {
     data: hdr
   };
   ws.send(JSON.stringify(msg1));
+  
+  msg2 = {
+    type: "inclusions", 
+    data: inclusions
+  };
+  ws.send(JSON.stringify(msg2));
 
   // ws.send(BSON.serialize(vlines)); // I don't know why BSON doesn't work
 

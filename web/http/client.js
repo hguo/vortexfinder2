@@ -36,6 +36,8 @@ function onMessage(evt)
     updateHdr(msg.data);
   else if (msg.type == "vlines")
     updateVlines(msg.data);
+  else if (msg.type == "inclusions")
+    updateInclusions(msg.data);
 }
 
 function updateHdr(hdr) {

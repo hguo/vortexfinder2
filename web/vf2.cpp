@@ -4,6 +4,7 @@
 #include <sstream>
 #include "common/VortexLine.h"
 #include "common/VortexTransition.h"
+#include "common/Inclusions.h"
 
 using v8::FunctionCallbackInfo;
 using v8::Function;
@@ -23,6 +24,23 @@ typedef struct {
   float Jxext;
   float V; // voltage
 } vfgpu_hdr_t;
+
+void LoadInclusionsFromDB(const std::string& dbname, Inclusions& incs)
+{
+  rocksdb::DB* db;
+  rocksdb::Status s;
+  
+  rocksdb::Options options;
+  options.create_if_missing = false;
+  s = rocksdb::DB::Open(options, dbname, &db);
+  assert(s.ok());
+  
+  std::string buf;
+  s = db->Get(rocksdb::ReadOptions(), "inclusions", &buf);
+  diy::unserialize(buf, incs);
+
+  delete db;
+}
 
 void LoadVorticiesFromDB(const std::string& dbname, int frame, vfgpu_hdr_t& hdr, std::vector<VortexLine>& vlines)
 {
@@ -62,6 +80,46 @@ void LoadVorticiesFromDB(const std::string& dbname, int frame, vfgpu_hdr_t& hdr,
   // fprintf(stderr, "#vlines=%d\n", (int)vlines.size());
 
   delete db;
+}
+
+void LoadInclusions(const FunctionCallbackInfo<Value>& args) {
+  Isolate *isolate = args.GetIsolate();
+
+  if (args.Length() < 1) {
+    isolate->ThrowException(Exception::TypeError(
+          String::NewFromUtf8(isolate, "Wrong number of arguments")));
+    return;
+  }
+
+  if (!args[0]->IsString()) {
+    isolate->ThrowException(Exception::TypeError(
+          String::NewFromUtf8(isolate, "Wrong arguments")));
+    return;
+  }
+
+  // input args
+  String::Utf8Value dbname1(args[0]->ToString());
+  std::string dbname(*dbname1);
+
+  Inclusions incs;
+  LoadInclusionsFromDB(dbname, incs);
+
+  // outputs
+  Local<Array> jincs = Array::New(isolate); 
+  for (int i=0; i<incs.Count(); i++) {
+    Local<Object> jinc = Object::New(isolate);
+    Local<Number> jradius = Number::New(isolate, incs.Radius());
+    jinc->Set(String::NewFromUtf8(isolate, "radius"), jradius);
+    Local<Number> jx = Number::New(isolate, incs.x(i));
+    jinc->Set(String::NewFromUtf8(isolate, "x"), jx);
+    Local<Number> jy = Number::New(isolate, incs.y(i));
+    jinc->Set(String::NewFromUtf8(isolate, "y"), jy);
+    Local<Number> jz = Number::New(isolate, incs.z(i));
+    jinc->Set(String::NewFromUtf8(isolate, "z"), jz);
+    jincs->Set(i, jinc);
+  }
+
+  args.GetReturnValue().Set(jincs);
 }
 
 void Load(const FunctionCallbackInfo<Value>& args) {
@@ -138,6 +196,7 @@ void Load(const FunctionCallbackInfo<Value>& args) {
 
 void Init(Local<Object> exports) {
   NODE_SET_METHOD(exports, "load", Load);
+  NODE_SET_METHOD(exports, "loadInclusions", LoadInclusions);
 }
 
 NODE_MODULE(vf2, Init)

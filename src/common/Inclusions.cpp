@@ -38,8 +38,14 @@ bool Inclusions::ParseFromTextFile(const std::string& filename)
   while (getline(ifs, line)) {
     if (line.length() == 0 || line[0] == '#' || line[0] == ' ')
       continue;
-    if (n == 0 || n == 1) { // skip line 1 and line 2 
+    if (n == 0) { // skip line 1
       n++; 
+      continue;
+    } else if (n == 1) {
+      std::stringstream ss(line);
+      ss >> _radius;
+      fprintf(stderr, "radius=%f\n", _radius);
+      n++;
       continue;
     }
    
@@ -56,7 +62,7 @@ bool Inclusions::ParseFromTextFile(const std::string& filename)
     _y.push_back(y);
     _z.push_back(z);
 
-    // fprintf(stderr, "{%f, %f, %f}\n", x, y, z);
+    fprintf(stderr, "{%f, %f, %f}\n", x, y, z);
     n ++;
   }
 

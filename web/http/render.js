@@ -14,6 +14,8 @@ var pointLight = new THREE.PointLight(0xffffff);
 pointLight.position.x = 100;
 pointLight.position.y = 100;
 pointLight.position.z = 100;
+// pointLight.castShadow = true;
+// pointLight.shadowDarkness = 0.5;
 scene.add(pointLight);
 
 var directionalLight = new THREE.DirectionalLight(0xffffff);
@@ -28,6 +30,7 @@ cameraControls.panSpeed = 0.8;
 var vortexCurves = [];
 var vortexTubes = [];
 var vortexColors = [];
+var inclusionSpheres = [];
 
 var vortexId = [];
 var vortexIdPos3D = [];
@@ -85,17 +88,32 @@ function renderVortexId () {
   }
 }
 
-function updateInclusions()
+function toggleInclusions(on)
 {
-  var sphereGeometry = new THREE.SphereGeometry(3, 50, 50, 0, Math.PI * 2, 0, Math.PI * 2);
+  inclusionSpheres.forEach(function(sphere) {
+    sphere.visible = on;
+  });
+}
+
+function updateInclusions(incs)
+{
   var sphereMaterial = new THREE.MeshPhongMaterial({
     color: 0xaaaaaa, 
     transparent: true,
     opacity: 0.9,
   });
 
-  var sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-  scene.add(sphere);
+  for (i=0; i<incs.length; i++) {
+    var sphereGeometry = new THREE.SphereGeometry(incs[i].radius, 50, 50, 0, Math.PI * 2, 0, Math.PI * 2);
+    var sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    sphere.position.x = incs[i].x - 64; // FIXME: just for Xfieldramp data
+    sphere.position.y = incs[i].y - 32; 
+    sphere.position.z = incs[i].z - 8;
+    // sphere.castShadow = true;
+    // sphere.receiveShadow = true;
+    scene.add(sphere);
+    inclusionSpheres.push(sphere);
+  }
 }
 
 function updateVortexTubes(radius)

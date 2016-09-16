@@ -3,8 +3,11 @@
 
 #include <vector>
 #include <string>
+#include "def.h"
+#include "common/diy-ext.hpp"
 
 class Inclusions {
+  friend class diy::Serialization<Inclusions>;
 public:
   Inclusions();
   ~Inclusions();
@@ -28,5 +31,23 @@ protected:
   float _radius;
   std::vector<float> _x, _y, _z;
 };
+
+namespace diy {
+  template <> struct Serialization<Inclusions> {
+    static void save(diy::BinaryBuffer& bb, const Inclusions& m) {
+      diy::save(bb, m._radius);
+      diy::save(bb, m._x);
+      diy::save(bb, m._y);
+      diy::save(bb, m._z);
+    }
+
+    static void load(diy::BinaryBuffer&bb, Inclusions& m) {
+      diy::load(bb, m._radius);
+      diy::load(bb, m._x);
+      diy::load(bb, m._y);
+      diy::load(bb, m._z);
+    }
+  };
+}
 
 #endif

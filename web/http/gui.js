@@ -18,7 +18,8 @@ window.onload = function() {
   gui.add(text, 'displayVortexId').onChange(function(val) {
   	displayVortexId = val;
   })
-  gui.add(text, "displayInclusions").onChange(function(val) {
+  gui.add(text, "displayInclusions").onChange(function(on) {
+    toggleInclusions(on);
   })
   gui.add(text, 'update');
 };
