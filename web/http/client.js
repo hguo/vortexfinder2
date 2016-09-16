@@ -31,7 +31,7 @@ function rgb(r, g, b) {
 function onMessage(evt)
 {
   var msg = JSON.parse(evt.data);
-  console.log(msg);
+  // console.log(msg);
   if (msg.type == "hdr") 
     updateHdr(msg.data);
   else if (msg.type == "vlines")
@@ -39,7 +39,21 @@ function onMessage(evt)
 }
 
 function updateHdr(hdr) {
-  console.log(hdr);
+  // console.log(hdr);
+  var datainfo = document.getElementById("datainfo");
+  if (datainfo == null) {
+    datainfo = document.createElement("div");
+    datainfo.id = "datainfo";
+    datainfo.style.position = "absolute";
+    datainfo.style.top = 15;
+    datainfo.style.left = 15;
+    datainfo.style.fontSize = 20;
+    document.body.appendChild(datainfo);
+  }
+  datainfo.innerHTML = 
+    "timestep=" + hdr.timestep + ", " + 
+    "B=(" + hdr.Bx.toFixed(3) + ", " + hdr.By.toFixed(3) + ", " + hdr.Bz.toFixed(3) + "), " +
+    "V=" + hdr.V.toFixed(3);
 }
 
 function updateVlines(vlines) {

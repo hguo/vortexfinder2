@@ -3,6 +3,7 @@ var menuText = function() {
   this.frame = 200;
   this.tubeRadius = 0.5;
   this.displayVortexId = true;
+  this.displayInclusions = true;
   this.update = function() {};
 };
 
@@ -16,6 +17,8 @@ window.onload = function() {
   })
   gui.add(text, 'displayVortexId').onChange(function(val) {
   	displayVortexId = val;
+  })
+  gui.add(text, "displayInclusions").onChange(function(val) {
   })
   gui.add(text, 'update');
 };

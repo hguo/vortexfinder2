@@ -34,6 +34,7 @@ var vortexIdPos3D = [];
 var displayVortexId = true;
 
 window.addEventListener("resize", onResize, false);
+// updateInclusions();
 
 function render() {
   // scene
@@ -65,6 +66,7 @@ function renderVortexId () {
       text2 = document.createElement("div");
       text2.id = "vortexId" + i;
       text2.style.position = "absolute";
+      text2.style.fontSize = 10;
       document.body.appendChild(text2);
     }
 
@@ -81,6 +83,19 @@ function renderVortexId () {
     if (!displayVortexId)
       text2.style.display = "none";
   }
+}
+
+function updateInclusions()
+{
+  var sphereGeometry = new THREE.SphereGeometry(3, 50, 50, 0, Math.PI * 2, 0, Math.PI * 2);
+  var sphereMaterial = new THREE.MeshPhongMaterial({
+    color: 0xaaaaaa, 
+    transparent: true,
+    opacity: 0.9,
+  });
+
+  var sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+  scene.add(sphere);
 }
 
 function updateVortexTubes(radius)

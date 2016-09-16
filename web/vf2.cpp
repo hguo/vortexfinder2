@@ -30,9 +30,10 @@ void LoadVorticiesFromDB(const std::string& dbname, int frame, vfgpu_hdr_t& hdr,
       dbname.c_str(), frame);
 
   rocksdb::DB* db;
-  rocksdb::Options options;
   rocksdb::Status s;
   
+  rocksdb::Options options;
+  options.create_if_missing = false;
   s = rocksdb::DB::Open(options, dbname, &db);
   assert(s.ok());
 

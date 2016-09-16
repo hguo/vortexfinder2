@@ -7,9 +7,6 @@ var vf2 = require('bindings')('vf2');
 
 const dbname="GL_3D_Xfieldramp_inter.rocksdb";
 
-var vlines = [];
-var hdr = [];
-
 wss = new WebSocketServer({
   port : 8080, 
   // binaryType : "arraybuffer",
@@ -19,20 +16,24 @@ wss = new WebSocketServer({
 wss.on("connection", function(ws) {
   console.log("connected.");
 
+  var vlines = [];
+  var hdr = {};
+
   vf2.load(dbname, 200, hdr, vlines);
   console.log(hdr);
-  
-  var msg = {
-    type: "hdr", 
-    data: hdr
-  };
-  ws.send(JSON.stringify(msg));
-
-  msg = {
+ 
+  msg0 = {
     type: "vlines", 
     data: vlines
   };
-  ws.send(JSON.stringify(msg));
+  ws.send(JSON.stringify(msg0));
+
+  msg1 = {
+    type: "hdr", 
+    data: hdr
+  };
+  ws.send(JSON.stringify(msg1));
+
   // ws.send(BSON.serialize(vlines)); // I don't know why BSON doesn't work
 
   // ws.onmessage = function(msg) {
