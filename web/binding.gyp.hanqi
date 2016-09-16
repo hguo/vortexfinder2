@@ -10,7 +10,10 @@
       ],
       "libraries": [
         "/Users/hguo/workspace/projects/vortexfinder2/build/install/lib/libglcommon.dylib",
-        "/Users/hguo/local/rocksdb-4.9/lib/librocksdb.dylib"
+        "/Users/hguo/local/rocksdb-4.9/lib/librocksdb.dylib",
+        "-Wl,-rpath,<!(pwd)/build/Release",
+        "-Wl,-rpath,/Users/hguo/workspace/projects/vortexfinder2/build/install/lib",
+        "-Wl,-rpath,/Users/hguo/local/rocksdb-4.9/lib"
       ],
       "xcode_settings": {
         "OTHER_CPLUSPLUSFLAGS" : [ "-std=c++11", "-stdlib=libc++" ], 

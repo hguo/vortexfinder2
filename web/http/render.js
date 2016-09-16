@@ -25,6 +25,10 @@ cameraControls.zoomSpeed = 0.04;
 cameraControls.panSpeed = 0.8;
 // cameraControls.addEventListener("change", render); // not working.. sigh
 
+var vortexCurves = [];
+var vortexTubes = [];
+var vortexColors = [];
+
 var vortexId = [];
 var vortexIdPos3D = [];
 var displayVortexId = true;
@@ -76,5 +80,25 @@ function renderVortexId () {
 
     if (!displayVortexId)
       text2.style.display = "none";
+  }
+}
+
+function updateVortexTubes(radius)
+{
+  for (i=0; i<vortexTubes.length; i++) {
+    scene.remove(vortexTubes[i]);
+  }
+  vortexTubes = [];
+
+  for (i=0; i<vortexCurves.length; i++) {
+    var tubeGeometry = new THREE.TubeGeometry(vortexCurves[i], 100, radius, 8, false);
+    var tubeMaterial = new THREE.MeshPhysicalMaterial({
+      color: vortexColors[i],
+      side: THREE.DoubleSide,
+      wireframe: false
+    });
+    var tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
+    scene.add(tubeMesh);
+    vortexTubes.push(tubeMesh);
   }
 }

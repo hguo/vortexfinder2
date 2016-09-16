@@ -1,7 +1,8 @@
 var ws;
 
 function connectToServer() {
-  ws = new WebSocket("ws://red.mcs.anl.gov:8080");
+  // ws = new WebSocket("ws://red.mcs.anl.gov:8080");
+  ws = new WebSocket("ws://127.0.0.1:8080");
   // ws.binaryType = "arraybuffer";
   ws.onopen = onOpen;
   ws.onclose = onClose;
@@ -50,20 +51,13 @@ function updateVlines(vlines) {
 
     var r = vlines[i].r, g = vlines[i].g, b = vlines[i].b;
     var color = new THREE.Color(rgb(r, g, b));
+    vortexColors.push(color);
   
     var points = [];
     for (j=0; j<verts.length/3; j++)
       points.push(new THREE.Vector3(verts[j*3], verts[j*3+1], verts[j*3+2]));
     var curve = new THREE.CatmullRomCurve3(points);
-
-    var tubeGeometry = new THREE.TubeGeometry(curve, 100, 0.5, 8, false);
-    var tubeMaterial = new THREE.MeshPhysicalMaterial({
-      color: color,
-      side: THREE.DoubleSide,
-      wireframe: false
-    });
-    var tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
-    scene.add(tubeMesh);
+    vortexCurves.push(curve);
 
     // var lineMaterial = new THREE.LineBasicMaterial({color: color});
     // var lineGeometry = new THREE.Geometry(curve);
@@ -73,6 +67,8 @@ function updateVlines(vlines) {
     vortexId.push(vlines[i].gid);
     vortexIdPos3D.push(new THREE.Vector3(verts[0], verts[1], verts[2]));
   }
+
+  updateVortexTubes(0.5);
 
   render();
 }
