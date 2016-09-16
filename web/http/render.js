@@ -47,7 +47,8 @@ function render() {
   directionalLight.position.copy(camera.position);
   renderer.render(scene, camera);
 
-  renderVortexId();
+  if (displayVortexId)
+    renderVortexId();
 }
 
 function onResize() {
@@ -55,6 +56,15 @@ function onResize() {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
   cameraControls.handleResize();
+}
+
+function toggleVortexId(on) {
+  displayVortexId = on;
+  if (!on) {
+    vortexIdLabels = document.getElementsByClassName("vortexId");
+    for (i=0; i<vortexIdLabels.length; i++) 
+      document.body.removeChild(vortexIdLabels[i]);
+  }
 }
 
 function renderVortexId () {
@@ -68,13 +78,15 @@ function renderVortexId () {
     if (text2 == null) {
       text2 = document.createElement("div");
       text2.id = "vortexId" + i;
+      text2.className = "vortexId";
       text2.style.position = "absolute";
       text2.style.fontSize = 10;
       document.body.appendChild(text2);
     }
 
     if (vector.x >= 0 && vector.x < window.innerWidth-50 && 
-        vector.y >= 0 && vector.y < window.innerHeight-25) {
+        vector.y >= 0 && vector.y < window.innerHeight-25 && 
+        vector.z < 1) {
       text2.style.top = vector.y;
       text2.style.left = vector.x;
       text2.innerHTML = vortexId[i];
@@ -82,9 +94,6 @@ function renderVortexId () {
     } else {
       text2.style.display = "none";
     }
-
-    if (!displayVortexId)
-      text2.style.display = "none";
   }
 }
 
@@ -103,6 +112,7 @@ function updateInclusions(incs)
     opacity: 0.9,
   });
 
+  inclusionSpheres = [];
   for (i=0; i<incs.length; i++) {
     var sphereGeometry = new THREE.SphereGeometry(incs[i].radius, 50, 50, 0, Math.PI * 2, 0, Math.PI * 2);
     var sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
@@ -118,9 +128,7 @@ function updateInclusions(incs)
 
 function updateVortexTubes(radius)
 {
-  for (i=0; i<vortexTubes.length; i++) {
-    scene.remove(vortexTubes[i]);
-  }
+  vortexTubes.forEach(function(tube){scene.remove(tube);})
   vortexTubes = [];
 
   for (i=0; i<vortexCurves.length; i++) {

@@ -1,4 +1,33 @@
 var ws;
+var dbname = "GL_3D_Xfieldramp_inter.rocksdb";
+var currentFrame = 200;
+
+function requestCurrentFrame() {
+  console.log("requesting frame " + currentFrame + " in " + dbname);
+  var msg = {
+    type: "requestFrame",
+    dbname: dbname,
+    frame: currentFrame
+  };
+
+  ws.send(JSON.stringify(msg));
+}
+
+function clearCurrentFrame() {
+  console.log("cleanning current frame");
+  vortexTubes.forEach(function(tube) {scene.remove(tube);})
+  inclusionSpheres.forEach(function(sphere) {scene.remove(sphere);})
+
+  vortexIdLabels = document.getElementsByClassName("vortexId");
+  for (i=0; i<vortexIdLabels.length; i++) 
+    document.body.removeChild(vortexIdLabels[i]);
+
+  vortexCurves = [];
+  vortexTubes = [];
+  vortexColors = [];
+  vortexId = [];
+  vortexIdPos3D = [];
+}
 
 function connectToServer() {
   // ws = new WebSocket("ws://red.mcs.anl.gov:8080");
@@ -13,10 +42,7 @@ function connectToServer() {
 function onOpen(evt)
 {
   console.log("connected to server");
-  // ws.send(JSON.stringify({
-  //   dataname : "Xfieldramp", 
-  //   frame : "1000"
-  // }));
+  requestCurrentFrame();
 }
 
 function onClose(evt)
@@ -59,9 +85,8 @@ function updateHdr(hdr) {
 }
 
 function updateVlines(vlines) {
-  vortexId = [];
-  vortexIdPos3D = [];
- 
+  clearCurrentFrame();
+
   for (i=0; i<vlines.length; i++) {
     var verts = vlines[i].verts;
 
