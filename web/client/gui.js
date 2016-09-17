@@ -49,8 +49,8 @@ window.onload = function() {
     toggleInclusions(on);
   });
   f2.add(text, "tubeRadius", 0.1, 2).onChange(function(val) {
-  f2.add(text, "resetTrackball");
     updateVortexTubes(val);
   });
+  f2.add(text, "resetTrackball");
   f2.open();
 };
