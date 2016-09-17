@@ -4,9 +4,11 @@ var menuText = function() {
   this.resetTrackball = function () {
     cameraControls.reset();
   };
-  this.tubeRadius = 0.5;
+  this.displayStats = false;
+  this.displayVoltage = true;
   this.displayVortexId = false;
   this.displayInclusions = true;
+  this.tubeRadius = 0.5;
   this.nextFrame = function() {
     currentFrame ++;
     requestFrame(currentFrame);
@@ -32,9 +34,13 @@ window.onload = function() {
   f1.open();
 
   var f2 = gui.addFolder("Rendering");
-  f2.add(text, "resetTrackball");
-  f2.add(text, "tubeRadius", 0.1, 2).onChange(function(val) {
-    updateVortexTubes(val);
+  f2.add(text, "displayStats").onChange(function(val) {
+    if (val) $("#stats").css({visibility: "visible"});
+    else $("#stats").css({visibility: "hidden"});
+  });
+  f2.add(text, "displayVoltage").onChange(function(val) {
+    if (val) $("#voltageChart").css({visibility: "visible"});
+    else $("#voltageChart").css({visibility: "hidden"});
   });
   f2.add(text, 'displayVortexId').onChange(function(val) {
     toggleVortexId(val);
@@ -42,4 +48,9 @@ window.onload = function() {
   f2.add(text, "displayInclusions").onChange(function(on) {
     toggleInclusions(on);
   });
+  f2.add(text, "tubeRadius", 0.1, 2).onChange(function(val) {
+  f2.add(text, "resetTrackball");
+    updateVortexTubes(val);
+  });
+  f2.open();
 };

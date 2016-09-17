@@ -1,6 +1,8 @@
 var stats = new Stats();
-stats.showPanel(1);
+stats.showPanel(0);
+stats.dom.id="stats";
 document.body.appendChild(stats.dom);
+$("#stats").css({visibility: "hidden"});
 
 var clock = new THREE.Clock();
 var scene = new THREE.Scene();
