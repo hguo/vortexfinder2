@@ -99,6 +99,7 @@ function updateFrameInfo() {
   frameinfo.innerHTML = 
     "frame=" + currentFrame + ", " +
     "timestep=" + hdr.timestep + ", " + 
+    "t=" + (hdr.timestep * dataCfg.dt).toFixed(3) + ", " +
     "B=(" + hdr.Bx.toFixed(3) + ", " + hdr.By.toFixed(3) + ", " + hdr.Bz.toFixed(3) + "), " +
     "V=" + hdr.V.toFixed(3);
 }
