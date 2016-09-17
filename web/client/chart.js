@@ -1,3 +1,5 @@
+var svg;
+
 function createLineChart() {
   var W = window.innerWidth, H = 120;
   var margin = {top: 20, right: 20, bottom: 30, left: 50},
@@ -28,7 +30,7 @@ function createLineChart() {
       .x(function(d) {return x(d.timestep * dataCfg.dt);})
       .y(function(d) {return y(d.V);});
   
-  var svg = d3.select("#voltageChart")
+  svg = d3.select("#voltageChart")
       .append("g")
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
   svg.append("g")

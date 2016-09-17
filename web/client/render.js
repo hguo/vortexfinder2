@@ -68,12 +68,17 @@ function onResize() {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
   cameraControls.handleResize();
+  
+  var W = window.innerWidth, H = 120;
+  var margin = {top: 20, right: 20, bottom: 30, left: 50},
+      width = W - margin.left - margin.right,
+      height = H - margin.top - margin.bottom;
 
   $("svg").css({
-    top: window.innerHeight - 120, 
+    top: window.innerHeight - H, 
     left: 0, 
     width: window.innerWidth, 
-    height: 120, 
+    height: H, 
     position: "absolute"
   });
 }
