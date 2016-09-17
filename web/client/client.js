@@ -81,7 +81,8 @@ function updateDataInfo(info) {
   dataCfg = info.cfg;
   dataHdrs = info.hdrs;
   updateInclusions(info.inclusions);
-  console.log(info);
+
+  createLineChart();
 }
 
 function updateFrameInfo() {

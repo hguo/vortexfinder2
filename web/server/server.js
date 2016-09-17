@@ -24,6 +24,10 @@ wss.on("connection", function(ws) {
       sendFrame(ws, msg.dbname, msg.frame);
     }
   });
+
+  ws.on("close", function() {
+    console.log("disconnected.");
+  });
 })
 
 wss.on("close", function(ws) {

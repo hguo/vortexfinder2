@@ -1,6 +1,9 @@
 var menuText = function() {
   this.dataName = "GL_3D_Xfieldramp_inter";
   this.frame = 200;
+  this.resetTrackball = function () {
+    cameraControls.reset();
+  };
   this.tubeRadius = 0.5;
   this.displayVortexId = false;
   this.displayInclusions = true;
@@ -17,20 +20,26 @@ var menuText = function() {
 window.onload = function() {
   var text = new menuText();
   var gui = new dat.GUI();
-  gui.add(text, 'dataName');
-  gui.add(text, 'frame').onChange(function(val) {
+
+  var f1 = gui.addFolder("Data");
+  f1.add(text, 'dataName');
+  f1.add(text, 'frame').onChange(function(val) {
     currentFrame = val;
     requestFrame();
   });
-  gui.add(text, "tubeRadius", 0.1, 2).onChange(function(val) {
+  f1.add(text, 'previousFrame');
+  f1.add(text, 'nextFrame');
+  f1.open();
+
+  var f2 = gui.addFolder("Rendering");
+  f2.add(text, "resetTrackball");
+  f2.add(text, "tubeRadius", 0.1, 2).onChange(function(val) {
     updateVortexTubes(val);
-  })
-  gui.add(text, 'displayVortexId').onChange(function(val) {
+  });
+  f2.add(text, 'displayVortexId').onChange(function(val) {
     toggleVortexId(val);
-  })
-  gui.add(text, "displayInclusions").onChange(function(on) {
+  });
+  f2.add(text, "displayInclusions").onChange(function(on) {
     toggleInclusions(on);
-  })
-  gui.add(text, 'previousFrame');
-  gui.add(text, 'nextFrame');
+  });
 };
