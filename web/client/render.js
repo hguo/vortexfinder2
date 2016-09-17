@@ -66,6 +66,14 @@ function onResize() {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
   cameraControls.handleResize();
+
+  $("svg").css({
+    top: window.innerHeight - 120, 
+    left: 0, 
+    width: window.innerWidth, 
+    height: 120, 
+    position: "absolute"
+  });
 }
 
 function toggleVortexId(on) {
