@@ -25,13 +25,14 @@ function requestDataInfo() {
   else connectToServer();
 }
 
+function clearVortexIdLabels() {
+  $('.vortexId').remove();
+}
+
 function clearCurrentFrame() {
   console.log("cleanning current frame");
   vortexTubes.forEach(function(tube) {scene.remove(tube);})
-
-  vortexIdLabels = document.getElementsByClassName("vortexId");
-  for (i=0; i<vortexIdLabels.length; i++) 
-    document.body.removeChild(vortexIdLabels[i]);
+  clearVortexIdLabels();
 
   vortexCurves = [];
   vortexTubes = [];

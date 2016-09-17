@@ -70,11 +70,8 @@ function onResize() {
 
 function toggleVortexId(on) {
   displayVortexId = on;
-  if (!on) {
-    vortexIdLabels = document.getElementsByClassName("vortexId");
-    for (i=0; i<vortexIdLabels.length; i++) 
-      document.body.removeChild(vortexIdLabels[i]);
-  }
+  if (!on) 
+    clearVortexIdLabels();
 }
 
 function renderVortexId () {
