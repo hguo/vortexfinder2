@@ -10,7 +10,8 @@ function requestFrame(frame) {
     frame: currentFrame
   };
 
-  ws.send(JSON.stringify(msg));
+  if (ws.readyState == 1) ws.send(JSON.stringify(msg));
+  else connectToServer();
 }
 
 function requestDataInfo() {
@@ -20,7 +21,8 @@ function requestDataInfo() {
     dbname: dbname
   };
 
-  ws.send(JSON.stringify(msg));
+  if (ws.readyState == 1) ws.send(JSON.stringify(msg));
+  else connectToServer();
 }
 
 function clearCurrentFrame() {
