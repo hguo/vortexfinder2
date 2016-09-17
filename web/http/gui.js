@@ -2,15 +2,15 @@ var menuText = function() {
   this.dataName = "GL_3D_Xfieldramp_inter";
   this.frame = 200;
   this.tubeRadius = 0.5;
-  this.displayVortexId = true;
+  this.displayVortexId = false;
   this.displayInclusions = true;
   this.nextFrame = function() {
     currentFrame ++;
-    requestCurrentFrame();
+    requestFrame(currentFrame);
   };
   this.previousFrame = function() {
     currentFrame --;
-    requestCurrentFrame();
+    requestFrame(currentFrame);
   };
 };
 

@@ -37,7 +37,9 @@ void LoadInclusionsFromDB(const std::string& dbname, Inclusions& incs)
   
   std::string buf;
   s = db->Get(rocksdb::ReadOptions(), "inclusions", &buf);
-  diy::unserialize(buf, incs);
+  if (buf.size() > 0) {
+    diy::unserialize(buf, incs);
+  }
 
   delete db;
 }

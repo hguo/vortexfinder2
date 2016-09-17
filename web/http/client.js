@@ -2,8 +2,8 @@ var ws;
 var dbname = "GL_3D_Xfieldramp_inter.rocksdb";
 var currentFrame = 200;
 
-function requestCurrentFrame() {
-  console.log("requesting frame " + currentFrame + " in " + dbname);
+function requestFrame(frame) {
+  console.log("requesting frame " + frame + " in " + dbname);
   var msg = {
     type: "requestFrame",
     dbname: dbname,
@@ -13,10 +13,19 @@ function requestCurrentFrame() {
   ws.send(JSON.stringify(msg));
 }
 
+function requestDataInfo() {
+  console.log("requesting data info");
+  var msg = {
+    type: "requestDataInfo", 
+    dbname: dbname
+  };
+
+  ws.send(JSON.stringify(msg));
+}
+
 function clearCurrentFrame() {
   console.log("cleanning current frame");
   vortexTubes.forEach(function(tube) {scene.remove(tube);})
-  inclusionSpheres.forEach(function(sphere) {scene.remove(sphere);})
 
   vortexIdLabels = document.getElementsByClassName("vortexId");
   for (i=0; i<vortexIdLabels.length; i++) 
@@ -42,7 +51,8 @@ function connectToServer() {
 function onOpen(evt)
 {
   console.log("connected to server");
-  requestCurrentFrame();
+  requestDataInfo();
+  requestFrame(currentFrame);
 }
 
 function onClose(evt)
@@ -68,17 +78,17 @@ function onMessage(evt)
 
 function updateHdr(hdr) {
   // console.log(hdr);
-  var datainfo = document.getElementById("datainfo");
-  if (datainfo == null) {
-    datainfo = document.createElement("div");
-    datainfo.id = "datainfo";
-    datainfo.style.position = "absolute";
-    datainfo.style.top = 15;
-    datainfo.style.left = 15;
-    datainfo.style.fontSize = 20;
-    document.body.appendChild(datainfo);
+  var frameinfo = document.getElementById("frameinfo");
+  if (frameinfo == null) {
+    frameinfo = document.createElement("div");
+    frameinfo.id = "frameinfo";
+    frameinfo.style.position = "absolute";
+    frameinfo.style.top = 15;
+    frameinfo.style.left = 15;
+    frameinfo.style.fontSize = 20;
+    document.body.appendChild(frameinfo);
   }
-  datainfo.innerHTML = 
+  frameinfo.innerHTML = 
     "timestep=" + hdr.timestep + ", " + 
     "B=(" + hdr.Bx.toFixed(3) + ", " + hdr.By.toFixed(3) + ", " + hdr.Bz.toFixed(3) + "), " +
     "V=" + hdr.V.toFixed(3);
@@ -110,8 +120,6 @@ function updateVlines(vlines) {
   }
 
   updateVortexTubes(0.5);
-
-  render();
 }
 
 function onError(evt)

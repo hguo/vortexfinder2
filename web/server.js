@@ -18,14 +18,28 @@ wss.on("connection", function(ws) {
 
   ws.on("message", function(data) {
     var msg = JSON.parse(data);
-    if (msg.type == "requestFrame")
+    if (msg.type == "requestDataInfo") {
+      sendDataInfo(ws, msg.dbname);
+    } else if (msg.type == "requestFrame") {
       sendFrame(ws, msg.dbname, msg.frame);
+    }
   });
 })
 
 wss.on("close", function(ws) {
   console.log("closed.");
 })
+
+function sendDataInfo(ws, dbname) {
+  console.log("requested data info");
+  var inclusions = vf2.loadInclusions(dbname);
+  
+  msg2 = {
+    type: "inclusions", 
+    data: inclusions
+   };
+  ws.send(JSON.stringify(msg2));
+}
 
 function sendFrame(ws, dbname, frame) {
   console.log("requested frame " + frame + " in " + dbname);
@@ -34,7 +48,6 @@ function sendFrame(ws, dbname, frame) {
   var hdr = {};
 
   vf2.load(dbname, frame, hdr, vlines);
-  var inclusions = vf2.loadInclusions(dbname);
  
   msg0 = {
     type: "vlines", 
@@ -47,12 +60,6 @@ function sendFrame(ws, dbname, frame) {
     data: hdr
   };
   ws.send(JSON.stringify(msg1));
-  
-  msg2 = {
-    type: "inclusions", 
-    data: inclusions
-  };
-  ws.send(JSON.stringify(msg2));
 
   // ws.send(BSON.serialize(vlines)); // I don't know why BSON doesn't work
 

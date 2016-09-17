@@ -1,3 +1,7 @@
+var stats = new Stats();
+stats.showPanel(1);
+document.body.appendChild(stats.dom);
+
 var clock = new THREE.Clock();
 var scene = new THREE.Scene();
 
@@ -34,12 +38,14 @@ var inclusionSpheres = [];
 
 var vortexId = [];
 var vortexIdPos3D = [];
-var displayVortexId = true;
+var displayVortexId = false;
 
 window.addEventListener("resize", onResize, false);
 // updateInclusions();
 
 function render() {
+  stats.begin();
+
   // scene
   var delta = clock.getDelta();
   requestAnimationFrame(render);
@@ -49,6 +55,8 @@ function render() {
 
   if (displayVortexId)
     renderVortexId();
+
+  stats.end();
 }
 
 function onResize() {
@@ -143,3 +151,5 @@ function updateVortexTubes(radius)
     vortexTubes.push(tubeMesh);
   }
 }
+
+render();
