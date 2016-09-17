@@ -31,11 +31,13 @@ function clearVortexIdLabels() {
 
 function clearCurrentFrame() {
   console.log("cleanning current frame");
-  vortexTubes.forEach(function(tube) {scene.remove(tube);})
+  vortexTubeMeshes.forEach(function(tube) {scene.remove(tube);});
+  vortexLines.forEach(function(line) {scene.remove(line);});
   clearVortexIdLabels();
 
   vortexCurves = [];
-  vortexTubes = [];
+  vortexLines = [];
+  vortexTubeMeshes = [];
   vortexColors = [];
   vortexId = [];
   vortexIdPos3D = [];
@@ -116,23 +118,31 @@ function updateVlines(vlines) {
     var r = vlines[i].r, g = vlines[i].g, b = vlines[i].b;
     var color = new THREE.Color(rgb(r, g, b));
     vortexColors.push(color);
-  
+    
+    var lineGeometry = new THREE.Geometry();
     var points = [];
-    for (j=0; j<verts.length/3; j++)
+    for (j=0; j<verts.length/3; j++) {
       points.push(new THREE.Vector3(verts[j*3], verts[j*3+1], verts[j*3+2]));
+      lineGeometry.vertices.push(new THREE.Vector3(verts[j*3], verts[j*3+1], verts[j*3+2]));
+    }
     var curve = new THREE.CatmullRomCurve3(points);
     vortexCurves.push(curve);
 
-    // var lineMaterial = new THREE.LineBasicMaterial({color: color});
-    // var lineGeometry = new THREE.Geometry(curve);
-    // var line = new THREE.Line(lineGeometry, lineMaterial);
-    // scene.add(line);
+    var lineMaterial = new THREE.LineBasicMaterial({color: color});
+    var line = new THREE.Line(lineGeometry, lineMaterial);
+    vortexLines.push(line);
+    scene.add(line);
 
     vortexId.push(vlines[i].gid);
     vortexIdPos3D.push(new THREE.Vector3(verts[0], verts[1], verts[2]));
   }
 
-  updateVortexTubes(0.5);
+  updateVortexTubes(vortexTubeRadius);
+  if (displayVortexTubes) {
+    toggleTubes(true); toggleLines(false);
+  } else {
+    toggleTubes(false); toggleLines(true);
+  }
 }
 
 function onError(evt)

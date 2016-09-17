@@ -30,20 +30,23 @@ scene.add(directionalLight);
 cameraControls = new THREE.TrackballControls(camera, renderer.domElement);
 cameraControls.target.set(0, 0, 0);
 cameraControls.zoomSpeed = 0.04;
-cameraControls.panSpeed = 0.8;
+cameraControls.panSpeed = 0.04;
 // cameraControls.addEventListener("change", render); // not working.. sigh
 
 var dataCfg = {};
 var dataHdrs = [];
 
 var vortexCurves = [];
-var vortexTubes = [];
+var vortexTubeMeshes = [];
+var vortexLines = [];
 var vortexColors = [];
 var inclusionSpheres = [];
 
 var vortexId = [];
 var vortexIdPos3D = [];
 var displayVortexId = false;
+var displayVortexTubes = true;
+var vortexTubeRadius = 0.5;
 
 window.addEventListener("resize", onResize, false);
 
@@ -69,16 +72,11 @@ function onResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   cameraControls.handleResize();
   
-  var W = window.innerWidth, H = 120;
-  var margin = {top: 20, right: 20, bottom: 30, left: 50},
-      width = W - margin.left - margin.right,
-      height = H - margin.top - margin.bottom;
-
   $("svg").css({
-    top: window.innerHeight - H, 
+    top: window.innerHeight - 120, // FIXME: hard code
     left: 0, 
     width: window.innerWidth, 
-    height: H, 
+    height: 120, 
     position: "absolute"
   });
 }
@@ -119,6 +117,18 @@ function renderVortexId () {
   }
 }
 
+function toggleTubes(on) {
+  vortexTubeMeshes.forEach(function(tube) {
+    tube.visible = on;
+  });
+}
+
+function toggleLines(on) {
+  vortexLines.forEach(function(line) {
+    line.visible = on;
+  });
+}
+
 function toggleInclusions(on)
 {
   inclusionSpheres.forEach(function(sphere) {
@@ -150,8 +160,8 @@ function updateInclusions(incs)
 
 function updateVortexTubes(radius)
 {
-  vortexTubes.forEach(function(tube){scene.remove(tube);})
-  vortexTubes = [];
+  vortexTubeMeshes.forEach(function(tube){scene.remove(tube);})
+  vortexTubeMeshes = [];
 
   for (i=0; i<vortexCurves.length; i++) {
     var tubeGeometry = new THREE.TubeGeometry(vortexCurves[i], 100, radius, 8, false);
@@ -162,7 +172,7 @@ function updateVortexTubes(radius)
     });
     var tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
     scene.add(tubeMesh);
-    vortexTubes.push(tubeMesh);
+    vortexTubeMeshes.push(tubeMesh);
   }
 }
 

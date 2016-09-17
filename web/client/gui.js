@@ -8,6 +8,7 @@ var menuText = function() {
   this.displayVoltage = true;
   this.displayVortexId = false;
   this.displayInclusions = true;
+  this.vortexRendering = "tube";
   this.tubeRadius = 0.5;
   this.nextFrame = function() {
     currentFrame ++;
@@ -48,7 +49,19 @@ window.onload = function() {
   f2.add(text, "displayInclusions").onChange(function(on) {
     toggleInclusions(on);
   });
+  f2.add(text, "vortexRendering", ["tube", "line"]).onChange(function(val) {
+    if (val == "tube") {
+      displayVortexTubes = true;
+      toggleTubes(true); 
+      toggleLines(false);
+    } else {
+      displayVortexTubes = false;
+      toggleTubes(false);
+      toggleLines(true);
+    }
+  });
   f2.add(text, "tubeRadius", 0.1, 2).onChange(function(val) {
+    vortexTubeRadius = val;
     updateVortexTubes(val);
   });
   f2.add(text, "resetTrackball");
