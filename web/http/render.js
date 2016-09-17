@@ -31,6 +31,7 @@ cameraControls.zoomSpeed = 0.04;
 cameraControls.panSpeed = 0.8;
 // cameraControls.addEventListener("change", render); // not working.. sigh
 
+var dataCfg = {};
 var dataHdrs = [];
 
 var vortexCurves = [];
@@ -43,7 +44,6 @@ var vortexIdPos3D = [];
 var displayVortexId = false;
 
 window.addEventListener("resize", onResize, false);
-// updateInclusions();
 
 function render() {
   stats.begin();
@@ -126,9 +126,9 @@ function updateInclusions(incs)
   for (i=0; i<incs.length; i++) {
     var sphereGeometry = new THREE.SphereGeometry(incs[i].radius, 50, 50, 0, Math.PI * 2, 0, Math.PI * 2);
     var sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-    sphere.position.x = incs[i].x - 64; // FIXME: just for Xfieldramp data
-    sphere.position.y = incs[i].y - 32; 
-    sphere.position.z = incs[i].z - 8;
+    sphere.position.x = incs[i].x + dataCfg.Ox; // FIXME: just for Xfieldramp data
+    sphere.position.y = incs[i].y + dataCfg.Oy; 
+    sphere.position.z = incs[i].z + dataCfg.Oz;
     // sphere.castShadow = true;
     // sphere.receiveShadow = true;
     scene.add(sphere);

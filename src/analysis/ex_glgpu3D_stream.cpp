@@ -279,7 +279,7 @@ int main(int argc, char **argv)
   int type_msg;
   vfgpu_hdr_t hdr;
   int pfcount, pecount;
-  const int max_frames = INT_MAX;
+  const int max_frames = 5000; // INT_MAX;
   int frame_count = 0;
   std::vector<int> frames;
   std::vector<vfgpu_hdr_t> hdrs;
@@ -337,9 +337,12 @@ int main(int argc, char **argv)
   
 #if WITH_ROCKSDB
   std::string buf;
-  
+ 
+  diy::serialize(cfg, buf);
+  db->Put(rocksdb::WriteOptions(), "cfg", buf);
+
   diy::serialize(hdrs, buf);
-  db->Put(rocksdb::WriteOptions(), "f", buf);
+  db->Put(rocksdb::WriteOptions(), "hdrs", buf);
 
   fprintf(stderr, "constructing sequences...\n");
   vt.SetFrames(frames);

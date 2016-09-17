@@ -58,7 +58,7 @@ void LoadDataInfoFromDB(
     diy::unserialize(buf, cfg);
   }
   
-  s = db->Get(rocksdb::ReadOptions(), "f", &buf);
+  s = db->Get(rocksdb::ReadOptions(), "hdrs", &buf);
   if (buf.size() > 0) {
     diy::unserialize(buf, hdrs);
   }
@@ -71,7 +71,7 @@ void LoadDataInfoFromDB(
   delete db;
 }
 
-void LoadFrameFromDB(
+bool LoadFrameFromDB(
     const std::string& dbname, 
     int frame, 
     std::vector<VortexLine>& vlines)
@@ -89,6 +89,7 @@ void LoadFrameFromDB(
 
   std::string buf;
   s = db->Get(rocksdb::ReadOptions(), "trans", &buf);
+  if (buf.empty()) {delete db; return false;}
   VortexTransition vt;
   diy::unserialize(buf, vt);
 
@@ -97,6 +98,7 @@ void LoadFrameFromDB(
   ss << "v." << timestep;
   buf.clear();
   s = db->Get(rocksdb::ReadOptions(), ss.str(), &buf);
+  if (buf.empty()) {delete db; return false;}
   diy::unserialize(buf, vlines);
 
   for (size_t i=0; i<vlines.size(); i++) {
@@ -225,7 +227,7 @@ void LoadFrame(const FunctionCallbackInfo<Value>& args) {
   int frame = args[1]->NumberValue();
 
   std::vector<VortexLine> vlines;
-  LoadFrameFromDB(dbname, frame, vlines);
+  bool succ = LoadFrameFromDB(dbname, frame, vlines);
 
   // output 
   Local<Object> jout = Object::New(isolate);

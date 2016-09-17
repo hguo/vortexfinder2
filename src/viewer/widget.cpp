@@ -856,7 +856,7 @@ void CGLWidget::SetDB(rocksdb::DB* db)
   _db = db;
 
   std::string buf;
-  rocksdb::Status s = _db->Get(rocksdb::ReadOptions(), "f", &buf);
+  rocksdb::Status s = _db->Get(rocksdb::ReadOptions(), "hdrs", &buf);
   diy::unserialize(buf, vfgpu_hdrs);
 }
 
