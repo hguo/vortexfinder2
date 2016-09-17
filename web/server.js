@@ -32,34 +32,25 @@ wss.on("close", function(ws) {
 
 function sendDataInfo(ws, dbname) {
   console.log("requested data info");
-  var inclusions = vf2.loadInclusions(dbname);
+  var dataInfo = vf2.loadDataInfo(dbname);
   
-  msg2 = {
-    type: "inclusions", 
-    data: inclusions
+  msg = {
+    type: "dataInfo", 
+    data: dataInfo
    };
-  ws.send(JSON.stringify(msg2));
+  ws.send(JSON.stringify(msg));
 }
 
 function sendFrame(ws, dbname, frame) {
   console.log("requested frame " + frame + " in " + dbname);
 
-  var vlines = [];
-  var hdr = {};
-
-  vf2.load(dbname, frame, hdr, vlines);
+  var frameData = vf2.loadFrame(dbname, frame);
  
-  msg0 = {
+  msg = {
     type: "vlines", 
-    data: vlines
+    data: frameData.vlines
   };
-  ws.send(JSON.stringify(msg0));
-
-  msg1 = {
-    type: "hdr", 
-    data: hdr
-  };
-  ws.send(JSON.stringify(msg1));
+  ws.send(JSON.stringify(msg));
 
   // ws.send(BSON.serialize(vlines)); // I don't know why BSON doesn't work
 

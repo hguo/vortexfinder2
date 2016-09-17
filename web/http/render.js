@@ -31,6 +31,8 @@ cameraControls.zoomSpeed = 0.04;
 cameraControls.panSpeed = 0.8;
 // cameraControls.addEventListener("change", render); // not working.. sigh
 
+var dataHdrs = [];
+
 var vortexCurves = [];
 var vortexTubes = [];
 var vortexColors = [];

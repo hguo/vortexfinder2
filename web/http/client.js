@@ -70,16 +70,19 @@ function onMessage(evt)
 {
   var msg = JSON.parse(evt.data);
   // console.log(msg);
-  if (msg.type == "hdr") 
-    updateHdr(msg.data);
+  if (msg.type == "dataInfo") 
+    updateDataInfo(msg.data);
   else if (msg.type == "vlines")
     updateVlines(msg.data);
-  else if (msg.type == "inclusions")
-    updateInclusions(msg.data);
 }
 
-function updateHdr(hdr) {
-  // console.log(hdr);
+function updateDataInfo(info) {
+  dataHdrs = info.hdrs;
+  updateInclusions(info.inclusions);
+}
+
+function updateFrameInfo() {
+  var hdr = dataHdrs[currentFrame];
   var frameinfo = document.getElementById("frameinfo");
   if (frameinfo == null) {
     frameinfo = document.createElement("div");
@@ -91,6 +94,7 @@ function updateHdr(hdr) {
     document.body.appendChild(frameinfo);
   }
   frameinfo.innerHTML = 
+    "frame=" + currentFrame + ", " +
     "timestep=" + hdr.timestep + ", " + 
     "B=(" + hdr.Bx.toFixed(3) + ", " + hdr.By.toFixed(3) + ", " + hdr.Bz.toFixed(3) + "), " +
     "V=" + hdr.V.toFixed(3);
@@ -98,6 +102,7 @@ function updateHdr(hdr) {
 
 function updateVlines(vlines) {
   clearCurrentFrame();
+  updateFrameInfo();
 
   for (i=0; i<vlines.length; i++) {
     var verts = vlines[i].verts;

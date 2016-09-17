@@ -20,7 +20,7 @@ window.onload = function() {
   gui.add(text, 'dataName');
   gui.add(text, 'frame').onChange(function(val) {
     currentFrame = val;
-    requestCurrentFrame();
+    requestFrame();
   });
   gui.add(text, "tubeRadius", 0.1, 2).onChange(function(val) {
     updateVortexTubes(val);
