@@ -82,6 +82,7 @@ function updateDataInfo(info) {
   dataHdrs = info.hdrs;
   updateInclusions(info.inclusions);
 
+  // dataHdrs.forEach(function(d) {if (d.V<0) d.V=0;});
   createLineChart();
 }
 
