@@ -114,6 +114,7 @@ function updateVlines(vlines) {
 
   for (i=0; i<vlines.length; i++) {
     var verts = vlines[i].verts;
+    console.log(vlines[i].moving_speed);
 
     var r = vlines[i].r, g = vlines[i].g, b = vlines[i].b;
     var color = new THREE.Color(rgb(r, g, b));

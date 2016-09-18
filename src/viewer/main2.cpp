@@ -15,7 +15,8 @@ int main(int argc, char **argv)
   const std::string dbname = argv[1];
   rocksdb::DB* db;
   rocksdb::Options options;
-  rocksdb::Status status = rocksdb::DB::Open(options, argv[1], &db);
+  // rocksdb::Status status = rocksdb::DB::Open(options, argv[1], &db);
+  rocksdb::Status status = rocksdb::DB::OpenForReadOnly(options, argv[1], &db);
 
   // VT
   VortexTransition vt;

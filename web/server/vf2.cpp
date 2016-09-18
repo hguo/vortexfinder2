@@ -50,7 +50,7 @@ void LoadDataInfoFromDB(
   
   rocksdb::Options options;
   options.create_if_missing = false;
-  s = rocksdb::DB::Open(options, dbname, &db);
+  s = rocksdb::DB::OpenForReadOnly(options, dbname, &db);
   assert(s.ok());
   
   s = db->Get(rocksdb::ReadOptions(), "cfg", &buf);
@@ -84,7 +84,7 @@ bool LoadFrameFromDB(
   
   rocksdb::Options options;
   options.create_if_missing = false;
-  s = rocksdb::DB::Open(options, dbname, &db);
+  s = rocksdb::DB::OpenForReadOnly(options, dbname, &db);
   assert(s.ok());
 
   std::string buf;
@@ -260,6 +260,10 @@ void LoadFrame(const FunctionCallbackInfo<Value>& args) {
     jvline->Set(String::NewFromUtf8(isolate, "g"), jg);
     Local<Number> jb = Number::New(isolate, vline.b);
     jvline->Set(String::NewFromUtf8(isolate, "b"), jb);
+
+    // moving_speed
+    Local<Number> jms = Number::New(isolate, vline.moving_speed);
+    jvline->Set(String::NewFromUtf8(isolate, "moving_speed"), jms);
 
     jvlines->Set(i, jvline);
   }

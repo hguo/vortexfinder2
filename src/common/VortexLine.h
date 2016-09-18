@@ -23,7 +23,12 @@ struct VortexLine : public std::vector<float>
   void Simplify(float tolorance=0.1);
   void ToBezier(float error_bound=0.01);
   void ToRegular(int N);
+  void ToRegularL(int N);
+ 
+  bool Linear(float t, float X[3]) const;
   bool Bezier(float t, float X[3]) const;
+
+  float Length() const;
 
   void Flattern(const float O[3], const float L[3]);
   void Unflattern(const float O[3], const float L[3]);
@@ -34,6 +39,7 @@ struct VortexLine : public std::vector<float>
   friend float MinimumDist(const VortexLine& l0, const VortexLine& l1);
   friend float CrossingPoint(const VortexLine& l0, const VortexLine& l1, float X[3]);
   friend float Area(const VortexLine& l0, const VortexLine& l1);
+  friend float AreaL(const VortexLine& l0, const VortexLine& l1);
 
   int id, gid;
   int timestep;
@@ -41,6 +47,10 @@ struct VortexLine : public std::vector<float>
   float moving_speed;
   bool is_bezier;
   bool is_loop;
+
+  // used for PL curve
+  mutable std::vector<float> length_seg;
+  mutable std::vector<float> length_acc;
 
   unsigned char r, g, b;
 };

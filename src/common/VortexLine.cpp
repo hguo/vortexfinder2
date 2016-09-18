@@ -37,8 +37,11 @@ void VortexLine::Print() const {
 
 void VortexLine::Simplify(float tolorance)
 {
+  if (is_bezier) return;
+
   std::vector<float> R;
   psimpl::simplify_reumann_witkam<3>(begin(), end(), tolorance, std::back_inserter(R));
+  // psimpl::simplify_douglas_peucker<3>(begin(), end(), tolorance, std::back_inserter(R));
   
   const int n0 = size()/3, n1 = R.size()/3;
   swap(R);
@@ -106,6 +109,68 @@ void VortexLine::ToBezier(float error_bound)
   is_bezier = true;
 }
 
+float VortexLine::Length() const
+{
+  if (!length_acc.empty())
+    return length_acc.back();
+
+  length_seg.clear();
+  length_acc.clear();
+
+  const int npts = size()/3;
+  float length = 0;
+  for (int i=0; i<npts-1; i++) {
+    const int j=i+1;
+    float P0[3] = {at(i*3), at(i*3)+1, at(i*3)+2}, 
+          P1[3] = {at(j*3), at(j*3)+1, at(j*3)+2};
+    float d = dist(P0, P1);
+
+    length_seg.push_back(d);
+    length_acc.push_back(length);
+    
+    length += dist(P0, P1);
+  }
+  length_acc.push_back(length);
+  return length;
+}
+
+bool VortexLine::Linear(float t, float X[3]) const 
+{
+  if (t <= 0) {
+    X[0] = at(0); X[1] = at(1); X[2] = at(2); return true;
+  } else if (t >= 1) {
+    X[0] = at(size()-3); X[1] = at(size()-2); X[2] = at(size()-1); return true;
+  }
+
+  const float length = Length();
+  const float tt = t * length;
+  // fprintf(stderr, "length=%f, tt=%f\n", length, tt);
+  int i0 = -1;
+
+  assert(length_acc.size()>0);
+  for (int i=0; i<length_acc.size()-1; i++) {
+    if ((tt-length_acc[i]) * (tt-length_acc[i+1]) < 0) {
+      i0 = i;
+      break;
+    }
+  }
+
+  if (i0 == -1) i0 = length_acc.size()-1;
+
+  // assert(i0 != -1);
+  // fprintf(stderr, "i0=%d, size=%d\n", i0, length_acc.size());
+  assert(size()/3 == length_acc.size());
+  const float tp = (tt-length_acc[i0])/length_seg[i0];
+  for (int j=0; j<3; j++) {
+    // X[j] = (1-tp) * at(i0*3+j) + tp * at((i0+1)*3+j);
+    if (i0*3+j>=size()-1)
+      fprintf(stderr, "%d, %d, %d, %d\n", i0*3+j, size(), i0, length_acc.size());
+    X[j] = (1-tp) * at(i0*3+j) + tp * at(i0*3+j);
+  }
+
+  return true;
+}
+
 bool VortexLine::Bezier(float t, float X[3]) const // t \in [0, 1]
 {
   using namespace FitCurves;
@@ -143,11 +208,26 @@ bool VortexLine::Bezier(float t, float X[3]) const // t \in [0, 1]
 
 void VortexLine::ToRegular(int N)
 {
+  length_seg.clear(); 
+  length_acc.clear();
+
   const float delta = 1.f / (N - 1);
   std::vector<float> L;
   for (int i=0; i<N; i++) {
     float X[3];
     Bezier(i*delta, X);
+    L.push_back(X[0]); L.push_back(X[1]); L.push_back(X[2]);
+  }
+  swap(L);
+}
+
+void VortexLine::ToRegularL(int N)
+{
+  const float delta = 1.f / (N - 1);
+  std::vector<float> L;
+  for (int i=0; i<N; i++) {
+    float X[3];
+    Linear(i*delta, X);
     L.push_back(X[0]); L.push_back(X[1]); L.push_back(X[2]);
   }
   swap(L);
@@ -244,27 +324,65 @@ float CrossingPoint(const VortexLine& l0, const VortexLine& l1, float X[3])
   return minDist;
 }
 
-float Area(const VortexLine& l0, const VortexLine& l1) 
+float AreaL(const VortexLine& l0, const VortexLine& l1) 
 {
   VortexLine b0 = l0, b1 = l1;
-  b0.ToBezier(); 
-  b1.ToBezier();
+  b0.RemoveInvalidPoints();  b0.Simplify();  
+  b1.RemoveInvalidPoints();  b1.Simplify();  
 
-  const int N = 1000;
-  const float delta = 1.f / N;
+  const int N = 100;
 
-  b0.ToRegular(delta);
-  b1.ToRegular(delta);
+  b0.ToRegularL(N);
+  b1.ToRegularL(N);
 
   float a = 0;
 
-  for (int i=0; i<N; i++) {
+  for (int i=0; i<N-1; i++) {
     const int j = i + 1;
     float A[3] = {b0[i*3], b0[i*3+1], b0[i*3+2]}, 
           B[3] = {b0[j*3], b0[j*3+1], b0[j*3+2]}, 
           C[3] = {b1[j*3], b1[j*3+1], b1[j*3+2]},
           D[3] = {b1[i*3], b1[i*3+1], b1[i*3+2]};
-    a += area(A, B, C) + area(A, C, D);
+    float a1 = area(A, B, C) + area(A, C, D);
+    a += a1;
+#if 0  
+    fprintf(stderr, "{%f, %f, %f}<->{%f, %f, %f}, a1=%f, a=%f\n", 
+        b0[i*3], b0[i*3+1], b0[i*3+2], 
+        b1[i*3], b1[i*3+1], b1[i*3+2], 
+        a1, a);
+#endif
+  }
+
+  return a;
+}
+
+float Area(const VortexLine& l0, const VortexLine& l1) 
+{
+  VortexLine b0 = l0, b1 = l1;
+  b0.RemoveInvalidPoints();  b0.Simplify();  b0.ToBezier(); 
+  b1.RemoveInvalidPoints();  b1.Simplify();  b1.ToBezier();
+
+  const int N = 100;
+
+  b0.ToRegular(N);
+  b1.ToRegular(N);
+
+  float a = 0;
+
+  for (int i=0; i<N-1; i++) {
+    const int j = i + 1;
+    float A[3] = {b0[i*3], b0[i*3+1], b0[i*3+2]}, 
+          B[3] = {b0[j*3], b0[j*3+1], b0[j*3+2]}, 
+          C[3] = {b1[j*3], b1[j*3+1], b1[j*3+2]},
+          D[3] = {b1[i*3], b1[i*3+1], b1[i*3+2]};
+    float a1 = area(A, B, C) + area(A, C, D);
+    a += a1;
+#if 0  
+    fprintf(stderr, "{%f, %f, %f}<->{%f, %f, %f}, a1=%f, a=%f\n", 
+        b0[i*3], b0[i*3+1], b0[i*3+2], 
+        b1[i*3], b1[i*3+1], b1[i*3+2], 
+        a1, a);
+#endif
   }
 
   return a;

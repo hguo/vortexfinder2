@@ -972,6 +972,7 @@ void CGLWidget::LoadVortexLines()
       const int span = vl.size()/4/2/2;
       // const int span = 18;
 
+#if 0
       for (int i=4*span; i<vl.size()/3; i+=4*span) {
 #if 0
         QVector3D p(
@@ -990,8 +991,9 @@ void CGLWidget::LoadVortexLines()
         _cones_dir.push_back(d);
         _cones_color.push_back(color);
       }
+#endif
 
-      vl.ToRegular(0.02);
+      vl.ToRegular(100);
       // vl.Unflattern(O, L);
     }
     

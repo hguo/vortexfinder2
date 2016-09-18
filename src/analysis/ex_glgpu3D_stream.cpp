@@ -94,14 +94,21 @@ static GLHeader conv_hdr(const vfgpu_cfg_t& cfg, const vfgpu_hdr_t& hdr) {
   return h;
 }
 
-static void write_vlines(int frame, const std::vector<VortexLine>& vlines)
+static void write_vlines(int frame, std::vector<VortexLine>& vlines)
 {
+  for (int i=0; i<vlines.size(); i++) {
+    vlines[i].RemoveInvalidPoints();
+    vlines[i].Simplify(0.1);
+    vlines[i].ToBezier(0.01);
+  }
+
   std::stringstream ss;
   std::string buf;
   diy::serialize(vlines, buf);
   ss << "v." << frame;
   db->Put(rocksdb::WriteOptions(), ss.str(), buf);
 
+  // compute distance
   std::vector<float> dist;
   for (int i=0; i<vlines.size(); i++) 
     for (int j=0; j<vlines.size(); j++) 
@@ -111,6 +118,26 @@ static void write_vlines(int frame, const std::vector<VortexLine>& vlines)
   ss << "d." << frame;
   diy::serialize(dist, buf);
   db->Put(rocksdb::WriteOptions(), ss.str(), buf);
+}
+
+static void compute_moving_speed(
+    int f0, int f1, 
+    std::vector<VortexLine>& vlines0, // moving speed will be written in vlines
+    const std::vector<VortexLine>& vlines1,
+    const VortexTransitionMatrix& mat)
+{
+  int event; 
+  std::set<int> lhs, rhs;
+  for (int i=0; i<mat.NModules(); i++) {
+    mat.GetModule(i, lhs, rhs, event);
+    if (event != VORTEX_EVENT_DUMMY) continue; // cannot compute moving speed for events
+
+    const int llvid = *lhs.begin(), rlvid = *rhs.begin();
+    const float A = AreaL(vlines0[llvid], vlines1[rlvid]);
+    vlines0[llvid].moving_speed = A;
+    // fprintf(stderr, "f0=%d, f1=%d, llvid=%d, rlvid=%d, A=%f\n", 
+    //     f0, f1, llvid, rlvid, A);
+  }
 }
 
 static void write_mat(int f0, int f1, const VortexTransitionMatrix& mat)
@@ -153,8 +180,6 @@ struct extract {
 
     std::vector<VortexLine> vlines = ex->GetVortexLines();
     vlines_all[hdr.frame] = vlines;
-    // for (int i=0; i<vlines.size(); i++) 
-    //   vlines[i].ToBezier();
     
     // write_vlines(hdr.frame, vlines);
 
@@ -225,8 +250,9 @@ struct track {
     delete ex;
     delete ds;
     
-    write_vlines(f0, vlines0);
+    compute_moving_speed(f0, f1, vlines0, vlines1, mat);
     write_mat(f0, f1, mat);
+    write_vlines(f0, vlines0);
     
     fprintf(stderr, "interval={%d, %d}, #pfs0=%d, #pfs1=%d, #pes=%d\n", 
         interval.first, interval.second, (int)pfs0.size(), (int)pfs1.size(), (int)pes.size());
