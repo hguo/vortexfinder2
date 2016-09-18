@@ -137,17 +137,17 @@ function updateMDSChart() {
     };
   });
 
-  // console.log(nodes);
-  // console.log(vortexDistances);
+  const distScale = 2;
 
-  var simulation = d3.forceSimulation()
+  var forceLink = d3.forceLink(vortexDistances)
+    .id(function(d) {return d.id;})
+    .distance(function(d) {return d.dist * distScale;});
+
+  var simulation = d3.forceSimulation(nodes)
     .force("charge", d3.forceManyBody())
-    // .force("link", d3.forceLink().id(function(d) {return d.id;}))
-    .force("center", d3.forceCenter(W/2, H/2));
-
-  simulation.nodes(nodes)
+    .force("link", forceLink)
+    .force("center", d3.forceCenter(W/2, H/2))
     .on("tick", ticked);
-  simulation.force("link", d3.forceLink(vortexDistances).id(function(d) {return d.id;}));
 
   svg.select(".nodes").remove();
   var node = svg.append("g")
@@ -155,7 +155,7 @@ function updateMDSChart() {
     .selectAll("circle")
     .data(nodes)
     .enter().append("circle")
-    .attr("r", 5)
+    .attr("r", 3)
     .attr("fill", function(d) {return d.color;});
 
   function ticked() {

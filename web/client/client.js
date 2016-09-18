@@ -130,7 +130,7 @@ function updateDistances(dist) {
       vortexDistances.push({
         source: vortexId[i],
         target: vortexId[j],
-        value: 1/dist[i*nv+j]
+        dist: dist[i*nv+j]
       });
     }
   }
