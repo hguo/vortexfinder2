@@ -34,3 +34,11 @@ canvas {width: 100%; height: 100%}
   top: 0;
   left: 0;
 }
+
+#mdsChart {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 320;
+  height: 320;
+}

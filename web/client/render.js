@@ -40,6 +40,8 @@ var vortexCurves = [];
 var vortexTubeMeshes = [];
 var vortexLines = [];
 var vortexColors = [];
+var vortexColorsHex = [];
+var vortexDistances = [];
 var inclusionSpheres = [];
 
 var vortexId = [];
@@ -72,7 +74,7 @@ function onResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   cameraControls.handleResize();
   
-  $("svg").css({
+  $("#voltageChart").css({
     top: window.innerHeight - 120, // FIXME: hard code
     left: 0, 
     width: window.innerWidth, 

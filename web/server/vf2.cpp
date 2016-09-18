@@ -51,7 +51,8 @@ void LoadDataInfoFromDB(
   rocksdb::Options options;
   options.create_if_missing = false;
   s = rocksdb::DB::OpenForReadOnly(options, dbname, &db);
-  assert(s.ok());
+  if (!s.ok()) return; 
+  // assert(s.ok());
   
   s = db->Get(rocksdb::ReadOptions(), "cfg", &buf);
   if (buf.size() > 0) {
@@ -74,7 +75,8 @@ void LoadDataInfoFromDB(
 bool LoadFrameFromDB(
     const std::string& dbname, 
     int frame, 
-    std::vector<VortexLine>& vlines)
+    std::vector<VortexLine>& vlines,
+    std::vector<float>& dist)
 {
   fprintf(stderr, "dbname=%s, frame=%d\n", 
       dbname.c_str(), frame);
@@ -85,7 +87,8 @@ bool LoadFrameFromDB(
   rocksdb::Options options;
   options.create_if_missing = false;
   s = rocksdb::DB::OpenForReadOnly(options, dbname, &db);
-  assert(s.ok());
+  if (!s.ok()) return false;
+  // assert(s.ok());
 
   std::string buf;
   s = db->Get(rocksdb::ReadOptions(), "trans", &buf);
@@ -104,9 +107,15 @@ bool LoadFrameFromDB(
   for (size_t i=0; i<vlines.size(); i++) {
     vlines[i].gid = vt.lvid2gvid(frame, vlines[i].id); // sorry, this is confusing
     vt.SequenceColor(vlines[i].gid, vlines[i].r, vlines[i].g, vlines[i].b);
-    // fprintf(stderr, "timestep=%d, lid=%d, gid=%d\n", timestep, vlines[i].id, vlines[i].gid);
   }
-  // fprintf(stderr, "#vlines=%d\n", (int)vlines.size());
+
+  // distance matrix
+  ss.clear();
+  ss << "d." << timestep;
+  buf.clear();
+  s = db->Get(rocksdb::ReadOptions(), ss.str(), &buf);
+  if (!buf.empty())
+    diy::unserialize(buf, dist);
 
   delete db;
 }
@@ -227,7 +236,8 @@ void LoadFrame(const FunctionCallbackInfo<Value>& args) {
   int frame = args[1]->NumberValue();
 
   std::vector<VortexLine> vlines;
-  bool succ = LoadFrameFromDB(dbname, frame, vlines);
+  std::vector<float> dist;
+  bool succ = LoadFrameFromDB(dbname, frame, vlines, dist);
 
   // output 
   Local<Object> jout = Object::New(isolate);
@@ -272,7 +282,13 @@ void LoadFrame(const FunctionCallbackInfo<Value>& args) {
     jvlines->Set(i, jvline);
   }
   jout->Set(String::NewFromUtf8(isolate, "vlines"), jvlines);
-  
+ 
+  // distance matrix
+  Local<Array> jdist = Array::New(isolate);
+  for (size_t i=0; i<dist.size(); i++) 
+    jdist->Set(i, Number::New(isolate, dist[i]));
+  jout->Set(String::NewFromUtf8(isolate, "dist"), jdist);
+
   args.GetReturnValue().Set(jout);
 }
 

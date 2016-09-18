@@ -39,11 +39,15 @@ function clearCurrentFrame() {
   vortexLines = [];
   vortexTubeMeshes = [];
   vortexColors = [];
+  vortexColorsHex = [];
   vortexId = [];
   vortexIdPos3D = [];
+  vortexDistances = [];
 }
 
 function connectToServer() {
+  clearCurrentFrame();
+
   // ws = new WebSocket("ws://red.mcs.anl.gov:8080");
   ws = new WebSocket("ws://127.0.0.1:8080");
   // ws.binaryType = "arraybuffer";
@@ -75,8 +79,10 @@ function onMessage(evt)
   // console.log(msg);
   if (msg.type == "dataInfo") 
     updateDataInfo(msg.data);
-  else if (msg.type == "vlines")
-    updateVlines(msg.data);
+  else if (msg.type == "vlines") {
+    updateVlines(msg.data.vlines);
+    updateDistances(msg.data.dist);
+  }
 }
 
 function updateDataInfo(info) {
@@ -111,9 +117,29 @@ function updateFrameInfo() {
     .attr("transform", "translate(" + xScale(dataHdrs[currentFrame].timestep*dataCfg.dt) + ", 0)");
 }
 
+function rgb2hex(r, g, b) {
+  var hex = b | (g<<8) | (r<<16);
+  return "#" + hex.toString(16);
+}
+
+function updateDistances(dist) {
+  var nv = vortexId.length;
+  for (i=0; i<nv; i++) {
+    for (j=0; j<nv; j++) {
+      if (i==j) continue;
+      vortexDistances.push({
+        source: vortexId[i],
+        target: vortexId[j],
+        value: 1/dist[i*nv+j]
+      });
+    }
+  }
+
+  updateMDSChart();
+}
+
 function updateVlines(vlines) {
   clearCurrentFrame();
-  updateFrameInfo();
 
   for (i=0; i<vlines.length; i++) {
     var verts = vlines[i].verts;
@@ -122,7 +148,8 @@ function updateVlines(vlines) {
     var r = vlines[i].r, g = vlines[i].g, b = vlines[i].b;
     var color = new THREE.Color(rgb(r, g, b));
     vortexColors.push(color);
-    
+    vortexColorsHex.push(rgb2hex(r, g, b));
+   
     var lineGeometry = new THREE.Geometry();
     var points = [];
     for (j=0; j<verts.length/3; j++) {
@@ -147,6 +174,8 @@ function updateVlines(vlines) {
   } else {
     toggleTubes(false); toggleLines(true);
   }
+
+  updateFrameInfo();
 }
 
 function onError(evt)

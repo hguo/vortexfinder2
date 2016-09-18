@@ -50,7 +50,7 @@ function sendFrame(ws, dbname, frame) {
  
   msg = {
     type: "vlines", 
-    data: frameData.vlines
+    data: frameData
   };
   ws.send(JSON.stringify(msg));
 

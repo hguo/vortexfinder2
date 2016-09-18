@@ -6,7 +6,7 @@ function createLineChart() {
       width = W - margin.left - margin.right,
       height = H - margin.top - margin.bottom;
   
-  $("svg").css({
+  $("#voltageChart").css({
     top: window.innerHeight - 120, 
     left: 0, 
     width: window.innerWidth, 
@@ -120,5 +120,48 @@ function createLineChart() {
     var i = bisect(dataHdrs, x0);
     currentFrame = i;
     requestFrame(i);
+  }
+}
+
+function createMDSChart() {
+}
+
+function updateMDSChart() {
+  const W = 320, H = 320;
+  var svg = d3.select("#mdsChart");
+
+  var nodes = d3.range(vortexId.length).map(function(i) {
+    return {
+      id: vortexId[i],
+      color: vortexColorsHex[i]
+    };
+  });
+
+  // console.log(nodes);
+  // console.log(vortexDistances);
+
+  var simulation = d3.forceSimulation()
+    .force("charge", d3.forceManyBody())
+    // .force("link", d3.forceLink().id(function(d) {return d.id;}))
+    .force("center", d3.forceCenter(W/2, H/2));
+
+  simulation.nodes(nodes)
+    .on("tick", ticked);
+  simulation.force("link", d3.forceLink(vortexDistances).id(function(d) {return d.id;}));
+
+  svg.select(".nodes").remove();
+  var node = svg.append("g")
+    .attr("class", "nodes")
+    .selectAll("circle")
+    .data(nodes)
+    .enter().append("circle")
+    .attr("r", 5)
+    .attr("fill", function(d) {return d.color;});
+
+  function ticked() {
+    nodes.forEach(function(d) {
+      node.attr("cx", function(d) {return d.x;});
+      node.attr("cy", function(d) {return d.y;});
+    });
   }
 }
