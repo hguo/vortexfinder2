@@ -4,6 +4,7 @@ var forceLink = {};
 var forceSimulation = {};
 var mdsNodeCircles = [];
 var mdsInitialized = false;
+var mdsDistScale = 2.0;
 var displayMDS = false;
 
 function createLineChart() {
@@ -135,7 +136,6 @@ function createMDSChart() {
 function updateMDSChart() {
   if (!displayMDS) return;
 
-  const distScale = 2;
   const W = 320, H = 320;
   var svg = d3.select("#mdsChart");
 
@@ -146,8 +146,8 @@ function updateMDSChart() {
 
   forceLink = d3.forceLink(vortexDistances)
     .id(function(d) {return d.id;})
-    .strength(function(d) {return 1/(d.dist+0.001);})
-    .distance(function(d) {return d.dist * distScale;});
+    .strength(function(d) {return 1/(d.dist+0.1);})
+    .distance(function(d) {return d.dist * mdsDistScale;});
 
   forceSimulation = d3.forceSimulation(mdsNodes)
     .force("charge", d3.forceManyBody().strength(0))

@@ -9,6 +9,7 @@ var menuText = function() {
   this.displayVortexId = false;
   this.displayInclusions = true;
   this.displayMDS = false;
+  this.distScale = 2;
   this.vortexRendering = "tube";
   this.tubeRadius = 0.5;
   this.nextFrame = function() {
@@ -78,4 +79,8 @@ window.onload = function() {
       $("#mdsChart").css({visibility: "hidden"});
     }
   })
+  f3.add(text, "distScale", 0.1, 10).onChange(function(val) {
+    mdsDistScale = val;
+    updateMDSChart();
+  });
 };
