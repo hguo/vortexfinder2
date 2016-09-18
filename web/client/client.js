@@ -106,6 +106,9 @@ function updateFrameInfo() {
     "t=" + (hdr.timestep * dataCfg.dt).toFixed(3) + ", " +
     "B=(" + hdr.Bx.toFixed(3) + ", " + hdr.By.toFixed(3) + ", " + hdr.Bz.toFixed(3) + "), " +
     "V=" + hdr.V.toFixed(3);
+
+  var frameCursor = d3.select("#frameCursor")
+    .attr("transform", "translate(" + xScale(dataHdrs[currentFrame].timestep*dataCfg.dt) + ", 0)");
 }
 
 function updateVlines(vlines) {
@@ -114,7 +117,7 @@ function updateVlines(vlines) {
 
   for (i=0; i<vlines.length; i++) {
     var verts = vlines[i].verts;
-    console.log(vlines[i].moving_speed);
+    // console.log(vlines[i].moving_speed);
 
     var r = vlines[i].r, g = vlines[i].g, b = vlines[i].b;
     var color = new THREE.Color(rgb(r, g, b));

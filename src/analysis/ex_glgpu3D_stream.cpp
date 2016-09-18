@@ -96,11 +96,13 @@ static GLHeader conv_hdr(const vfgpu_cfg_t& cfg, const vfgpu_hdr_t& hdr) {
 
 static void write_vlines(int frame, std::vector<VortexLine>& vlines)
 {
+#if 0
   for (int i=0; i<vlines.size(); i++) {
     vlines[i].RemoveInvalidPoints();
     vlines[i].Simplify(0.1);
     vlines[i].ToBezier(0.01);
   }
+#endif
 
   std::stringstream ss;
   std::string buf;

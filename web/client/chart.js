@@ -1,3 +1,5 @@
+var xScale = {};
+
 function createLineChart() {
   var W = window.innerWidth, H = 120;
   var margin = {top: 20, right: 20, bottom: 30, left: 50},
@@ -13,21 +15,21 @@ function createLineChart() {
   });
  
   const dt = dataCfg.dt;
-  var x = d3.scaleLinear()
+  xScale = d3.scaleLinear()
       .range([0, width])
       .domain(d3.extent(dataHdrs, function(d) {return d.timestep * dt;}));
-  var y = d3.scaleLinear()
+  var yScale = d3.scaleLinear()
       .range([height, 0])
       .domain(d3.extent(dataHdrs, function(d) {return d.V;}));
 
   var xAxis = d3.axisBottom()
-      .scale(x);
+      .scale(xScale);
   var yAxis = d3.axisLeft()
-      .scale(y)
-      .ticks(5);
+      .scale(yScale)
+      .ticks(3);
   var line = d3.line()
-      .x(function(d) {return x(d.timestep * dt);})
-      .y(function(d) {return y(d.V);});
+      .x(function(d) {return xScale(d.timestep * dt);})
+      .y(function(d) {return yScale(d.V);});
   
   var svg = d3.select("#voltageChart")
       .append("g")
@@ -53,9 +55,15 @@ function createLineChart() {
       .attr("class", "line")
       .attr("d", line);
 
-  var cursor = svg.append("g")
-      .attr("class", "cursor")
-      .style("display", "none"); // TODO
+  var frameCursor = svg.append("g")
+      .attr("id", "frameCursor")
+      .attr("transform", "translate(" + xScale(dataHdrs[currentFrame].timestep*dt) + ",0)")
+      .append("line")
+      .attr("x1", 0)
+      .attr("y1", 0)
+      .attr("x2", 0)
+      .attr("y2", height)
+      .style("stroke", "steelblue");
 
   var focus = svg.append("g")
       .attr("class", "focus")
@@ -66,17 +74,33 @@ function createLineChart() {
   focus.append("text")
       .attr("y", -15)
       .attr("dy", ".35em");
+  
+  var cursor = svg.append("g");
+  cursor.append("line")
+      .attr("x1", 0)
+      .attr("y1", 0)
+      .attr("x2", 0)
+      .attr("y2", height)
+      .style("stroke", "steelblue")
+      .style("stroke-dasharray", "2,2");
 
   svg.append("rect")
       .attr("class", "overlay")
       .attr("width", width)
       .attr("height", height)
-      .on("mouseover", function() {focus.style("display", null);})
-      .on("mouseout", function() {focus.style("display", "none");})
-      .on("mousemove", mousemove);
+      .on("mouseover", function() {
+        focus.style("display", null);
+        cursor.style("display", null);
+      })
+      .on("mouseout", function() {
+        focus.style("display", null);
+        cursor.style("display", null);
+      })
+      .on("mousemove", mousemove)
+      .on("click", click);
 
   function mousemove(val) {
-    var x0 = x.invert(d3.mouse(this)[0]);
+    var x0 = xScale.invert(d3.mouse(this)[0]);
     var bisect = d3.bisector(function(d) {return d.timestep*dt;}).left;
     var i = bisect(dataHdrs, x0);
     var hdr = dataHdrs[i];
@@ -85,7 +109,16 @@ function createLineChart() {
     // i = d3.bisector(function(d) {return d.timestep * dt;}).left,
     //     d = dataHdrs[i];
     // focus.attr("transform", "translate(" + x(d.timestep) + "," + y(d.V) + ")");
-    focus.attr("transform", "translate(" + x(x0) + "," + y(hdr.V) + ")");
+    focus.attr("transform", "translate(" + xScale(x0) + "," + yScale(hdr.V) + ")");
     focus.select("text").text(hdr.V.toFixed(3));
+    cursor.attr("transform", "translate(" + xScale(x0) + ",0)");
+  }
+
+  function click(val) {
+    var x0 = xScale.invert(d3.mouse(this)[0]);
+    var bisect = d3.bisector(function(d) {return d.timestep*dt;}).left;
+    var i = bisect(dataHdrs, x0);
+    currentFrame = i;
+    requestFrame(i);
   }
 }

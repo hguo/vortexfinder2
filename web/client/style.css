@@ -14,6 +14,11 @@ canvas {width: 100%; height: 100%}
   text-anchor: end;
 }
 
+#voltageChart .frameCursor {
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
 #voltageChart .circle {
   fill: none;
   stroke: steelblue;
