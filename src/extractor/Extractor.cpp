@@ -559,7 +559,7 @@ void VortexExtractor::TraceOverSpace(int slot)
               trace.push_back(f);
               c = cell.neighbor_cells[i]; 
               traced = true;
-            }
+            } 
           }
         }
         if (!traced) break;

@@ -872,6 +872,8 @@ void CGLWidget::LoadVortexLines()
   rocksdb::Status s = _db->Get(rocksdb::ReadOptions(), key, &buf);
   std::vector<VortexLine> vlines;
   diy::unserialize(buf, vlines);
+  for (int i=0; i<vlines.size(); i++) 
+    vlines[i].RemoveInvalidPoints();
 
   if (_vortex_render_mode == 4) {
     ss.clear(); 
@@ -915,6 +917,16 @@ void CGLWidget::LoadVortexLines()
     _vt->SequenceColor(vlines[i].gid, vlines[i].r, vlines[i].g, vlines[i].b);
     // fprintf(stderr, "t=%d, lid=%d, gid=%d\n", _timestep, vlines[i].id, vlines[i].gid);
   }
+  
+  if (_timestep == 249) {
+    fprintf(stderr, "shit\n");
+    for (int i=0; i<vlines.size(); i++) {
+      if (vlines[i].gid == 203) {
+        vlines[i].Print();
+      }
+    }
+  }
+
 
   // const float O[3] = {_data_info.ox(), _data_info.oy(), _data_info.oz()},
   //              L[3] = {_data_info.lx(), _data_info.ly(), _data_info.lz()};

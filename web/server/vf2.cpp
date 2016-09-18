@@ -236,8 +236,10 @@ void LoadFrame(const FunctionCallbackInfo<Value>& args) {
   Local<Array> jvlines = Array::New(isolate);
   for (size_t i=0; i<vlines.size(); i++) {
     VortexLine& vline = vlines[i];
-    // vline.ToBezier();
-    // vline.ToRegular(0.2);
+    vline.RemoveInvalidPoints();
+    vline.Simplify(0.1);
+    vline.ToBezier(0.01);
+    vline.ToRegular(100);
     Local<Object> jvline = Object::New(isolate);
 
     // gid

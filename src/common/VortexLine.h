@@ -18,8 +18,12 @@ struct VortexLine : public std::vector<float>
   VortexLine();
   ~VortexLine(); 
 
-  void ToBezier();
-  void ToRegular(const float d=0.1);
+  void Print() const;
+  void RemoveInvalidPoints();
+  void Simplify(float tolorance=0.1);
+  void ToBezier(float error_bound=0.01);
+  void ToRegular(int N);
+  bool Bezier(float t, float X[3]) const;
 
   void Flattern(const float O[3], const float L[3]);
   void Unflattern(const float O[3], const float L[3]);

@@ -5,8 +5,6 @@ var vf2 = require('bindings')('vf2');
 // var BSON = new bson.BSONPure.BSON()
 // var BSON = new bson.BSONPure.BSON()
 
-const dbname="GL_3D_Xfieldramp_inter.rocksdb";
-
 wss = new WebSocketServer({
   port : 8080, 
   // binaryType : "arraybuffer",

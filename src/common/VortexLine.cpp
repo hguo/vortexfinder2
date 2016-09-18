@@ -1,6 +1,7 @@
 #include "VortexLine.h"
 #include "common/Utils.hpp"
 #include "fitCurves/fitCurves.hpp"
+#include "fitCurves/psimpl.h"
 #include <climits>
 #include <cfloat>
 #include <cassert>
@@ -28,16 +29,59 @@ VortexLine::~VortexLine()
 {
 }
 
-void VortexLine::ToBezier()
+void VortexLine::Print() const {
+  for (int i=0; i<size()/3; i++) 
+    fprintf(stderr, "(%f, %f, %f)\n", 
+        at(i*3), at(i*3+1), at(i*3+2));
+}
+
+void VortexLine::Simplify(float tolorance)
+{
+  std::vector<float> R;
+  psimpl::simplify_reumann_witkam<3>(begin(), end(), tolorance, std::back_inserter(R));
+  
+  const int n0 = size()/3, n1 = R.size()/3;
+  swap(R);
+  // fprintf(stderr, "n0=%d, n1=%d\n", n0, n1);
+}
+
+void VortexLine::RemoveInvalidPoints() {
+  if (is_bezier) return;
+
+  std::vector<float> R;
+  float lastPt[3];
+
+  for (int i=0; i<size()/3; i++) {
+    float currentPt[3] = {at(i*3), at(i*3+1), at(i*3+2)};
+
+    bool valid = true;
+    for (int j=0; j<3; j++) if (isnan(currentPt[j]) || isinf(currentPt[j])) valid = false;
+    if (!valid) continue;
+  
+    if (i>1) {
+      float d = dist(currentPt, lastPt);
+      if (d>3) valid = false; // FIXME: arbitrary threshold
+    }
+    if (!valid) continue;
+
+    memcpy(lastPt, currentPt, sizeof(float)*3);
+
+    R.push_back(currentPt[0]);
+    R.push_back(currentPt[1]);
+    R.push_back(currentPt[2]);
+  }
+  swap(R);
+}
+
+void VortexLine::ToBezier(float error_bound)
 {
   using namespace FitCurves;
   typedef Point<3> Pt;
-  const float error_bound = 0.01;
   float tot_error;
 
   if (is_bezier) return;
 
-  int npts = size()/3-1;
+  int npts = size()/3;
   Pt *pts = (Pt*)malloc(npts*3*sizeof(Pt));
 
   for (int i=0; i<npts; i++) {
@@ -47,7 +91,7 @@ void VortexLine::ToBezier()
   }
 
   Pt *pts1 = (Pt*)malloc(npts*4*sizeof(Pt));
-  int npts1 = fit_curves(npts, pts, error_bound, pts1, tot_error);
+  const int npts1 = fit_curves(npts, pts, error_bound, pts1, tot_error);
 
   clear();
   for (int i=0; i<npts1; i++) {
@@ -62,34 +106,51 @@ void VortexLine::ToBezier()
   is_bezier = true;
 }
 
-void VortexLine::ToRegular(const float stepsize)
+bool VortexLine::Bezier(float t, float X[3]) const // t \in [0, 1]
 {
   using namespace FitCurves;
   typedef Point<3> Pt;
-
-  if (!is_bezier) return;
- 
-  int npts = size()/3;
-  Pt *pts = (Pt*)malloc(npts*3*sizeof(Pt));
-
-  for (int i=0; i<size()/3; i++) {
-    pts[i][0] = at(i*3);
-    pts[i][1] = at(i*3+1);
-    pts[i][2] = at(i*3+2);
-  }
-
-  clear();
   
-  for (int i=0; i<npts; i+=4) {
-    const float tl = i<npts-5 ? 0.9999 : 1;
-    for (float t=0; t<tl; t+=stepsize) {
-      Pt p = bezier(3, pts+i, t);
-      push_back(p[0]);
-      push_back(p[1]);
-      push_back(p[2]);
-      // fprintf(stderr, "t=%f, p={%f, %f, %f}\n", t, p[0], p[1], p[2]);
-    }
+  if (!is_bezier) return false;
+  if (t <= 0) {
+    X[0] = at(0); X[1] = at(1); X[2] = at(2); return true;
+  } else if (t >= 1) {
+    X[0] = at(size()-3); X[1] = at(size()-2); X[2] = at(size()-1); return true;
   }
+
+  const int npts = size()/3;
+  const int nbs = npts/4;
+  const int kInterval = t * nbs;
+  const float tt = t * nbs - kInterval;
+
+  Pt pts[4];
+  for (int i=0; i<4; i++) {
+    pts[i][0] = at((kInterval*4+i)*3);
+    pts[i][1] = at((kInterval*4+i)*3+1);
+    pts[i][2] = at((kInterval*4+i)*3+2);
+  }
+      
+  Pt p = bezier(3, pts, tt);
+  X[0] = p[0]; X[1] = p[1]; X[2] = p[2];
+
+  if (X[2]>10) {
+    for (int i=0; i<4; i++)
+      fprintf(stderr, "%f, %f, %f\n", pts[i][0], pts[i][1], pts[i][2]);
+    fprintf(stderr, "t=%f, tt=%f, kInt=%d, val={%f, %f, %f}\n", t, tt, kInterval, X[0], X[1], X[2]);
+  }
+  return true;
+}
+
+void VortexLine::ToRegular(int N)
+{
+  const float delta = 1.f / (N - 1);
+  std::vector<float> L;
+  for (int i=0; i<N; i++) {
+    float X[3];
+    Bezier(i*delta, X);
+    L.push_back(X[0]); L.push_back(X[1]); L.push_back(X[2]);
+  }
+  swap(L);
 }
 
 void VortexLine::Flattern(const float O[3], const float L[3])
