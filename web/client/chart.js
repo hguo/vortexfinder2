@@ -1,4 +1,10 @@
 var xScale = {};
+var mdsNodes = [];
+var forceLink = {};
+var forceSimulation = {};
+var mdsNodeCircles = [];
+var mdsInitialized = false;
+var displayMDS = false;
 
 function createLineChart() {
   var W = window.innerWidth, H = 120;
@@ -127,41 +133,42 @@ function createMDSChart() {
 }
 
 function updateMDSChart() {
+  if (!displayMDS) return;
+
+  const distScale = 2;
   const W = 320, H = 320;
   var svg = d3.select("#mdsChart");
 
-  var nodes = d3.range(vortexId.length).map(function(i) {
-    return {
-      id: vortexId[i],
-      color: vortexColorsHex[i]
-    };
-  });
+  if (!mdsInitialized)
+    mdsInitialized = true;
+  else
+    forceSimulation.stop();
 
-  const distScale = 2;
-
-  var forceLink = d3.forceLink(vortexDistances)
+  forceLink = d3.forceLink(vortexDistances)
     .id(function(d) {return d.id;})
+    .strength(function(d) {return 1/(d.dist+0.001);})
     .distance(function(d) {return d.dist * distScale;});
 
-  var simulation = d3.forceSimulation(nodes)
-    .force("charge", d3.forceManyBody())
+  forceSimulation = d3.forceSimulation(mdsNodes)
+    .force("charge", d3.forceManyBody().strength(0))
     .force("link", forceLink)
     .force("center", d3.forceCenter(W/2, H/2))
     .on("tick", ticked);
 
   svg.select(".nodes").remove();
-  var node = svg.append("g")
+  mdsNodeCircles = svg.append("g")
     .attr("class", "nodes")
     .selectAll("circle")
-    .data(nodes)
+    .data(mdsNodes)
     .enter().append("circle")
     .attr("r", 3)
     .attr("fill", function(d) {return d.color;});
+}
 
-  function ticked() {
-    nodes.forEach(function(d) {
-      node.attr("cx", function(d) {return d.x;});
-      node.attr("cy", function(d) {return d.y;});
-    });
-  }
+
+function ticked() {
+  mdsNodes.forEach(function(d) {
+    mdsNodeCircles.attr("cx", function(d) {return d.x;});
+    mdsNodeCircles.attr("cy", function(d) {return d.y;});
+  });
 }

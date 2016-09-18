@@ -8,6 +8,7 @@ var menuText = function() {
   this.displayVoltage = true;
   this.displayVortexId = false;
   this.displayInclusions = true;
+  this.displayMDS = false;
   this.vortexRendering = "tube";
   this.tubeRadius = 0.5;
   this.nextFrame = function() {
@@ -34,14 +35,10 @@ window.onload = function() {
   f1.add(text, 'nextFrame');
   f1.open();
 
-  var f2 = gui.addFolder("Rendering");
+  var f2 = gui.addFolder("3D Rendering");
   f2.add(text, "displayStats").onChange(function(val) {
     if (val) $("#stats").css({visibility: "visible"});
     else $("#stats").css({visibility: "hidden"});
-  });
-  f2.add(text, "displayVoltage").onChange(function(val) {
-    if (val) $("#voltageChart").css({visibility: "visible"});
-    else $("#voltageChart").css({visibility: "hidden"});
   });
   f2.add(text, 'displayVortexId').onChange(function(val) {
     toggleVortexId(val);
@@ -66,4 +63,19 @@ window.onload = function() {
   });
   f2.add(text, "resetTrackball");
   f2.open();
+
+  var f3 = gui.addFolder("Charts");
+  f3.add(text, "displayVoltage").onChange(function(val) {
+    if (val) $("#voltageChart").css({visibility: "visible"});
+    else $("#voltageChart").css({visibility: "hidden"});
+  });
+  f3.add(text, "displayMDS").onChange(function(val) {
+    displayMDS = val;
+    if (val) {
+      updateMDSChart();
+      $("#mdsChart").css({visibility: "visible"});
+    } else {
+      $("#mdsChart").css({visibility: "hidden"});
+    }
+  })
 };

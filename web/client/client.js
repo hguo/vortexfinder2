@@ -124,6 +124,7 @@ function rgb2hex(r, g, b) {
 
 function updateDistances(dist) {
   var nv = vortexId.length;
+  vortexDistances = [];
   for (i=0; i<nv; i++) {
     for (j=0; j<nv; j++) {
       if (i==j) continue;
@@ -132,8 +133,28 @@ function updateDistances(dist) {
         target: vortexId[j],
         dist: dist[i*nv+j]
       });
+      if (vortexId[i] == 133 && vortexId[j] == 191) console.log(dist[i*nv+j]);
+      if (vortexId[i] == 194 && vortexId[j] == 195) console.log(dist[i*nv+j]);
     }
   }
+
+  newMdsNodes = [];
+  vortexId.forEach(function(v, i) {
+    var node = mdsNodes.find(function(d) {return d.id == v;});
+    if (node == undefined) {
+      node = {
+        id: v,
+        vx: 0,
+        vy: 0,
+        x: 160, // FIXME: hardcode
+        y: 160,
+        color: vortexColorsHex[i]
+      }
+    }
+      newMdsNodes.push(node);
+  });
+
+  mdsNodes = newMdsNodes;
 
   updateMDSChart();
 }
