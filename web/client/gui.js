@@ -1,5 +1,5 @@
 var menuText = function() {
-  this.dataName = "GL_3D_Xfieldramp_inter";
+  this.dataName = "";
   this.frame = 200;
   this.resetTrackball = function () {
     cameraControls.reset();
@@ -22,7 +22,7 @@ var menuText = function() {
   };
 };
 
-window.onload = function() {
+function initializeControlPanel () {
   var text = new menuText();
   var gui = new dat.GUI();
 

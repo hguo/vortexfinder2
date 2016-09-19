@@ -1,4 +1,5 @@
 var ws;
+var dbList;
 var dbname = "GL_3D_Xfieldramp_inter_tet.rocksdb";
 var currentFrame = 200;
 
@@ -77,12 +78,20 @@ function onMessage(evt)
 {
   var msg = JSON.parse(evt.data);
   // console.log(msg);
+  if (msg.type == "dbList") {
+    updateDBList(msg.data);
+  }
   if (msg.type == "dataInfo") 
     updateDataInfo(msg.data);
   else if (msg.type == "vlines") {
     updateVlines(msg.data.vlines);
     updateDistances(msg.data.dist);
   }
+}
+
+function updateDBList(list) {
+  dbList = list;
+  console.log(list);
 }
 
 function updateDataInfo(info) {

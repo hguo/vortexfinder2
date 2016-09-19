@@ -1,11 +1,12 @@
 var WebSocketServer = require("ws").Server;
+var glob = require("glob");
 var vf2 = require('bindings')('vf2');
 
 // var bson = require("bson");
 // var BSON = new bson.BSONPure.BSON()
 // var BSON = new bson.BSONPure.BSON()
 
-wss = new WebSocketServer({
+var wss = new WebSocketServer({
   port : 8080, 
   // binaryType : "arraybuffer",
   perMessageDeflate : "false"
@@ -13,6 +14,7 @@ wss = new WebSocketServer({
 
 wss.on("connection", function(ws) {
   console.log("connected.");
+  sendDBList(ws);
 
   ws.on("message", function(data) {
     var msg = JSON.parse(data);
@@ -31,6 +33,16 @@ wss.on("connection", function(ws) {
 wss.on("close", function(ws) {
   console.log("closed.");
 })
+
+function sendDBList(ws) {
+  glob("*rocksdb", function(er, files) {
+    msg = {
+      type: "dbList", 
+      data: files
+     };
+    ws.send(JSON.stringify(msg));
+  })
+}
 
 function sendDataInfo(ws, dbname) {
   console.log("requested data info");

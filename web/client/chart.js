@@ -117,7 +117,8 @@ function createLineChart() {
     //     d = dataHdrs[i];
     // focus.attr("transform", "translate(" + x(d.timestep) + "," + y(d.V) + ")");
     focus.attr("transform", "translate(" + xScale(x0) + "," + yScale(hdr.V) + ")");
-    focus.select("text").text(hdr.V.toFixed(3));
+    focus.select("text")
+      .text("frame=" + i + "\ntime=" + (hdr.timestep*dt).toFixed(2) + "\nV=" + hdr.V.toFixed(3));
     cursor.attr("transform", "translate(" + xScale(x0) + ",0)");
   }
 

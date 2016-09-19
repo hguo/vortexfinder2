@@ -178,4 +178,5 @@ function updateVortexTubes(radius)
   }
 }
 
+initializeControlPanel();
 render();
