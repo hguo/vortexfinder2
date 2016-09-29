@@ -1,45 +1,127 @@
-#include "vf2.h"
+#include <node.h>
+#include <rocksdb/db.h>
 #include <string>
 #include <sstream>
+#include "common/VortexLine.h"
+#include "common/VortexTransition.h"
+#include "common/Inclusions.h"
 
-Persistent<Function> VF2::constructor;
+using v8::FunctionCallbackInfo;
+using v8::Function;
+using v8::Array;
+using v8::Number;
+using v8::Isolate;
+using v8::Local;
+using v8::Object;
+using v8::String;
+using v8::Value;
+using v8::Exception;
+  
+typedef struct {
+  int timestep;
+  float B[3];
+  float Kx; // Kx
+  float Jxext;
+  float V; // voltage
+} vfgpu_hdr_t;
 
-void VF2::Init(Local<Object> exports) {
-  Isolate *isolate = exports->GetIsolate();
-  Local<FunctionTemplate> tpl = FunctionTemplate::New(isolate, New);
-  tpl->SetClassName(String::NewFromUtf8(isolate, "vf2"));
-  tpl->InstanceTemplate()->SetInternalFieldCount(1);
+typedef struct {
+  unsigned char meshtype;
+  bool tracking;
+  float dt;
+  int d[3];
+  unsigned int count; // d[0]*d[1]*d[2];
+  bool pbc[3];
+  float origins[3];
+  float lengths[3];
+  float cell_lengths[3];
+  float zaniso;
+} vfgpu_cfg_t;
 
-  NODE_SET_PROTOTYPE_METHOD(tpl, "openDB", OpenDB);
-  NODE_SET_PROTOTYPE_METHOD(tpl, "loadDataInfo", LoadDataInfo);
-  NODE_SET_PROTOTYPE_METHOD(tpl, "loadFrame", LoadFrame);
-
-  constructor.Reset(isolate, tpl->GetFunction());
-  exports->Set(String::NewFromUtf8(isolate, "vf2"), 
-      tpl->GetFunction());
-}
-
-void VF2::New(const FunctionCallbackInfo<Value>& args) {
-  Isolate *isolate = args.GetIsolate();
-
-  if (args.IsConstructCall()) {
-    VF2 *obj = new VF2;
-    obj->Wrap(args.This());
-    args.GetReturnValue().Set(args.This());
-  } else {
-    const int argc = 1;
-    Local<Value> argv[argc] = {args[0]}; 
-    Local<Context> context = isolate->GetCurrentContext();
-    Local<Function> cons = Local<Function>::New(isolate, constructor);
-    Local<Object> result = 
-      cons->NewInstance(context, argc, argv).ToLocalChecked();
-    args.GetReturnValue().Set(result);
+void LoadDataInfoFromDB(
+    const std::string& dbname, 
+    vfgpu_cfg_t& cfg,
+    std::vector<vfgpu_hdr_t>& hdrs, 
+    Inclusions& incs)
+{
+  rocksdb::DB* db;
+  rocksdb::Status s;
+  std::string buf;
+  
+  rocksdb::Options options;
+  options.create_if_missing = false;
+  s = rocksdb::DB::OpenForReadOnly(options, dbname, &db);
+  if (!s.ok()) return; 
+  // assert(s.ok());
+  
+  s = db->Get(rocksdb::ReadOptions(), "cfg", &buf);
+  if (buf.size() > 0) {
+    diy::unserialize(buf, cfg);
   }
+  
+  s = db->Get(rocksdb::ReadOptions(), "hdrs", &buf);
+  if (buf.size() > 0) {
+    diy::unserialize(buf, hdrs);
+  }
+
+  s = db->Get(rocksdb::ReadOptions(), "inclusions", &buf);
+  if (buf.size() > 0) {
+    diy::unserialize(buf, incs);
+  }
+
+  delete db;
 }
 
-void VF2::OpenDB(const FunctionCallbackInfo<Value>& args) {
+bool LoadFrameFromDB(
+    const std::string& dbname, 
+    int frame, 
+    std::vector<VortexLine>& vlines,
+    std::vector<float>& dist)
+{
+  fprintf(stderr, "dbname=%s, frame=%d\n", 
+      dbname.c_str(), frame);
+
+  rocksdb::DB* db;
+  rocksdb::Status s;
+  
+  rocksdb::Options options;
+  options.create_if_missing = false;
+  s = rocksdb::DB::OpenForReadOnly(options, dbname, &db);
+  if (!s.ok()) return false;
+  // assert(s.ok());
+
+  std::string buf;
+  s = db->Get(rocksdb::ReadOptions(), "trans", &buf);
+  if (buf.empty()) {delete db; return false;}
+  VortexTransition vt;
+  diy::unserialize(buf, vt);
+
+  const int timestep = vt.Frame(frame);
+  std::stringstream ss;
+  ss << "v." << timestep;
+  buf.clear();
+  s = db->Get(rocksdb::ReadOptions(), ss.str(), &buf);
+  if (buf.empty()) {delete db; return false;}
+  diy::unserialize(buf, vlines);
+
+  for (size_t i=0; i<vlines.size(); i++) {
+    vlines[i].gid = vt.lvid2gvid(frame, vlines[i].id); // sorry, this is confusing
+    vt.SequenceColor(vlines[i].gid, vlines[i].r, vlines[i].g, vlines[i].b);
+  }
+
+  // distance matrix
+  ss.clear();
+  ss << "d." << timestep;
+  buf.clear();
+  s = db->Get(rocksdb::ReadOptions(), ss.str(), &buf);
+  if (!buf.empty())
+    diy::unserialize(buf, dist);
+
+  delete db;
+}
+
+void LoadDataInfo(const FunctionCallbackInfo<Value>& args) {
   Isolate *isolate = args.GetIsolate();
-  VF2* obj = ObjectWrap::Unwrap<VF2>(args.Holder());
 
   if (args.Length() < 1) {
     isolate->ThrowException(Exception::TypeError(
@@ -52,21 +134,15 @@ void VF2::OpenDB(const FunctionCallbackInfo<Value>& args) {
           String::NewFromUtf8(isolate, "Wrong arguments")));
     return;
   }
-  
+
+  // input args
   String::Utf8Value dbname1(args[0]->ToString());
   std::string dbname(*dbname1);
 
-  obj->OpenDB(dbname);
-}
-
-void VF2::LoadDataInfo(const FunctionCallbackInfo<Value>& args) {
-  Isolate *isolate = args.GetIsolate();
-  VF2* obj = ObjectWrap::Unwrap<VF2>(args.Holder());
-  
-  obj->LoadDataInfo();
-  const vfgpu_cfg_t& cfg = obj->cfg;
-  const std::vector<vfgpu_hdr_t> &hdrs = obj->hdrs;
-  const Inclusions& incs = obj->incs;
+  vfgpu_cfg_t cfg;
+  std::vector<vfgpu_hdr_t> hdrs;
+  Inclusions incs;
+  LoadDataInfoFromDB(dbname, cfg, hdrs, incs);
 
   // outputs
   Local<Object> jout = Object::New(isolate);
@@ -139,30 +215,29 @@ void VF2::LoadDataInfo(const FunctionCallbackInfo<Value>& args) {
   args.GetReturnValue().Set(jout);
 }
 
-void VF2::LoadFrame(const FunctionCallbackInfo<Value>& args) {
+void LoadFrame(const FunctionCallbackInfo<Value>& args) {
   Isolate *isolate = args.GetIsolate();
 
-  VF2* obj = ObjectWrap::Unwrap<VF2>(args.Holder());
-  const std::string& dbname = obj->dbname;
-
-  if (args.Length() < 1) {
+  if (args.Length() < 2) {
     isolate->ThrowException(Exception::TypeError(
           String::NewFromUtf8(isolate, "Wrong number of arguments")));
     return;
   }
 
-  if (!args[0]->IsNumber()) {
+  if (!args[0]->IsString() || !args[1]->IsNumber()) {
     isolate->ThrowException(Exception::TypeError(
           String::NewFromUtf8(isolate, "Wrong arguments")));
     return;
   }
 
   // input args
-  const int frame = args[0]->NumberValue();
+  String::Utf8Value dbname1(args[0]->ToString());
+  std::string dbname(*dbname1);
+  int frame = args[1]->NumberValue();
 
   std::vector<VortexLine> vlines;
   std::vector<float> dist;
-  bool succ = obj->LoadFrame(frame, vlines, dist);
+  bool succ = LoadFrameFromDB(dbname, frame, vlines, dist);
 
   // output 
   Local<Object> jout = Object::New(isolate);
@@ -217,86 +292,9 @@ void VF2::LoadFrame(const FunctionCallbackInfo<Value>& args) {
   args.GetReturnValue().Set(jout);
 }
 
-bool VF2::OpenDB(const std::string& dbname_)
-{
-  dbname = dbname_;
-  rocksdb::Options options;
-  options.create_if_missing = false;
-
-  rocksdb::Status s = rocksdb::DB::OpenForReadOnly(options, dbname, &db);
-  fprintf(stderr, "Openning db, dbname=%s, succ=%d\n", dbname.c_str(), (bool)s.ok());
-
-  if (s.ok()) return true;
-  else return false;
-}
-
-void VF2::CloseDB()
-{
-  if (db != NULL) {
-    dbname.clear();
-    delete db;
-    db = NULL;
-  }
-}
-
-void VF2::LoadDataInfo()
-{
-  rocksdb::Status s;
-  std::string buf;
-
-  s = db->Get(rocksdb::ReadOptions(), "cfg", &buf);
-  if (buf.size() > 0) 
-    diy::unserialize(buf, cfg);
-  
-  s = db->Get(rocksdb::ReadOptions(), "hdrs", &buf);
-  if (buf.size() > 0) 
-    diy::unserialize(buf, hdrs);
-
-  s = db->Get(rocksdb::ReadOptions(), "inclusions", &buf);
-  if (buf.size() > 0) 
-    diy::unserialize(buf, incs);
-  
-  s = db->Get(rocksdb::ReadOptions(), "trans", &buf);
-  if (buf.size() > 0)
-    diy::unserialize(buf, vt);
-}
-
-bool VF2::LoadFrame(
-    int frame, 
-    std::vector<VortexLine>& vlines,
-    std::vector<float>& dist)
-{
-  fprintf(stderr, "dbname=%s, frame=%d\n", dbname.c_str(), frame);
-
-  rocksdb::Status s;
-  std::string buf;
-
-  const int timestep = vt.Frame(frame);
-  std::stringstream ss;
-  ss << "v." << timestep;
-  buf.clear();
-  s = db->Get(rocksdb::ReadOptions(), ss.str(), &buf);
-  if (buf.empty()) return false;
-  diy::unserialize(buf, vlines);
-
-  for (size_t i=0; i<vlines.size(); i++) {
-    vlines[i].gid = vt.lvid2gvid(frame, vlines[i].id); // sorry, this is confusing
-    vt.SequenceColor(vlines[i].gid, vlines[i].r, vlines[i].g, vlines[i].b);
-  }
-
-  // distance matrix
-  ss.clear();
-  ss << "d." << timestep;
-  buf.clear();
-  s = db->Get(rocksdb::ReadOptions(), ss.str(), &buf);
-  if (!buf.empty())
-    diy::unserialize(buf, dist);
-
-  return true;
-}
-
 void Init(Local<Object> exports) {
-  VF2::Init(exports);
+  NODE_SET_METHOD(exports, "loadDataInfo", LoadDataInfo);
+  NODE_SET_METHOD(exports, "loadFrame", LoadFrame);
 }
 
-NODE_MODULE(vf2, Init);
+NODE_MODULE(vf2, Init)

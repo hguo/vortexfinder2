@@ -16,12 +16,14 @@ wss.on("connection", function(ws) {
   console.log("connected.");
   sendDBList(ws);
 
+  var obj = new vf2.vf2();
+
   ws.on("message", function(data) {
     var msg = JSON.parse(data);
     if (msg.type == "requestDataInfo") {
-      sendDataInfo(ws, msg.dbname);
+      sendDataInfo(ws, obj, msg.dbname);
     } else if (msg.type == "requestFrame") {
-      sendFrame(ws, msg.dbname, msg.frame);
+      sendFrame(ws, obj, msg.frame);
     }
   });
 
@@ -44,9 +46,10 @@ function sendDBList(ws) {
   })
 }
 
-function sendDataInfo(ws, dbname) {
+function sendDataInfo(ws, obj, dbname) {
   console.log("requested data info");
-  var dataInfo = vf2.loadDataInfo(dbname);
+  obj.openDB(dbname);
+  var dataInfo = obj.loadDataInfo(dbname);
   
   msg = {
     type: "dataInfo", 
@@ -55,10 +58,9 @@ function sendDataInfo(ws, dbname) {
   ws.send(JSON.stringify(msg));
 }
 
-function sendFrame(ws, dbname, frame) {
-  console.log("requested frame " + frame + " in " + dbname);
-
-  var frameData = vf2.loadFrame(dbname, frame);
+function sendFrame(ws, obj, frame) {
+  console.log("requested frame " + frame);
+  var frameData = obj.loadFrame(frame);
  
   msg = {
     type: "vlines", 
