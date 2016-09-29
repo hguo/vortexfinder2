@@ -1,6 +1,7 @@
 var ws;
 var dbList;
-var dbname = "GL_3D_Xfieldramp_inter_tet.rocksdb";
+// var dbname = "GL_3D_Xfieldramp_inter_tet.rocksdb";
+var dbname = "GL_3D_Bramp_4holes.rocksdb";
 var currentFrame = 200;
 
 function requestFrame(frame) {
