@@ -1,5 +1,6 @@
 var ws;
 var dbList;
+// var dbname = "GL_3D_Crossing-thin-full-long.rocksdb";
 var dbname = "GL_3D_Xfieldramp_inter_tet.rocksdb";
 // var dbname = "GL_3D_Bramp_4holes.rocksdb";
 var currentFrame = 200;
@@ -82,8 +83,12 @@ function onMessage(evt)
   if (msg.type == "dbList") {
     updateDBList(msg.data);
   }
-  if (msg.type == "dataInfo") 
+  else if (msg.type == "dataInfo") {
     updateDataInfo(msg.data);
+  }
+  else if (msg.type == "events") {
+    // console.log(msg.data);
+  }
   else if (msg.type == "vlines") {
     updateVlines(msg.data.vlines);
     updateDistances(msg.data.dist);

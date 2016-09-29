@@ -38,7 +38,8 @@ private:
 
   static void New(const FunctionCallbackInfo<Value>& args);
   static void OpenDB(const FunctionCallbackInfo<Value>& args);
-  static void LoadDataInfo(const FunctionCallbackInfo<Value>& args);
+  static void GetDataInfo(const FunctionCallbackInfo<Value>& args);
+  static void GetEvents(const FunctionCallbackInfo<Value>& args);
   static void LoadFrame(const FunctionCallbackInfo<Value>& args);
 
   static Persistent<Function> constructor;

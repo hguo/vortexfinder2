@@ -11,7 +11,8 @@ void VF2::Init(Local<Object> exports) {
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
   NODE_SET_PROTOTYPE_METHOD(tpl, "openDB", OpenDB);
-  NODE_SET_PROTOTYPE_METHOD(tpl, "loadDataInfo", LoadDataInfo);
+  NODE_SET_PROTOTYPE_METHOD(tpl, "getDataInfo", GetDataInfo);
+  NODE_SET_PROTOTYPE_METHOD(tpl, "getEvents", GetEvents);
   NODE_SET_PROTOTYPE_METHOD(tpl, "loadFrame", LoadFrame);
 
   constructor.Reset(isolate, tpl->GetFunction());
@@ -59,7 +60,45 @@ void VF2::OpenDB(const FunctionCallbackInfo<Value>& args) {
   obj->OpenDB(dbname);
 }
 
-void VF2::LoadDataInfo(const FunctionCallbackInfo<Value>& args) {
+void VF2::GetEvents(const FunctionCallbackInfo<Value>& args) {
+  Isolate *isolate = args.GetIsolate();
+  VF2* obj = ObjectWrap::Unwrap<VF2>(args.Holder());
+  const VortexTransition& vt = obj->vt;
+  const std::vector<VortexEvent>& events = vt.Events();
+
+  Local<Array> jevents = Array::New(isolate);
+  for (int i=0; i<events.size(); i++) {
+    const VortexEvent& e = events[i];
+    Local<Object> jevent = Object::New(isolate);
+    
+    Local<Number> jf0 = Number::New(isolate, e.if0);
+    jevent->Set(String::NewFromUtf8(isolate, "f0"), jf0);
+    
+    Local<Number> jf1 = Number::New(isolate, e.if1);
+    jevent->Set(String::NewFromUtf8(isolate, "f1"), jf1);
+
+    Local<Number> jtype = Number::New(isolate, e.type);
+    jevent->Set(String::NewFromUtf8(isolate, "type"), jtype);
+
+    Local<Array> jlhs = Array::New(isolate);
+    int k = 0;
+    for (std::set<int>::iterator it = e.lhs.begin(); it != e.lhs.end(); it ++) 
+      jlhs->Set(Number::New(isolate, k ++), Number::New(isolate, *it));
+    jevent->Set(String::NewFromUtf8(isolate, "lhs"), jlhs);
+
+    Local<Array> jrhs = Array::New(isolate);
+    k = 0;
+    for (std::set<int>::iterator it = e.rhs.begin(); it != e.rhs.end(); it ++) 
+      jrhs->Set(Number::New(isolate, k ++), Number::New(isolate, *it));
+    jevent->Set(String::NewFromUtf8(isolate, "rhs"), jrhs);
+
+    jevents->Set(Number::New(isolate, i), jevent);
+  }
+
+  args.GetReturnValue().Set(jevents);
+}
+
+void VF2::GetDataInfo(const FunctionCallbackInfo<Value>& args) {
   Isolate *isolate = args.GetIsolate();
   VF2* obj = ObjectWrap::Unwrap<VF2>(args.Holder());
   
@@ -143,7 +182,7 @@ void VF2::LoadFrame(const FunctionCallbackInfo<Value>& args) {
   Isolate *isolate = args.GetIsolate();
 
   VF2* obj = ObjectWrap::Unwrap<VF2>(args.Holder());
-  const std::string& dbname = obj->dbname;
+  // const std::string& dbname = obj->dbname;
 
   if (args.Length() < 1) {
     isolate->ThrowException(Exception::TypeError(
@@ -226,8 +265,10 @@ bool VF2::OpenDB(const std::string& dbname_)
   rocksdb::Status s = rocksdb::DB::OpenForReadOnly(options, dbname, &db);
   fprintf(stderr, "Openning db, dbname=%s, succ=%d\n", dbname.c_str(), (bool)s.ok());
 
-  if (s.ok()) return true;
-  else return false;
+  if (s.ok()) {
+    LoadDataInfo();
+    return true;
+  } else return false;
 }
 
 void VF2::CloseDB()

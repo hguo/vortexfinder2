@@ -49,12 +49,19 @@ function sendDBList(ws) {
 function sendDataInfo(ws, obj, dbname) {
   console.log("requested data info");
   obj.openDB(dbname);
-  var dataInfo = obj.loadDataInfo(dbname);
+  var dataInfo = obj.getDataInfo();
+  var events = obj.getEvents();
   
   msg = {
     type: "dataInfo", 
     data: dataInfo
-   };
+  };
+  ws.send(JSON.stringify(msg));
+
+  msg = {
+    type: "events",
+    data: events
+  };
   ws.send(JSON.stringify(msg));
 }
 
