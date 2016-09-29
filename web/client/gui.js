@@ -9,6 +9,7 @@ var menuText = function() {
   this.displayVortexId = false;
   this.displayInclusions = true;
   this.displayMDS = false;
+  this.displayEvents = false;
   this.distScale = 2;
   this.vortexRendering = "tube";
   this.tubeRadius = 0.5;
@@ -78,7 +79,11 @@ function initializeControlPanel () {
     } else {
       $("#mdsChart").css({visibility: "hidden"});
     }
-  })
+  });
+  f3.add(text, "displayEvents").onChange(function(val) {
+    if (val) $("#eventCursors").css({display: "block"});
+    else $("#eventCursors").css({display: "none"});
+  });
   f3.add(text, "distScale", 0.1, 10).onChange(function(val) {
     mdsDistScale = val;
     updateMDSChart();

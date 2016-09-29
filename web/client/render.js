@@ -42,6 +42,7 @@ var vortexLines = [];
 var vortexColors = [];
 var vortexColorsHex = [];
 var vortexDistances = [];
+var vortexEvents = [];
 var inclusionSpheres = [];
 
 var vortexId = [];

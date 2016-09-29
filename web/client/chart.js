@@ -62,14 +62,25 @@ function createLineChart() {
       .attr("class", "line")
       .attr("d", line);
 
+  var eventCursors = svg.append("g")
+    .attr("id", "eventCursors")
+    .style("display", "none")
+    .selectAll("g")
+    .data(vortexEvents)
+    .enter().append("g")
+    .attr("transform", function(d) {return "translate(" + xScale(dataHdrs[d.f0].timestep*dt) + ",0)";})
+    .append("line").attr("x1", 0).attr("y1", 0).attr("x2", 0).attr("y2", height)
+    .style("stroke", "red")
+    .style("display", function(d) {
+      if (d.type == 5) return "block"; // recombination
+      else return "none";
+    });
+
+
   var frameCursor = svg.append("g")
       .attr("id", "frameCursor")
       .attr("transform", "translate(" + xScale(dataHdrs[currentFrame].timestep*dt) + ",0)")
-      .append("line")
-      .attr("x1", 0)
-      .attr("y1", 0)
-      .attr("x2", 0)
-      .attr("y2", height)
+      .append("line").attr("x1", 0).attr("y1", 0).attr("x2", 0).attr("y2", height)
       .style("stroke", "steelblue");
 
   var focus = svg.append("g")

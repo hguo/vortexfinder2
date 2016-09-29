@@ -54,13 +54,8 @@ function sendDataInfo(ws, obj, dbname) {
   
   msg = {
     type: "dataInfo", 
-    data: dataInfo
-  };
-  ws.send(JSON.stringify(msg));
-
-  msg = {
-    type: "events",
-    data: events
+    dataInfo: dataInfo, 
+    events: events
   };
   ws.send(JSON.stringify(msg));
 }

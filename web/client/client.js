@@ -84,10 +84,7 @@ function onMessage(evt)
     updateDBList(msg.data);
   }
   else if (msg.type == "dataInfo") {
-    updateDataInfo(msg.data);
-  }
-  else if (msg.type == "events") {
-    // console.log(msg.data);
+    updateDataInfo(msg.dataInfo, msg.events);
   }
   else if (msg.type == "vlines") {
     updateVlines(msg.data.vlines);
@@ -100,9 +97,10 @@ function updateDBList(list) {
   console.log(list);
 }
 
-function updateDataInfo(info) {
+function updateDataInfo(info, events) {
   dataCfg = info.cfg;
   dataHdrs = info.hdrs;
+  vortexEvents = events;
   updateInclusions(info.inclusions);
 
   // dataHdrs.forEach(function(d) {if (d.V<0) d.V=0;});
@@ -126,7 +124,7 @@ function updateFrameInfo() {
     "timestep=" + hdr.timestep + ", " + 
     "t=" + (hdr.timestep * dataCfg.dt).toFixed(3) + ", " +
     "B=(" + hdr.Bx.toFixed(3) + ", " + hdr.By.toFixed(3) + ", " + hdr.Bz.toFixed(3) + "), " +
-    "V=" + hdr.V.toFixed(3);
+    "V=" + hdr.V.toFixed(5);
 
   var frameCursor = d3.select("#frameCursor")
     .attr("transform", "translate(" + xScale(dataHdrs[currentFrame].timestep*dataCfg.dt) + ", 0)");
