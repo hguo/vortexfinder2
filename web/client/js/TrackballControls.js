@@ -331,8 +331,24 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 	};
 
-	this.reset = function () {
+  this.load = function(target, position, up) {
+		_state = STATE.NONE;
+		_prevState = STATE.NONE;
 
+		_this.target.copy( target );
+		_this.object.position.copy( position );
+		_this.object.up.copy( up );
+
+		_eye.subVectors( _this.object.position, _this.target );
+
+		_this.object.lookAt( _this.target );
+
+		_this.dispatchEvent( changeEvent );
+
+		lastPosition.copy( _this.object.position );
+  }
+
+	this.reset = function () {
 		_state = STATE.NONE;
 		_prevState = STATE.NONE;
 
@@ -347,7 +363,6 @@ THREE.TrackballControls = function ( object, domElement ) {
 		_this.dispatchEvent( changeEvent );
 
 		lastPosition.copy( _this.object.position );
-
 	};
 
 	// listeners

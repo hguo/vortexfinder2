@@ -21,6 +21,40 @@ var menuText = function() {
     currentFrame --;
     requestFrame(currentFrame);
   };
+
+  this.saveTrackball = function () {
+    var trac = {
+      target: cameraControls.target,
+      position: cameraControls.object.position,
+      up: cameraControls.object.up
+    };
+    var blob = new Blob([JSON.stringify(trac)], {type: "text/plain;charset=utf-8"});
+    saveAs(blob, "camera.json");
+  };
+
+  this.loadTrackball = function () {
+    if (!window.File || !window.FileReader || !window.FileList || !window.Blob) {
+      alert('The File APIs are not fully supported in this browser.');
+      return;
+    }
+
+    var evt = document.createEvent("MouseEvents");
+    evt.initEvent("click", true, false);
+    file_open.dispatchEvent(evt);
+    file_open.onchange = function() {
+      var path = file_open.value;
+      var f = file_open.files[0];
+      var reader = new FileReader();
+      
+      reader.onload = function(evt) {
+        var str = evt.target.result;
+        var trac = JSON.parse(str);
+        cameraControls.load(trac.target, trac.position, trac.up);
+      }
+
+      reader.readAsText(f);
+    }
+  };
 };
 
 function initializeControlPanel () {
@@ -28,7 +62,7 @@ function initializeControlPanel () {
   var gui = new dat.GUI();
 
   var f1 = gui.addFolder("Data");
-  f1.add(text, 'dataName');
+  // f1.add(text, 'dataName');
   // f1.add(text, 'frame').onChange(function(val) {
   //   currentFrame = val;
   //   requestFrame();
@@ -63,15 +97,19 @@ function initializeControlPanel () {
     vortexTubeRadius = val;
     updateVortexTubes(val);
   });
-  f2.add(text, "resetTrackball");
   f2.open();
 
-  var f3 = gui.addFolder("Charts");
-  f3.add(text, "displayVoltage").onChange(function(val) {
+  var f3 = gui.addFolder("Trackball");
+  f3.add(text, "saveTrackball");
+  f3.add(text, "loadTrackball");
+  f3.add(text, "resetTrackball");
+
+  var f4 = gui.addFolder("Charts");
+  f4.add(text, "displayVoltage").onChange(function(val) {
     if (val) $("#voltageChart").css({visibility: "visible"});
     else $("#voltageChart").css({visibility: "hidden"});
   });
-  f3.add(text, "displayMDS").onChange(function(val) {
+  f4.add(text, "displayMDS").onChange(function(val) {
     displayMDS = val;
     if (val) {
       updateMDSChart();
@@ -80,11 +118,11 @@ function initializeControlPanel () {
       $("#mdsChart").css({visibility: "hidden"});
     }
   });
-  f3.add(text, "displayEvents").onChange(function(val) {
+  f4.add(text, "displayEvents").onChange(function(val) {
     if (val) $("#eventCursors").css({display: "block"});
     else $("#eventCursors").css({display: "none"});
   });
-  f3.add(text, "distScale", 0.1, 10).onChange(function(val) {
+  f4.add(text, "distScale", 0.1, 10).onChange(function(val) {
     mdsDistScale = val;
     updateMDSChart();
   });
