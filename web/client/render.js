@@ -10,7 +10,7 @@ var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(30, window.innerWidth/window.innerHeight, 0.1, 1000); 
 camera.position.z = 200;
 
-var renderer = new THREE.WebGLRenderer();
+var renderer = new THREE.WebGLRenderer({preserveDrawingBuffer: true});
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0xffffff, 1);
@@ -33,6 +33,9 @@ cameraControls.zoomSpeed = 0.04;
 cameraControls.panSpeed = 0.04;
 // cameraControls.addEventListener("change", render); // not working.. sigh
 
+var raycaster = new THREE.Raycaster();
+var mousePos = new THREE.Vector2();
+
 var dataCfg = {};
 var dataHdrs = [];
 
@@ -51,10 +54,17 @@ var displayVortexId = false;
 var displayVortexTubes = true;
 var vortexTubeRadius = 0.5;
 
+window.addEventListener("mousedown", onMouseDown, false );
+window.addEventListener("mousemove", onMouseMove, false);
 window.addEventListener("resize", onResize, false);
 
 function render() {
   stats.begin();
+
+  raycaster.setFromCamera(mousePos, camera);
+  var intersects = raycaster.intersectObjects(scene.children);
+  // for (i=0; i<intersects.length; i++)
+  //   intersects[i].object.material.color.set(0xff0000);
 
   // scene
   var delta = clock.getDelta();
@@ -67,6 +77,16 @@ function render() {
     renderVortexId();
 
   stats.end();
+}
+
+function onMouseDown(evt) {
+  mousePos.x = (evt.clientX / window.innerWidth) * 2 - 1;
+  mousePos.y = -(evt.clientY / window.innerHeight) * 2 + 1;
+}
+
+function onMouseMove(evt) {
+  mousePos.x = (evt.clientX / window.innerWidth) * 2 - 1;
+  mousePos.y = -(evt.clientY / window.innerHeight) * 2 + 1;
 }
 
 function onResize() {

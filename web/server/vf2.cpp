@@ -298,8 +298,11 @@ void VF2::LoadDataInfo()
     diy::unserialize(buf, incs);
   
   s = db->Get(rocksdb::ReadOptions(), "trans", &buf);
-  if (buf.size() > 0)
+  if (buf.size() > 0) {
     diy::unserialize(buf, vt);
+    srand(100);
+    vt.SequenceGraphColoring(); // TODO
+  }
 }
 
 bool VF2::LoadFrame(

@@ -22,6 +22,10 @@ var menuText = function() {
     requestFrame(currentFrame);
   };
 
+  this.saveImage = function() {
+    window.open( renderer.domElement.toDataURL( 'image/png' ), 'screenshot' );
+  };
+
   this.saveTrackball = function () {
     var trac = {
       target: cameraControls.target,
@@ -97,6 +101,7 @@ function initializeControlPanel () {
     vortexTubeRadius = val;
     updateVortexTubes(val);
   });
+  f2.add(text, "saveImage");
   f2.open();
 
   var f3 = gui.addFolder("Trackball");
