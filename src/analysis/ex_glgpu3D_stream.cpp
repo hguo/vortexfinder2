@@ -110,6 +110,7 @@ static void write_vlines(int frame, std::vector<VortexLine>& vlines)
   ss << "v." << frame;
   db->Put(rocksdb::WriteOptions(), ss.str(), buf);
 
+#if 0
   // compute distance
   std::vector<float> dist;
   for (int i=0; i<vlines.size(); i++) 
@@ -120,6 +121,7 @@ static void write_vlines(int frame, std::vector<VortexLine>& vlines)
   ss << "d." << frame;
   diy::serialize(dist, buf);
   db->Put(rocksdb::WriteOptions(), ss.str(), buf);
+#endif
 }
 
 static void compute_moving_speed(
@@ -252,7 +254,7 @@ struct track {
     delete ex;
     delete ds;
     
-    compute_moving_speed(f0, f1, vlines0, vlines1, mat);
+    // compute_moving_speed(f0, f1, vlines0, vlines1, mat);
     write_mat(f0, f1, mat);
     write_vlines(f0, vlines0);
     

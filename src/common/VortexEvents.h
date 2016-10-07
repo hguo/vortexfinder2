@@ -20,6 +20,8 @@ struct VortexEvent {
   std::set<int> lhs, rhs; // local ids.
   // std::vector<int> lhs_gids, rhs_gids;
 
+  std::map<int, float> dist; // key=timestep, val=dist
+
   static const char* TypeToString(int e) {
     static const char* strs[7] = {
       "dummy", "birth", "death", "merge", "split", "recombination", "compound"};

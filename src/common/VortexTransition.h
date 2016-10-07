@@ -54,6 +54,7 @@ public:
   int Frame(int i) const {return _frames[i];}
   int NTimesteps() const {return _frames.size();}
   void SetFrames(const std::vector<int> frames) {_frames = frames;}
+  const std::vector<int>& Frames() const {return _frames;}
 
 private:
   int NewVortexSequence(int its);

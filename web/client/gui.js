@@ -67,10 +67,10 @@ function initializeControlPanel () {
 
   var f1 = gui.addFolder("Data");
   // f1.add(text, 'dataName');
-  // f1.add(text, 'frame').onChange(function(val) {
-  //   currentFrame = val;
-  //   requestFrame();
-  // });
+  f1.add(text, 'frame').onChange(function(val) {
+    currentFrame = val;
+    requestFrame();
+  });
   f1.add(text, 'previousFrame');
   f1.add(text, 'nextFrame');
   f1.open();

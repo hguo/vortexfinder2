@@ -303,7 +303,7 @@ void CGLWidget::keyPressEvent(QKeyEvent* e)
   case Qt::Key_P: 
   if (e->modifiers() == Qt::ShiftModifier) { // capture video
     _toggle_video = true;
-    _timestep = _ts;
+    // _timestep = _ts;
     LoadTimeStep(_timestep);
     updateGL();
   } else { // save to PNG
@@ -788,6 +788,7 @@ void CGLWidget::paintGL()
     img.save(filename);
     if (_timestep < _ts + _tl - 1)
       LoadTimeStep(_timestep + 1);
+      // LoadTimeStep(_timestep + 100);
     else 
       _toggle_video = false;
     QMetaObject::invokeMethod(this, "updateGL", Qt::QueuedConnection);
@@ -872,8 +873,13 @@ void CGLWidget::LoadVortexLines()
   rocksdb::Status s = _db->Get(rocksdb::ReadOptions(), key, &buf);
   std::vector<VortexLine> vlines;
   diy::unserialize(buf, vlines);
-  for (int i=0; i<vlines.size(); i++) 
-    vlines[i].RemoveInvalidPoints();
+  for (int i=0; i<vlines.size(); i++) {
+    if (vlines[i].is_bezier) {
+      vlines[i].ToRegular(500);
+    }
+    else 
+      vlines[i].RemoveInvalidPoints();
+  }
 
   if (_vortex_render_mode == 4) {
     ss.clear(); 

@@ -123,7 +123,7 @@ function renderVortexId () {
       text2.id = "vortexId" + i;
       text2.className = "vortexId";
       text2.style.position = "absolute";
-      text2.style.fontSize = 12;
+      text2.style.fontSize = 20;
       document.body.appendChild(text2);
     }
 

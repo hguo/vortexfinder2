@@ -1,9 +1,10 @@
 var ws;
 var dbList;
 // var dbname = "GL_3D_Crossing-thin-full-long.rocksdb";
+// var dbname = "GL_3D_Crossing-full-long-hex.rocksdb";
 var dbname = "GL_3D_Xfieldramp_inter_tet.rocksdb";
 // var dbname = "GL_3D_Bramp_4holes.rocksdb";
-var currentFrame = 200;
+var currentFrame = 1000;
 
 function requestFrame(frame) {
   console.log("requesting frame " + frame + " in " + dbname);

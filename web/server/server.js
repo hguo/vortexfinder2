@@ -51,7 +51,7 @@ function sendDataInfo(ws, obj, dbname) {
   obj.openDB(dbname);
   var dataInfo = obj.getDataInfo();
   var events = obj.getEvents();
-  
+
   msg = {
     type: "dataInfo", 
     dataInfo: dataInfo, 

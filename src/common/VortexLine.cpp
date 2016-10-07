@@ -198,11 +198,13 @@ bool VortexLine::Bezier(float t, float X[3]) const // t \in [0, 1]
   Pt p = bezier(3, pts, tt);
   X[0] = p[0]; X[1] = p[1]; X[2] = p[2];
 
+#if 0
   if (X[2]>10) {
     for (int i=0; i<4; i++)
       fprintf(stderr, "%f, %f, %f\n", pts[i][0], pts[i][1], pts[i][2]);
     fprintf(stderr, "t=%f, tt=%f, kInt=%d, val={%f, %f, %f}\n", t, tt, kInterval, X[0], X[1], X[2]);
   }
+#endif
   return true;
 }
 

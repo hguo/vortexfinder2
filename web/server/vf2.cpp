@@ -211,7 +211,7 @@ void VF2::LoadFrame(const FunctionCallbackInfo<Value>& args) {
   for (size_t i=0; i<vlines.size(); i++) {
     VortexLine& vline = vlines[i];
     if (vline.is_bezier) {
-      vline.ToRegular(100);
+      vline.ToRegular(500);
     } else {
       vline.RemoveInvalidPoints();
       vline.Simplify(0.1);
@@ -300,8 +300,8 @@ void VF2::LoadDataInfo()
   s = db->Get(rocksdb::ReadOptions(), "trans", &buf);
   if (buf.size() > 0) {
     diy::unserialize(buf, vt);
-    srand(100);
-    vt.SequenceGraphColoring(); // TODO
+    // std::srand(0);
+    // vt.SequenceGraphColoring(); // TODO
   }
 }
 
@@ -335,6 +335,7 @@ bool VF2::LoadFrame(
   s = db->Get(rocksdb::ReadOptions(), ss.str(), &buf);
   if (!buf.empty())
     diy::unserialize(buf, dist);
+  // fprintf(stderr, "key=%s, dist.size=%d\n", ss.str().c_str(), dist.size());
 
   return true;
 }

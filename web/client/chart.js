@@ -70,9 +70,17 @@ function createLineChart() {
     .enter().append("g")
     .attr("transform", function(d) {return "translate(" + xScale(dataHdrs[d.f0].timestep*dt) + ",0)";})
     .append("line").attr("x1", 0).attr("y1", 0).attr("x2", 0).attr("y2", height)
-    .style("stroke", "red")
+    .style("stroke", function(d) {
+      switch (d.type) {
+        case 1: return "red";
+        case 2: return "blue";
+        case 3: return "green";
+        case 4: return "black";
+        case 5: return "brown";
+      }})
+    // .style("display", "block");
     .style("display", function(d) {
-      if (d.type == 5) return "block"; // recombination
+      if (d.type == 1) return "block"; // recombination
       else return "none";
     });
 
