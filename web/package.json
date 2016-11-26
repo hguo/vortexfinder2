@@ -1,0 +1,20 @@
+{
+  "name": "vortexfinder2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install": "node-gyp rebuild",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "",
+  "gypfile": true,
+  "dependencies": {
+    "express": "^4.14.0",
+    "glob": "^7.1.1",
+    "ws": "^1.1.1"
+  }
+}

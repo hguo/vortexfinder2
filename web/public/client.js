@@ -6,6 +6,8 @@ var dbname = "GL_3D_Xfieldramp_inter_tet.rocksdb";
 // var dbname = "GL_3D_Bramp_4holes.rocksdb";
 var currentFrame = 1000;
 
+const wsUri = "ws://localhost:8080/ws";
+
 function requestFrame(frame) {
   console.log("requesting frame " + frame + " in " + dbname);
   var msg = {
@@ -53,7 +55,7 @@ function connectToServer() {
   clearCurrentFrame();
 
   // ws = new WebSocket("ws://red.mcs.anl.gov:8080");
-  ws = new WebSocket("ws://127.0.0.1:8080");
+  ws = new WebSocket(wsUri);
   // ws.binaryType = "arraybuffer";
   ws.onopen = onOpen;
   ws.onclose = onClose;

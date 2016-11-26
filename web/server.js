@@ -1,13 +1,22 @@
-var WebSocketServer = require("ws").Server;
-var glob = require("glob");
-var vf2 = require('bindings')('vf2');
+const WebSocketServer = require("ws").Server;
+const express = require("express");
+const http = require("http");
+const glob = require("glob");
+const vf2 = require('./build/Release/vf2.node');
 
 // var bson = require("bson");
 // var BSON = new bson.BSONPure.BSON()
 // var BSON = new bson.BSONPure.BSON()
 
+var app = express();
+app.use(express.static("public"));
+
+var server = http.createServer(app);
+server.listen(8080);
+
 var wss = new WebSocketServer({
-  port : 8080, 
+  server: server,
+  path: "/ws",
   // binaryType : "arraybuffer",
   perMessageDeflate : "false"
 });
