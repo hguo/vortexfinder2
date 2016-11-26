@@ -1,3 +1,3 @@
-[submodule "diy2"]
-	path = diy2
-	url = https://github.com/diatomic/diy2.git
+[submodule "diy"]
+	path = diy
+	url = https://github.com/diatomic/diy.git
