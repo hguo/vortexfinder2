@@ -2,7 +2,7 @@
 
 ## Introduction ##
 
-*vortexfinder2* provides Tools to analyze and visualize vorticies in time-dependent Ginzburg-Landau (TDGL) superconductor simulation data. 
+*vortexfinder2* provides tools to analyze and visualize vorticies in time-dependent Ginzburg-Landau (TDGL) superconductor simulation data. 
 Output data from two simulation models are supported, namely GLGPU and Condor2. 
 GLGPU and Condor2 are based on structured grid and unstructured grid, respectively. 
 
