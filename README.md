@@ -6,6 +6,8 @@ Tools to analyze and visualize vorticies in time-dependent Ginzburg-Landau (TDGL
 Output data from two simulation models are supported, namely GLGPU and Condor2. 
 GLGPU and Condor2 are based on structured grid and unstructured grid, respectively. 
 
+The tool is part of the [OSCON](http://oscon-scidac.org/) (Optimizing Superconductor Transport Properties through Large-Scale Simulation) project for the Scientific Discovery through Advanced Computing Institutes.
+
 A set of tools are provided: 
 
 * Standalone command-line tools for extracting and tracking vortices
