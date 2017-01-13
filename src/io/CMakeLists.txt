@@ -20,6 +20,10 @@ if (WITH_LIBMESH)
 else ()
   target_link_libraries (glio PUBLIC glcommon glpp)
 endif ()
+  
+if (WITH_NETCDF)
+  target_link_libraries (glio PUBLIC ${NETCDF_LIBRARIES})
+endif ()
 
 #install (TARGETS glio DESTINATION ${VTK_INSTALL_LIBRARY_DIR})
 

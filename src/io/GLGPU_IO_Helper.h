@@ -27,6 +27,7 @@ bool GLGPU_IO_Helper_ReadNetCDF(
 bool GLGPU_IO_Helper_WriteNetCDF(
     const std::string& filename, 
     GLHeader &hdr, 
-    float **psi); 
+    const float *rho, const float *phi, 
+    const float *re, const float *im, const float *Jx, const float *Jy, const float *Jz);
 
 #endif

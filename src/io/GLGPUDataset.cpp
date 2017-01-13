@@ -248,6 +248,24 @@ bool GLGPUDataset::OpenLegacyDataFile(const std::string& filename, int slot)
     return true;
 }
 
+void GLGPUDataset::WriteNetCDF(const std::string& filename, int slot) {
+  GLGPU_IO_Helper_WriteNetCDF(
+      filename, _h[slot],
+      _rho[slot], _phi[slot],
+      _re[slot], _im[slot], 
+      _Jx[slot], _Jy[slot], _Jz[slot]);
+}
+
+void GLGPUDataset::WriteRaw(const std::string& prefix, int slot) {
+  const int count = _h[0].dims[0] * _h[0].dims[1] * _h[0].dims[2];
+
+  FILE *fp = fopen(prefix.c_str(), "wb");
+  fwrite(_Jx[slot], sizeof(float), count, fp);
+  fwrite(_Jy[slot], sizeof(float), count, fp);
+  fwrite(_Jz[slot], sizeof(float), count, fp);
+  fclose(fp);
+}
+
 bool GLGPUDataset::OpenBDATDataFile(const std::string& filename, int slot)
 {
   int ndims;

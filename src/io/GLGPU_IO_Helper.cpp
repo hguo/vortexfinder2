@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <cstring>
 
-#ifdef WITH_LIBMESH // suppose libmesh is built with netcdf
+#if WITH_LIBMESH || WITH_NETCDF
 #include <netcdf.h>
 #endif
 
@@ -333,10 +333,11 @@ bool GLGPU_IO_Helper_ReadLegacy(
 bool GLGPU_IO_Helper_WriteNetCDF(
     const std::string& filename, 
     GLHeader& h,
+    const float *rho, const float *phi,
     const float *re, const float *im, 
     const float *Jx, const float *Jy, const float *Jz)
 {
-#ifdef WITH_LIBMESH
+#if WITH_LIBMESH || WITH_NETCDF
   int ncid; 
   int dimids[3]; 
   int varids[8];
@@ -344,6 +345,7 @@ bool GLGPU_IO_Helper_WriteNetCDF(
   size_t starts[3] = {0, 0, 0}, 
          sizes[3]  = {(size_t)h.dims[2], (size_t)h.dims[1], (size_t)h.dims[0]};
 
+#if 0
   const int cnt = sizes[0]*sizes[1]*sizes[2];
   float *rho = (float*)malloc(sizeof(float)*cnt), 
          *phi = (float*)malloc(sizeof(float)*cnt);
@@ -351,6 +353,7 @@ bool GLGPU_IO_Helper_WriteNetCDF(
     rho[i] = sqrt(re[i]*re[i] + im[i]*im[i]);
     phi[i] = atan2(im[i], re[i]);
   }
+#endif
 
   fprintf(stderr, "netcdf filename=%s\n", filename.c_str());
 
@@ -371,9 +374,9 @@ bool GLGPU_IO_Helper_WriteNetCDF(
   NC_SAFE_CALL( nc_put_vara_float(ncid, varids[1], starts, sizes, phi) ); 
   NC_SAFE_CALL( nc_put_vara_float(ncid, varids[2], starts, sizes, re) ); 
   NC_SAFE_CALL( nc_put_vara_float(ncid, varids[3], starts, sizes, im) ); 
-  NC_SAFE_CALL( nc_put_vara_float(ncid, varids[4], starts, sizes, _Jx) ); 
-  NC_SAFE_CALL( nc_put_vara_float(ncid, varids[5], starts, sizes, _Jy) ); 
-  NC_SAFE_CALL( nc_put_vara_float(ncid, varids[6], starts, sizes, _Jz) ); 
+  NC_SAFE_CALL( nc_put_vara_float(ncid, varids[4], starts, sizes, Jx) ); 
+  NC_SAFE_CALL( nc_put_vara_float(ncid, varids[5], starts, sizes, Jy) ); 
+  NC_SAFE_CALL( nc_put_vara_float(ncid, varids[6], starts, sizes, Jz) ); 
 
   NC_SAFE_CALL( nc_close(ncid) );
 

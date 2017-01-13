@@ -15,6 +15,8 @@ public:
   bool OpenDataFile(const std::string& filename); // file list
   bool OpenDataFileByPattern(const std::string& pattern); 
   bool LoadTimeStep(int timestep, int slot=0);
+  void WriteNetCDF(const std::string& filename, int slot=0);
+  void WriteRaw(const std::string& prefix, int slot=0);
   void RotateTimeSteps();
   void CloseDataFile();
 

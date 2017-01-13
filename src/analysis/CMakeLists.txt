@@ -6,6 +6,9 @@ endif ()
 add_executable (extractor_glgpu3D ex_glgpu3D.cpp)
 target_link_libraries (extractor_glgpu3D PUBLIC glextractor)
 
+add_executable (convertor ex_convertor.cpp)
+target_link_libraries (convertor PUBLIC glextractor)
+
 if (WITH_TBB AND WITH_ROCKSDB)
   add_executable (extractor_glgpu3D_stream ex_glgpu3D_stream.cpp)
   target_link_libraries (extractor_glgpu3D_stream PUBLIC glextractor ${TBB_LIBRARY_RELEASE})
