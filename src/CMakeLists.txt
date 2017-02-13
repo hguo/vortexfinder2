@@ -4,7 +4,7 @@ include_directories (
 )
 
 configure_file (def.h.cmake def.h)
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/def.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/def.h DESTINATION ${VTK_INSTALL_INCLUDE_DIR})
 
 add_subdirectory (common)
 add_subdirectory (io)
