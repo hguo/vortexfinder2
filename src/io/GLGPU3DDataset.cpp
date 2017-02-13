@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cassert>
+#include <cstring>
 #include <cmath>
 #include <cstring>
 #include <climits>

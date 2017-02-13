@@ -3,4 +3,4 @@ set (extractor_sources
 )
 
 add_library (gltracer ${extractor_sources})
-link_libraries (gltracer glcommon glio)
+target_link_libraries (gltracer glcommon glio)
