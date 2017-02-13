@@ -36,6 +36,7 @@ else()
   option (WITH_ROCKSDB "Build with RocksDB" OFF)
   option (WITH_PARAVIEW "Build paraview plugins" OFF)
   option (WITH_FORTRAN "Enable fortran" OFF)
+  option (WITH_MACOS_RPATH "Enable macOS rpath support" ON)
 
   set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake-modules)
   set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
@@ -47,8 +48,8 @@ else()
     find_package (LAPACK REQUIRED)
   endif ()
 
-  # Always use a full RPATH
-  if(APPLE)
+  # Set up RPATH if requested.
+  if(WITH_MACOS_RPATH)
     set(CMAKE_MACOSX_RPATH ON)
     set(CMAKE_SKIP_BUILD_RPATH FALSE)
     set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
