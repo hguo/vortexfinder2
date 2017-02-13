@@ -53,5 +53,5 @@ endif ()
 
 target_link_libraries (glcommon PUBLIC ${deps})
 
-install (FILES ${common_headers} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/common)
-install (TARGETS glcommon DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+install (FILES ${common_headers} DESTINATION ${VTK_INSTALL_INCLUDE_DIR}/common)
+install (TARGETS glcommon DESTINATION ${VTK_INSTALL_LIBRARY_DIR})
