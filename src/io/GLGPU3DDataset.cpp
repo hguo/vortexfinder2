@@ -179,9 +179,9 @@ bool GLGPU3DDataset::Supercurrent(const float X[3], float J[3], int slot) const
   const float *j[3] = {_Jx[slot], _Jy[slot], _Jz[slot]};
  
   Pos2Grid(X, gpt);
-  if (isnan(gpt[0]) || gpt[0]<=1 || gpt[0]>dims()[0]-2 || 
-      isnan(gpt[1]) || gpt[1]<=1 || gpt[1]>dims()[1]-2 || 
-      isnan(gpt[2]) || gpt[2]<=1 || gpt[2]>dims()[2]-2) return false;
+  if (std::isnan(gpt[0]) || gpt[0]<=1 || gpt[0]>dims()[0]-2 ||
+      std::isnan(gpt[1]) || gpt[1]<=1 || gpt[1]>dims()[1]-2 ||
+      std::isnan(gpt[2]) || gpt[2]<=1 || gpt[2]>dims()[2]-2) return false;
 
   if (!lerp3D(gpt, st, dims(), 3, j, J))
     return false;
