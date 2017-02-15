@@ -5,6 +5,7 @@
 #include <climits>
 #include <cfloat>
 #include <cassert>
+#include <cmath>
 
 #if WITH_VTK
 #include <vtkSmartPointer.h>
@@ -58,7 +59,7 @@ void VortexLine::RemoveInvalidPoints() {
     float currentPt[3] = {at(i*3), at(i*3+1), at(i*3+2)};
 
     bool valid = true;
-    for (int j=0; j<3; j++) if (isnan(currentPt[j]) || isinf(currentPt[j])) valid = false;
+    for (int j=0; j<3; j++) if (std::isnan(currentPt[j]) || std::isinf(currentPt[j])) valid = false;
     if (!valid) continue;
   
     if (i>1) {
