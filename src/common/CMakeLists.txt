@@ -40,6 +40,10 @@ set (common_protos
   Puncture.proto
 )
 
+if (APPLE AND NOT PARAVIEW_DO_UNIX_STYLE_INSTALL)
+  set(CMAKE_INSTALL_NAME_DIR "@loader_path/../Libraries")
+endif ()
+
 add_library (glcommon SHARED ${common_sources} ${common_proto_sources})
 target_include_directories(glcommon PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
