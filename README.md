@@ -168,6 +168,9 @@ In the viewer, use left mouse button to rotate, and wheel to zoom in/out. Press 
 
 ## References ##
 
+H. Guo, T. Peterka, and A. Glatz.
+In Situ Magnetic Flux Vortex Visualization in Time-Dependent Ginzburg-Landau Superconductor Simulations. In Proc. IEEE Pacific Visualization Symposium (PacificVis '17), Seuol, Korea, 2017.  (Accepted)
+
 H. Guo, C. L. Phillps, T. Peterka, D. Karpeyev, and A. Glatz. 
 Extracting, Tracking and Visualizing Magnetic Flux Vortices in 3D Complex-Valued Superconductor Simulation Data. IEEE Trans. Vis. Comput. Graph. (SciVis '15), 22(1):827-836, 2016.
 
