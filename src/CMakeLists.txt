@@ -4,7 +4,10 @@ include_directories (
 )
 
 configure_file (def.h.cmake def.h)
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/def.h DESTINATION ${VTK_INSTALL_INCLUDE_DIR})
+
+if (CMAKE_PROJECT_NAME STREQUAL "ParaView")
+  install (FILES ${CMAKE_CURRENT_BINARY_DIR}/def.h DESTINATION ${VTK_INSTALL_INCLUDE_DIR})
+endif ()
 
 add_subdirectory (common)
 add_subdirectory (io)
