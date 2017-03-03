@@ -424,11 +424,10 @@ bool SaveVortexLinesAscii(const std::vector<VortexLine>& vlines, const std::stri
     const VortexLine& vline = vlines[i];
     const int nv = vlines[i].size()/3;
 
-    fprintf(fp, "id=%d", 
-        vline.id, vline.timestep, vline.time);
+    fprintf(fp, "id=%d\n", vline.id); 
 
     for (int i=0; i<nv; i++) {
-      fprintf(fp, "%f, %f, %f\n", 
+      fprintf(fp, "%f\t%f\t%f\n", 
           vline[i*3], vline[i*3+1], vline[i*3+2]);
     }
 
@@ -436,6 +435,7 @@ bool SaveVortexLinesAscii(const std::vector<VortexLine>& vlines, const std::stri
   }
 
   fclose(fp);
+  return true;
 }
 
 bool SaveVortexLinesVTK(const std::vector<VortexLine>& vlines, const std::string& filename)
