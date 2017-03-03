@@ -22,6 +22,7 @@ public: // IO
   void SetToDummy() {_n0 = _n1 = 0; _match.clear();}
   bool Valid() const {return _match.size()>0;}
   void Print() const;
+  void SaveAscii(const std::string& filename) const;
   
 public: // modulars
   void Modularize();

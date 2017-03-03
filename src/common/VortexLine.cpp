@@ -416,6 +416,28 @@ float VortexLine::MaxExtent() const
   return std::max(std::max(D[0], D[1]), D[2]);
 }
 
+bool SaveVortexLinesAscii(const std::vector<VortexLine>& vlines, const std::string& filename) 
+{
+  FILE *fp = fopen(filename.c_str(), "w");
+
+  for (int i=0; i<vlines.size(); i++) {
+    const VortexLine& vline = vlines[i];
+    const int nv = vlines[i].size()/3;
+
+    fprintf(fp, "id=%d", 
+        vline.id, vline.timestep, vline.time);
+
+    for (int i=0; i<nv; i++) {
+      fprintf(fp, "%f, %f, %f\n", 
+          vline[i*3], vline[i*3+1], vline[i*3+2]);
+    }
+
+    fprintf(fp, "#\n");
+  }
+
+  fclose(fp);
+}
+
 bool SaveVortexLinesVTK(const std::vector<VortexLine>& vlines, const std::string& filename)
 {
 #if WITH_VTK

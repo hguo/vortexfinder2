@@ -164,6 +164,8 @@ function updateMDSChart() {
   else
     forceSimulation.stop();
 
+  console.log(mdsNodes, vortexDistances);
+
   forceLink = d3.forceLink(vortexDistances)
     .id(function(d) {return d.id;})
     .strength(function(d) {return 1/(d.dist+0.1);})

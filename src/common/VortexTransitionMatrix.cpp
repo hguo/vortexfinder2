@@ -160,3 +160,20 @@ void VortexTransitionMatrix::Print() const
     fprintf(stderr, "\n");
   }
 }
+
+void VortexTransitionMatrix::SaveAscii(const std::string& filename) const 
+{
+  FILE *fp = fopen(filename.c_str(), "w");
+  
+  fprintf(fp, "Interval={%d, %d}, n0=%d, n1=%d\n", 
+      _interval.first, _interval.second, _n0, _n1);
+
+  for (int i=0; i<_n0; i++) {
+    for (int j=0; j<_n1; j++) {
+      fprintf(fp, "%d\t", at(i, j));
+    }
+    fprintf(fp, "\n");
+  }
+
+  fclose(fp);
+}

@@ -96,6 +96,7 @@ static GLHeader conv_hdr(const vfgpu_cfg_t& cfg, const vfgpu_hdr_t& hdr) {
 
 static void write_vlines(int frame, std::vector<VortexLine>& vlines)
 {
+#if WITH_ROCKSDB
 #if 0
   for (int i=0; i<vlines.size(); i++) {
     vlines[i].RemoveInvalidPoints();
@@ -122,6 +123,11 @@ static void write_vlines(int frame, std::vector<VortexLine>& vlines)
   diy::serialize(dist, buf);
   db->Put(rocksdb::WriteOptions(), ss.str(), buf);
 #endif
+#else 
+  std::stringstream ss;
+  ss << infile << ".v." << frame;
+  SaveVortexLinesAscii(vlines, ss.str());
+#endif
 }
 
 static void compute_moving_speed(
@@ -146,11 +152,17 @@ static void compute_moving_speed(
 
 static void write_mat(int f0, int f1, const VortexTransitionMatrix& mat)
 {
+#if WITH_ROCKSDB
   std::stringstream ss;
   ss << "m." << f0 << "." << f1;
   std::string buf;
   diy::serialize(mat, buf);
   db->Put(rocksdb::WriteOptions(), ss.str(), buf);
+#else 
+  std::stringstream ss;
+  ss << infile << ".m." << f0 << "." << f1;
+  mat.SaveAscii(ss.str());
+#endif
 }
 
 /////////////////
