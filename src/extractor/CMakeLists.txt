@@ -12,4 +12,8 @@ else ()
   target_link_libraries (glextractor PUBLIC glcommon glio)
 endif ()
 
+if (WITH_ARMA)
+  target_link_libraries (glextractor PUBLIC ${ARMADILLO_LIBRARIES})
+endif ()
+
 #install (TARGETS glextractor DESTINATION ${VTK_INSTALL_LIBRARY_DIR})

@@ -32,6 +32,7 @@ public:
   void SetArchive(bool); // archive intermediate results for data reuse
   void SetExtentThreshold(float);
   void SetGPU(bool);
+  void SetCond(bool); // extrat faces and return condition numbers
   void SetPertubation(float);
   
   virtual void SetDataset(const GLDatasetBase* ds);
@@ -76,11 +77,11 @@ protected:
   void ResetGlobalVortexId();
 
 public:
-  void AddPuncturedFace(FaceIdType, int slot, ChiralityType chirality, const float pos[3]);
+  void AddPuncturedFace(FaceIdType, int slot, ChiralityType chirality, const float pos[3], float cond=0.f);
   void AddPuncturedEdge(EdgeIdType, ChiralityType chirality, float t);
 
 protected:
-  bool FindFaceZero(int n, const float X[][3], const float re[], const float im[], float pos[3]) const;
+  bool FindFaceZero(int n, const float X[][3], const float re[], const float im[], float pos[3], float &cond) const;
   bool FindSpaceTimeEdgeZero(const float re[], const float im[], float &t) const;
 
 protected:
@@ -100,6 +101,7 @@ protected:
   bool _gauge; 
   bool _archive;
   bool _gpu;
+  bool _cond;
   unsigned int _interpolation_mode;
   float _pertubation; // used for stochastic analysis
   float _extent_threshold;

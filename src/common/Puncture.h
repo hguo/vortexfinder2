@@ -9,6 +9,7 @@ struct PuncturedFace
 {
   ChiralityType chirality;
   float pos[3];
+  float cond; // condition number
 };
 
 struct PuncturedEdge

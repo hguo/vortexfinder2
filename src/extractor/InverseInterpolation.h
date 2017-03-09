@@ -1,11 +1,42 @@
 #ifndef _INVERSE_INTERPOLATION_H
 #define _INVERSE_INTERPOLATION_H
 
+#include "def.h"
 #include <cmath>
+
+#if WITH_ARMA
+#include <armadillo>
+#endif
+
+template <typename T>
+static inline T cond_barycentric(const T re[3], const T im[3]) 
+{
+#if WITH_ARMA
+  using namespace std;
+  using namespace arma;
+
+  Mat<T> A(3, 3);
+  A(0, 0) = re[0]; 
+  A(0, 1) = re[1];
+  A(0, 2) = re[2];
+  A(1, 0) = im[0];
+  A(1, 1) = im[1];
+  A(1, 2) = im[2];
+  A(2, 0) = 1;
+  A(2, 1) = 1;
+  A(2, 2) = 1;
+
+  return cond(A);
+#else
+  return 0;
+#endif
+}
 
 template <typename T>
 static inline bool find_zero_barycentric(const T re[3], const T im[3], T lambda[3], T epsilon=0)
 {
+  // A = [[R0, R1, R2], [I0, I1, I2], [1, 1, 1]], b = [0, 0, 1]^T, solve Ax=b
+
   T D = re[0]*im[1] + re[1]*im[2] + re[2]*im[0] - re[2]*im[1] - re[1]*im[0] - re[0]*im[2]; // TODO: check if D=0?
   T det[3] = {
     re[1]*im[2] - re[2]*im[1], 

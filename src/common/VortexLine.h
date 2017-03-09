@@ -48,6 +48,8 @@ struct VortexLine : public std::vector<float>
   bool is_bezier;
   bool is_loop;
 
+  std::vector<float> cond; // condition numbers
+
   // used for PL curve
   mutable std::vector<float> length_seg;
   mutable std::vector<float> length_acc;
@@ -65,6 +67,7 @@ namespace diy {
       diy::save(bb, m.moving_speed);
       diy::save(bb, m.is_bezier);
       diy::save(bb, m.is_loop);
+      // diy::save(bb, m.cond); // TODO: adding this field will make historical data invalid
       diy::save<std::vector<float> >(bb, m);
     }
 
@@ -76,6 +79,7 @@ namespace diy {
       diy::load(bb, m.moving_speed);
       diy::load(bb, m.is_bezier);
       diy::load(bb, m.is_loop);
+      // diy::load(bb, m.cond); 
       diy::load<std::vector<float> >(bb, m);
     }
   };

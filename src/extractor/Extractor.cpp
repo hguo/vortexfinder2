@@ -33,6 +33,7 @@ VortexExtractor::VortexExtractor() :
   _vfgpu_ctx(NULL),
   _archive(false), 
   _gpu(false),
+  _cond(false),
   _pertubation(0),
   _extent_threshold(0),
   _interpolation_mode(INTERPOLATION_TRI_BARYCENTRIC | INTERPOLATION_QUAD_BILINEAR)
@@ -79,6 +80,11 @@ void VortexExtractor::SetArchive(bool a)
 void VortexExtractor::SetGPU(bool g)
 {
   _gpu = g;
+}
+
+void VortexExtractor::SetCond(bool c) 
+{
+  _cond = c;
 }
 
 void VortexExtractor::SetPertubation(float p)
@@ -210,7 +216,7 @@ bool VortexExtractor::LoadPuncturedFaces(int slot)
   return true;
 }
 
-void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType chirality, const float pos[])
+void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType chirality, const float pos[], float cond)
 {
   pthread_mutex_lock(&_mutex);
   
@@ -219,6 +225,7 @@ void VortexExtractor::AddPuncturedFace(FaceIdType id, int slot, ChiralityType ch
 
   pf.chirality = chirality;
   memcpy(pf.pos, pos, sizeof(float)*3);
+  pf.cond = cond;
 
   if (slot == 0) _punctured_faces[id] = pf;
   else _punctured_faces1[id] = pf;
@@ -651,7 +658,8 @@ void VortexExtractor::VortexObjectsToVortexLines(
         line.push_back(pf.pos[0]);
         line.push_back(pf.pos[1]);
         line.push_back(pf.pos[2]);
-        // fprintf(stderr, "{%f, %f, %f}\n", pf.pos[0], pf.pos[1], pf.pos[2]);
+        if (_cond) line.push_back(pf.cond);
+        // fprintf(stderr, "{%f, %f, %f}, cond=%f\n", pf.pos[0], pf.pos[1], pf.pos[2], pf.cond);
       }
     }
 
@@ -1108,13 +1116,14 @@ int VortexExtractor::ExtractFace(FaceIdType id, int slot)
 
   // find zero
   float pos[3];
-  if (FindFaceZero(nnodes, X, re, im, pos)) {
-    AddPuncturedFace(id, slot, chirality, pos);
+  float cond = 0.f; 
+  if (FindFaceZero(nnodes, X, re, im, pos, cond)) {
+    AddPuncturedFace(id, slot, chirality, pos, cond);
     // fprintf(stderr, "pos={%f, %f, %f}, chi=%d\n", pos[0], pos[1], pos[2], chirality);
   } else {
     fprintf(stderr, "WARNING: punctured but singularity not found.\n");
     pos[0] = pos[1] = pos[2] = NAN;
-    AddPuncturedFace(id, slot, chirality, pos);
+    AddPuncturedFace(id, slot, chirality, pos, cond);
   }
 
   return chirality;
@@ -1142,7 +1151,7 @@ void VortexExtractor::execute_thread(int nthreads, int tid, int type, int slot)
   } else assert(false);
 }
 
-bool VortexExtractor::FindFaceZero(int n, const float X_[][3], const float re[], const float im[], float pos[3]) const
+bool VortexExtractor::FindFaceZero(int n, const float X_[][3], const float re[], const float im[], float pos[3], float &cond) const
 {
   const float epsilon = 0.05;
   bool succ = false;
@@ -1163,6 +1172,7 @@ bool VortexExtractor::FindFaceZero(int n, const float X_[][3], const float re[],
 
   if (n == 3) {
     if (_interpolation_mode & INTERPOLATION_TRI_BARYCENTRIC) {
+      if (_cond) cond = cond_barycentric(re, im);
       if (find_zero_triangle(re, im, X, pos, epsilon))
         succ = true; 
       else 

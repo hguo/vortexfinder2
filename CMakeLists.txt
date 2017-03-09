@@ -62,6 +62,11 @@ else()
     endif()
   endif()
 
+  if (WITH_ARMA)
+    find_package (Armadillo REQUIRED)
+    include_directories (${ARMADILLO_INCLUDE_DIRS})
+  endif ()
+
   if (WITH_NETCDF)
     find_package (NetCDF REQUIRED)
     include_directories (${NETCDF_INCLUDES})
