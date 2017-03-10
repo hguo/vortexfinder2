@@ -2,6 +2,7 @@
 #include "vtkInformation.h"
 #include "vtkSmartPointer.h"
 #include "vtkPointData.h"
+#include "vtkFloatArray.h"
 #include "vtkPolyData.h"
 #include "vtkPolyLine.h"
 #include "vtkCellArray.h"
@@ -139,6 +140,7 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
 #if WITH_CUDA
   ex->SetGPU(bUseGPU); // FIXME: failure fallback
 #endif
+  ex->SetCond(true); // TODO
   ex->SetGaugeTransformation(true); 
   ex->SetExtentThreshold(dExtentThreshold);
   ex->ExtractFaces(0);
@@ -147,6 +149,14 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
   std::vector<VortexLine> vlines = ex->GetVortexLines(0);
   vtkSmartPointer<vtkPoints> points = vtkPoints::New();
   vtkSmartPointer<vtkCellArray> cells = vtkCellArray::New();
+  vtkSmartPointer<vtkFloatArray> conditionNumberArray = vtkFloatArray::New();
+  // conditionNumberArray->SetNumberOfComponents(1);
+
+  std::vector<float> conditionNumbers;
+
+  bool hasCond = false; 
+  if (vlines.size() > 0 && vlines[0].cond.size() > 0)
+    hasCond = true;
 
   if (h.ndims == 3) { // 3D poly lines
     std::vector<int> vertCounts;
@@ -158,6 +168,11 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
       for (int j=0; j<nv; j++) {
         double p[3] = {vlines[i][j*3], vlines[i][j*3+1], vlines[i][j*3+2]};
         points->InsertNextPoint(p);
+
+        if (hasCond) {
+          // fprintf(stderr, "cond1=%f\n", vlines[i].cond[j]);
+          conditionNumbers.push_back(vlines[i].cond[j]);
+        }
 
         double delta[3] = {p[0] - p0[0], p[1] - p0[1], p[2] - p0[2]};
         double dist = sqrt(delta[0]*delta[0] + delta[1]*delta[1] + delta[2]*delta[2]);
@@ -185,8 +200,16 @@ int vtkGLGPUVortexFilter::ExtractVorticies(vtkImageData* imageData, vtkPolyData*
       cells->InsertNextCell(polyLine);
       nv += vertCounts[i];
     }
+    
     polyData->SetPoints(points);
     polyData->SetLines(cells);
+
+    if (hasCond) {
+      conditionNumberArray->SetNumberOfValues(conditionNumbers.size());
+      for (int i=0; i<conditionNumbers.size(); i++) 
+        conditionNumberArray->SetValue(i, conditionNumbers[i]);
+      polyData->GetPointData()->SetScalars(conditionNumberArray);
+    }
   } else { // 2D data
     for (int i=0; i<vlines.size(); i++) {
       double p[3] = {vlines[i][0], vlines[i][1], vlines[i][2]};

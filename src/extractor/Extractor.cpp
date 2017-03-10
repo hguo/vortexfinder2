@@ -658,7 +658,7 @@ void VortexExtractor::VortexObjectsToVortexLines(
         line.push_back(pf.pos[0]);
         line.push_back(pf.pos[1]);
         line.push_back(pf.pos[2]);
-        if (_cond) line.push_back(pf.cond);
+        if (_cond) line.cond.push_back(pf.cond);
         // fprintf(stderr, "{%f, %f, %f}, cond=%f\n", pf.pos[0], pf.pos[1], pf.pos[2], pf.cond);
       }
     }
@@ -667,7 +667,6 @@ void VortexExtractor::VortexObjectsToVortexLines(
       line.Flattern(Dataset()->Origins(), Dataset()->Lengths());
       line.ToBezier();
     }
-
 
     if (vobj.loop && _extent_threshold > 0) {
       if (line.MaxExtent() < _extent_threshold) {
