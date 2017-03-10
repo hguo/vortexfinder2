@@ -41,7 +41,7 @@ namespace diy {
 
   template <typename T> void serializeToFile(const T& obj, const std::string& filename)
   {
-    FILE *fp = fopen(filename.c_str(), "rb");
+    FILE *fp = fopen(filename.c_str(), "wb");
     assert(fp);
     diy::detail::FileBuffer bb(fp);
     diy::save(bb, obj);

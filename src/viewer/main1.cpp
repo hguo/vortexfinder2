@@ -22,15 +22,15 @@ int main(int argc, char **argv)
   fmt.setSamples(16); 
   QGLFormat::setDefaultFormat(fmt); 
 
-  VortexTransition vt;
-  vt.LoadFromFile(dataname, ts, tl);
-  vt.ConstructSequence();
+  // VortexTransition vt;
+  // vt.LoadFromFile(dataname, ts, tl);
+  // vt.ConstructSequence();
 
   CGLWidget *widget = new CGLWidget;
   widget->show();
   widget->SetData(dataname, ts, tl);
   // widget->OpenGLGPUDataset();
-  widget->SetVortexTransition(&vt);
+  // widget->SetVortexTransition(&vt);
 
 #if 1
   widget->LoadTimeStep(ts);

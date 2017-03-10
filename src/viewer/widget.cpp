@@ -10,6 +10,7 @@
 #include "common/FieldLine.h"
 #include "common/Utils.hpp"
 #include "io/GLGPU3DDataset.h"
+#include "common/random_color.h"
 
 #ifdef WITH_VTK
 #include <vtkNew.h>
@@ -442,6 +443,8 @@ void CGLWidget::renderFieldLines()
 
 void CGLWidget::renderVortexIds()
 {
+  return;  // TODO
+
   QFont ft;
   ft.setPointSize(36);
 
@@ -852,6 +855,7 @@ void CGLWidget::Clear()
   _cones_color.clear();
 }
 
+#if WITH_ROCKSDB
 void CGLWidget::SetDB(rocksdb::DB* db)
 {
   _db = db;
@@ -860,6 +864,7 @@ void CGLWidget::SetDB(rocksdb::DB* db)
   rocksdb::Status s = _db->Get(rocksdb::ReadOptions(), "hdrs", &buf);
   diy::unserialize(buf, vfgpu_hdrs);
 }
+#endif
 
 void CGLWidget::LoadVortexLines()
 {
@@ -912,16 +917,23 @@ void CGLWidget::LoadVortexLines()
 
   std::string info_bytes;
   std::vector<VortexLine> vlines;
-  if (!::LoadVortexLines(vlines, info_bytes, filename))
-    return;
+  diy::unserializeFromFile(filename, vlines);
   
   fprintf(stderr, "Loaded vortex line file from %s\n", filename.c_str());
 #endif
 
+  std::vector<unsigned char> random_colors;
+  generate_random_colors(vlines.size(), random_colors);
   for (int i=0; i<vlines.size(); i++) {
+#if 0
     vlines[i].gid = _vt->lvid2gvid(_timestep, vlines[i].id);
     _vt->SequenceColor(vlines[i].gid, vlines[i].r, vlines[i].g, vlines[i].b);
     // fprintf(stderr, "t=%d, lid=%d, gid=%d\n", _timestep, vlines[i].id, vlines[i].gid);
+#else
+    vlines[i].r = random_colors[i*3];
+    vlines[i].g = random_colors[i*3+1];
+    vlines[i].b = random_colors[i*3+2];
+#endif
   }
   
   if (_timestep == 249) {

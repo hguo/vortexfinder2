@@ -151,7 +151,7 @@ void VortexExtractor::SaveVortexLines(int slot)
   std::string info;
   Dataset()->SerializeDataInfoToString(info);
 
-  // diy::serializeToFile(vlines, os.str()); // TODO
+  diy::serializeToFile(vlines, os.str()); // TODO
   // ::SaveVortexLines(vlines, info, os.str()); // FIXME!
   // ::SaveVortexLinesVTK(vlines, os.str()); // FIXME!
 #endif

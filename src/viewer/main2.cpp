@@ -38,7 +38,7 @@ int main(int argc, char **argv)
   widget->SetData(dbname, 0, vt.NTimesteps());
   // widget->SetData(dataname, ts, tl);
   // widget->OpenGLGPUDataset();
-  widget->SetVortexTransition(&vt);
+  // widget->SetVortexTransition(&vt);
   widget->LoadTimeStep(0);
 
   return app.exec(); 
