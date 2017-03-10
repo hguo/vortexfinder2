@@ -76,7 +76,7 @@ static inline bool find_zero_unit_quad_bilinear(const T re[4], const T im[4], T 
 {
   T f00 = re[0], f10 = re[1], f01 = re[3], f11 = re[2], // counter-clockwise
     g00 = im[0], g10 = im[1], g01 = im[3], g11 = im[2];
-  T A0 = f00 - f10 - f01 + f11, 
+  T A0 = f00 - f10 - f01 + f11,  // Axy + Bx + Cy + D = 0
     B0 = f10 - f00, 
     C0 = f01 - f00, 
     D0 = f00,
