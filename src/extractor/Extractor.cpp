@@ -29,6 +29,9 @@ typedef struct {
 
 VortexExtractor::VortexExtractor() :
   _dataset(NULL), 
+#if WITH_ROCKSDB
+  _db(NULL),
+#endif
   _gauge(false), 
   _vfgpu_ctx(NULL),
   _archive(false), 
@@ -54,6 +57,11 @@ VortexExtractor::~VortexExtractor()
   if (_gpu && _vfgpu_ctx)
     vfgpu_destroy_ctx(_vfgpu_ctx);
 #endif
+
+#if WITH_ROCKSDB
+  if (_db != NULL)
+    delete _db;
+#endif
 }
 
 void VortexExtractor::SetNumberOfThreads(int n)
@@ -62,9 +70,28 @@ void VortexExtractor::SetNumberOfThreads(int n)
   else _nthreads = n;
 }
 
+void VortexExtractor::OpenDB(const std::string &name) 
+{
+#if WITH_ROCKSDB
+  std::string dbname = name + ".rocksdb";
+
+  rocksdb::Options options;
+  options.create_if_missing = true;
+  options.compression = rocksdb::kBZip2Compression;
+  rocksdb::Status status = rocksdb::DB::Open(options, dbname.c_str(), &_db);
+  assert(status.ok());
+#else
+  assert(false);
+#endif
+}
+
 void VortexExtractor::SetDataset(const GLDatasetBase* ds)
 {
   _dataset = ds;
+
+#if WITH_ROCKSDB
+  OpenDB(ds->DataName());
+#endif
 }
 
 void VortexExtractor::SetGaugeTransformation(bool g)
@@ -100,9 +127,6 @@ void VortexExtractor::SetExtentThreshold(float threshold)
 void VortexExtractor::SaveVortexLines(int slot)
 {
   const GLDatasetBase *ds = _dataset;
-  std::ostringstream os; 
-  os << ds->DataName() << ".vlines." << ds->TimeStep(slot);
-  
   std::vector<VortexObject> &vobjs = 
     slot == 0 ? _vortex_objects : _vortex_objects1;
   std::vector<VortexLine> &vlines = 
@@ -112,13 +136,25 @@ void VortexExtractor::SaveVortexLines(int slot)
 
   VortexObjectsToVortexLines(pfs, vobjs, vlines);
 
+#if WITH_ROCKSDB
+  assert(_db);
+
+  std::stringstream ss;
+  std::string buf;
+  diy::serialize(vlines, buf);
+  ss << "v." << ds->TimeStep(slot);
+  rocksdb::Status status = _db->Put(rocksdb::WriteOptions(), ss.str(), buf);
+#else
+  std::ostringstream os; 
+  os << ds->DataName() << ".vlines." << ds->TimeStep(slot);
+
   std::string info;
   Dataset()->SerializeDataInfoToString(info);
 
+  // diy::serializeToFile(vlines, os.str()); // TODO
   // ::SaveVortexLines(vlines, info, os.str()); // FIXME!
-  
-  fprintf(stderr, "OUT: %s\n", os.str().c_str());
-  ::SaveVortexLinesVTK(vlines, os.str()); // FIXME!
+  // ::SaveVortexLinesVTK(vlines, os.str()); // FIXME!
+#endif
 }
 
 std::vector<VortexLine> VortexExtractor::GetVortexLines(int slot)
@@ -631,8 +667,6 @@ void VortexExtractor::TraceOverSpace(int slot)
     vobj.id = vobjs.size();  // local (time) id
     vobjs.push_back(vobj);
   }
-
-  // fprintf(stderr, "#vortex_objs=%ld\n", vobjs.size());
 }
 
 void VortexExtractor::VortexObjectsToVortexLines(
@@ -691,7 +725,8 @@ VortexTransitionMatrix VortexExtractor::TraceOverTime()
   const int n0 = _vortex_objects.size(), 
             n1 = _vortex_objects1.size();
   // VortexTransitionMatrix &tm = _vortex_transition[_dataset->TimeStep(0)]; 
-  VortexTransitionMatrix tm(_dataset->TimeStep(0), _dataset->TimeStep(1), n0, n1);
+  const int f0 = _dataset->TimeStep(0), f1 = _dataset->TimeStep(1);
+  VortexTransitionMatrix tm(f0, f1, n0, n1);
 
   RelateOverTime();
 
@@ -718,6 +753,14 @@ next:
   // if (_archive) tm.SaveToFile(Dataset()->DataName(), Dataset()->TimeStep(0), Dataset()->TimeStep(1));
   _vortex_transition.AddMatrix(tm);
   // tm.Print();
+
+#if 0 // WITH_ROCKSDB
+  std::stringstream ss;
+  ss << "m." << f0 << "." << f1;
+  std::string buf;
+  diy::serialize(tm, buf);
+  _db->Put(rocksdb::WriteOptions(), ss.str(), buf);
+#endif
 
   return tm;
 

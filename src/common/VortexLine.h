@@ -86,6 +86,7 @@ namespace diy {
 }
 
 bool SaveVortexLinesVTK(const std::vector<VortexLine>& lines, const std::string& filename);
+bool SaveVortexLinesBinary(const std::vector<VortexLine>& lines, const std::string& filename);
 bool SaveVortexLinesAscii(const std::vector<VortexLine>& lines, const std::string& filename);
 
 #endif

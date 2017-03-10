@@ -8,6 +8,10 @@
 #include "InverseInterpolation.h"
 #include <map>
 
+#if WITH_ROCKSDB
+#include <rocksdb/db.h>
+#endif
+
 class GLDataset;
 class GLDatasetBase;
 
@@ -27,6 +31,8 @@ public:
 
   void SetNumberOfThreads(int);
   void SetInterpolationMode(unsigned int);
+
+  void OpenDB(const std::string &dbname);
 
   void SetGaugeTransformation(bool);
   void SetArchive(bool); // archive intermediate results for data reuse
@@ -107,6 +113,10 @@ protected:
   float _extent_threshold;
 
   struct vfgpu_ctx_t *_vfgpu_ctx;
+
+#if WITH_ROCKSDB
+  rocksdb::DB *_db;
+#endif
 
 private:
   static void *execute_thread_helper(void *ctx);
