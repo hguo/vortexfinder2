@@ -169,13 +169,16 @@ In the viewer, use left mouse button to rotate, and wheel to zoom in/out. Press 
 ## References ##
 
 H. Guo, T. Peterka, and A. Glatz.
-In Situ Magnetic Flux Vortex Visualization in Time-Dependent Ginzburg-Landau Superconductor Simulations. In Proc. IEEE Pacific Visualization Symposium (PacificVis '17), Seuol, Korea, 2017.  (Accepted)
+In Situ Magnetic Flux Vortex Visualization in Time-Dependent Ginzburg-Landau Superconductor Simulations. In Proc. IEEE Pacific Visualization Symposium (PacificVis '17), Seuol, Korea, pages 71-80, 2017.
 
 H. Guo, C. L. Phillps, T. Peterka, D. Karpeyev, and A. Glatz. 
 Extracting, Tracking and Visualizing Magnetic Flux Vortices in 3D Complex-Valued Superconductor Simulation Data. IEEE Trans. Vis. Comput. Graph. (SciVis '15), 22(1):827-836, 2016.
 
+C. L. Phillps, H. Guo, T. Peterka, D. Karpeyev, and A. Glatz.
+Tracking Vortices in Superconductors: Extracting Singularities from a Discretized Complex Scalar Field Evolving in Time. Physical Reivew E, 93(023305), 2016.
+
 C. L. Phillps, T. Peterka, D. Karpeyev, and A. Glatz.
-Detecting Vortices in Superconductors: Extracting One-Dimensional Topological Singularities from a Discretized Complex Scalar Field. Physics Review E, 023331(91):1-12, 2015.
+Detecting Vortices in Superconductors: Extracting One-Dimensional Topological Singularities from a Discretized Complex Scalar Field. Physical Review E, 91(023331), 2015.
 
 
 ## Contact ##
