@@ -59,6 +59,7 @@ public:
   void Clear();
   
   void SaveVortexLines(int slot=0);
+  void SaveVortexLinesToFile(std::string filename, int slot=0);
   std::vector<VortexLine> GetVortexLines(int slot=0);
   void SetVortexObjects(const std::vector<VortexObject>&, int slot);
   const std::vector<VortexObject>& GetVortexObjects(int slot) const;

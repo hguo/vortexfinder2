@@ -124,7 +124,7 @@ void VortexExtractor::SetExtentThreshold(float threshold)
   _extent_threshold = threshold;
 }
 
-void VortexExtractor::SaveVortexLines(int slot)
+void VortexExtractor::SaveVortexLinesToFile(std::string filename, int slot)
 {
   const GLDatasetBase *ds = _dataset;
   std::vector<VortexObject> &vobjs = 
@@ -145,17 +145,20 @@ void VortexExtractor::SaveVortexLines(int slot)
   ss << "v." << ds->TimeStep(slot);
   rocksdb::Status status = _db->Put(rocksdb::WriteOptions(), ss.str(), buf);
 #else
-  std::ostringstream os; 
-  os << ds->DataName() << ".vlines." << ds->TimeStep(slot);
-
-  std::string info;
-  Dataset()->SerializeDataInfoToString(info);
-
   // diy::serializeToFile(vlines, os.str()); // TODO
   // ::SaveVortexLines(vlines, info, os.str()); // FIXME!
   // ::SaveVortexLinesVTK(vlines, os.str()); // FIXME!
-  ::SaveVortexLinesAscii(vlines, os.str()); // FIXME!
+  ::SaveVortexLinesAscii(vlines, filename); // FIXME!
 #endif
+}
+
+void VortexExtractor::SaveVortexLines(int slot)
+{
+  const GLDatasetBase *ds = _dataset;
+  std::ostringstream os; 
+  os << ds->DataName() << ".vlines." << ds->TimeStep(slot);
+
+  SaveVortexLinesToFile(os.str());
 }
 
 std::vector<VortexLine> VortexExtractor::GetVortexLines(int slot)

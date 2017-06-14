@@ -6,6 +6,9 @@ endif ()
 add_executable (extractor_glgpu3D ex_glgpu3D.cpp)
 target_link_libraries (extractor_glgpu3D PUBLIC glextractor)
 
+add_executable (extractor_glgpu3D_simple ex_glgpu3D_simple.cpp)
+target_link_libraries (extractor_glgpu3D_simple PUBLIC glextractor)
+
 add_executable (convertor ex_convertor.cpp)
 target_link_libraries (convertor PUBLIC glextractor)
   
