@@ -706,6 +706,8 @@ void VortexExtractor::VortexObjectsToVortexLines(
       line.ToBezier();
     }
 
+    if (vobj.loop) line.is_loop = true;
+
     if (vobj.loop && _extent_threshold > 0) {
       if (line.MaxExtent() < _extent_threshold) {
         fprintf(stderr, "loop filtered, extent=%f\n", line.MaxExtent());

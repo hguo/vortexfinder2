@@ -424,7 +424,7 @@ bool SaveVortexLinesAscii(const std::vector<VortexLine>& vlines, const std::stri
     const VortexLine& vline = vlines[i];
     const int nv = vlines[i].size()/3;
 
-    fprintf(fp, "id=%d\n", vline.id); 
+    fprintf(fp, "id=%d,n=%d,loop=%d\n", vline.id, vline.size()/3, vline.is_loop); 
 
     for (int i=0; i<nv; i++) {
       fprintf(fp, "%f\t%f\t%f\n", 

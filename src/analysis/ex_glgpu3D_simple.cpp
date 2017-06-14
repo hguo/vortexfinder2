@@ -97,8 +97,7 @@ int main(int argc, char **argv)
   // ds.SetPrecomputeSupercurrent(true);
   ds.SetDataName(filename_in); // FIXME
   ds.LoadTimeStep(T0, 0);
-  if (tet) ds.SetMeshType(GLGPU3D_MESH_TET);
-  else ds.SetMeshType(GLGPU3D_MESH_HEX);
+  ds.SetMeshType(GLGPU3D_MESH_TET);
   ds.BuildMeshGraph();
   ds.PrintInfo();
  
