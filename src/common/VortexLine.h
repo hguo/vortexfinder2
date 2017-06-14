@@ -67,7 +67,7 @@ namespace diy {
       diy::save(bb, m.moving_speed);
       diy::save(bb, m.is_bezier);
       diy::save(bb, m.is_loop);
-      // diy::save(bb, m.cond); // TODO: adding this field will make historical data invalid
+      diy::save(bb, m.cond); // TODO: adding this field will make historical data invalid
       diy::save<std::vector<float> >(bb, m);
     }
 
@@ -79,7 +79,7 @@ namespace diy {
       diy::load(bb, m.moving_speed);
       diy::load(bb, m.is_bezier);
       diy::load(bb, m.is_loop);
-      // diy::load(bb, m.cond); 
+      diy::load(bb, m.cond); 
       diy::load<std::vector<float> >(bb, m);
     }
   };

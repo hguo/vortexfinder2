@@ -151,7 +151,7 @@ void CGLWidget::LoadVortexLines2D()
     QVector3D p0;
     for (int i=0; i<line.size()/3; i++) {
       QVector3D p(line[i*3], line[i*3+1], line[i*3+2]);
-      
+
       v_line_vertices.push_back(p.x()); 
       v_line_vertices.push_back(p.y()); 
       v_line_vertices.push_back(p.z()); 
@@ -1021,6 +1021,12 @@ void CGLWidget::LoadVortexLines()
     for (int i=0; i<vlines[k].size()/3; i++) {
       QVector3D p(*it, *(++it), *(++it));
       it ++;
+
+      if (vlines[k].cond.size()>0) { // TODO
+        c[0] = std::min(255.f, vlines[k].cond[i]*256*8);
+        c[1] = 255-c[0];
+        c[2] = 0;
+      }
       
       v_line_vertices.push_back(p.x()); 
       v_line_vertices.push_back(p.y()); 

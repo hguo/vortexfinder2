@@ -26,7 +26,11 @@ static inline T cond_barycentric(const T re[3], const T im[3])
   A(2, 1) = 1;
   A(2, 2) = 1;
 
-  return cond(A);
+  Mat<T> invA = inv(A);
+  T val = T(1.0) / (norm(invA, 1) * norm(A, 1));
+
+  // fprintf(stderr, "%f, %f, %f\n", cond(A), norm(invA, 1)*norm(A, 1), val);
+  return val; 
 #else
   return 0;
 #endif
