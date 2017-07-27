@@ -1121,15 +1121,42 @@ void VortexExtractor::ExtractSpaceTimeEdge(EdgeIdType id)
 
 int VortexExtractor::ExtractFace(FaceIdType id, int slot)
 {
+  const GLHeader& hdr = _dataset->GetHeader(slot); 
   const GLDataset *ds = (GLDataset*)_dataset;
-  const CFace& f = ds->MeshGraph()->Face(id, true);
+  const MeshGraphRegular3DTets *mg = (const MeshGraphRegular3DTets*)_dataset->MeshGraph();
+  
+  const CFace& f = mg->Face(id, true);
   const int nnodes = f.nodes.size();
 
   if (!f.Valid()) return 0;
 
+  int nidx0[3], nidx1[3], nidx2[3];
+  mg->nid2nidx(f.nodes[0], nidx0);
+  mg->nid2nidx(f.nodes[1], nidx1);
+  mg->nid2nidx(f.nodes[2], nidx2);
+  // fprintf(stderr, "%d, %d, %d\n", f.nodes[0], f.nodes[1], f.nodes[2]);
+
   float X[nnodes][3], A[nnodes][3];
   float rho[nnodes], phi[nnodes], re[nnodes], im[nnodes];
   ds->GetFaceValues(f, slot, X, A, rho, phi, re, im);
+  
+#if 1 // pbc
+  for (int i=1; i<nnodes; i++) {
+    for (int k=0; k<3; k++) {
+      if (X[i][k] - X[0][k] < -hdr.lengths[k]/2) 
+        X[i][k] += hdr.lengths[k];
+      else if (X[i][k] - X[0][k] > hdr.lengths[k]/2) 
+        X[i][k] -= hdr.lengths[k];
+    }
+  }
+#endif
+
+#if 0
+  if (nidx0[0] == 255) {
+    fprintf(stderr, "%d, %d, %d, crossed=%d\n", nidx0[0], nidx1[0], nidx2[0], crossed);
+    fprintf(stderr, "%f, %f, %f\n", X[0][0], X[1][0], X[2][0]);
+  }
+#endif
 
   // calculating phase shift
   float delta[nnodes], phase_shift = 0;
@@ -1137,7 +1164,7 @@ int VortexExtractor::ExtractFace(FaceIdType id, int slot)
     int j = (i+1) % nnodes;
     delta[i] = phi[j] - phi[i]; 
     float li = ds->LineIntegral(X[i], X[j], A[i], A[j]), 
-           qp = ds->QP(X[i], X[j]);
+          qp = ds->QP(X[i], X[j]);
     if (_gauge) 
       // delta[i] = mod2pi1(delta[i] - li + qp);
       delta[i] = mod2pi1(delta[i] - li + qp);
@@ -1208,15 +1235,6 @@ bool VortexExtractor::FindFaceZero(int n, const float X_[][3], const float re[],
   for (int i=0; i<4; i++)
     for (int j=0; j<3; j++)
       X[i][j] = X_[i][j];
-
-#if 0 // pbc
-  for (int i=1; i<4; i++) {
-    for (int k=0; k<3; k++) 
-      if (X[i][k] - X[0][k] < 0) { // -ds->Lengths()[k]/2) 
-        X[i][k] += ds->Lengths()[k];
-      }
-  }
-#endif
 
   if (n == 3) {
     if (_interpolation_mode & INTERPOLATION_TRI_BARYCENTRIC) {

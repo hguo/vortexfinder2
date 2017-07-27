@@ -72,23 +72,27 @@ CFace MeshGraphRegular3DTets::Face(FaceIdType id, bool nodes_only) const
   int fidx[4];
 
   fid2fidx(id, fidx);
-  if (!valid_fidx(fidx)) return face;
+  bool valid = valid_fidx(fidx);
   const int i = fidx[0], j = fidx[1], k = fidx[2], t = fidx[3];
+  if (!valid) {
+    // fprintf(stderr, "invalid {%d, %d, %d, %d}\n", i, j, k, t);
+    return face;
+  }
 
   // nodes
   const int nodes_idx[12][3][3] = { // 12 types of faces
-    {{i, j, k}, {i+1, j, k}, {i+1, j+1, k}},      // ABC
-    {{i, j, k}, {i+1, j+1, k}, {i, j+1, k}},      // ACD
-    {{i, j, k}, {i+1, j, k}, {i+1, j, k+1}},      // ABF
-    {{i, j, k}, {i, j, k+1}, {i+1, j, k+1}},      // AEF
-    {{i, j, k}, {i, j+1, k}, {i, j, k+1}},        // ADE
-    {{i, j+1, k}, {i, j, k+1}, {i, j+1, k+1}},    // DEH
-    {{i, j, k}, {i, j+1, k}, {i+1, j, k+1}},      // ADF
-    {{i, j+1, k}, {i+1, j, k+1}, {i+1, j+1, k+1}},// DFG
-    {{i, j+1, k}, {i, j, k+1}, {i+1, j, k+1}},    // DEF
-    {{i+1, j+1, k}, {i, j+1, k}, {i+1, j, k+1}},  // CDF
-    {{i, j, k}, {i+1, j+1, k}, {i+1, j, k+1}},    // ACF
-    {{i, j+1, k}, {i, j, k+1}, {i+1, j+1, k+1}}   // DEG
+    {{i, j, k}, {i+1, j, k}, {i+1, j+1, k}},      // 0: ABC
+    {{i, j, k}, {i+1, j+1, k}, {i, j+1, k}},      // 1: ACD
+    {{i, j, k}, {i+1, j, k}, {i+1, j, k+1}},      // 2: ABF
+    {{i, j, k}, {i, j, k+1}, {i+1, j, k+1}},      // 3: AEF
+    {{i, j, k}, {i, j+1, k}, {i, j, k+1}},        // 4: ADE
+    {{i, j+1, k}, {i, j, k+1}, {i, j+1, k+1}},    // 5: DEH
+    {{i, j, k}, {i, j+1, k}, {i+1, j, k+1}},      // 6: ADF
+    {{i, j+1, k}, {i+1, j, k+1}, {i+1, j+1, k+1}},// 8: DFG
+    {{i, j+1, k}, {i, j, k+1}, {i+1, j, k+1}},    // 9: DEF
+    {{i+1, j+1, k}, {i, j+1, k}, {i+1, j, k+1}},  //10: CDF
+    {{i, j, k}, {i+1, j+1, k}, {i+1, j, k+1}},    //11: ACF
+    {{i, j+1, k}, {i, j, k+1}, {i+1, j+1, k+1}}   //12: DEG
   };
   for (int p=0; p<3; p++)
     face.nodes.push_back(nidx2nid(nodes_idx[t][p]));
