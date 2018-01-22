@@ -330,6 +330,25 @@ bool GLGPU_IO_Helper_ReadLegacy(
   return true;
 }
 
+bool GLGPU_IO_Helper_WriteRaw_rho_phi(
+    const std::string& filename_rho, 
+    const std::string& filename_phi, 
+    GLHeader& h, 
+    const float *rho, const float *phi)
+{
+  size_t num_elems = h.dims[2] * h.dims[1] * h.dims[0];
+
+  FILE *fp_rho = fopen(filename_rho.c_str(), "wb");
+  fwrite(rho, sizeof(float), num_elems, fp_rho);
+  fclose(fp_rho);
+
+  FILE *fp_phi = fopen(filename_phi.c_str(), "wb");
+  fwrite(phi, sizeof(float), num_elems, fp_phi);
+  fclose(fp_phi);
+
+  return true;
+}
+
 bool GLGPU_IO_Helper_WriteNetCDF(
     const std::string& filename, 
     GLHeader& h,

@@ -30,4 +30,10 @@ bool GLGPU_IO_Helper_WriteNetCDF(
     const float *rho, const float *phi, 
     const float *re, const float *im, const float *Jx, const float *Jy, const float *Jz);
 
+bool GLGPU_IO_Helper_WriteRaw_rho_phi(
+    const std::string& filename_rho, 
+    const std::string& filename_phi, 
+    GLHeader& hdr, 
+    const float *rho, const float *phi);
+
 #endif
