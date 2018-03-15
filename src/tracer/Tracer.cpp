@@ -72,7 +72,8 @@ void FieldLineTracer::Trace()
   fprintf(stderr, "Trace..\n");
 
   // const int nseeds[3] = {8, 9, 8};
-  const int nseeds[3] = {256, 128, 32};
+  // const int nseeds[3] = {256, 128, 32};
+  const int nseeds[3] = {128, 64, 32};
   const float span[3] = {
     _ds->Lengths()[0]/(nseeds[0]-1), 
     _ds->Lengths()[1]/(nseeds[1]-1), 
