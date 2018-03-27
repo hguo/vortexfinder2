@@ -63,7 +63,8 @@ void FieldLineTracer::WriteFieldLines(const std::string& filename)
   writer->SetInputData(polyData);
   writer->Write();
 #else
-  ::WriteFieldLines(filename, _fieldlines);
+  // ::WriteFieldLines(filename, _fieldlines);
+  ::WriteFieldLinesASCII(filename, _fieldlines);
 #endif
 }
 
@@ -73,7 +74,8 @@ void FieldLineTracer::Trace()
 
   // const int nseeds[3] = {8, 9, 8};
   // const int nseeds[3] = {256, 128, 32};
-  const int nseeds[3] = {128, 64, 32};
+  // const int nseeds[3] = {128, 64, 32};
+  const int nseeds[3] = {64, 32, 32};
   const float span[3] = {
     _ds->Lengths()[0]/(nseeds[0]-1), 
     _ds->Lengths()[1]/(nseeds[1]-1), 
@@ -94,8 +96,8 @@ void FieldLineTracer::Trace()
 
 void FieldLineTracer::Trace(const float seed[3])
 {
-  static const int max_length = 2048; 
-  const float h = 0.25; 
+  static const int max_length = 1024; 
+  const float h = 2; // 0.25; 
   float X[3] = {seed[0], seed[1], seed[2]}; 
 
   FieldLine line;
@@ -135,7 +137,7 @@ bool FieldLineTracer::RK1(T *X, T h)
   bool succ = Supercurrent(X, J);
   if (!succ) return false;
 
-  const float threshold = 0.0001;
+  const float threshold = 0.001;
   float Jmag = sqrt(J[0]*J[0] + J[1]*J[1] + J[2]*J[2]);
   if (Jmag < threshold) return false;
 

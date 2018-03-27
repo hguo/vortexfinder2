@@ -75,6 +75,22 @@ void WriteFieldLines(const std::string& filename, const std::vector<FieldLine>& 
   fclose(fp);
 }
 
+void WriteFieldLinesASCII(const std::string &filename, const std::vector<FieldLine>& objs)
+{
+  FILE *fp = fopen(filename.c_str(), "w");
+  assert(fp); 
+ 
+  for (int i=0; i<objs.size(); i++) {
+    fprintf(fp, "id=%d, npoints=%zu\n", i, objs[i].size()/3); 
+
+    for (const auto val : objs[i]) fprintf(fp, "%f\n", val);
+
+    fprintf(fp, "#\n");
+  }
+  
+  fclose(fp);
+}
+
 bool ReadFieldLines(const std::string& filename, std::vector<FieldLine>& objs)
 {
   size_t count;
