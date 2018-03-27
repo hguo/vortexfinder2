@@ -69,7 +69,7 @@ tbb::concurrent_unordered_map<int, std::vector<VortexLine> > vlines_all;
 tbb::concurrent_unordered_map<std::pair<int, int>, std::vector<vfgpu_pe_t> > pes_all; // released on exit
 std::map<int, tbb::flow::continue_node<tbb::flow::continue_msg>* > extract_tasks; 
 std::map<std::pair<int, int>, tbb::flow::continue_node<tbb::flow::continue_msg>* > track_tasks;
-VortexTransition vt;
+ftkTransition vt;
 
 tbb::concurrent_unordered_map<int, int> frame_counter;  // used to count how many times a frame is referenced by trackers
 // tbb::concurrent_unordered_map<int, tbb::mutex> frame_mutexes;
@@ -134,13 +134,13 @@ static void compute_moving_speed(
     int f0, int f1, 
     std::vector<VortexLine>& vlines0, // moving speed will be written in vlines
     const std::vector<VortexLine>& vlines1,
-    const VortexTransitionMatrix& mat)
+    const ftkTransitionMatrix& mat)
 {
   int event; 
   std::set<int> lhs, rhs;
   for (int i=0; i<mat.NModules(); i++) {
     mat.GetModule(i, lhs, rhs, event);
-    if (event != VORTEX_EVENT_DUMMY) continue; // cannot compute moving speed for events
+    if (event != FTK_EVENT_DUMMY) continue; // cannot compute moving speed for events
 
     const int llvid = *lhs.begin(), rlvid = *rhs.begin();
     const float A = AreaL(vlines0[llvid], vlines1[rlvid]);
@@ -150,7 +150,7 @@ static void compute_moving_speed(
   }
 }
 
-static void write_mat(int f0, int f1, const VortexTransitionMatrix& mat)
+static void write_mat(int f0, int f1, const ftkTransitionMatrix& mat)
 {
 #if WITH_ROCKSDB
   std::stringstream ss;
@@ -258,7 +258,7 @@ struct track {
 
     ex->SetVortexObjects(vobjs0, 0);
     ex->SetVortexObjects(vobjs1, 1);
-    VortexTransitionMatrix mat = ex->TraceOverTime();
+    ftkTransitionMatrix mat = ex->TraceOverTime();
     mat.SetInterval(interval);
     mat.Modularize();
     vt.AddMatrix(mat);

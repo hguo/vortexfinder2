@@ -1,16 +1,16 @@
 #include "def.h"
 #include <diy/serialization.hpp>
-#include "common/VortexEvents.h"
-#include "common/VortexTransition.h"
+#include <ftk/ftkEvents.h>
+#include <ftk/ftkTransition.h>
 #include <sstream>
 #include <cstdio>
   
-VortexTransition vt;
+ftkTransition vt;
 std::vector<std::vector<float> > distMatrices;
 
 void seqDist(int gvid0, int gvid1, int f0_, std::map<int, float>& dist) {
-  const VortexSequence &s0 = vt.Sequences()[gvid0]; 
-  const VortexSequence &s1 = vt.Sequences()[gvid1];
+  const ftkSequence &s0 = vt.Sequences()[gvid0]; 
+  const ftkSequence &s1 = vt.Sequences()[gvid1];
   int f0 = std::max(20000, std::max(s0.its, s1.its)), // limit: 20000
       f1 = std::min((int)distMatrices.size()-1, std::min(s0.its+s0.itl-1, s1.its+s1.itl-1));
 
@@ -55,9 +55,9 @@ int main(int argc, char **argv)
     distMatrices.push_back(dist);
   }
 
-  const std::vector<VortexEvent>& events = vt.Events();
+  const std::vector<ftkEvent>& events = vt.Events();
   for (int i=0; i<events.size(); i++) {
-    const VortexEvent& e = events[i];
+    const ftkEvent& e = events[i];
     if (e.type == VORTEX_EVENT_RECOMBINATION) {
       std::vector<int> lhs, rhs;
       for (auto const &id : e.lhs) lhs.push_back(vt.lvid2gvid(e.if0, id));

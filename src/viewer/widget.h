@@ -10,7 +10,7 @@
 #include "def.h"
 #include "trackball.h"
 #include "common/Inclusions.h"
-#include "common/VortexTransition.h"
+#include <ftk/ftkTransition.h>
 
 #ifdef WITH_ROCKSDB
 #include <rocksdb/db.h>
@@ -53,7 +53,7 @@ public:
 #endif 
   void LoadTimeStep(int t);
 
-  void SetVortexTransition(const VortexTransition* vt);
+  void SetTransition(const ftkTransition* vt);
 
   void Clear();
   
@@ -98,7 +98,7 @@ private: //data
   int _timestep;
   int _ts, _tl;
 
-  const VortexTransition *_vt;
+  const ftkTransition *_vt;
 
 private: // camera
   const float _fovy, _znear, _zfar; 

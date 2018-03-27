@@ -5,13 +5,9 @@ set (common_headers
   VortexObject.h
   Inclusions.h
   MeshGraphRegular3DTets.h
-  VortexSequence.h 
   Interval.h
   Puncture.h
-  VortexTransition.h
   MeshGraph.h 
-  VortexEvents.h
-  VortexTransitionMatrix.h
   MeshGraphRegular2D.h
   VortexLine.h
 )
@@ -22,14 +18,11 @@ set (common_sources
   MeshGraphRegular3D.cpp
   MeshGraphRegular3DTets.cpp
   VortexLine.cpp
-  VortexTransitionMatrix.cpp
-  VortexTransition.cpp
   Inclusions.cpp
   FieldLine.cpp
   Puncture.cpp
-  zcolor.cpp
   random_color.cpp
-  graph_color.cpp
+  zcolor.cpp
 )
 
 set (common_protos

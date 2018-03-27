@@ -3,9 +3,9 @@
 
 #include "common/VortexLine.h"
 #include "common/VortexObject.h"
-#include "common/VortexTransition.h"
 #include "common/Puncture.h"
 #include "InverseInterpolation.h"
+#include <ftk/ftkTransition.h>
 #include <map>
 
 #if WITH_ROCKSDB
@@ -66,7 +66,7 @@ public:
 
   void TraceVirtualCells();
   void TraceOverSpace(int slot=0);
-  VortexTransitionMatrix TraceOverTime();
+  ftkTransitionMatrix TraceOverTime();
   void AnalyzeTransition();
 
   void RelateOverTime();
@@ -101,7 +101,7 @@ protected:
   std::vector<VortexObject> _vortex_objects, _vortex_objects1;
   std::vector<VortexLine> _vortex_lines, _vortex_lines1;
 
-  VortexTransition _vortex_transition;
+  ftkTransition _vortex_transition;
 
 protected:
   const GLDatasetBase *_dataset;

@@ -1,9 +1,9 @@
 #include "Extractor.h"
 #include "common/Utils.hpp"
-#include "common/VortexTransition.h"
 #include "common/MeshGraphRegular3DTets.h"
 #include "io/GLDataset.h"
 #include "io/GLGPU3DDataset.h"
+#include <ftk/ftkTransition.h>
 #include <pthread.h>
 #include <set>
 #include <climits>
@@ -726,13 +726,13 @@ int VortexExtractor::NewGlobalVortexId()
 }
 
 // only relate ids
-VortexTransitionMatrix VortexExtractor::TraceOverTime()
+ftkTransitionMatrix VortexExtractor::TraceOverTime()
 {
   const int n0 = _vortex_objects.size(), 
             n1 = _vortex_objects1.size();
-  // VortexTransitionMatrix &tm = _vortex_transition[_dataset->TimeStep(0)]; 
+  // ftkTransitionMatrix &tm = _vortex_transition[_dataset->TimeStep(0)]; 
   const int f0 = _dataset->TimeStep(0), f1 = _dataset->TimeStep(1);
-  VortexTransitionMatrix tm(f0, f1, n0, n1);
+  ftkTransitionMatrix tm(f0, f1, n0, n1);
 
   RelateOverTime();
 

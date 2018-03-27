@@ -1,7 +1,7 @@
 #include "def.h"
-#include "common/VortexTransition.h"
 #include "common/VortexLine.h"
 #include "io/GLGPU_IO_Helper.h"
+#include <ftk/ftkTransition.h>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
 
   LoadTimesteps(dataname);
 
-  VortexTransition vt;
+  ftkTransition vt;
   vt.LoadFromFile(dataname, ts, tl);
   vt.ConstructSequence();
   // vt.PrintSequence();

@@ -19,8 +19,8 @@ if (WITH_TBB AND WITH_ROCKSDB)
   add_executable (inclusions ex_inclusions.cpp)
   target_link_libraries (inclusions PUBLIC glcommon ${TBB_LIBRARY_RELEASE})
   
-  add_executable (dist2 ex_dist2.cpp)
-  target_link_libraries (dist2 PUBLIC glcommon)
+  # add_executable (dist2 ex_dist2.cpp)
+  # target_link_libraries (dist2 PUBLIC glcommon)
 endif ()
 
 # add_executable (extractor_glgpu3D_sto ex_glgpu3D_sto.cpp)
@@ -41,8 +41,8 @@ target_link_libraries (events glcommon)
 # add_executable (events_dist ex_events_dist.cpp)
 # target_link_libraries (events_dist glcommon)
 
-add_executable (dist ex_dist.cpp)
-target_link_libraries (dist glio)
+# add_executable (dist ex_dist.cpp)
+# target_link_libraries (dist glio)
 
 # add_executable (count ex_count.cpp)
 # target_link_libraries (count glio)

@@ -1,5 +1,5 @@
 #include "def.h"
-#include "common/VortexTransition.h"
+#include <ftk/ftkTransition.h>
 #include <cstdio>
 
 #if WITH_ROCKSDB
@@ -13,7 +13,7 @@ int main(int argc, char **argv)
   rocksdb::Options options;
   rocksdb::Status status = rocksdb::DB::Open(options, argv[1], &db);
 
-  VortexTransition vt;
+  ftkTransition vt;
   vt.LoadFromDB(db);
   // vt.ConstructSequence();
   vt.PrintSequence();
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
   const int ts = atoi(argv[2]), 
             tl = atoi(argv[3]);
 
-  VortexTransition vt;
+  ftkTransition vt;
   vt.LoadFromFile(dataname, ts, tl);
   vt.ConstructSequence();
   vt.PrintSequence();
