@@ -3,7 +3,6 @@
 #include "common/MeshGraphRegular3DTets.h"
 #include "io/GLDataset.h"
 #include "io/GLGPU3DDataset.h"
-#include <ftk/ftkTransition.h>
 #include <pthread.h>
 #include <set>
 #include <climits>

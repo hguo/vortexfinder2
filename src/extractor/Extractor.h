@@ -5,7 +5,7 @@
 #include "common/VortexObject.h"
 #include "common/Puncture.h"
 #include "InverseInterpolation.h"
-#include <ftk/ftkTransition.h>
+#include <ftk/transition/transition.h>
 #include <map>
 
 #if WITH_ROCKSDB

@@ -1,5 +1,5 @@
 #include "def.h"
-#include <ftk/ftkTransition.h>
+#include <ftk/transition/transition.h>
 #include <cstdio>
 
 #if WITH_ROCKSDB

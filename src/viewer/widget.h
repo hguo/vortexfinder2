@@ -10,7 +10,7 @@
 #include "def.h"
 #include "trackball.h"
 #include "common/Inclusions.h"
-#include <ftk/ftkTransition.h>
+#include <ftk/transition/transition.h>
 
 #ifdef WITH_ROCKSDB
 #include <rocksdb/db.h>
