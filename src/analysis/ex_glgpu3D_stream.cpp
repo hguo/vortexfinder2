@@ -13,6 +13,8 @@
 #include <tbb/concurrent_unordered_map.h>
 #include "io/GLGPU3DDataset.h"
 #include "extractor/Extractor.h"
+// #include <ftk/transition/trackingGraph.h>
+#include <ftk/transition/transition.h>
 
 #if WITH_ROCKSDB
 #include <rocksdb/db.h>
@@ -70,6 +72,7 @@ tbb::concurrent_unordered_map<std::pair<int, int>, std::vector<vfgpu_pe_t> > pes
 std::map<int, tbb::flow::continue_node<tbb::flow::continue_msg>* > extract_tasks; 
 std::map<std::pair<int, int>, tbb::flow::continue_node<tbb::flow::continue_msg>* > track_tasks;
 ftkTransition vt;
+// ftkTrackingGraph tg;
 
 tbb::concurrent_unordered_map<int, int> frame_counter;  // used to count how many times a frame is referenced by trackers
 // tbb::concurrent_unordered_map<int, tbb::mutex> frame_mutexes;
@@ -136,6 +139,7 @@ static void compute_moving_speed(
     const std::vector<VortexLine>& vlines1,
     const ftkTransitionMatrix& mat)
 {
+#if 0
   int event; 
   std::set<int> lhs, rhs;
   for (int i=0; i<mat.NModules(); i++) {
@@ -148,6 +152,7 @@ static void compute_moving_speed(
     // fprintf(stderr, "f0=%d, f1=%d, llvid=%d, rlvid=%d, A=%f\n", 
     //     f0, f1, llvid, rlvid, A);
   }
+#endif
 }
 
 static void write_mat(int f0, int f1, const ftkTransitionMatrix& mat)
@@ -161,7 +166,7 @@ static void write_mat(int f0, int f1, const ftkTransitionMatrix& mat)
 #else 
   std::stringstream ss;
   ss << infile << ".m." << f0 << "." << f1;
-  mat.SaveAscii(ss.str());
+  // mat.SaveAscii(ss.str()); // FIXME
 #endif
 }
 
@@ -228,6 +233,8 @@ struct track {
                              vlines1 = vlines_all[f1];
 
     GLGPU3DDataset *ds = new GLGPU3DDataset;
+    ds->SetTimeStep(f0, 0); 
+    ds->SetTimeStep(f1, 1);
     ds->SetHeader(h0);
     ds->SetMeshType(cfg.meshtype);
     ds->BuildMeshGraph();
@@ -258,17 +265,18 @@ struct track {
 
     ex->SetVortexObjects(vobjs0, 0);
     ex->SetVortexObjects(vobjs1, 1);
-    ftkTransitionMatrix mat = ex->TraceOverTime();
-    mat.SetInterval(interval);
-    mat.Modularize();
-    vt.AddMatrix(mat);
+    ex->TraceOverTime(vt);
+    // ftkTransitionMatrix mat = ex->TraceOverTime(); // FIXME: ftk
+    // mat.SetInterval(interval);
+    // mat.Modularize();
+    // vt.AddMatrix(mat);
 
     delete ex;
     delete ds;
     
     // compute_moving_speed(f0, f1, vlines0, vlines1, mat);
-    write_mat(f0, f1, mat);
-    write_vlines(f0, vlines0);
+    // write_mat(f0, f1, mat); // FIXME
+    // write_vlines(f0, vlines0);
     
     fprintf(stderr, "interval={%d, %d}, #pfs0=%d, #pfs1=%d, #pes=%d\n", 
         interval.first, interval.second, (int)pfs0.size(), (int)pfs1.size(), (int)pes.size());
@@ -321,7 +329,7 @@ int main(int argc, char **argv)
   int type_msg;
   vfgpu_hdr_t hdr;
   int pfcount, pecount;
-  const int max_frames = 5000; // INT_MAX;
+  const int max_frames = 100; // 5000; // INT_MAX;
   int frame_count = 0;
   std::vector<int> frames;
   std::vector<vfgpu_hdr_t> hdrs;
@@ -376,7 +384,10 @@ int main(int argc, char **argv)
   fclose(fp);
 
   g.wait_for_all();
-  
+
+  // tg.relabel();
+  vt.relabel();
+
 #if WITH_ROCKSDB
   std::string buf;
  
@@ -387,11 +398,13 @@ int main(int argc, char **argv)
   db->Put(rocksdb::WriteOptions(), "hdrs", buf);
 
   fprintf(stderr, "constructing sequences...\n");
+#if 0 // FIXME
   vt.SetFrames(frames);
   vt.ConstructSequence();
   vt.PrintSequence();
   diy::serialize(vt, buf);
   db->Put(rocksdb::WriteOptions(), "trans", buf);
+#endif
   
   delete db;
 #endif

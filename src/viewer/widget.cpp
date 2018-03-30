@@ -131,9 +131,9 @@ void CGLWidget::LoadVortexLines2D()
     //   _data_info.ParseFromString(info_bytes);
 
     for (int i=0; i<vlines.size(); i++) {
-      const int gid = _vt->lvid2gvid(t, vlines[i].id);
+      const int gid = _vt->lid2gid(t, vlines[i].id);
       unsigned char r, g, b;
-      _vt->SequenceColor(gid, r, g, b);
+      // _vt->SequenceColor(gid, r, g, b); // FIXME: ftk
       lines[gid] << *(vlines[i].begin())
                  << *(vlines[i].begin()+1)
                  << t*delta - (_tl*delta*0.5);
@@ -452,13 +452,13 @@ void CGLWidget::renderVortexIds()
   glDisable(GL_DEPTH_TEST);
 
   QString s0;
-  if (vfgpu_hdrs.empty()) 
-    s0 = QString("frame=%1, timestep=%2").arg(_timestep).arg(_vt->TimestepToFrame(_timestep));
-  else {
+  if (vfgpu_hdrs.empty()) {
+    // s0 = QString("frame=%1, timestep=%2").arg(_timestep).arg(_vt->TimestepToFrame(_timestep)); // FIXME: ftk
+  } else {
     const vfgpu_hdr_t &h = vfgpu_hdrs[_timestep];
     s0 = QString("frame=%1, timestep=%2, B=(%3, %4, %5), V=%6")
       .arg(_timestep)
-      .arg(_vt->TimestepToFrame(_timestep))
+      // .arg(_vt->TimestepToFrame(_timestep)) //FIXME: ftk
       .arg(h.B[0]).arg(h.B[1]).arg(h.B[2])
       .arg(h.V);
   }

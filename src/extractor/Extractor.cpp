@@ -725,15 +725,18 @@ int VortexExtractor::NewGlobalVortexId()
 }
 
 // only relate ids
-ftkTransitionMatrix VortexExtractor::TraceOverTime()
+// ftkTransitionMatrix VortexExtractor::TraceOverTime()
+void VortexExtractor::TraceOverTime(ftkTransition &vt)
 {
   const int n0 = _vortex_objects.size(), 
             n1 = _vortex_objects1.size();
   // ftkTransitionMatrix &tm = _vortex_transition[_dataset->TimeStep(0)]; 
   const int f0 = _dataset->TimeStep(0), f1 = _dataset->TimeStep(1);
-  ftkTransitionMatrix tm(f0, f1, n0, n1);
+  // ftkTransitionMatrix tm(f0, f1, n0, n1);
 
   RelateOverTime();
+
+  vt.addInterval(f0, n0, f1, n1);
 
   for (int i=0; i<n0; i++) {
     for (int j=0; j<n1; j++) {
@@ -745,7 +748,9 @@ ftkTransitionMatrix VortexExtractor::TraceOverTime()
           if (_vortex_objects1[j].faces.find(related[k]) != _vortex_objects1[j].faces.end()) {
             // if (i != j)
             //   fprintf(stderr, "vid=%d --> vid=%d, fid0=%u, fid1=%u\n", i, j, *it, related[k]);
-            tm(i, j) ++;
+            // tm(i, j) ++;
+            // tg.addEdge(f0, i, f1, j);
+            vt.addTransition(f0, i, f1, j);
             goto next;
           }
         }
@@ -756,7 +761,7 @@ next:
   }
 
   // if (_archive) tm.SaveToFile(Dataset()->DataName(), Dataset()->TimeStep(0), Dataset()->TimeStep(1));
-  _vortex_transition.AddMatrix(tm);
+  // _vortex_transition.AddMatrix(tm);
   // tm.Print();
 
 #if 0 // WITH_ROCKSDB
@@ -767,7 +772,7 @@ next:
   _db->Put(rocksdb::WriteOptions(), ss.str(), buf);
 #endif
 
-  return tm;
+  // return tm;
 
 #if 0
   std::vector<int> ids0(n0), ids1(n1);

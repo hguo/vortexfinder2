@@ -126,7 +126,7 @@ int main(int argc, char **argv)
     extractor.ExtractFaces(1);
     extractor.TraceOverSpace(1);
     extractor.ExtractEdges();
-    extractor.TraceOverTime();
+    // extractor.TraceOverTime(); // FIXME: ftk
     extractor.SaveVortexLines(1);
     extractor.RotateTimeSteps();
     ds.RotateTimeSteps();
