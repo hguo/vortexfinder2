@@ -85,7 +85,7 @@ void CGLWidget::SetData(const std::string& dataname, int ts, int tl)
   _tl = tl;
 }
 
-void CGLWidget::SetTransition(const ftkTransition *vt)
+void CGLWidget::SetTransition(const ftk::Transition *vt)
 {
   _vt = vt;
 }

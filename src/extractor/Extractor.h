@@ -5,7 +5,6 @@
 #include "common/VortexObject.h"
 #include "common/Puncture.h"
 #include "InverseInterpolation.h"
-// #include <ftk/transition/trackingGraph.h>
 #include <ftk/transition/transition.h>
 #include <map>
 
@@ -68,8 +67,7 @@ public:
   void TraceVirtualCells();
   void TraceOverSpace(int slot=0);
   // ftkTransitionMatrix TraceOverTime();
-  void TraceOverTime(ftkTransition &vt);
-  void AnalyzeTransition();
+  void TraceOverTime(ftk::Transition &vt);
 
   void RelateOverTime();
 

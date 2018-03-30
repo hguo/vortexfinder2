@@ -53,7 +53,7 @@ public:
 #endif 
   void LoadTimeStep(int t);
 
-  void SetTransition(const ftkTransition* vt);
+  void SetTransition(const ftk::Transition* vt);
 
   void Clear();
   
@@ -98,7 +98,7 @@ private: //data
   int _timestep;
   int _ts, _tl;
 
-  const ftkTransition *_vt;
+  const ftk::Transition *_vt;
 
 private: // camera
   const float _fovy, _znear, _zfar; 

@@ -725,14 +725,11 @@ int VortexExtractor::NewGlobalVortexId()
 }
 
 // only relate ids
-// ftkTransitionMatrix VortexExtractor::TraceOverTime()
-void VortexExtractor::TraceOverTime(ftkTransition &vt)
+void VortexExtractor::TraceOverTime(ftk::Transition &vt)
 {
   const int n0 = _vortex_objects.size(), 
             n1 = _vortex_objects1.size();
-  // ftkTransitionMatrix &tm = _vortex_transition[_dataset->TimeStep(0)]; 
   const int f0 = _dataset->TimeStep(0), f1 = _dataset->TimeStep(1);
-  // ftkTransitionMatrix tm(f0, f1, n0, n1);
 
   RelateOverTime();
 
@@ -820,11 +817,6 @@ next:
     }
   }
 #endif
-}
-
-void VortexExtractor::AnalyzeTransition()
-{
-
 }
 
 void VortexExtractor::RotateTimeSteps()

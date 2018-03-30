@@ -71,7 +71,7 @@ tbb::concurrent_unordered_map<int, std::vector<VortexLine> > vlines_all;
 tbb::concurrent_unordered_map<std::pair<int, int>, std::vector<vfgpu_pe_t> > pes_all; // released on exit
 std::map<int, tbb::flow::continue_node<tbb::flow::continue_msg>* > extract_tasks; 
 std::map<std::pair<int, int>, tbb::flow::continue_node<tbb::flow::continue_msg>* > track_tasks;
-ftkTransition vt;
+ftk::Transition vt;
 // ftkTrackingGraph tg;
 
 tbb::concurrent_unordered_map<int, int> frame_counter;  // used to count how many times a frame is referenced by trackers
@@ -137,7 +137,7 @@ static void compute_moving_speed(
     int f0, int f1, 
     std::vector<VortexLine>& vlines0, // moving speed will be written in vlines
     const std::vector<VortexLine>& vlines1,
-    const ftkTransitionMatrix& mat)
+    const ftk::TransitionMatrix& mat)
 {
 #if 0
   int event; 
@@ -155,7 +155,7 @@ static void compute_moving_speed(
 #endif
 }
 
-static void write_mat(int f0, int f1, const ftkTransitionMatrix& mat)
+static void write_mat(int f0, int f1, const ftk::TransitionMatrix& mat)
 {
 #if WITH_ROCKSDB
   std::stringstream ss;
