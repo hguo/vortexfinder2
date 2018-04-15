@@ -3,3 +3,5 @@ target_link_libraries (conv_nc glio)
 
 add_executable (conv_raw conv_raw.cpp)
 target_link_libraries (conv_raw glio)
+
+# add_executable (test_ftk test_ftk.cpp)

@@ -329,7 +329,8 @@ int main(int argc, char **argv)
   int type_msg;
   vfgpu_hdr_t hdr;
   int pfcount, pecount;
-  const int max_frames = 100; // 5000; // INT_MAX;
+  const int max_frames = 100; // 500; // 5000; // INT_MAX;
+  // const int max_frames = INT_MAX;
   int frame_count = 0;
   std::vector<int> frames;
   std::vector<vfgpu_hdr_t> hdrs;
@@ -385,8 +386,15 @@ int main(int argc, char **argv)
 
   g.wait_for_all();
 
-  // tg.relabel();
   vt.relabel();
+  
+  nlohmann::json j = vt;
+  fprintf(stdout, "%s\n", j.dump().c_str());
+ 
+  // ftk::Transition vt1;
+  // vt1 = j;
+  // vt1.relabel();
+
 
 #if WITH_ROCKSDB
   std::string buf;
