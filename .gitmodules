@@ -3,4 +3,4 @@
 	url = https://github.com/diatomic/diy.git
 [submodule "ftk"]
 	path = ftk
-	url = git@bitbucket.org:hanqiguo/openftk.git
+	url = git@github.com:hguo/ftk.git
