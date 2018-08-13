@@ -1,7 +1,7 @@
 # Find librocksdb.a - key/value storage system
 
 find_path(RocksDB_INCLUDE_DIR NAMES rocksdb/db.h)
-find_library(RocksDB_LIBRARY NAMES librocksdb.a librocksdb.lib)
+find_library(RocksDB_LIBRARY NAMES rocksdb)
 
 if(RocksDB_INCLUDE_DIR AND RocksDB_LIBRARY)
   set(RocksDB_FOUND TRUE)

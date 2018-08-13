@@ -39,7 +39,7 @@ else()
   option (WITH_FORTRAN "Enable fortran" OFF)
   option (WITH_MACOS_RPATH "Enable macOS rpath support" ON)
 
-  set (CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
+  set (CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
   set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
   set (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
   set (CMAKE_INCLUDE_CURRENT_DIR ON)
