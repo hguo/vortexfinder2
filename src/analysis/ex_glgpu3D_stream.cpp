@@ -17,7 +17,8 @@
 #include <ftk/transition/transition.h>
 
 #if WITH_ROCKSDB
-#include <rocksdb/db.h>
+#include <ftk/storage/rocksdbStorage.h>
+// #include <rocksdb/db.h>
 #endif
 
 enum {
@@ -83,7 +84,8 @@ static vfgpu_cfg_t cfg;
 static std::string infile;
 
 #ifdef WITH_ROCKSDB
-static rocksdb::DB* db;
+// static rocksdb::DB* db;
+ftk::RocksDBStorage store;
 #endif
 
 static GLHeader conv_hdr(const vfgpu_cfg_t& cfg, const vfgpu_hdr_t& hdr) {
@@ -112,7 +114,8 @@ static void write_vlines(int frame, std::vector<VortexLine>& vlines)
   std::string buf;
   diy::serialize(vlines, buf);
   ss << "v." << frame;
-  db->Put(rocksdb::WriteOptions(), ss.str(), buf);
+  store.put(ss.str(), buf);
+  // db->Put(rocksdb::WriteOptions(), ss.str(), buf);
 
 #if 0
   // compute distance
@@ -160,9 +163,12 @@ static void write_mat(int f0, int f1, const ftk::TransitionMatrix& mat)
 #if WITH_ROCKSDB
   std::stringstream ss;
   ss << "m." << f0 << "." << f1;
-  std::string buf;
-  diy::serialize(mat, buf);
-  db->Put(rocksdb::WriteOptions(), ss.str(), buf);
+
+  nlohmann::json j = mat;
+  // std::string buf;
+  // diy::serialize(mat, buf);
+  // db->Put(rocksdb::WriteOptions(), ss.str(), buf);
+  store.put(ss.str(), j.dump());
 #else 
   std::stringstream ss;
   ss << infile << ".m." << f0 << "." << f1;
@@ -266,7 +272,7 @@ struct track {
     ex->SetVortexObjects(vobjs0, 0);
     ex->SetVortexObjects(vobjs1, 1);
     ex->TraceOverTime(vt);
-    // ftkTransitionMatrix mat = ex->TraceOverTime(); // FIXME: ftk
+    // ftk::TransitionMatrix mat = ex->TraceOverTime(vt); // FIXME: ftk
     // mat.SetInterval(interval);
     // mat.Modularize();
     // vt.AddMatrix(mat);
@@ -312,8 +318,10 @@ int main(int argc, char **argv)
   if (!fp) return 1;
 
 #if WITH_ROCKSDB
-  std::string dbname = infile + ".rocksdb";
+  std::string dbname = infile + ".rocksdb_ftk";
+  store.open(dbname);
 
+#if 0
   rocksdb::Options options;
   options.create_if_missing = true;
   // options.compression = rocksdb::kLZ4Compression;
@@ -321,6 +329,7 @@ int main(int argc, char **argv)
   // options.write_buffer_size = 64*1024*1024; // 64 MB
   rocksdb::Status status = rocksdb::DB::Open(options, dbname.c_str(), &db);
   assert(status.ok());
+#endif
 #endif
 
   using namespace tbb::flow;
@@ -390,6 +399,9 @@ int main(int argc, char **argv)
   
   nlohmann::json j = vt;
   fprintf(stdout, "%s\n", j.dump().c_str());
+  
+  // nlohmann::json j = vt;
+  // fprintf(stdout, "%s\n", j.dump().c_str());
  
   // ftk::Transition vt1;
   // vt1 = j;
@@ -400,10 +412,12 @@ int main(int argc, char **argv)
   std::string buf;
  
   diy::serialize(cfg, buf);
-  db->Put(rocksdb::WriteOptions(), "cfg", buf);
+  // db->Put(rocksdb::WriteOptions(), "cfg", buf);
+  store.put("cfg", buf);
 
   diy::serialize(hdrs, buf);
-  db->Put(rocksdb::WriteOptions(), "hdrs", buf);
+  // db->Put(rocksdb::WriteOptions(), "hdrs", buf);
+  store.put("hdrs", buf);
 
   fprintf(stderr, "constructing sequences...\n");
 #if 0 // FIXME
@@ -413,8 +427,16 @@ int main(int argc, char **argv)
   diy::serialize(vt, buf);
   db->Put(rocksdb::WriteOptions(), "trans", buf);
 #endif
-  
-  delete db;
+
+  for (auto m : vt.matrices()) {
+    std::stringstream key;
+    key << m.second.t0() << "." << m.second.t1();
+    store.put_obj(key.str(), m.second);
+  }
+
+  // store.put_obj("transition", vt); // .to_json());
+  store.close();
+  // delete db;
 #endif
 
   fprintf(stderr, "exiting...\n");
