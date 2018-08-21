@@ -14,7 +14,8 @@
 #include "io/GLGPU3DDataset.h"
 #include "extractor/Extractor.h"
 // #include <ftk/transition/trackingGraph.h>
-#include <ftk/transition/transition.h>
+// #include <ftk/transition/transition.h>
+#include <ftk/graph/graph.hh>
 
 #if WITH_ROCKSDB
 #include <ftk/storage/rocksdbStorage.h>
@@ -72,8 +73,9 @@ tbb::concurrent_unordered_map<int, std::vector<VortexLine> > vlines_all;
 tbb::concurrent_unordered_map<std::pair<int, int>, std::vector<vfgpu_pe_t> > pes_all; // released on exit
 std::map<int, tbb::flow::continue_node<tbb::flow::continue_msg>* > extract_tasks; 
 std::map<std::pair<int, int>, tbb::flow::continue_node<tbb::flow::continue_msg>* > track_tasks;
-ftk::Transition vt;
-// ftkTrackingGraph tg;
+
+ftk::Graph<> vg;
+// ftk::Transition vt;
 
 tbb::concurrent_unordered_map<int, int> frame_counter;  // used to count how many times a frame is referenced by trackers
 // tbb::concurrent_unordered_map<int, tbb::mutex> frame_mutexes;
@@ -139,8 +141,8 @@ static void write_vlines(int frame, std::vector<VortexLine>& vlines)
 static void compute_moving_speed(
     int f0, int f1, 
     std::vector<VortexLine>& vlines0, // moving speed will be written in vlines
-    const std::vector<VortexLine>& vlines1,
-    const ftk::TransitionMatrix& mat)
+    const std::vector<VortexLine>& vlines1) 
+    // const ftk::TransitionMatrix& mat)
 {
 #if 0
   int event; 
@@ -158,6 +160,7 @@ static void compute_moving_speed(
 #endif
 }
 
+#if 0
 static void write_mat(int f0, int f1, const ftk::TransitionMatrix& mat)
 {
 #if WITH_ROCKSDB
@@ -175,6 +178,7 @@ static void write_mat(int f0, int f1, const ftk::TransitionMatrix& mat)
   // mat.SaveAscii(ss.str()); // FIXME
 #endif
 }
+#endif
 
 /////////////////
 struct extract {
@@ -271,7 +275,7 @@ struct track {
 
     ex->SetVortexObjects(vobjs0, 0);
     ex->SetVortexObjects(vobjs1, 1);
-    ex->TraceOverTime(vt);
+    ex->TraceOverTime(vg);
     // ftk::TransitionMatrix mat = ex->TraceOverTime(vt); // FIXME: ftk
     // mat.SetInterval(interval);
     // mat.Modularize();
@@ -395,10 +399,11 @@ int main(int argc, char **argv)
 
   g.wait_for_all();
 
-  vt.relabel();
+  vg.relabel();
+  vg.detectEvents();
   
-  nlohmann::json j = vt;
-  fprintf(stdout, "%s\n", j.dump().c_str());
+  // nlohmann::json j = vt;
+  // fprintf(stdout, "%s\n", j.dump().c_str());
   
   // nlohmann::json j = vt;
   // fprintf(stdout, "%s\n", j.dump().c_str());
@@ -428,11 +433,13 @@ int main(int argc, char **argv)
   db->Put(rocksdb::WriteOptions(), "trans", buf);
 #endif
 
+#if 0
   for (auto m : vt.matrices()) {
     std::stringstream key;
     key << m.second.t0() << "." << m.second.t1();
     store.put_obj(key.str(), m.second);
   }
+#endif
 
   // store.put_obj("transition", vt); // .to_json());
   store.close();
