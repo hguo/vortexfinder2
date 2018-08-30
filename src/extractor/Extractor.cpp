@@ -725,7 +725,7 @@ int VortexExtractor::NewGlobalVortexId()
 }
 
 // only relate ids
-void VortexExtractor::TraceOverTime(ftk::Graph<> &g)
+void VortexExtractor::TraceOverTime(ftk::tracking_graph<> &g)
 {
   const int n0 = _vortex_objects.size(), 
             n1 = _vortex_objects1.size();
@@ -748,7 +748,7 @@ void VortexExtractor::TraceOverTime(ftk::Graph<> &g)
             // tm(i, j) ++;
             // tg.addEdge(f0, i, f1, j);
             // vt.addTransition(f0, i, f1, j);
-            g.addEdge(f0, i, f1, j);
+            g.add_edge(f0, i, f1, j);
             goto next;
           }
         }

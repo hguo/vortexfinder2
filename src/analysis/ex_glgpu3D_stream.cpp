@@ -15,7 +15,7 @@
 #include "extractor/Extractor.h"
 // #include <ftk/transition/trackingGraph.h>
 // #include <ftk/transition/transition.h>
-#include <ftk/graph/graph.hh>
+#include <ftk/tracking_graph.hh>
 
 #if WITH_ROCKSDB
 #include <ftk/storage/rocksdbStorage.h>
@@ -74,7 +74,7 @@ tbb::concurrent_unordered_map<std::pair<int, int>, std::vector<vfgpu_pe_t> > pes
 std::map<int, tbb::flow::continue_node<tbb::flow::continue_msg>* > extract_tasks; 
 std::map<std::pair<int, int>, tbb::flow::continue_node<tbb::flow::continue_msg>* > track_tasks;
 
-ftk::Graph<> vg;
+ftk::tracking_graph<> vg;
 // ftk::Transition vt;
 
 tbb::concurrent_unordered_map<int, int> frame_counter;  // used to count how many times a frame is referenced by trackers
@@ -400,7 +400,8 @@ int main(int argc, char **argv)
   g.wait_for_all();
 
   vg.relabel();
-  vg.detectEvents();
+  vg.detect_events();
+  vg.generate_dot_file("mydot");
   
   // nlohmann::json j = vt;
   // fprintf(stdout, "%s\n", j.dump().c_str());

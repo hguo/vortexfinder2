@@ -5,7 +5,7 @@
 #include "common/VortexObject.h"
 #include "common/Puncture.h"
 #include "InverseInterpolation.h"
-#include <ftk/graph/graph.hh>
+#include <ftk/tracking_graph.hh>
 #include <map>
 
 #if WITH_ROCKSDB
@@ -66,7 +66,7 @@ public:
 
   void TraceVirtualCells();
   void TraceOverSpace(int slot=0);
-  void TraceOverTime(ftk::Graph<> &g);
+  void TraceOverTime(ftk::tracking_graph<> &g);
 
   void RelateOverTime();
 

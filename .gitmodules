@@ -1,6 +1,3 @@
 [submodule "diy"]
 	path = diy
 	url = https://github.com/diatomic/diy.git
-[submodule "ftk"]
-	path = ftk
-	url = git@github.com:hguo/ftk.git

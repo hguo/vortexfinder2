@@ -4,8 +4,12 @@ project (vortexfinder2)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set (CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}/diy/include)
-include_directories (${CMAKE_CURRENT_SOURCE_DIR}/ftk/include)
+# include_directories (${CMAKE_CURRENT_SOURCE_DIR}/ftk/include)
+
+find_package (FTK REQUIRED)
+include_directories (${FTK_INCLUDE_DIR})
 
 if (CMAKE_PROJECT_NAME STREQUAL "ParaView")
 
@@ -39,7 +43,6 @@ else()
   option (WITH_FORTRAN "Enable fortran" OFF)
   option (WITH_MACOS_RPATH "Enable macOS rpath support" ON)
 
-  set (CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
   set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
   set (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
   set (CMAKE_INCLUDE_CURRENT_DIR ON)
