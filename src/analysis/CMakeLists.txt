@@ -12,15 +12,15 @@ target_link_libraries (extractor_glgpu3D_simple PUBLIC glextractor)
 add_executable (convertor ex_convertor.cpp)
 target_link_libraries (convertor PUBLIC glextractor)
   
-add_executable (extractor_glgpu3D_stream ex_glgpu3D_stream.cpp)
-target_link_libraries (extractor_glgpu3D_stream PUBLIC glextractor ${TBB_LIBRARY_RELEASE})
-
 if (WITH_TBB AND WITH_ROCKSDB)
   add_executable (inclusions ex_inclusions.cpp)
   target_link_libraries (inclusions PUBLIC glcommon ${TBB_LIBRARY_RELEASE})
   
   add_executable (dist2 ex_dist2.cpp)
   target_link_libraries (dist2 PUBLIC glcommon)
+
+  add_executable (extractor_glgpu3D_stream ex_glgpu3D_stream.cpp)
+  target_link_libraries (extractor_glgpu3D_stream PUBLIC glextractor ${TBB_LIBRARY_RELEASE})
 endif ()
 
 # add_executable (extractor_glgpu3D_sto ex_glgpu3D_sto.cpp)
