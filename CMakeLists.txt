@@ -119,11 +119,6 @@ else()
     include (${PARAVIEW_USE_FILE})
   endif ()
 
-  if (WITH_VTK)
-    find_package (VTK REQUIRED)
-    include_directories(${VTK_INCLUDE_DIRS})
-  endif ()
-
   if (WITH_CUDA)
     find_package (CUDA REQUIRED)
     set (CUDA_PROPAGATE_HOST_FLAGS OFF)
