@@ -1,11 +1,12 @@
-#ifndef __vtkGLGPUSupercurrentFilter_h
-#define __vtkGLGPUSupercurrentFilter_h
+#ifndef vtkGLGPUSupercurrentFilter_h
+#define vtkGLGPUSupercurrentFilter_h
 
+#include "vtkVortexFiltersModule.h"
 #include "vtkImageAlgorithm.h"
 
 class vtkDataSet;
 
-class vtkGLGPUSupercurrentFilter : public vtkImageAlgorithm
+class VTKVORTEXFILTERS_EXPORT vtkGLGPUSupercurrentFilter : public vtkImageAlgorithm
 {
 public:
   static vtkGLGPUSupercurrentFilter *New();

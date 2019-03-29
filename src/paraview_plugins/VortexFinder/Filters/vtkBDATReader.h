@@ -1,11 +1,12 @@
-#ifndef __vtkBDATReader_h
-#define __vtkBDATReader_h
+#ifndef vtkBDATReader_h
+#define vtkBDATReader_h
 
+#include "vtkVortexFiltersModule.h"
 #include "vtkDataReader.h"
 #include "vtkDataObjectAlgorithm.h"
 #include "vtkImageAlgorithm.h"
 
-class vtkBDATReader : public vtkImageAlgorithm
+class VTKVORTEXFILTERS_EXPORT vtkBDATReader : public vtkImageAlgorithm
 {
 public:
   static vtkBDATReader *New();

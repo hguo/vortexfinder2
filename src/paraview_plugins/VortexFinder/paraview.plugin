@@ -1,0 +1,10 @@
+NAME
+  VortexFinder
+DESCRIPTION
+  Analyze vorticies in time-dep. Ginzburg-Landau (TDGL) superconductor simulation data
+REQUIRES_MODULES
+  VTK::CommonCore
+  VTK::CommonDataModel
+  VTK::CommonExecutionModel
+  VTK::FiltersSources
+  VTK::IOLegacy

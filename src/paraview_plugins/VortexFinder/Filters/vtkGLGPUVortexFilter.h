@@ -1,12 +1,13 @@
-#ifndef __vtkGLGPUVortexFilter_h
-#define __vtkGLGPUVortexFilter_h
+#ifndef vtkGLGPUVortexFilter_h
+#define vtkGLGPUVortexFilter_h
 
+#include "vtkVortexFiltersModule.h"
 #include "vtkImageAlgorithm.h"
 #include "vtkPolyDataAlgorithm.h"
 
 class vtkDataSet;
 
-class vtkGLGPUVortexFilter : public vtkImageAlgorithm
+class VTKVORTEXFILTERS_EXPORT vtkGLGPUVortexFilter : public vtkImageAlgorithm
 {
 public:
   static vtkGLGPUVortexFilter *New();

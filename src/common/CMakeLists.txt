@@ -57,7 +57,10 @@ endif ()
 
 target_link_libraries (glcommon PUBLIC ${deps})
 
-if (CMAKE_PROJECT_NAME STREQUAL "ParaView")
-  install (FILES ${common_headers} DESTINATION ${VTK_INSTALL_INCLUDE_DIR}/common)
-  install (TARGETS glcommon DESTINATION ${VTK_INSTALL_LIBRARY_DIR})
+if (WITH_PARAVIEW)
+  install (FILES ${common_headers}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/common)
+  install (TARGETS glcommon
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif ()

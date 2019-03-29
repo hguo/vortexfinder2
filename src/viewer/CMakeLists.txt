@@ -1,5 +1,12 @@
 if (WITH_VTK)
-  include (${VTK_USE_FILE})
+  find_package(VTK REQUIRED
+    COMPONENTS
+      CommonCore
+      CommonDataModel
+      FiltersCore
+      IOImage
+      RenderingCore
+      RenderingOpenGL2)
 endif ()
 
 if (WITH_QT)
