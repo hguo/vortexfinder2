@@ -1,0 +1,11 @@
+NAME
+  VortexFilters
+LIBRARY_NAME
+  vtkVortexFilters
+DEPENDS
+  VTK::CommonExecutionModel
+  VTK::IOLegacy
+PRIVATE_DEPENDS
+  VTK::CommonCore
+  VTK::CommonDataModel
+  VTK::FiltersSources

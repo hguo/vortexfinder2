@@ -1,6 +1,7 @@
-#ifndef __vtkBDATSeriesReader_h
-#define __vtkBDATSeriesReader_h
+#ifndef vtkBDATSeriesReader_h
+#define vtkBDATSeriesReader_h
 
+#include "vtkVortexFiltersModule.h"
 #include "vtkDataReader.h"
 #include "vtkDataObjectAlgorithm.h"
 #include "vtkImageAlgorithm.h"
@@ -8,7 +9,7 @@
 #include <vector>
 #include <map>
 
-class vtkBDATSeriesReader : public vtkImageAlgorithm
+class VTKVORTEXFILTERS_EXPORT vtkBDATSeriesReader : public vtkImageAlgorithm
 {
 public:
   static vtkBDATSeriesReader *New();
