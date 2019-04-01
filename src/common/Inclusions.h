@@ -4,10 +4,9 @@
 #include <vector>
 #include <string>
 #include "def.h"
-#include "common/diy-ext.hpp"
 
 class Inclusions {
-  friend class diy::Serialization<Inclusions>;
+  // friend class diy::Serialization<Inclusions>;
 public:
   Inclusions();
   ~Inclusions();
@@ -32,6 +31,7 @@ protected:
   std::vector<float> _x, _y, _z;
 };
 
+#if 0
 namespace diy {
   template <> struct Serialization<Inclusions> {
     static void save(diy::BinaryBuffer& bb, const Inclusions& m) {
@@ -49,5 +49,6 @@ namespace diy {
     }
   };
 }
+#endif
 
 #endif

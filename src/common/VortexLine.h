@@ -6,7 +6,6 @@
 #include <vector>
 #include <sstream>
 #include "def.h"
-#include "common/diy-ext.hpp"
 
 /* 
  * \class   VortexLine
@@ -57,6 +56,7 @@ struct VortexLine : public std::vector<float>
   unsigned char r, g, b;
 };
 
+#if 0
 namespace diy {
   template <> struct Serialization<VortexLine> {
     static void save(diy::BinaryBuffer& bb, const VortexLine& m) {
@@ -84,6 +84,7 @@ namespace diy {
     }
   };
 }
+#endif
 
 bool SaveVortexLinesVTK(const std::vector<VortexLine>& lines, const std::string& filename);
 bool SaveVortexLinesBinary(const std::vector<VortexLine>& lines, const std::string& filename);

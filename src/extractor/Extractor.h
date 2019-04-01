@@ -5,7 +5,7 @@
 #include "common/VortexObject.h"
 #include "common/Puncture.h"
 #include "InverseInterpolation.h"
-#include <ftk/tracking_graph.hh>
+#include <ftk/tracking_graph/tracking_graph.hh>
 #include <map>
 
 #if WITH_ROCKSDB

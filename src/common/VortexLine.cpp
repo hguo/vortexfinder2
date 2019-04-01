@@ -165,7 +165,7 @@ bool VortexLine::Linear(float t, float X[3]) const
   for (int j=0; j<3; j++) {
     // X[j] = (1-tp) * at(i0*3+j) + tp * at((i0+1)*3+j);
     if (i0*3+j>=size()-1)
-      fprintf(stderr, "%d, %d, %d, %d\n", i0*3+j, size(), i0, length_acc.size());
+      fprintf(stderr, "%d, %lu, %d, %lu\n", i0*3+j, size(), i0, length_acc.size());
     X[j] = (1-tp) * at(i0*3+j) + tp * at(i0*3+j);
   }
 
@@ -424,7 +424,7 @@ bool SaveVortexLinesAscii(const std::vector<VortexLine>& vlines, const std::stri
     const VortexLine& vline = vlines[i];
     const int nv = vlines[i].size()/3;
 
-    fprintf(fp, "id=%d,n=%d,loop=%d\n", vline.id, vline.size()/3, vline.is_loop); 
+    fprintf(fp, "id=%d,n=%lu,loop=%d\n", vline.id, vline.size()/3, vline.is_loop); 
 
     for (int i=0; i<nv; i++) {
       fprintf(fp, "%f\t%f\t%f\n", 
