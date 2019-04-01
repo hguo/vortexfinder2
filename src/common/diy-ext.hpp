@@ -21,6 +21,10 @@ namespace diy {
       pos += count;
     }
 
+    inline void append_binary(const char *x, size_t count) {
+      // TODO: check with tom to see what should append_binary do for binary buffer.
+    }
+
     inline void load_binary(char *x, size_t count) {
       memcpy(x, str.data()+pos, count);
       pos += count;
